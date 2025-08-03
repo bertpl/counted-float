@@ -1,0 +1,30 @@
+# build files
+dist
+*.tar.gz
+*.whl
+
+# Python cache files
+__pycache__
+*.pyc
+
+# Coverage reports
+.coverage
+htmlcov
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Virtual environment directories
+venv
+.env
+
+# Pytest cache
+.cache
+
+# OS thumbnail files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea
+.vscode

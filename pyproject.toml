@@ -1,0 +1,49 @@
+[project]
+name = "counted-float"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.5.0",
+]
+
+[project.optional-dependencies]
+benchmark = [
+    "numba>=0.59",
+    "numpy>=2.0",
+    "psutil>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+# configs below also make sure the .whl file contains the data files, because wheels are built from the sdist
+packages = ["counted_float"]
+force-include = { "counted_float/_core/data" = "counted_float/_core/data" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["counted_float"]
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["I"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "requires_benchmark: only run this test if benchmark options are installed",
+    "requires_no_benchmark: only run this test if benchmark options are NOT installed"
+]
+
