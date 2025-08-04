@@ -1,0 +1,45 @@
+
+name: Unit Tests
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+        deps-resolution: ["lowest", "lowest-direct", "highest"]
+        optional-deps: ["none", "benchmark"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.4"
+
+      - name: Set up venv, Python ${{ matrix.python-version }} & dependencies
+        run:  |
+            uv python install ${{ matrix.python-version }}
+            uv venv --python ${{ matrix.python-version }}
+            source .venv/bin/activate
+            if [ "${{ matrix.optional-deps }}" = "benchmark" ]; then
+                uv pip compile --resolution ${{ matrix.deps-resolution }} --extra benchmark --group dev pyproject.toml
+                uv sync --extra benchmark --dev 
+            else
+                uv pip compile --resolution ${{ matrix.deps-resolution }} --group dev pyproject.toml
+                uv sync --dev
+            fi
+
+      - name: Run tests
+        run:  |
+            if [ "${{ matrix.optional-deps }}" = "benchmark" ]; then
+                uv run pytest ./tests -m "not requires_no_benchmark"
+            else
+                uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmark"
+            fi
+
