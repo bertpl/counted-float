@@ -5,7 +5,7 @@ from counted_float._core.benchmarking._flops_micro_benchmark import FlopsMicroBe
 from counted_float._core.counting.models import FlopsBenchmarkResults, FlopType
 
 
-@pytest.mark.requires_benchmark
+@pytest.mark.requires_benchmarking_deps
 def test_flops_benchmarking_suite_get():
     # --- arrange -----------------------------------------
     suite = FlopsBenchmarkSuite()
@@ -20,7 +20,7 @@ def test_flops_benchmarking_suite_get():
     assert all([v.size == 12345 for v in benchmarks.values()])
 
 
-@pytest.mark.requires_benchmark
+@pytest.mark.requires_benchmarking_deps
 def test_flops_benchmarking_suite_run():
     # --- arrange -----------------------------------------
     suite = FlopsBenchmarkSuite()

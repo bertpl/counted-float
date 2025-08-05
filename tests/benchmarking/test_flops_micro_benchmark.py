@@ -4,7 +4,7 @@ from counted_float._core.benchmarking._flops_micro_benchmark import FlopsMicroBe
 from counted_float._core.benchmarking._models import MicroBenchmarkResult, SingleRunResult
 
 
-@pytest.mark.requires_benchmark
+@pytest.mark.requires_benchmarking_deps
 def test_flops_micro_benchmark():
     # --- arrange -----------------------------------------
     import numpy as np
