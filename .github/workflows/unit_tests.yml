@@ -12,7 +12,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
         deps-resolution: ["lowest", "lowest-direct", "highest"]
-        optional-deps: ["none", "benchmark"]
+        optional-deps: ["none", "benchmarking"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -27,9 +27,9 @@ jobs:
             uv python install ${{ matrix.python-version }}
             uv venv --python ${{ matrix.python-version }}
             source .venv/bin/activate
-            if [ "${{ matrix.optional-deps }}" = "benchmark" ]; then
-                uv pip compile --resolution ${{ matrix.deps-resolution }} --extra benchmark --group dev pyproject.toml
-                uv sync --extra benchmark --dev 
+            if [ "${{ matrix.optional-deps }}" = "benchmarking" ]; then
+                uv pip compile --resolution ${{ matrix.deps-resolution }} --extra benchmarking --group dev pyproject.toml
+                uv sync --extra benchmarking --dev 
             else
                 uv pip compile --resolution ${{ matrix.deps-resolution }} --group dev pyproject.toml
                 uv sync --dev
@@ -37,9 +37,9 @@ jobs:
 
       - name: Run tests
         run:  |
-            if [ "${{ matrix.optional-deps }}" = "benchmark" ]; then
-                uv run pytest ./tests -m "not requires_no_benchmark"
+            if [ "${{ matrix.optional-deps }}" = "benchmarking" ]; then
+                uv run pytest ./tests -m "not requires_no_benchmarking_deps"
             else
-                uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmark"
+                uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
             fi
 

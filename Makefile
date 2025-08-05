@@ -19,21 +19,21 @@ build:
 	uv build;
 
 test-benchmark-deps:
-	# run tests WITH optional [benchmark] dependencies installed
-	uv run --extra benchmark pytest ./tests -m "not requires_no_benchmark"
+	# run tests WITH optional [benchmarking] dependencies installed
+	uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps"
 
 
 test-no-benchmark-deps:
-	# run tests WITHOUT optional [benchmark] dependencies installed
+	# run tests WITHOUT optional [benchmarking] dependencies installed
 	uv sync;
-	uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmark"
+	uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
 
 
 test: test-no-benchmark-deps test-benchmark-deps
 	# run all tests
 
 coverage:
-	uv run --extra benchmark pytest ./tests -m "not requires_no_benchmark" --cov=./counted_float/ --cov-report=html
+	uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --cov=./counted_float/ --cov-report=html
 
 format:
 	uvx ruff format .;

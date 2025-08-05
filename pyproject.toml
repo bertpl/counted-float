@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-benchmark = [
+benchmarking = [
     "numba>=0.57",
     "numpy>=1.20",
     "psutil>=5.0",
@@ -28,7 +28,6 @@ force-include = { "counted_float/_core/data" = "counted_float/_core/data" }
 [tool.hatch.build.targets.wheel]
 packages = ["counted_float"]
 
-
 [tool.ruff]
 line-length = 120
 target-version = "py311"
@@ -44,7 +43,7 @@ dev = [
 
 [tool.pytest.ini_options]
 markers = [
-    "requires_benchmark: only run this test if benchmark options are installed",
-    "requires_no_benchmark: only run this test if benchmark options are NOT installed"
+    "requires_benchmarking_deps: only run this test if benchmark options ARE installed",
+    "requires_no_benchmarking_deps: only run this test if benchmark options ARE NOT installed"
 ]
 
