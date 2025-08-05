@@ -1,0 +1,70 @@
+name: Deploy to pypi.org
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  unit_test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        deps-resolution: ["lowest", "lowest-direct", "highest"]
+        optional-deps: ["none", "benchmarking"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.4"
+
+      - name: Set up venv, Python ${{ matrix.python-version }} & dependencies
+        run:  |
+            uv python install ${{ matrix.python-version }}
+            uv venv --python ${{ matrix.python-version }}
+            source .venv/bin/activate
+            if [ "${{ matrix.optional-deps }}" = "benchmarking" ]; then
+                uv pip compile --resolution ${{ matrix.deps-resolution }} --extra benchmarking --group dev pyproject.toml
+                uv sync --extra benchmarking --dev 
+            else
+                uv pip compile --resolution ${{ matrix.deps-resolution }} --group dev pyproject.toml
+                uv sync --dev
+            fi
+
+      - name: Run tests
+        run:  |
+            if [ "${{ matrix.optional-deps }}" = "benchmarking" ]; then
+                uv run pytest ./tests -m "not requires_no_benchmarking_deps"
+            else
+                uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
+            fi
+
+  deploy:
+    name: build & upload release to pypi.org (PROD)
+    needs: unit_test
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      # IMPORTANT: this permission is mandatory for Trusted Publishing
+      id-token: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.4"
+
+      - name: Build package with uv
+        run: uv build
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://pypi.org/legacy/

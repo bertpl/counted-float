@@ -1,8 +1,7 @@
-
-name: Unit Tests
+name: Unit Tests - Full Matrix
 on:
-  push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -42,4 +41,3 @@ jobs:
             else
                 uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
             fi
-
