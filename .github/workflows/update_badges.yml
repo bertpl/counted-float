@@ -4,7 +4,7 @@ name: Update badges
 on:
   # Runs on pull requests to the main branch (i.e. in preparation for a release)
   pull_request:
-    branches: ["main"]
+    branches: ["main", "develop"]
 
   # Or manually
   workflow_dispatch:
