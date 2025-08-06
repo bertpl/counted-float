@@ -1,6 +1,7 @@
 name: Unit Tests - Reduced Matrix
 on:
   push:
+    branches-ignore: ['fix/*']
 
 jobs:
   test:
