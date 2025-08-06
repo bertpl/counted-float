@@ -44,7 +44,7 @@ class MicroBenchmark(ABC):
                                              n_operations will be iteratively adjusted to achieve this target time.
         """
 
-        print(f"{self.name.ljust(30)}: ", end="")
+        print(f"{self.name.ljust(35)}: ", end="")
 
         # repeat benchmark_runs n_runs_total times
         n_operations = 1  # start with a benchmark_runs of 1 operation and scale up as needed

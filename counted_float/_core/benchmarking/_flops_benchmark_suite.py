@@ -164,20 +164,26 @@ class FlopsBenchmarkSuite:
 
         # --- return in appropriate format ----------------
         return {
-            None: FlopsMicroBenchmark(name="baseline", f=baseline, size=size),
-            FlopType.ABS: FlopsMicroBenchmark(name="c=abs(a)", f=flop_abs, size=size),
-            FlopType.CMP_ZERO: FlopsMicroBenchmark(name="c=(a>=0)", f=flop_gte_zero, size=size),
-            FlopType.RND: FlopsMicroBenchmark(name="c=ceil(a)", f=flop_rnd, size=size),
-            FlopType.MINUS: FlopsMicroBenchmark(name="c=-a", f=flop_minus, size=size),
-            FlopType.EQUALS: FlopsMicroBenchmark(name="c=(a==b)", f=flop_equals, size=size),
-            FlopType.GTE: FlopsMicroBenchmark(name="c=(a>=b)", f=flop_gte, size=size),
-            FlopType.LTE: FlopsMicroBenchmark(name="c=(a<=b)", f=flop_lte, size=size),
-            FlopType.ADD: FlopsMicroBenchmark(name="c=a+b", f=flop_add, size=size),
-            FlopType.SUB: FlopsMicroBenchmark(name="c=a-b", f=flop_sub, size=size),
-            FlopType.MUL: FlopsMicroBenchmark(name="c=a*b", f=flop_mul, size=size),
-            FlopType.SQRT: FlopsMicroBenchmark(name="c=sqrt(a)", f=flop_sqrt, size=size),
-            FlopType.DIV: FlopsMicroBenchmark(name="c=a/b", f=flop_div, size=size),
-            FlopType.POW2: FlopsMicroBenchmark(name="c=2**a", f=flop_pow2, size=size),
-            FlopType.LOG2: FlopsMicroBenchmark(name="c=log2(a)", f=flop_log2, size=size),
-            FlopType.POW: FlopsMicroBenchmark(name="c=a^b", f=flop_pow, size=size),
+            key: FlopsMicroBenchmark(name=name, f=f, size=size)
+            for key, name, f in [
+                (key, key.long_name() if key else "baseline", f)
+                for key, f in [
+                    (None, baseline),
+                    (FlopType.ABS, flop_abs),
+                    (FlopType.CMP_ZERO, flop_gte_zero),
+                    (FlopType.RND, flop_rnd),
+                    (FlopType.MINUS, flop_minus),
+                    (FlopType.EQUALS, flop_equals),
+                    (FlopType.GTE, flop_gte),
+                    (FlopType.LTE, flop_lte),
+                    (FlopType.ADD, flop_add),
+                    (FlopType.SUB, flop_sub),
+                    (FlopType.MUL, flop_mul),
+                    (FlopType.SQRT, flop_sqrt),
+                    (FlopType.DIV, flop_div),
+                    (FlopType.POW2, flop_pow2),
+                    (FlopType.LOG2, flop_log2),
+                    (FlopType.POW, flop_pow),
+                ]
+            ]
         }

@@ -1,6 +1,8 @@
 import dataclasses
 import random
 
+from counted_float import FlopWeights
+from counted_float._core.counting.config import get_flop_weights
 from counted_float._core.counting.models import FlopCounts, FlopType
 
 
@@ -136,3 +138,35 @@ def test_flop_counts_reset():
     # --- assert ------------------------------------------
     for attr in FlopCounts.field_names():
         assert getattr(flop_counts, attr) == 0, f"Attribute {attr} not correctly set to 0 by reset()."
+
+
+def test_flop_counts_total_weighted_cost_default():
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(**{attr: random.randint(0, 10_000) for attr in FlopCounts.field_names()})
+    default_weights = get_flop_weights()
+
+    expected_total_cost = sum(
+        getattr(flop_counts, flop_type.name) * default_weights.weights[flop_type] for flop_type in FlopType
+    )
+
+    # --- act ---------------------------------------------
+    total_weighted_cost = flop_counts.total_weighted_cost()
+
+    # --- assert ------------------------------------------
+    assert total_weighted_cost == expected_total_cost
+
+
+def test_flop_counts_total_weighted_cost_custom():
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(**{attr: random.randint(0, 10_000) for attr in FlopCounts.field_names()})
+    custom_weights = FlopWeights(weights={flop_type: i for i, flop_type in enumerate(FlopType, start=1)})
+
+    expected_total_cost = sum(
+        getattr(flop_counts, flop_type.name) * custom_weights.weights[flop_type] for flop_type in FlopType
+    )
+
+    # --- act ---------------------------------------------
+    total_weighted_cost = flop_counts.total_weighted_cost(weights=custom_weights)
+
+    # --- assert ------------------------------------------
+    assert total_weighted_cost == expected_total_cost

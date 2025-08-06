@@ -65,10 +65,10 @@ def test_flop_weights_incorrect_construction(
         _ = FlopWeights(weights=weights_dict)
 
 
-def test_flop_weights_print(sample_flop_weights_dict_by_str):
+def test_flop_weights_show(sample_flop_weights_dict_by_str):
     """Very minimal test to check if MyBaseModel.print() at least does not raise exceptions."""
     # --- arrange -----------------------------------------
     flop_weights = FlopWeights(weights=sample_flop_weights_dict_by_str)
 
     # --- act ---------------------------------------------
-    flop_weights.print()
+    flop_weights.show()

@@ -39,6 +39,18 @@ class FlopWeights(MyBaseModel):
         return {k.value: v for k, v in weights.items()}
 
     # -------------------------------------------------------------------------
+    #  Custom visualization
+    # -------------------------------------------------------------------------
+    def show(self):
+        print("{")
+        for k, v in self.weights.items():
+            if isinstance(v, float):
+                print(f"    {k.long_name()}".ljust(40) + f": {v:9.5f}")
+            else:
+                print(f"    {k.long_name()}".ljust(40) + f": {v:>4}")
+        print("}")
+
+    # -------------------------------------------------------------------------
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod

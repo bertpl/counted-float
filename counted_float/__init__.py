@@ -1,4 +1,6 @@
-from ._core.counting import CountedFloat, FlopCountingContext, PauseFlopCounting
+import counted_float.config as config
+
+from ._core.counting import BuiltInData, CountedFloat, FlopCountingContext, PauseFlopCounting
 from ._core.counting.models import (
     FlopCounts,
     FlopsBenchmarkDurations,
@@ -10,6 +12,7 @@ from ._core.counting.models import (
 )
 
 __all__ = [
+    "config",
     "CountedFloat",
     "FlopCountingContext",
     "FlopCounts",
