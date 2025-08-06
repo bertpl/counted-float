@@ -127,7 +127,99 @@ counts.total_count()         # 2
 
 ## 2.3. Weighted FLOP counting
 
-**NOTE:** This functionality is planned for release 0.2.0.
+The `counted_float` package contains a set of default, built-in FLOP weights, based on both empirical measurements
+and theoretical estimates of the relative cost of different floating point operations.
+
+```
+>>> from counted_float.config import get_flop_weights
+>>> get_flop_weights().show()
+
+{
+    FlopType.ABS        [abs(x)]        :    1
+    FlopType.MINUS      [-x]            :    1
+    FlopType.EQUALS     [x==y]          :    1
+    FlopType.GTE        [x>=y]          :    1
+    FlopType.LTE        [x<=y]          :    1
+    FlopType.CMP_ZERO   [x>=0]          :    1
+    FlopType.RND        [round(x)]      :    1
+    FlopType.ADD        [x+y]           :    1
+    FlopType.SUB        [x-y]           :    1
+    FlopType.MUL        [x*y]           :    1
+    FlopType.DIV        [x/y]           :    3
+    FlopType.SQRT       [sqrt(x)]       :    4
+    FlopType.POW2       [2^x]           :   12
+    FlopType.LOG2       [log2(x)]       :   15
+    FlopType.POW        [x^y]           :   32
+}
+```
+These weights will be used by default when extracting total weighted flop costs:
+
+```python
+import math
+from counted_float import CountedFloat, FlopCountingContext
+
+
+cf1 = CountedFloat(1.73)
+cf2 = CountedFloat(2.94)
+
+with FlopCountingContext() as ctx:
+    _ = cf1 + cf2
+    _ = cf1 ** cf2
+    _ = math.log2(cf2)
+    
+flop_counts = ctx.flop_counts()
+total_cost = flop_counts.total_weighted_cost()  # 1 + 32 + 15 = 48
+```
+Note that the `total_weighted_cost` method will use the default flop weights as returned by `get_flop_weights()`.  This can be
+overridden by either configure different flop weights (see next section) or by setting the `weights` argument of the `total_weighted_cost()` method.
+
+
+## 2.4. Configuring FLOP weights
+
+We showed earlier that the `get_flop_weights()` function returns the default FLOP weights.  We can change this by
+using the `set_flop_weights()` function, which takes a `FlopWeights` object as an argument.  This way we can configure
+flop weights that might be obtained using benchmarks run on the target hardware (see later sections).
+
+```python
+from counted_float.config import set_flop_weights
+from counted_float import FlopWeights
+
+set_flop_weights(weights=FlopWeights(...))  # insert own weights here
+```
+## 2.5. Inspecting built-in data
+
+Built-in empirical, theoretical and consensus built-in flop weights can be inspected using the following functions:
+
+```python
+from counted_float.config import get_default_empirical_flop_weights, get_default_theoretical_flop_weights, get_default_consensus_flop_weights
+
+>>> get_default_empirical_flop_weights(rounded=False).show()
+
+{
+    FlopType.ABS        [abs(x)]        :   0.94863
+    FlopType.MINUS      [-x]            :   0.74700
+    FlopType.EQUALS     [x==y]          :   0.91142
+    FlopType.GTE        [x>=y]          :   0.91889
+    FlopType.LTE        [x<=y]          :   0.90862
+    FlopType.CMP_ZERO   [x>=0]          :   0.80503
+    FlopType.RND        [round(x)]      :   1.00080
+    FlopType.ADD        [x+y]           :   0.86304
+    FlopType.SUB        [x-y]           :   1.19673
+    FlopType.MUL        [x*y]           :   1.06232
+    FlopType.DIV        [x/y]           :   3.50765
+    FlopType.SQRT       [sqrt(x)]       :   2.87080
+    FlopType.POW2       [2^x]           :  10.58784
+    FlopType.LOG2       [log2(x)]       :  17.08929
+    FlopType.POW        [x^y]           :  38.82827
+}
+```
+
+These 3 types of built-in weights are defined as follows:
+* `empirical`: geo-mean of the flop weights corresponding to the built-in **benchmarking** results
+* `theoretical`: geo-mean of the flop weights corresponding to the built-in **specification analyses** (FPU instruction latencies)
+* `consensus`: geo-mean of the `empirical` and `theoretical` flop weights
+
+The default weights that are configured in the package are the integer-rounded `consensus` weights.
 
 # 3. Benchmarking
 
