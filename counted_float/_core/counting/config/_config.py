@@ -2,6 +2,9 @@ from ..models import FlopWeights
 from ._defaults import get_default_consensus_flop_weights
 
 
+# =================================================================================================
+#  Central class for weight configuration
+# =================================================================================================
 class Config:
     """Class to hold configuration settings for the counted_float package."""
 
@@ -30,3 +33,22 @@ class Config:
         Get the currently configured flop weights.
         """
         return cls.__weights.model_copy()
+
+
+# =================================================================================================
+#  Functional accessors
+# =================================================================================================
+def set_flop_weights(weights: FlopWeights):
+    """
+    Set the weights for the flops used in the package.  These weights will be used in any calculation of
+    weighted flops, going forward.
+    :param weights: FlopWeights instance containing the weights.
+    """
+    Config.set_flop_weights(weights)
+
+
+def get_flop_weights() -> FlopWeights:
+    """
+    Get the currently configured flop weights.
+    """
+    return Config.get_flop_weights()
