@@ -8,8 +8,5 @@ if FLAG_BENCHMARK_DEPS:
         "run_flops_benchmark",
     ]
 
-else:
-    __all__ = []
-
 # delete variable again, we don't want to expose this
 del FLAG_BENCHMARK_DEPS
