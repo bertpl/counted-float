@@ -138,43 +138,41 @@ the ability to micro-benchmark floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-baseline                      : wwwwwwwwww....................    218.71 ns ±    1.47 ns / operation
-c=abs(a)                      : wwwwwwwwww....................    331.25 ns ±    5.64 ns / operation
-c=(a>=0)                      : wwwwwwwwww....................    337.88 ns ±    8.92 ns / operation
-c=ceil(a)                     : wwwwwwwwww....................    329.89 ns ±    4.00 ns / operation
-c=-a                          : wwwwwwwwww....................    333.21 ns ±    4.99 ns / operation
-c=(a==b)                      : wwwwwwwwww....................    354.99 ns ±    4.85 ns / operation
-c=(a>=b)                      : wwwwwwwwww....................    352.01 ns ±    6.27 ns / operation
-c=(a<=b)                      : wwwwwwwwww....................    351.94 ns ±    6.03 ns / operation
-c=a+b                         : wwwwwwwwww....................    346.22 ns ±    4.61 ns / operation
-c=a-b                         : wwwwwwwwww....................    350.77 ns ±    8.45 ns / operation
-c=a*b                         : wwwwwwwwww....................    345.23 ns ±    5.57 ns / operation
-c=sqrt(a)                     : wwwwwwwwww....................    477.92 ns ±    2.78 ns / operation
-c=a/b                         : wwwwwwwwww....................    513.39 ns ±    2.96 ns / operation
-c=2**a                        : wwwwwwwwww....................      1.80 µs ±    0.00 µs / operation
-c=log2(a)                     : wwwwwwwwww....................      2.17 µs ±    0.01 µs / operation
-c=a^b                         : wwwwwwwwww....................      6.60 µs ±    0.01 µs / operation
+baseline                           : wwwwwwwwww....................    186.43 ns ±    0.82 ns / operation
+FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    300.85 ns ±    5.26 ns / operation
+FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    307.79 ns ±    6.65 ns / operation
+FlopType.RND        [round(x)]     : wwwwwwwwww....................    307.62 ns ±    5.12 ns / operation
+FlopType.MINUS      [-x]           : wwwwwwwwww....................    302.88 ns ±    4.51 ns / operation
+FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    328.41 ns ±    5.73 ns / operation
+FlopType.GTE        [x>=y]         : wwwwwwwwww....................    326.37 ns ±    5.07 ns / operation
+FlopType.LTE        [x<=y]         : wwwwwwwwww....................    322.10 ns ±    4.74 ns / operation
+FlopType.ADD        [x+y]          : wwwwwwwwww....................    317.28 ns ±    9.27 ns / operation
+FlopType.SUB        [x-y]          : wwwwwwwwww....................    320.05 ns ±    6.38 ns / operation
+FlopType.MUL        [x*y]          : wwwwwwwwww....................    325.44 ns ±    4.00 ns / operation
+FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    452.21 ns ±    4.32 ns / operation
+FlopType.DIV        [x/y]          : wwwwwwwwww....................    482.68 ns ±    0.93 ns / operation
+FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.77 µs ±    0.00 µs / operation
+FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.15 µs ±    0.01 µs / operation
+FlopType.POW        [x^y]          : wwwwwwwwww....................      6.55 µs ±    0.01 µs / operation
 
->>> result.flop_weights.print() 
+>>> results.flop_weights.show() 
 
 {
-    "weights": {
-        "abs(x)": 0.8621431123617258,
-        "-x": 0.877162001570882,
-        "x==y": 1.0440190272083842,
-        "x>=y": 1.0211908077124046,
-        "x<=y": 1.0206239758063622,
-        "x>=0": 0.9129479117929392,
-        "round(x)": 0.8517231697599011,
-        "x+y": 0.9768284351219878,
-        "x-y": 1.0116551232199238,
-        "x*y": 0.9692611546908555,
-        "x/y": 2.2574503148692138,
-        "sqrt(x)": 1.9857266998711156,
-        "2^x": 12.127727096594114,
-        "log2(x)": 14.932183767553829,
-        "x^y": 48.866160190275906
-    }
+    FlopType.ABS        [abs(x)]        :   0.83953
+    FlopType.MINUS      [-x]            :   0.85441
+    FlopType.EQUALS     [x==y]          :   1.04173
+    FlopType.GTE        [x>=y]          :   1.02677
+    FlopType.LTE        [x<=y]          :   0.99542
+    FlopType.CMP_ZERO   [x>=0]          :   0.89041
+    FlopType.RND        [round(x)]      :   0.88915
+    FlopType.ADD        [x+y]           :   0.96007
+    FlopType.SUB        [x-y]           :   0.98034
+    FlopType.MUL        [x*y]           :   1.01992
+    FlopType.DIV        [x/y]           :   2.17358
+    FlopType.SQRT       [sqrt(x)]       :   1.95006
+    FlopType.POW2       [2^x]           :  11.65331
+    FlopType.LOG2       [log2(x)]       :  14.38278
+    FlopType.POW        [x^y]           :  46.72479
 }
 ```
 

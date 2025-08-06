@@ -71,4 +71,4 @@ def test_flop_weights_print(sample_flop_weights_dict_by_str):
     flop_weights = FlopWeights(weights=sample_flop_weights_dict_by_str)
 
     # --- act ---------------------------------------------
-    flop_weights.print()
+    flop_weights.show()

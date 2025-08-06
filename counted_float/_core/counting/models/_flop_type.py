@@ -42,3 +42,6 @@ class FlopType(StrEnum):
     POW2 = "2^x"
     LOG2 = "log2(x)"
     POW = "x^y"
+
+    def long_name(self) -> str:
+        return f"FlopType.{self.name:<9}  [{self.value}]"
