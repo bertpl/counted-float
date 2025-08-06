@@ -23,7 +23,7 @@ pip install counted-float                  # install without benchmarking option
 pip install counted-float[benchmarking]    # install with benchmarking optional dependencies
 ```
 Benchmarking dependencies are optional due to the large size of the numba (+llvmlite) package, which is used for
-micro-benchmarking, which relies on jit-compiled code to get more accurate estimates wiht less Python overhead. 
+micro-benchmarking, which relies on jit-compiled code to get more accurate estimates with less Python overhead. 
 
 # 2. Counting Flops
 
