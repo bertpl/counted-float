@@ -3,6 +3,7 @@ from __future__ import annotations
 import dataclasses
 
 from ._flop_type import FlopType
+from ._flop_weights import FlopWeights
 
 
 @dataclasses.dataclass(slots=True)
@@ -46,6 +47,19 @@ class FlopCounts:
     def total_count(self) -> int:
         """Sum of all flop counts."""
         return sum(getattr(self, attr) for attr in self.field_names())
+
+    def total_weighted_cost(self, weights: FlopWeights | None = None) -> float:
+        """
+        Returns a weighted total count of all flops (counterpart of the unweighted total_count() method),
+        using the provided weights in the computations.
+        When omitted, the currently configured weights (see Config class) will be used.
+        """
+        if not weights:
+            from counted_float._core.counting.config import get_flop_weights
+
+            weights = get_flop_weights()
+
+        return sum([getattr(self, flop_type.name) * weights.weights[flop_type] for flop_type in FlopType])
 
     # --- other -------------------------------------------
     def reset(self):
