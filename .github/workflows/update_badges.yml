@@ -22,7 +22,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  update_badges_and_publish_to_pages:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -36,12 +36,11 @@ jobs:
           version: "0.8.4"
       - name: Update Coverage
         run: |
-          uv python install
           uv venv
           source .venv/bin/activate
           uv sync --extra benchmarking --dev --resolution highest
           uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --cov=./counted_float/ --cov-report=xml
-          uv run genbadge coverage -o ./badges/coverage.svg
+          uv run genbadge coverage -i coverage.xml -o ./badges/coverage.svg
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
