@@ -1,7 +1,7 @@
 [project]
 name = "counted-float"
 version = "0.1.0"
-description = "Add your description here"
+description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -11,7 +11,7 @@ dependencies = [
 
 [project.optional-dependencies]
 benchmarking = [
-    "numba>=0.57",
+    "numba>=0.50",
     "numpy>=1.20",
     "psutil>=5.0",
 ]
@@ -37,6 +37,7 @@ select = ["I"]
 
 [dependency-groups]
 dev = [
+    "genbadge[all]>=1.1.2",
     "pytest>=8.0",
     "pytest-cov>=6.0",
 ]

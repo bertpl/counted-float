@@ -1,3 +1,7 @@
+![shields.io](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
+![genbadge](https://bertpl.github.io/counted-float/badges/tests.svg)
+![genbadge](https://bertpl.github.io/counted-float/badges/coverage.svg)
+
 # counted-float
 
 This Python package provides functionality for counting the number of floating point operations (FLOPs) of numerical
