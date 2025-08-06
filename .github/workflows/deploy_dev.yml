@@ -5,7 +5,8 @@ on:
       devVersionNumber:
         description: 'Development version number'
         required: true
-        type: number
+        type: string
+        default: ${{ github.run_number }}
 
 jobs:
 
