@@ -34,20 +34,20 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           version: "0.8.4"
-      - name: Update Coverage
+      - name: Update Badge - Tests & Coverage
         run: |
           uv venv
           source .venv/bin/activate
           uv sync --extra benchmarking --dev --resolution highest
-          uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --cov=./counted_float/ --cov-report=xml
-          uv run genbadge coverage -i coverage.xml -o ./badges/coverage.svg
+          uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+          uv run genbadge tests -i junit.xml -o ./pages/badges/tests.svg
+          uv run genbadge coverage -i coverage.xml -o ./pages/badges/coverage.svg
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: './badges'
+          path: './pages'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
