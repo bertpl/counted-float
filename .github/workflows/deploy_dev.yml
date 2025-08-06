@@ -4,9 +4,8 @@ on:
     inputs:
       devVersionNumber:
         description: 'Development version number'
-        required: true
+        required: false
         type: string
-        default: ${{ github.run_number }}
 
 jobs:
 
@@ -67,8 +66,7 @@ jobs:
 
       - name: Update version in pyproject.toml
         run: |
-          ver=$(uv version --short)
-          ver_dev="${ver}.dev${{ github.event.inputs.devVersionNumber }}"
+          ver_dev="$(uv version --short).dev${{ github.event.inputs.devVersionNumber || github.run_number }}"
           echo "Updating version to ${ver_dev}"
           uv version "${ver_dev}"
 
