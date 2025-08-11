@@ -1,17 +1,20 @@
 name: Deploy to pypi.org
 on:
   push:
-    tags:
-      - "v*.*.*"  # Match version tags like v1.2.3   (as set by the tag_release workflow)
+    branches:
+      - main    # on each push to the main branch, check if this version already has a tag
+  workflow_dispatch:
+
 
 jobs:
 
   check_tag_version_correct:
+    if: github.ref == 'refs/heads/main' # Only run if branch is main
     name: check tag correctness
     runs-on: ubuntu-latest
     steps:
       - name: Full checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # fetch all history and tags
 
@@ -34,7 +37,6 @@ jobs:
 
   unit_test:
     name: full unit test matrix
-    needs: check_tag_version_correct
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -72,9 +74,38 @@ jobs:
                 uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
             fi
 
+  tag_as_release:
+    name: tag as release
+    needs:
+      - check_tag_version_correct
+      - unit_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Create tag
+        run: |
+          TAG="v$( uv version --short )"  
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists --> do not create & fail this step"
+            exit -1
+          else
+            echo "Tag ${TAG} does not exist --> create it now"
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
+
   deploy:
     name: release (pypi.org)
-    needs: unit_test
+    needs: tag_as_release
     runs-on: ubuntu-latest
     environment: prod
     permissions:
