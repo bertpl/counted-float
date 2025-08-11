@@ -1,6 +1,6 @@
 [project]
 name = "counted-float"
-version = "1.0.1"
+version = "0.8.0"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
 requires-python = ">=3.10"
