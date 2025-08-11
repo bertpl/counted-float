@@ -1,6 +1,7 @@
 name: Unit Tests - Full Matrix
 on:
   pull_request:
+    branches-ignore: ['main']
   workflow_dispatch:
   push:
     branches: ["fix/*"]
