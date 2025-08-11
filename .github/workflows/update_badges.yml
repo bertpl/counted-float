@@ -27,7 +27,46 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  update_badges_and_publish_to_pages:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Update Badge - Tests & Coverage
+        run: |
+          uv venv
+          source .venv/bin/activate
+          uv sync --extra benchmarking --dev --resolution highest
+          uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+          PACKAGE_VERSION="$(uv version --short)"
+          uv run genbadge tests -i junit.xml -o "./pages/badges/v${PACKAGE_VERSION}/tests.svg"
+          uv run genbadge coverage -i coverage.xml -o "./pages/badges/v${PACKAGE_VERSION}/coverage.svg"
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: './pages'
+          publish_branch: 'gh-pages'
+          keep_files: true
+
   update_readme_urls:
+    needs: update_badges_and_publish_to_pages
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -54,34 +93,3 @@ jobs:
           git config --local user.email ""          
           git diff --quiet || (git add "$GITHUB_WORKSPACE/README.md" && git commit -m "Update README.md badge URLs")          
           git push
-
-  update_badges_and_publish_to_pages:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-      - name: Update Badge - Tests & Coverage
-        run: |
-          uv venv
-          source .venv/bin/activate
-          uv sync --extra benchmarking --dev --resolution highest
-          uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
-          PACKAGE_VERSION="$(uv version --short)"
-          uv run genbadge tests -i junit.xml -o "./pages/badges/v${PACKAGE_VERSION}/tests.svg"
-          uv run genbadge coverage -i coverage.xml -o "./pages/badges/v${PACKAGE_VERSION}/coverage.svg"
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './pages'
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
