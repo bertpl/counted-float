@@ -8,34 +8,8 @@ on:
 
 jobs:
 
-  check_tag_version_correct:
-    if: github.ref == 'refs/heads/main' # Only run if branch is main
-    name: check tag correctness
-    runs-on: ubuntu-latest
-    steps:
-      - name: Full checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # fetch all history and tags
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Check tag
-        run: |
-          EXPECTED_TAG="v$( uv version --short )"  
-          if [ "${GITHUB_REF}" != "refs/tags/${EXPECTED_TAG}" ]; then
-            echo "This workflow was triggered by tag ${GITHUB_REF}, but expected tag is refs/tags/${EXPECTED_TAG}"
-            echo "This means that the tag does not match the current version in pyproject.toml"
-            echo "Please fix this before deploying to production"
-            exit -1
-          else
-            echo "Tag matches the current version in pyproject.toml"
-          fi      
-
   unit_test:
+    if: github.ref == 'refs/heads/main' # Only run if branch is main
     name: full unit test matrix
     runs-on: ubuntu-latest
     strategy:
@@ -77,7 +51,6 @@ jobs:
   tag_as_release:
     name: tag as release
     needs:
-      - check_tag_version_correct
       - unit_test
     runs-on: ubuntu-latest
     steps:
