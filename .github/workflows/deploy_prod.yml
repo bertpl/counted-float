@@ -96,3 +96,44 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://upload.pypi.org/legacy/
+          
+  bump_dev_version:
+    name: bump dev version
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # fetch everything, so all branches are available
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Bump dev version if needed
+        run: |
+          git checkout main
+          git pull origin main
+          ver_main="$( uv version --short )"
+          git checkout develop
+          git pull origin develop
+          ver_develop="$( uv version --short )"          
+          if [ "${ver_main}" = "${ver_develop}" ]; then
+            echo "main & develop branches are both on package version ${ver_main}"
+            echo "bumping develop branch version to make sure it stays ahead of main"
+            uv version --bump patch
+            ver_develop_new="$(uv version --short)"
+            echo "Bumped ${ver_develop} -> ${ver_develop_new}"
+            git config --local user.name "GitHub Actions"
+            git config --local user.email ""
+            git add pyproject.toml
+            git commit -m "Bump package version ${ver_develop} -> ${ver_develop_new}"
+            git push origin develop
+          else
+            echo "main & develop branches are on different package versions ${ver_main} vs ${ver_develop}"
+            echo "no need to bump develop branch version"
+          fi          
