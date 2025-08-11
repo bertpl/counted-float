@@ -1,12 +1,40 @@
 name: Deploy to pypi.org
 on:
   push:
-    branches:
-      - main
+    tags:
+      - "v*.*.*"  # Match version tags like v1.2.3   (as set by the tag_release workflow)
 
 jobs:
 
+  check_tag_version_correct:
+    name: check tag correctness
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Check tag
+        run: |
+          EXPECTED_TAG="v$( uv version --short )"  
+          if [ "${GITHUB_REF}" != "refs/tags/${EXPECTED_TAG}" ]; then
+            echo "This workflow was triggered by tag ${GITHUB_REF}, but expected tag is refs/tags/${EXPECTED_TAG}"
+            echo "This means that the tag does not match the current version in pyproject.toml"
+            echo "Please fix this before deploying to production"
+            exit -1
+          else
+            echo "Tag matches the current version in pyproject.toml"
+          fi      
+
   unit_test:
+    name: full unit test matrix
+    needs: check_tag_version_correct
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -21,7 +49,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.8.4"
+          version: ${{ vars.UV_VERSION }}
 
       - name: Set up venv, Python ${{ matrix.python-version }} & dependencies
         run:  |
@@ -45,7 +73,7 @@ jobs:
             fi
 
   deploy:
-    name: build & upload release to pypi.org (PROD)
+    name: deploy to pypi.org (PROD)
     needs: unit_test
     runs-on: ubuntu-latest
     environment: prod
@@ -59,7 +87,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.8.4"
+          version: ${{ vars.UV_VERSION }}
 
       - name: Build package with uv
         run: uv build
