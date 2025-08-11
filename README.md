@@ -1,7 +1,7 @@
 <!--START_SECTION:badges-->
 ![shields.io](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.0/tests.svg)
-![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.0/coverage.svg)
+![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.1/tests.svg)
+![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.1/coverage.svg)
 <!--END_SECTION:badges-->
 
 # counted-float
