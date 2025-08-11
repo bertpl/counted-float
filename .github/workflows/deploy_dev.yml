@@ -1,15 +1,37 @@
 name: Deploy to test.pypi.org
 on:
-  workflow_dispatch:  # manually triggered
-    inputs:
-      devVersionNumber:
-        description: 'Development version number'
-        required: false
-        type: string
+  pull_request:
+    branches:
+      - main    # test-deploy on PRs to main branch (which represent a new release)
 
 jobs:
 
+  check_version_tag_does_not_exist:
+    name: check version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Create tag
+        run: |
+          TAG="v$( uv version --short )"  
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists --> UNSAFE to merge to main"
+            exit -1
+          else
+            echo "Tag ${TAG} does not exist --> safe to merge to main"
+          fi
+
   unit_test:
+    name: full unit test matrix
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -48,7 +70,7 @@ jobs:
             fi
 
   deploy:
-    name: build & upload release to test.pypi.org (DEV)
+    name: deploy to test.pypi.org (DEV)
     needs: unit_test
     runs-on: ubuntu-latest
     environment: dev
@@ -66,7 +88,7 @@ jobs:
 
       - name: Update version in pyproject.toml
         run: |
-          ver_dev="$(uv version --short).dev${{ github.event.inputs.devVersionNumber || github.run_number }}"
+          ver_dev="$(uv version --short).dev${{ github.run_number }}"
           echo "Updating version to ${ver_dev}"
           uv version "${ver_dev}"
 
