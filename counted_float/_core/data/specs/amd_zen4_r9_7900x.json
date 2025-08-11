@@ -1,0 +1,52 @@
+{
+    "latencies": {
+        "FABS": {
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "FCHS": {
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "FCOM": {
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "FTST": {
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "FRNDINT": {
+            "min_cycles": 5,
+            "max_cycles": 5
+        },
+        "FADD": {
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "FSUB": {
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "FMUL": {
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "FDIV": {
+            "min_cycles": 15,
+            "max_cycles": 15
+        },
+        "FSQRT": {
+            "min_cycles": 25,
+            "max_cycles": 25
+        },
+        "F2XM1": {
+            "min_cycles": 50,
+            "max_cycles": 60
+        },
+        "FYL2X": {
+            "min_cycles": 40,
+            "max_cycles": 60
+        }
+    }
+}

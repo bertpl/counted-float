@@ -1,0 +1,49 @@
+[project]
+name = "counted-float"
+version = "0.8.0"
+description = "Count floating-point operations in Python code & benchmark relative flop costs."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "backports-strenum>=1.3.1",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+benchmarking = [
+    "numba>=0.50",
+    "numpy>=1.20",
+    "psutil>=5.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+# configs below also make sure the .whl file contains the data files, because wheels are built from the sdist
+packages = ["counted_float"]
+force-include = { "counted_float/_core/data" = "counted_float/_core/data" }
+
+[tool.hatch.build.targets.wheel]
+packages = ["counted_float"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["I"]
+
+[dependency-groups]
+dev = [
+    "genbadge[all]>=1.1.2",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "requires_benchmarking_deps: only run this test if benchmark options ARE installed",
+    "requires_no_benchmarking_deps: only run this test if benchmark options ARE NOT installed"
+]
