@@ -21,7 +21,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.8.4"
+          version: ${{ vars.UV_VERSION }}
 
       - name: Set up venv, Python ${{ matrix.python-version }} & dependencies
         run:  |
