@@ -47,4 +47,3 @@ markers = [
     "requires_benchmarking_deps: only run this test if benchmark options ARE installed",
     "requires_no_benchmarking_deps: only run this test if benchmark options ARE NOT installed"
 ]
-
