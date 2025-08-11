@@ -73,7 +73,7 @@ jobs:
             fi
 
   deploy:
-    name: deploy to pypi.org (PROD)
+    name: release (pypi.org)
     needs: unit_test
     runs-on: ubuntu-latest
     environment: prod

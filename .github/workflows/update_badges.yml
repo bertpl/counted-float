@@ -2,11 +2,9 @@
 name: Update badges
 
 on:
-  # Runs on pull requests to the main branch (i.e. in preparation for a release)
-  pull_request:
-    branches: ["main"]
-
-  # Or whenever we change the pyproject.toml file
+  # Whenever we change the pyproject.toml file
+  #  - this could happen on push in develop
+  #  - or after merge to main  (in which case readme.md is up to date, but badges will be updated to final state)
   push:
     paths:
       - "pyproject.toml"

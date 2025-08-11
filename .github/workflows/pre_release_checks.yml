@@ -1,4 +1,4 @@
-name: Deploy to test.pypi.org
+name: Pre-release checks
 on:
   pull_request:
     branches:
@@ -20,7 +20,7 @@ jobs:
         with:
           version: ${{ vars.UV_VERSION }}
 
-      - name: Create tag
+      - name: Check tag
         run: |
           TAG="v$( uv version --short )"  
           if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
@@ -70,8 +70,10 @@ jobs:
             fi
 
   deploy:
-    name: deploy to test.pypi.org (DEV)
-    needs: unit_test
+    name: test-release (test.pypi.org)
+    needs:
+      - unit_test
+      - check_version_tag_does_not_exist
     runs-on: ubuntu-latest
     environment: dev
     permissions:
