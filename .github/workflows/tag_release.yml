@@ -1,0 +1,33 @@
+name: Tag commit as v<version> if it does not exist
+on:
+  push:
+    branches:
+      - main    # on each push to the main branch, check if this version already has a tag
+
+
+jobs:
+
+  tag_as_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Full checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # fetch all history and tags
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ vars.UV_VERSION }}
+
+      - name: Create tag
+        run: |
+          TAG="v$( uv version --short )"  
+          if git show-ref --tags --verify --quiet "refs/tags/${TAG}"; then
+            echo "Tag ${TAG} already exists --> do not create & fail this step"
+            exit -1
+          else
+            echo "Tag ${TAG} does not exist --> create it now"
+            git tag "$TAG"
+            git push origin "$TAG"
+          fi
