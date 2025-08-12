@@ -101,7 +101,7 @@ cf2 = CountedFloat(2.94)
 with FlopCountingContext() as ctx:
     _ = cf1 * cf2
     ctx.pause()
-    _ = cf1 + cf2   # will be executed but bot counted
+    _ = cf1 + cf2   # will be executed but not counted
     ctx.resume()
     _ = cf1 - cf2
 
@@ -120,7 +120,7 @@ cf2 = CountedFloat(2.94)
 with FlopCountingContext() as ctx:
     _ = cf1 * cf2
     with PauseFlopCounting():
-        _ = cf1 + cf2   # will be executed but bot counted
+        _ = cf1 + cf2   # will be executed but not counted
     _ = cf1 - cf2
 
 counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
