@@ -9,6 +9,11 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[project.urls]
+Source = "https://github.com/bertpl/counted-float"
+Issues = "https://github.com/bertpl/counted-float/issues"
+Roadmap = "https://github.com/bertpl/counted-float/milestones"
+
 [project.optional-dependencies]
 benchmarking = [
     "numba>=0.50",
