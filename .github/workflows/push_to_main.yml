@@ -99,7 +99,7 @@ jobs:
         with:
           uv_version: ${{ vars.UV_VERSION }}
           git_ref: 'develop'
-          bump_type: 'minor'
+          bump_type: 'patch'
           only_if_equal_to_version: ${{ env.CURRENT_PACKAGE_VERSION }}
 
       - uses: ./.github/actions/badges_and_splash

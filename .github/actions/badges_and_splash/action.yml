@@ -84,5 +84,5 @@ runs:
         run: |
           git config --local user.name "GitHub Actions"
           git config --local user.email ""          
-          git diff --quiet || (git add "$GITHUB_WORKSPACE/README.md" && git commit -m "Update README.md image URLs")          
+          git diff --quiet || (git add "$GITHUB_WORKSPACE/README.md" && git commit -m "Update README.md image URLs")
           git push
