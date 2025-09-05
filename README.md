@@ -1,8 +1,9 @@
-<!--START_SECTION:badges-->
-![shields.io](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.1/tests.svg)
-![genbadge](https://bertpl.github.io/counted-float/badges/v0.8.1/coverage.svg)
-<!--END_SECTION:badges-->
+<!--START_SECTION:images-->
+![shields.io-python-versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
+![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/badge-test-count.svg)
+![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/badge-coverage.svg)
+![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/splash.webp)
+<!--END_SECTION:images-->
 
 # counted-float
 
@@ -101,7 +102,7 @@ cf2 = CountedFloat(2.94)
 with FlopCountingContext() as ctx:
     _ = cf1 * cf2
     ctx.pause()
-    _ = cf1 + cf2   # will be executed but bot counted
+    _ = cf1 + cf2   # will be executed but not counted
     ctx.resume()
     _ = cf1 - cf2
 
@@ -120,7 +121,7 @@ cf2 = CountedFloat(2.94)
 with FlopCountingContext() as ctx:
     _ = cf1 * cf2
     with PauseFlopCounting():
-        _ = cf1 + cf2   # will be executed but bot counted
+        _ = cf1 + cf2   # will be executed but not counted
     _ = cf1 - cf2
 
 counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}

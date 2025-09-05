@@ -1,0 +1,88 @@
+name: Test Badges & Splash Screen (develop)
+author: bertpluymers
+description: Generate version-specific images displayed in readme file & upload to appropriate folder on GH pages
+
+inputs:
+    uv_version:
+        required: true
+        description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "Github token to be used to upload to github pages."
+
+
+runs:
+    using: "composite"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: develop  # this always acts upon the develop branch
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ inputs.uv_version }}
+
+      - name: Determine Package version
+        shell: bash
+        run: |
+            PACKAGE_VERSION=$(uv version --short)
+            echo "PACKAGE_EFFECTIVE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+
+      - name: Create coverage report
+        shell: bash
+        run: |
+            uv venv
+            source .venv/bin/activate
+            uv sync --extra benchmarking --dev --resolution highest
+            uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+
+      - name: Generate badges
+        shell: bash
+        run: |            
+            PACKAGE_VERSION="$(uv version --short)"
+            uv run genbadge tests -i junit.xml -o "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/badge-test-count.svg"
+            uv run genbadge coverage -i coverage.xml -o "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/badge-coverage.svg"
+
+      - name: Prepare splash screen
+        shell: bash
+        run: |
+            sudo apt-get update && sudo apt-get install -y imagemagick
+            convert "./images/splash.webp" -gravity West -pointsize 80 -fill white -annotate +475+150 "v${PACKAGE_EFFECTIVE_VERSION}" -quality 90 -define webp:lossless=false "./images/splash_with_version.webp"
+            cp "./images/splash_with_version.webp" "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/splash.webp"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Create Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './pages'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ inputs.github_token }}
+          publish_dir: './pages'
+          publish_branch: 'gh-pages'
+          keep_files: true
+
+      - name: Update README URLs
+        shell: bash
+        run: |
+          git pull origin develop
+          uv run --python 3.13 .github/scripts/update_readme_urls.py "$GITHUB_WORKSPACE/.python-versions" "$GITHUB_WORKSPACE/pyproject.toml" "$GITHUB_WORKSPACE/README.md"
+          echo "----------------------------------------------------------"
+          cat "$GITHUB_WORKSPACE/README.md" | head -n 10
+          echo "..."
+          echo "----------------------------------------------------------"
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git config --local user.name "GitHub Actions"
+          git config --local user.email ""          
+          git diff --quiet || (git add "$GITHUB_WORKSPACE/README.md" && git commit -m "Update README.md image URLs")
+          git push
