@@ -18,22 +18,16 @@ help:
 build:
 	uv build;
 
-test-benchmark-deps:
-	# run tests WITH optional [benchmarking] dependencies installed
-	uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps"
-
-
-test-no-benchmark-deps:
-	# run tests WITHOUT optional [benchmarking] dependencies installed
-	uv sync;
-	uv run pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
-
-
-test: test-no-benchmark-deps test-benchmark-deps
-	# run all tests
+test:
+	# run all tests - with numba & just 1 python version
+	uv run --all-extras --python 3.13 pytest ./tests
 
 coverage:
-	uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --cov=./counted_float/ --cov-report=html
+	# run tests with Python 3.10; without numba & create new report
+	uv sync	# should remove numba
+	uv run --python 3.10 pytest ./tests --cov=./counted_float/ --cov-report=html
+	# run tests with Python 3.13; with numba & append to report
+	uv run --all-extras --python 3.13 pytest ./tests --cov=./counted_float/ --cov-append --cov-report=html
 
 format:
 	uvx ruff format .;

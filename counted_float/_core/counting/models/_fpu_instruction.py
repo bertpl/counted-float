@@ -1,4 +1,4 @@
-from counted_float._core._backwards_compat import StrEnum
+from counted_float._core.compatibility import StrEnum
 
 
 class FPUInstruction(StrEnum):

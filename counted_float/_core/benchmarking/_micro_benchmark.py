@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from counted_float._core._optional_deps import requires_benchmark_deps
-
 from ._models import MicroBenchmarkResult, SingleRunResult
 from ._time_utils import Timer, format_time_durations
 
@@ -25,7 +23,6 @@ class MicroBenchmark(ABC):
 
     MAX_N_OPERATIONS_FACTOR = 10  # never adjust n_operations by more than this factor (up or down)
 
-    @requires_benchmark_deps
     def __init__(self, name: str):
         self.name = name
 

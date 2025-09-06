@@ -35,8 +35,9 @@ runs:
         run: |
             uv venv
             source .venv/bin/activate
-            uv sync --extra benchmarking --dev --resolution highest
-            uv run --extra benchmarking pytest ./tests -m "not requires_no_benchmarking_deps" --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+            uv sync
+            uv run --python 3.10 pytest ./tests --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+            uv run --python 3.13 --all-extras pytest ./tests --junitxml=junit.xml --cov=./counted_float/ --cov-append --cov-report=xml          
 
       - name: Generate badges
         shell: bash

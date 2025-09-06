@@ -42,7 +42,6 @@ class DummyMicroBenchmark(MicroBenchmark):
         (10, 5, 0.03),
     ],
 )
-@pytest.mark.requires_benchmarking_deps
 def test_micro_benchmark(n_runs_total: int, n_runs_warmup: int, n_seconds_per_run_target: float):
     # --- arrange -----------------------------------------
     nsec_per_op = 1_000
