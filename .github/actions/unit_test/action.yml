@@ -56,7 +56,7 @@ runs:
         shell: bash
         run:  |
             if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests -m "not requires_no_benchmarking_deps"
+                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
             else
-                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests/counting ./tests/shared -m "not requires_benchmarking_deps"
+                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
             fi
