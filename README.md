@@ -1,8 +1,8 @@
 <!--START_SECTION:images-->
 ![shields.io-python-versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/badge-test-count.svg)
-![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/badge-coverage.svg)
-![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.8.2/splash.webp)
+![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.8.3/badge-test-count.svg)
+![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.8.3/badge-coverage.svg)
+![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.8.3/splash.webp)
 <!--END_SECTION:images-->
 
 # counted-float
@@ -16,8 +16,8 @@ feasible or desirable.
 
 The package contains two components:
  - `counting`: provides a CountedFloat class & flop counting context managers to count flops of code blocks.
- - `benchmarking`: (optional) provides functionality to micro-benchmark floating point operations to get an empirical
-   ballpark estimate of the relative cost of different operations on the target hardware.
+ - `benchmarking`: provides functionality to micro-benchmark floating point operations to get an empirical
+   ballpark estimate of the relative cost of different operations on the target hardware.  Requires 'numba' optional dependency for accurate results.
 
 # 1. Installation
 
@@ -26,11 +26,11 @@ The package contains two components:
 Use you favorite package manager such as `uv` or `pip`:
 
 ```
-pip install counted-float                  # install without benchmarking optional dependencies
-pip install counted-float[benchmarking]    # install with benchmarking optional dependencies
+pip install counted-float           # install without numba optional dependency
+pip install counted-float[numba]    # install with numba optional dependency
 ```
-Benchmarking dependencies are optional due to the large size of the numba (+llvmlite) package, which is used for
-micro-benchmarking, which relies on jit-compiled code to get more accurate estimates with less Python overhead. 
+Numba is optional due to its relatively large size (40-50MB, including llvmlite), but without it, benchmarks will
+not be reliable (but will still run, but not in jit-compiled form).
 
 # 2. Counting Flops
 
@@ -226,7 +226,7 @@ The default weights that are configured in the package are the integer-rounded `
 
 # 3. Benchmarking
 
-If the package is installed with the optional `benchmarking` dependencies, it provides
+If the package is installed with the optional `numba` dependency, it provides
 the ability to micro-benchmark floating point operations as follows:
 
 ```

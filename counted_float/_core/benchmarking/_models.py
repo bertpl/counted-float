@@ -1,3 +1,5 @@
+import numpy as np
+
 from counted_float._core.counting.models import MyBaseModel, Quantiles
 
 
@@ -19,8 +21,6 @@ class MicroBenchmarkResult(MyBaseModel):
 
     def get_nsec_per_op_quantile(self, q: float) -> float:
         """Returns a specific quantile of all results in the 'benchmark_runs' category expressed as nsec/op."""
-        import numpy as np  # late import of optional dependency
-
         return float(np.quantile([el.nsecs_per_op() for el in self.benchmark_runs], q))
 
     def summary_stats(self) -> Quantiles:

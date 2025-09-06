@@ -1,8 +1,9 @@
 import platform
 
+import numpy as np
 import psutil
 
-from counted_float._core._optional_deps import requires_benchmark_deps
+from counted_float._core.compatibility import is_numba_installed, numba
 from counted_float._core.counting.models import (
     BenchmarkSettings,
     FlopsBenchmarkDurations,
@@ -29,6 +30,13 @@ class FlopsBenchmarkSuite:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
         """
+
+        # warn if needed
+        if not is_numba_installed():
+            print("========= WARNING =========")
+            print("'numba' was not found; results of this benchmark will be wildly inaccurate & unusable.")
+            print("Install this package with the numba optional dependency: 'pip install counted-float[numba]'")
+            print("========= WARNING =========")
 
         # run actual benchmarks
         benchmarks = self.get_flops_benchmarking_suite(size=array_size)
@@ -70,15 +78,10 @@ class FlopsBenchmarkSuite:
     #  Static methods
     # -------------------------------------------------------------------------
     @staticmethod
-    @requires_benchmark_deps
     def get_flops_benchmarking_suite(size: int) -> dict[FlopType | None, FlopsMicroBenchmark]:
         """
         Returns a benchmark for each FlopType + None (=baseline test), of requested array size.
         """
-
-        # --- late import of optional dependencies --------
-        import numba
-        import numpy as np
 
         # --- define all test functions -------------------
         @numba.njit(parallel=False)

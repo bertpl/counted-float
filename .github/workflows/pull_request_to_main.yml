@@ -6,7 +6,7 @@ on:
     types: [opened, synchronize]
 
 jobs:
-  check_version_tag_does_not_exist:
+  check-version-tag-does-not-exist:
     name: check version
     runs-on: ubuntu-latest
     steps:
@@ -33,7 +33,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    needs: check_version_tag_does_not_exist
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +52,6 @@ jobs:
 
 
   update-badges-and-splash:
-    needs: test
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -71,7 +69,6 @@ jobs:
 
 
   publish-to-dev:
-    needs: test
     runs-on: ubuntu-latest
     environment: dev
     permissions:

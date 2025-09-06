@@ -1,6 +1,6 @@
 from typing import Callable
 
-from counted_float._core._optional_deps import requires_benchmark_deps
+import numpy as np
 
 from ._micro_benchmark import MicroBenchmark
 
@@ -32,10 +32,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
     operations, so we can make representative estimates of the number of FLOPS executed by instrumented algorithms.
     """
 
-    @requires_benchmark_deps
     def __init__(self, name: str, f: Callable, size: int):
-        import numpy as np  # late import of optional dependency
-
         super().__init__(name=name)
         self.size = size
         self.f = f
@@ -48,8 +45,6 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.out_i: np.ndarray = np.zeros(size, dtype=int)
 
     def _prepare_benchmark(self, n_operations: int):
-        import numpy as np  # late import of optional dependency
-
         self.n_operations = n_operations
         # input arrays
         self.in_f1 = 10 * np.random.rand(self.size)
