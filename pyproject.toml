@@ -13,6 +13,7 @@ dependencies = [
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
+ChangeLog = "https://github.com/bertpl/counted-float/blob/develop/RELEASE_NOTES.md"
 Issues = "https://github.com/bertpl/counted-float/issues"
 Roadmap = "https://github.com/bertpl/counted-float/milestones"
 
