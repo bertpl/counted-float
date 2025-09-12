@@ -24,3 +24,17 @@ jobs:
           python_version: ${{ matrix.python_version }}
           dependency_resolution: ${{ matrix.dependency_resolution }}
           include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
+
+  check-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for accurate diff
+
+      - name: Check for release notes
+        uses: ./.github/actions/check_release_notes
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          git_ref: ${{ github.event.pull_request.base.ref }}
