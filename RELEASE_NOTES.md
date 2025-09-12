@@ -9,7 +9,7 @@
 - Add release notes
 
 ### Improvements
-/
+- CI/CD - Allow manual test deployments
 
 ### Bug Fixes
 /
