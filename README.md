@@ -149,10 +149,10 @@ and theoretical estimates of the relative cost of different floating point opera
     FlopType.SUB        [x-y]           :    1
     FlopType.MUL        [x*y]           :    1
     FlopType.DIV        [x/y]           :    3
-    FlopType.SQRT       [sqrt(x)]       :    4
+    FlopType.SQRT       [sqrt(x)]       :    3
     FlopType.POW2       [2^x]           :   12
-    FlopType.LOG2       [log2(x)]       :   15
-    FlopType.POW        [x^y]           :   32
+    FlopType.LOG2       [log2(x)]       :   14
+    FlopType.POW        [x^y]           :   33
 }
 ```
 These weights will be used by default when extracting total weighted flop costs:
@@ -171,10 +171,10 @@ with FlopCountingContext() as ctx:
     _ = math.log2(cf2)
     
 flop_counts = ctx.flop_counts()
-total_cost = flop_counts.total_weighted_cost()  # 1 + 32 + 15 = 48
+total_cost = flop_counts.total_weighted_cost()  # 1 + 33 + 14 = 48
 ```
 Note that the `total_weighted_cost` method will use the default flop weights as returned by `get_flop_weights()`.  This can be
-overridden by either configure different flop weights (see next section) or by setting the `weights` argument of the `total_weighted_cost()` method.
+overridden by either configuring different flop weights (see next section) or by setting the `weights` argument of the `total_weighted_cost()` method.
 
 
 ## 2.4. Configuring FLOP weights
@@ -191,6 +191,8 @@ set_active_flop_weights(weights=FlopWeights(...))  # insert own weights here
 ```
 ## 2.5. Inspecting built-in data
 
+### 2.5.1. Default, pre-aggregated flop weights
+
 Built-in empirical, theoretical and consensus built-in flop weights can be inspected using the following functions:
 
 ```python
@@ -199,30 +201,59 @@ from counted_float.config import get_default_empirical_flop_weights, get_default
 >>> get_default_empirical_flop_weights(rounded=False).show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.94863
-    FlopType.MINUS      [-x]            :   0.74700
-    FlopType.EQUALS     [x==y]          :   0.91142
-    FlopType.GTE        [x>=y]          :   0.91889
-    FlopType.LTE        [x<=y]          :   0.90862
-    FlopType.CMP_ZERO   [x>=0]          :   0.80503
-    FlopType.RND        [round(x)]      :   1.00080
-    FlopType.ADD        [x+y]           :   0.86304
-    FlopType.SUB        [x-y]           :   1.19673
-    FlopType.MUL        [x*y]           :   1.06232
-    FlopType.DIV        [x/y]           :   3.50765
-    FlopType.SQRT       [sqrt(x)]       :   2.87080
-    FlopType.POW2       [2^x]           :  10.58784
-    FlopType.LOG2       [log2(x)]       :  17.08929
-    FlopType.POW        [x^y]           :  38.82827
+    FlopType.ABS        [abs(x)]        :   0.90744
+    FlopType.MINUS      [-x]            :   0.80068
+    FlopType.EQUALS     [x==y]          :   0.93532
+    FlopType.GTE        [x>=y]          :   0.94684
+    FlopType.LTE        [x<=y]          :   0.93101
+    FlopType.CMP_ZERO   [x>=0]          :   0.82204
+    FlopType.RND        [round(x)]      :   0.96944
+    FlopType.ADD        [x+y]           :   0.89296
+    FlopType.SUB        [x-y]           :   1.14383
+    FlopType.MUL        [x*y]           :   1.04677
+    FlopType.DIV        [x/y]           :   3.10940
+    FlopType.SQRT       [sqrt(x)]       :   2.56566
+    FlopType.POW2       [2^x]           :  10.80030
+    FlopType.LOG2       [log2(x)]       :  16.32770
+    FlopType.POW        [x^y]           :  40.50382
 }
 ```
 
-These 3 types of built-in weights are defined as follows:
-* `empirical`: geo-mean of the flop weights corresponding to the built-in **benchmarking** results
-* `theoretical`: geo-mean of the flop weights corresponding to the built-in **specification analyses** (FPU instruction latencies)
-* `consensus`: geo-mean of the `empirical` and `theoretical` flop weights
-
 The default weights that are configured in the package are the integer-rounded `consensus` weights.
+
+### 2.5.2. Custom-aggregated flop weights
+
+We can retrieve built-in flop weights in a more fine-grained manner, by custom filtering and the aggregating them with
+the geometric mean.
+
+```python
+from counted_float.config import get_builtin_flop_weights
+
+>>> get_builtin_flop_weights(key_filter="intel").show()
+
+{
+    FlopType.ABS        [abs(x)]        :   0.56708
+    FlopType.MINUS      [-x]            :   0.44910
+    FlopType.EQUALS     [x==y]          :   0.89744
+    FlopType.GTE        [x>=y]          :   0.89744
+    FlopType.LTE        [x<=y]          :   0.89744
+    FlopType.CMP_ZERO   [x>=0]          :   0.84762
+    FlopType.RND        [round(x)]      :   2.63592
+    FlopType.ADD        [x+y]           :   0.86616
+    FlopType.SUB        [x-y]           :   1.10411
+    FlopType.MUL        [x*y]           :   1.16515
+    FlopType.DIV        [x/y]           :   4.55230
+    FlopType.SQRT       [sqrt(x)]       :   4.37234
+    FlopType.POW2       [2^x]           :  14.78792
+    FlopType.LOG2       [log2(x)]       :  20.51270
+    FlopType.POW        [x^y]           :  40.16390
+}
+```
+
+The 3 built-in *default* flop weights are simply presets for the `key_filter` argument:  
+* `get_default_empirical_flop_weights()` --> `get_built_in_flop_weights(key_filter="benchmarks")`
+* `get_default_theoretical_flop_weights()` --> `get_built_in_flop_weights(key_filter="specs")`
+* `get_default_consensus_flop_weights()` --> `get_built_in_flop_weights(key_filter="")`
 
 # 3. Benchmarking
 
