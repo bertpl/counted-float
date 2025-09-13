@@ -184,10 +184,10 @@ using the `set_flop_weights()` function, which takes a `FlopWeights` object as a
 flop weights that might be obtained using benchmarks run on the target hardware (see later sections).
 
 ```python
-from counted_float.config import set_flop_weights
+from counted_float.config import set_active_flop_weights
 from counted_float import FlopWeights
 
-set_flop_weights(weights=FlopWeights(...))  # insert own weights here
+set_active_flop_weights(weights=FlopWeights(...))  # insert own weights here
 ```
 ## 2.5. Inspecting built-in data
 

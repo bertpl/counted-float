@@ -38,7 +38,7 @@ class Config:
 # =================================================================================================
 #  Functional accessors
 # =================================================================================================
-def set_flop_weights(weights: FlopWeights):
+def set_active_flop_weights(weights: FlopWeights):
     """
     Set the weights for the flops used in the package.  These weights will be used in any calculation of
     weighted flops, going forward.
@@ -47,7 +47,7 @@ def set_flop_weights(weights: FlopWeights):
     Config.set_flop_weights(weights)
 
 
-def get_flop_weights() -> FlopWeights:
+def get_active_flop_weights() -> FlopWeights:
     """
     Get the currently configured flop weights.
     """

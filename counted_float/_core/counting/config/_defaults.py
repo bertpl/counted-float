@@ -29,7 +29,7 @@ def get_default_empirical_flop_weights(rounded: bool = True) -> FlopWeights:
     Get the default EMPIRICAL flop weights.
     Computed as the geo-mean of flop weights estimated from built-in benchmark results.
     """
-    weights = FlopWeights.as_geo_mean([v.flop_weights for v in BuiltInData.benchmarks().values()])
+    weights = BuiltInData.get_flop_weights(key_filter="benchmarks.")
     if rounded:
         return weights.round()
     else:
@@ -42,7 +42,7 @@ def get_default_theoretical_flop_weights(rounded: bool = True) -> FlopWeights:
     Get the default THEORETICAL flop weights.
     Computed as the geo-mean of flop weights estimated from built-in instruction latency analyse.
     """
-    weights = FlopWeights.as_geo_mean([v.flop_weights for v in BuiltInData.specs().values()])
+    weights = BuiltInData.get_flop_weights(key_filter="specs.")
     if rounded:
         return weights.round()
     else:
