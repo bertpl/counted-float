@@ -9,10 +9,14 @@
 - Add release notes
 
 ### Improvements
-- CI/CD - Allow manual test deployments
+/
 
 ### Bug Fixes
 /
+
+### Internal
+- CI/CD - Allow manual test deployments
+
 
 <!------------------------------------------------------------------------------------------------->
 ## v0.8.3
@@ -22,10 +26,15 @@
 /
 
 ### Improvements
-- simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba')
-- improve test coverage generation by running coverage analysis in various settings
+- simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba'), 
+  all functionality is now usable with and without this optional dependency. 
+  However, running benchmarks without numba will result in a warning, since results are expect to be wildly inaccurate. 
+- improve test coverage generation by running coverage analysis in various settings (Python 3.10 & 3.13; with and without numba)
 
 ### Bug Fixes
+/
+
+### Internal
 /
 
 <!------------------------------------------------------------------------------------------------->
@@ -33,13 +42,16 @@
 *(2025-09-05)*
 <!------------------------------------------------------------------------------------------------->
 ### What's New
-- add splash screen to readme / pypi.org
+- add splash screen to README.md
 
 ### Improvements
-- clean up CI/CD pipeline
+/
 
 ### Bug Fixes
 /
+
+### Internal
+- clean up CI/CD pipeline
 
 <!------------------------------------------------------------------------------------------------->
 ## v0.8.1
@@ -49,9 +61,12 @@
 /
 
 ### Improvements
-- add more project metadata to pyproject.toml to show up on pypi.org
+- add links to GitHub code, issues, ... to pyproject.toml to show up on pypi.org
 
 ### Bug Fixes
+/
+
+### Internal
 /
 
 <!------------------------------------------------------------------------------------------------->
@@ -61,11 +76,13 @@
 ### What's New
 - initial feature-complete version
 - full readme file with usage instructions
-- full test suite
-- initial CI/CD pipeline
+- full test suite & automatic badge generation for README.md
 
 ### Improvements
 /
 
 ### Bug Fixes
 /
+
+### Internal
+- initial CI/CD pipeline
