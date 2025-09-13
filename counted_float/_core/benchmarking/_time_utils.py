@@ -14,7 +14,7 @@ def format_time_durations(nsec_q25: float, nsec_q50: float, nsec_q75: float) -> 
     else:
         formatter = _format_nsec_as_s
 
-    return f"{formatter(nsec_q50)} ± {formatter((nsec_q75 - nsec_q25) / 2)} / operation"
+    return f"{formatter(nsec_q50)} ± {formatter((nsec_q75 - nsec_q25) / 2)}"
 
 
 def _format_nsec_as_ns(nsec: float) -> str:
