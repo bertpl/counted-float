@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import math
 from typing import Iterable
 
 from pydantic import field_serializer, field_validator
+
+from counted_float._core.utils import geo_mean
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
 
 
 class FlopWeights(MyBaseModel):
-    weights: dict[FlopType, float | int]
+    weights: dict[FlopType, float | int]  # note: 0 will indicate "unknown" weights  (e.g. missing FPU specs)
 
     # -------------------------------------------------------------------------
     #  Helpers
@@ -59,10 +60,9 @@ class FlopWeights(MyBaseModel):
         all_flop_weights = list(all_flop_weights)
         return FlopWeights(
             weights={
-                flop_type: pow(
-                    math.prod(fw.weights[flop_type] for fw in all_flop_weights),
-                    1 / len(all_flop_weights),
-                )  # take geometric mean of all weights for this flop_type
+                flop_type: geo_mean(
+                    [fw.weights[flop_type] for fw in all_flop_weights]
+                )  # take geometric mean of all weights for this flop_type (will return 0 if any value is 0)
                 for flop_type in FlopType
             }
         )
@@ -75,9 +75,13 @@ class FlopWeights(MyBaseModel):
         """
 
         # step 1) compute reference duration
-        ref_cost = (
-            flop_costs[FlopType.EQUALS] * flop_costs[FlopType.ADD] * flop_costs[FlopType.SUB] * flop_costs[FlopType.MUL]
-        ) ** (1 / 4)
+        ref_values = [
+            flop_costs[FlopType.EQUALS],
+            flop_costs[FlopType.ADD],
+            flop_costs[FlopType.SUB],
+            flop_costs[FlopType.MUL],
+        ]
+        ref_cost = geo_mean([v for v in ref_values if v > 0.0])  # ignore any missing data
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(
