@@ -55,9 +55,9 @@ class FlopCounts:
         When omitted, the currently configured weights (see Config class) will be used.
         """
         if not weights:
-            from counted_float._core.counting.config import get_flop_weights
+            from counted_float._core.counting.config import get_active_flop_weights
 
-            weights = get_flop_weights()
+            weights = get_active_flop_weights()
 
         return sum([getattr(self, flop_type.name) * weights.weights[flop_type] for flop_type in FlopType])
 

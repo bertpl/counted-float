@@ -7,6 +7,10 @@
 
 ### What's New
 - add command line command `run_flops_benchmark` that is runnable after installing with `uv tool instal ...` + add instructions to readme.
+- add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
+- rename flop_weight configuration methods
+  - `get_flop_weights` --> `get_active_flop_weights`
+  - `set_flop_weights` --> `set_active_flop_weights`
 
 ### Improvements
 - improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')

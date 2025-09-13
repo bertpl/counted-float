@@ -1,6 +1,6 @@
 import pytest
 
-from counted_float._core.counting.config import get_flop_weights, set_flop_weights
+from counted_float._core.counting.config import get_active_flop_weights, set_active_flop_weights
 from counted_float._core.counting.config._config import Config
 from counted_float._core.counting.models import FlopType, FlopWeights
 
@@ -8,10 +8,10 @@ from counted_float._core.counting.models import FlopType, FlopWeights
 @pytest.mark.parametrize(
     "getter, setter",
     [
-        (get_flop_weights, set_flop_weights),
+        (get_active_flop_weights, set_active_flop_weights),
         (Config.get_flop_weights, Config.set_flop_weights),
-        (get_flop_weights, Config.set_flop_weights),
-        (Config.get_flop_weights, set_flop_weights),
+        (get_active_flop_weights, Config.set_flop_weights),
+        (Config.get_flop_weights, set_active_flop_weights),
     ],
 )
 def test_flop_weight_config(getter, setter):
