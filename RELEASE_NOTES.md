@@ -6,10 +6,10 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool instal ...` + add instructions to readme.
 
 ### Improvements
-/
+- improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
 
 ### Bug Fixes
 /

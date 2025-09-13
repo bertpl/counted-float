@@ -226,6 +226,8 @@ The default weights that are configured in the package are the integer-rounded `
 
 # 3. Benchmarking
 
+## 3.1. General
+
 If the package is installed with the optional `numba` dependency, it provides
 the ability to micro-benchmark floating point operations as follows:
 
@@ -233,22 +235,25 @@ the ability to micro-benchmark floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-baseline                           : wwwwwwwwww....................    186.43 ns ±    0.82 ns / operation
-FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    300.85 ns ±    5.26 ns / operation
-FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    307.79 ns ±    6.65 ns / operation
-FlopType.RND        [round(x)]     : wwwwwwwwww....................    307.62 ns ±    5.12 ns / operation
-FlopType.MINUS      [-x]           : wwwwwwwwww....................    302.88 ns ±    4.51 ns / operation
-FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    328.41 ns ±    5.73 ns / operation
-FlopType.GTE        [x>=y]         : wwwwwwwwww....................    326.37 ns ±    5.07 ns / operation
-FlopType.LTE        [x<=y]         : wwwwwwwwww....................    322.10 ns ±    4.74 ns / operation
-FlopType.ADD        [x+y]          : wwwwwwwwww....................    317.28 ns ±    9.27 ns / operation
-FlopType.SUB        [x-y]          : wwwwwwwwww....................    320.05 ns ±    6.38 ns / operation
-FlopType.MUL        [x*y]          : wwwwwwwwww....................    325.44 ns ±    4.00 ns / operation
-FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    452.21 ns ±    4.32 ns / operation
-FlopType.DIV        [x/y]          : wwwwwwwwww....................    482.68 ns ±    0.93 ns / operation
-FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.77 µs ±    0.00 µs / operation
-FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.15 µs ±    0.01 µs / operation
-FlopType.POW        [x^y]          : wwwwwwwwww....................      6.55 µs ±    0.01 µs / operation
+Running FLOPS benchmarks using counted-float 0.9.0 ...
+
+baseline                           : wwwwwwwwww....................    187.97 ns ±    0.52 ns / 1000 flops
+FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    307.23 ns ±    8.37 ns / 1000 flops
+FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    301.36 ns ±    7.22 ns / 1000 flops
+FlopType.RND        [round(x)]     : wwwwwwwwww....................    302.96 ns ±    8.39 ns / 1000 flops
+FlopType.MINUS      [-x]           : wwwwwwwwww....................    304.00 ns ±    7.99 ns / 1000 flops
+FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    319.64 ns ±    6.71 ns / 1000 flops
+FlopType.GTE        [x>=y]         : wwwwwwwwww....................    325.35 ns ±    9.26 ns / 1000 flops
+FlopType.LTE        [x<=y]         : wwwwwwwwww....................    323.17 ns ±   11.45 ns / 1000 flops
+FlopType.ADD        [x+y]          : wwwwwwwwww....................    316.96 ns ±   11.11 ns / 1000 flops
+FlopType.SUB        [x-y]          : wwwwwwwwww....................    318.59 ns ±    9.36 ns / 1000 flops
+FlopType.MUL        [x*y]          : wwwwwwwwww....................    318.11 ns ±    7.16 ns / 1000 flops
+FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    449.06 ns ±    2.42 ns / 1000 flops
+FlopType.DIV        [x/y]          : wwwwwwwwww....................    483.70 ns ±    2.00 ns / 1000 flops
+FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.77 µs ±    0.00 µs / 1000 flops
+FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.13 µs ±    0.01 µs / 1000 flops
+FlopType.POW        [x^y]          : wwwwwwwwww....................      6.53 µs ±    0.00 µs / 1000 flops
+
 
 >>> results.flop_weights.show() 
 
@@ -270,6 +275,21 @@ FlopType.POW        [x^y]          : wwwwwwwwww....................      6.55 µ
     FlopType.POW        [x^y]           :  46.72479
 }
 ```
+
+## 3.2. Using `uv`
+
+There's a lower-threshold way of running benchmarks if you have `uv` installed.  Simply install the package including `numba`.
+
+```
+uv tool install git+https://github.com/bertpl/counted-float@main[numba]         # latest official release
+uv tool install git+https://github.com/bertpl/counted-float@develop[numba]      # or latest develop version
+```
+After which you can run the `run_flops_benchmarks` command from the command line:
+```
+run_flops_benchmark
+```
+Final results will be shown as json.
+
 
 # 4. Known limitations
 

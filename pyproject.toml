@@ -11,6 +11,9 @@ dependencies = [
     "psutil>=5.0",
 ]
 
+[project.scripts]
+run_flops_benchmark = "counted_float._core.benchmarking:run_flops_benchmark"
+
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
 ChangeLog = "https://github.com/bertpl/counted-float/blob/develop/RELEASE_NOTES.md"
