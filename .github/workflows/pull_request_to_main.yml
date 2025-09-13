@@ -31,6 +31,21 @@ jobs:
           fi
 
 
+  check-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for accurate diff
+
+      - name: Check for release notes
+        uses: ./.github/actions/check_release_notes
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          git_ref: ${{ github.event.pull_request.base.ref }}
+
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -65,7 +80,7 @@ jobs:
       - uses: ./.github/actions/badges_and_splash
         with:
           uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
 
 
   publish-to-dev:
