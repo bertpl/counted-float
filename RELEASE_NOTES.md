@@ -16,7 +16,7 @@
 
 ### Internal
 - CI/CD - Allow manual test deployments
-
+- CI/CD - Use custom PAT for git actions to allow improved rulesets
 
 <!------------------------------------------------------------------------------------------------->
 ## v0.8.3
