@@ -98,6 +98,7 @@ jobs:
       - uses: ./.github/actions/bump_version
         with:
           uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
           git_ref: 'develop'
           bump_type: 'patch'
           only_if_equal_to_version: ${{ env.CURRENT_PACKAGE_VERSION }}
@@ -105,4 +106,4 @@ jobs:
       - uses: ./.github/actions/badges_and_splash
         with:
           uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}

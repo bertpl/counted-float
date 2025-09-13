@@ -6,6 +6,9 @@ inputs:
     uv_version:
         required: true
         description: "Version of UV to be used."
+    github_token:
+        required: true
+        description: "GitHub token with permissions to push to selected branch (git_ref)."
     git_ref:
         required: false
         description: "git ref (tag/commmit/branch) where to bump version  (default: develop)"
@@ -56,7 +59,9 @@ runs:
                 echo "Bumping version ${ver_before} -> ${ver_after}."
           
                 git config --local user.name "GitHub Actions"
-                git config --local user.email ""
+                git config --local user.email ""          
+                git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/counted-float.git
+                
                 git add pyproject.toml
                 git commit -m "Bump package version ${ver_before} -> ${ver_after}"
                 git push origin          
