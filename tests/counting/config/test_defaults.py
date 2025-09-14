@@ -27,6 +27,7 @@ def test_default_flop_weights(fun: Callable, rounded: bool):
     # --- assert ------------------------------------------
     assert isinstance(flop_weights, FlopWeights)
     assert all([isinstance(v, int | float) for v in flop_weights.weights.values()])
+    assert not any([math.isnan(v) for v in flop_weights.weights.values()])
 
 
 @pytest.mark.parametrize(
@@ -59,7 +60,6 @@ def test_consensus_flop_weights():
         min_value = min(fw_theoretical.weights[flop_type], fw_empirical.weights[flop_type])
         max_value = max(fw_theoretical.weights[flop_type], fw_empirical.weights[flop_type])
 
-        if not math.isnan(fw_consensus.weights[flop_type]):
-            assert min_value <= fw_consensus.weights[flop_type] <= max_value, (
-                f"consensus cost for '{flop_type}' should be between theoretical and empirical values"
-            )
+        assert min_value <= fw_consensus.weights[flop_type] <= max_value, (
+            f"consensus cost for '{flop_type}' should be between theoretical and empirical values"
+        )
