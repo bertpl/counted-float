@@ -61,7 +61,7 @@ class FlopWeights(MyBaseModel):
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod
-    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights], fill_missing_data: bool = False) -> FlopWeights:
+    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights], fill_missing_data: bool = True) -> FlopWeights:
         """Computes geo-mean of a collection of FlopWeights instances."""
 
         # --- prep ----------------------------------------
@@ -74,13 +74,19 @@ class FlopWeights(MyBaseModel):
                 w[i_row, i_col] = fw.weights[flop_type]
 
         # --- fill missing data ---------------------------
-        if fill_missing_data and any([fw.has_missing_data() for fw in all_flop_weights]):
+        if (
+            fill_missing_data
+            and (len(all_flop_weights) > 1)
+            and any([fw.has_missing_data() for fw in all_flop_weights])
+        ):
             w = impute_missing_data(w)
 
         # --- compute geo_mean ----------------------------
         return FlopWeights(
             weights={
-                flop_type: geo_mean(list(w[i, :]))  # take geo_mean of row (will return nan if any value is nan)
+                flop_type: geo_mean(
+                    [float(w_i) for w_i in w[i, :]]
+                )  # take geo_mean of row (will return nan if any value is nan)
                 for i, flop_type in enumerate(FlopType)
             }
         )
