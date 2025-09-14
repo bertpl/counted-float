@@ -11,9 +11,11 @@
 - rename flop_weight configuration methods
   - `get_flop_weights` --> `get_active_flop_weights`
   - `set_flop_weights` --> `set_active_flop_weights`
+- add `notes` field to InstructionLatency class, to allow adding human-readable attribution of data source etc...
 
 ### Improvements
 - improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
+- allow missing data in instruction latency data (`specs` data-folder), in which case missing data is imputed from neighboring data.
 
 ### Bug Fixes
 /

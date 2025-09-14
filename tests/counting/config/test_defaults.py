@@ -1,3 +1,4 @@
+import math
 from typing import Callable
 
 import pytest
@@ -25,10 +26,8 @@ def test_default_flop_weights(fun: Callable, rounded: bool):
 
     # --- assert ------------------------------------------
     assert isinstance(flop_weights, FlopWeights)
-    if rounded:
-        assert all([isinstance(v, int) for v in flop_weights.weights.values()])
-    else:
-        assert all([isinstance(v, float) for v in flop_weights.weights.values()])
+    assert all([isinstance(v, int | float) for v in flop_weights.weights.values()])
+    assert not any([math.isnan(v) for v in flop_weights.weights.values()])
 
 
 @pytest.mark.parametrize(
@@ -62,5 +61,5 @@ def test_consensus_flop_weights():
         max_value = max(fw_theoretical.weights[flop_type], fw_empirical.weights[flop_type])
 
         assert min_value <= fw_consensus.weights[flop_type] <= max_value, (
-            f"consensus for {flop_type} should be between theoretical and empirical values"
+            f"consensus cost for '{flop_type}' should be between theoretical and empirical values"
         )

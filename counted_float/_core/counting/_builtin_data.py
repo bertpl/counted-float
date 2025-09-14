@@ -21,7 +21,9 @@ class BuiltInData:
         """
         Return averaged FlopWeights over all FlopWeights found using get_flop_weights_dict for the provided key_filter.
 
-        Averaging happens one key-level at a time, which implicitly defines a recursive weighting scheme.
+        Averaging happens one key-level at a time, which implicitly defines a recursive weighting scheme. At every level
+        of aggregation, an attempt is made to impute missing data (if any) to avoid biasing the average towards entries
+        with more complete data.
         """
         flat_flop_weights_dict = cls.get_flop_weights_dict(key_filter)
         if len(flat_flop_weights_dict) == 0:

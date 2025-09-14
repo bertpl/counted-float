@@ -3,14 +3,17 @@ from __future__ import annotations
 import math
 from typing import Iterable
 
+import numpy as np
 from pydantic import field_serializer, field_validator
+
+from counted_float._core.utils import geo_mean, impute_missing_data
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
 
 
 class FlopWeights(MyBaseModel):
-    weights: dict[FlopType, float | int]
+    weights: dict[FlopType, float | int]  # note: math.nan will indicate "unknown" weights  (e.g. missing FPU specs)
 
     # -------------------------------------------------------------------------
     #  Helpers
@@ -18,8 +21,12 @@ class FlopWeights(MyBaseModel):
     def round(self) -> FlopWeights:
         """Round all weights to the nearest integer, with minimum of 1."""
         return FlopWeights(
-            weights={k: max(1, round(v)) for k, v in self.weights.items()},
+            weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
         )
+
+    def has_missing_data(self) -> bool:
+        """Check if any flop type has missing data (i.e. weight is NaN)."""
+        return any(math.isnan(v) for v in self.weights.values())
 
     # -------------------------------------------------------------------------
     #  Validation
@@ -54,16 +61,33 @@ class FlopWeights(MyBaseModel):
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod
-    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights]) -> FlopWeights:
+    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights], fill_missing_data: bool = True) -> FlopWeights:
         """Computes geo-mean of a collection of FlopWeights instances."""
+
+        # --- prep ----------------------------------------
         all_flop_weights = list(all_flop_weights)
+
+        # put in numpy array for easier processing
+        w = np.zeros(shape=(len(FlopType), len(all_flop_weights)), dtype=float)
+        for i_row, flop_type in enumerate(FlopType):
+            for i_col, fw in enumerate(all_flop_weights):
+                w[i_row, i_col] = fw.weights[flop_type]
+
+        # --- fill missing data ---------------------------
+        if (
+            fill_missing_data
+            and (len(all_flop_weights) > 1)
+            and any([fw.has_missing_data() for fw in all_flop_weights])
+        ):
+            w = impute_missing_data(w)
+
+        # --- compute geo_mean ----------------------------
         return FlopWeights(
             weights={
-                flop_type: pow(
-                    math.prod(fw.weights[flop_type] for fw in all_flop_weights),
-                    1 / len(all_flop_weights),
-                )  # take geometric mean of all weights for this flop_type
-                for flop_type in FlopType
+                flop_type: geo_mean(
+                    [float(w_i) for w_i in w[i, :]]
+                )  # take geo_mean of row (will return nan if any value is nan)
+                for i, flop_type in enumerate(FlopType)
             }
         )
 
@@ -74,10 +98,14 @@ class FlopWeights(MyBaseModel):
         As a reference duration, we take the geometric mean of the costs for EQUALS, ADD, SUB, and MUL operations.
         """
 
-        # step 1) compute reference duration
-        ref_cost = (
-            flop_costs[FlopType.EQUALS] * flop_costs[FlopType.ADD] * flop_costs[FlopType.SUB] * flop_costs[FlopType.MUL]
-        ) ** (1 / 4)
+        # step 1) compute reference duration based on 4 simple flop types that should be about equally fast on most CPUs
+        ref_values = [
+            flop_costs[FlopType.EQUALS],
+            flop_costs[FlopType.ADD],
+            flop_costs[FlopType.SUB],
+            flop_costs[FlopType.MUL],
+        ]
+        ref_cost = geo_mean([v for v in ref_values if not math.isnan(v)])  # ignore any missing data
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(

@@ -1,4 +1,9 @@
 {
+    "notes": [
+        "Data from Agner Fog's instruction tables",
+        "https://www.agner.org/optimize/instruction_tables.pdf",
+        "pages 368-369, column 'latency'"
+    ],
     "latencies": {
         "FABS": {
             "min_cycles": 1,
