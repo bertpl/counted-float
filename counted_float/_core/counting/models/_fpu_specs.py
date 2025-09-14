@@ -57,8 +57,8 @@ class InstructionLatencies(MyBaseModel):
         """
 
         # step 1) take geo_mean of all instruction latencies
-        #         (or 0.0 for missing data; FlopWeights will interpret as missing data)
-        lat = {k: 0.0 if v is None else v.geo_mean() for k, v in self.latencies.items()}
+        #         (or math.nan for missing data; FlopWeights will interpret as missing data)
+        lat = {k: math.nan if v is None else v.geo_mean() for k, v in self.latencies.items()}
 
         # step 2) convert instruction latencies to estimated flop costs
         I = FPUInstruction

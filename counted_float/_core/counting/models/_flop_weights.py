@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import Iterable
 
 from pydantic import field_serializer, field_validator
@@ -11,7 +12,7 @@ from ._flop_type import FlopType
 
 
 class FlopWeights(MyBaseModel):
-    weights: dict[FlopType, float | int]  # note: 0 will indicate "unknown" weights  (e.g. missing FPU specs)
+    weights: dict[FlopType, float | int]  # note: math.nan will indicate "unknown" weights  (e.g. missing FPU specs)
 
     # -------------------------------------------------------------------------
     #  Helpers
@@ -19,7 +20,7 @@ class FlopWeights(MyBaseModel):
     def round(self) -> FlopWeights:
         """Round all weights to the nearest integer, with minimum of 1."""
         return FlopWeights(
-            weights={k: max(1, round(v)) for k, v in self.weights.items()},
+            weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
         )
 
     # -------------------------------------------------------------------------
@@ -74,14 +75,14 @@ class FlopWeights(MyBaseModel):
         As a reference duration, we take the geometric mean of the costs for EQUALS, ADD, SUB, and MUL operations.
         """
 
-        # step 1) compute reference duration
+        # step 1) compute reference duration based on 4 simple flop types that should be about equally fast on most CPUs
         ref_values = [
             flop_costs[FlopType.EQUALS],
             flop_costs[FlopType.ADD],
             flop_costs[FlopType.SUB],
             flop_costs[FlopType.MUL],
         ]
-        ref_cost = geo_mean([v for v in ref_values if v > 0.0])  # ignore any missing data
+        ref_cost = geo_mean([v for v in ref_values if not math.isnan(v)])  # ignore any missing data
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(
