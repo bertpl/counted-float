@@ -25,7 +25,7 @@ def test_builtin_data_specs():
 
     # --- assert ------------------------------------------
     assert all(isinstance(v, InstructionLatencies) for v in result.values())
-    assert len(result) == 6  # update as we add data
+    assert len(result) == 12  # update as we add data
 
 
 # =================================================================================================
@@ -52,10 +52,10 @@ def test_builtin_data_get_flop_weights_invalid_key():
 @pytest.mark.parametrize(
     "key_filter, n_expected",
     [
-        (".", 9),
-        ("specs.", 6),
+        (".", 15),
+        ("specs.", 12),
         ("benchmarks.", 3),
-        ("arm", 1),
+        ("arm", 7),
         ("x86", 8),
     ],
 )
