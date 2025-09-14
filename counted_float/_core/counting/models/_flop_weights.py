@@ -3,9 +3,10 @@ from __future__ import annotations
 import math
 from typing import Iterable
 
+import numpy as np
 from pydantic import field_serializer, field_validator
 
-from counted_float._core.utils import geo_mean
+from counted_float._core.utils import geo_mean, impute_missing_data
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
@@ -22,6 +23,10 @@ class FlopWeights(MyBaseModel):
         return FlopWeights(
             weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
         )
+
+    def has_missing_data(self) -> bool:
+        """Check if any flop type has missing data (i.e. weight is NaN)."""
+        return any(math.isnan(v) for v in self.weights.values())
 
     # -------------------------------------------------------------------------
     #  Validation
@@ -56,15 +61,27 @@ class FlopWeights(MyBaseModel):
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod
-    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights]) -> FlopWeights:
+    def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights], fill_missing_data: bool = False) -> FlopWeights:
         """Computes geo-mean of a collection of FlopWeights instances."""
+
+        # --- prep ----------------------------------------
         all_flop_weights = list(all_flop_weights)
+
+        # put in numpy array for easier processing
+        w = np.zeros(shape=(len(FlopType), len(all_flop_weights)), dtype=float)
+        for i_row, flop_type in enumerate(FlopType):
+            for i_col, fw in enumerate(all_flop_weights):
+                w[i_row, i_col] = fw.weights[flop_type]
+
+        # --- fill missing data ---------------------------
+        if fill_missing_data and any([fw.has_missing_data() for fw in all_flop_weights]):
+            w = impute_missing_data(w)
+
+        # --- compute geo_mean ----------------------------
         return FlopWeights(
             weights={
-                flop_type: geo_mean(
-                    [fw.weights[flop_type] for fw in all_flop_weights]
-                )  # take geometric mean of all weights for this flop_type (will return 0 if any value is 0)
-                for flop_type in FlopType
+                flop_type: geo_mean(list(w[i, :]))  # take geo_mean of row (will return nan if any value is nan)
+                for i, flop_type in enumerate(FlopType)
             }
         )
 
