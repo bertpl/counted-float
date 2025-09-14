@@ -1,0 +1,57 @@
+{
+    "notes": [
+        "Data from Agner Fog's instruction tables",
+        "https://www.agner.org/optimize/instruction_tables.pdf",
+        "pages 350-352, column 'latency'"
+    ],
+    "latencies": {
+        "FABS": {
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "FCHS": {
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "FCOM": {
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FTST": {
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FRNDINT": {
+            "min_cycles": 21,
+            "max_cycles": 21
+        },
+        "FADD": {
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FSUB": {
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FMUL": {
+            "min_cycles": 5,
+            "max_cycles": 5
+        },
+        "FDIV": {
+            "min_cycles": 14,
+            "max_cycles": 16
+        },
+        "FSQRT": {
+            "min_cycles": 14,
+            "max_cycles": 21
+        },
+        "F2XM1": {
+            "min_cycles": 65,
+            "max_cycles": 80
+        },
+        "FYL2X": {
+            "min_cycles": 50,
+            "max_cycles": 100
+        }
+    }
+}

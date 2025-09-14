@@ -43,7 +43,7 @@ class InstructionLatencies(MyBaseModel):
         |-----------------------------|------------------------------|-----------------------|
         | abs(a)                      | `FABS`                       |                       |
         | -a                          | `FCHS`                       |                       |
-        | a==b, a>=b, a>b             | `FCOM`                       |                       |
+        | a==b, a>=b, a>b             | `FCOM`                       | See Note (1)          |
         | a>0, a>=0, a==0             | `FTST`                       |                       |
         | round(a), floor(a), ceil(a) | `FRNDINT`                    | See [FIL], chapter 8  |
         | a+b                         | `FADD`                       |                       |
@@ -54,6 +54,8 @@ class InstructionLatencies(MyBaseModel):
         | log2(a)                     | `FYL2X`                      |                       |
         | 2^a                         | > `F2XM1`                    | See [FIL], chapter 11 |
         | a^b                         | > `FYL2X` + `F2XM1` + `FMUL` | See [FIL], chapter 11 |
+
+        NOTE 1:  FCOM should be assigned the range of values found for FCOM, FCOMI, FCOMIP, FCOMP & FCOMPP instructions
         """
 
         # step 1) take geo_mean of all instruction latencies

@@ -12,6 +12,7 @@
   - `get_flop_weights` --> `get_active_flop_weights`
   - `set_flop_weights` --> `set_active_flop_weights`
 - add `notes` field to InstructionLatency class, to allow adding human-readable attribution of data source etc...
+- add additional FPU specs for ARM v7 (Cortex A9), ARM v8 (Cortex A55, A76) and ARM v9 (Cortex X1, X2, X3)
 
 ### Improvements
 - improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
