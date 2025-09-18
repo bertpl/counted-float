@@ -25,7 +25,7 @@ class FlopsBenchmarkSuite:
         array_size: int = 1000,
         n_runs_total: int = 30,
         n_runs_warmup: int = 10,
-        n_seconds_per_run_target: float = 0.1,
+        n_seconds_per_run_target: float = 0.01,
     ) -> FlopsBenchmarkResults:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.

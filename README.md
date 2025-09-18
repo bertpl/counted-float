@@ -7,21 +7,15 @@
 
 # counted-float
 
-This Python package provides functionality for counting the number of floating point operations (FLOPs) of numerical
-algorithms implemented in plain Python.
+This Python package provides functionality for...
+- **counting floating point operations** (FLOPs) of numerical algorithms implemented in plain Python, optionally weighted by their relative cost of execution
+- **running benchmarks** to estimate the relative cost of executing various floating-point operations (requires `numba` optional dependency for achieving accurate results)
 
-The target application area are research prototypes of numerical algorithms where (weighted) flop counting can be 
+The target application area is evaluation of research prototypes of numerical algorithms where (weighted) flop counting can be 
 useful for estimating total computational cost, in cases where benchmarking a compiled version (C, Rust, ...) is not 
 feasible or desirable.
 
-The package contains two components:
- - `counting`: provides a CountedFloat class & flop counting context managers to count flops of code blocks.
- - `benchmarking`: provides functionality to micro-benchmark floating point operations to get an empirical
-   ballpark estimate of the relative cost of different operations on the target hardware.  Requires 'numba' optional dependency for accurate results.
-
 # 1. Installation
-
-
 
 Use you favorite package manager such as `uv` or `pip`:
 
@@ -31,6 +25,8 @@ pip install counted-float[numba]    # install with numba optional dependency
 ```
 Numba is optional due to its relatively large size (40-50MB, including llvmlite), but without it, benchmarks will
 not be reliable (but will still run, but not in jit-compiled form).
+
+NOTE: the `cli` optional dependency is only useful when installing the code as a tool using e.g. `uv` or `pipx` (see below)
 
 # 2. Counting Flops
 
@@ -257,10 +253,8 @@ The 3 built-in *default* flop weights are simply presets for the `key_filter` ar
 
 # 3. Benchmarking
 
-## 3.1. General
-
-If the package is installed with the optional `numba` dependency, it provides
-the ability to micro-benchmark floating point operations as follows:
+If the package is installed with the optional `numba` dependency, it provides the ability to micro-benchmark 
+floating point operations as follows:
 
 ```
 >>> from counted_float.benchmarking import run_flops_benchmark
@@ -307,22 +301,26 @@ FlopType.POW        [x^y]          : wwwwwwwwww....................      6.53 µ
 }
 ```
 
-## 3.2. Using `uv`
+## 4. Installing the package as a command-line tool
 
-There's a lower-threshold way of running benchmarks if you have `uv` installed.  Simply install the package including `numba`.
+An alternative way of using (parts) of the functionality is installing the package as a stand-alone command-line tool
+using `uv` or `pipx`:
 
 ```
-uv tool install git+https://github.com/bertpl/counted-float@main[numba]         # latest official release
-uv tool install git+https://github.com/bertpl/counted-float@develop[numba]      # or latest develop version
+uv tool install git+https://github.com/bertpl/counted-float@main[numba,cli]         # latest official release
+uv tool install git+https://github.com/bertpl/counted-float@develop[numba,cli]      # or latest develop version
 ```
-After which you can run the `run_flops_benchmarks` command from the command line:
-```
-run_flops_benchmark
-```
-Final results will be shown as json.
+This installs the `counted_float` command-line tool, which can be used to e.g. run flops benchmarks.
 
+## 4.1 Running benchmarks
 
-# 4. Known limitations
+Simply execute:
+```
+counted_float benchmark
+```
+after which the results will be shown as .json.
+
+# 5. Known limitations
 
 - currently any non-Python-built-in math operations are not counted (e.g. `numpy`)
 - not all Python built-in math operations are counted (e.g. `log`, `log10`, `exp`, `exp10`)
