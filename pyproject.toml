@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.scripts]
-run_flops_benchmark = "counted_float._core.benchmarking:run_flops_benchmark"
+counted_float = "counted_float._core._cli:cli"
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
