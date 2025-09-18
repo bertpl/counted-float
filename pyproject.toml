@@ -1,6 +1,6 @@
 [project]
 name = "counted-float"
-version = "0.8.4"
+version = "0.9.1"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -10,6 +10,9 @@ dependencies = [
     "numpy>=1.20",
     "psutil>=5.0",
 ]
+
+[project.scripts]
+run_flops_benchmark = "counted_float._core.benchmarking:run_flops_benchmark"
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"

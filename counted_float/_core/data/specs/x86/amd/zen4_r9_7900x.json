@@ -1,4 +1,9 @@
 {
+    "notes": [
+        "Data from Agner Fog's instruction tables",
+        "https://www.agner.org/optimize/instruction_tables.pdf",
+        "pages 129-130, column 'latency'"
+    ],
     "latencies": {
         "FABS": {
             "min_cycles": 1,
@@ -9,13 +14,10 @@
             "max_cycles": 1
         },
         "FCOM": {
-            "min_cycles": 7,
-            "max_cycles": 7
+            "min_cycles": 11,
+            "max_cycles": 11
         },
-        "FTST": {
-            "min_cycles": 7,
-            "max_cycles": 7
-        },
+        "FTST": null,
         "FRNDINT": {
             "min_cycles": 5,
             "max_cycles": 5

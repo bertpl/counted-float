@@ -1,8 +1,37 @@
 # Release Notes
 
 <!------------------------------------------------------------------------------------------------->
+## v0.9.1
+*(2025-09-18)*
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool instal ...` + add instructions to readme.
+- add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
+- rename flop_weight configuration methods
+  - `get_flop_weights` --> `get_active_flop_weights`
+  - `set_flop_weights` --> `set_active_flop_weights`
+- add `notes` field to InstructionLatency class, to allow adding human-readable attribution of data source etc...
+- add additional FPU specs for ARM v7 (Cortex A9), ARM v8 (Cortex A55, A76) and ARM v9 (Cortex X1, X2, X3)
+
+### Improvements
+- improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
+- allow missing data in instruction latency data (`specs` data-folder), in which case missing data is imputed from neighboring data.
+
+### Bug Fixes
+/
+
+### Internal
+- CI/CD - fix bug with custom PAT
+
+<!------------------------------------------------------------------------------------------------->
+## v0.9.0
+*(skipped)*
+<!------------------------------------------------------------------------------------------------->
+
+<!------------------------------------------------------------------------------------------------->
 ## v0.8.4
-*(under development)*
+*(2025-09-13)*
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New

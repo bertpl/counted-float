@@ -23,8 +23,9 @@ class MicroBenchmark(ABC):
 
     MAX_N_OPERATIONS_FACTOR = 10  # never adjust n_operations by more than this factor (up or down)
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, single_operation: str = "operation"):
         self.name = name
+        self.single_operation = single_operation
 
     def run_many(
         self, n_runs_total: int = 20, n_runs_warmup: int = 5, n_seconds_per_run_target: float = 0.5
@@ -74,7 +75,8 @@ class MicroBenchmark(ABC):
             benchmark_runs=benchmark_runs,
         )
         stats = benchmark_result.summary_stats()
-        print(f"   {format_time_durations(nsec_q25=stats.q25, nsec_q50=stats.q50, nsec_q75=stats.q75)}")
+        s_time_duration = format_time_durations(nsec_q25=stats.q25, nsec_q50=stats.q50, nsec_q75=stats.q75)
+        print(f"   {s_time_duration} / {self.single_operation}")
 
         # return quantiles
         return benchmark_result

@@ -28,6 +28,7 @@ runs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          token: '${{ inputs.github_token }}'
           ref: ${{ inputs.git_ref }}
 
       - name: Install uv
@@ -51,16 +52,17 @@ runs:
       - name: Bump if needed
         shell: bash
         run: |
+            git config --local user.name "GitHub Actions"
+            git config --local user.email ""          
+            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/counted-float.git
+            git pull origin ${{ inputs.git_ref }}
+          
             if [[ $VERSION_BUMP_NEEDED == "true" ]]; then
 
                 ver_before="$(uv version --short)"
                 uv version --bump ${{ inputs.bump_type }}
                 ver_after="$(uv version --short)"
-                echo "Bumping version ${ver_before} -> ${ver_after}."
-          
-                git config --local user.name "GitHub Actions"
-                git config --local user.email ""          
-                git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/counted-float.git
+                echo "Bumping version ${ver_before} -> ${ver_after}."          
                 
                 git add pyproject.toml
                 git commit -m "Bump package version ${ver_before} -> ${ver_after}"
