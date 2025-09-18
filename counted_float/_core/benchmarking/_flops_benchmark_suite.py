@@ -4,7 +4,7 @@ import numpy as np
 import psutil
 
 from counted_float._core.compatibility import is_numba_installed, numba
-from counted_float._core.counting.models import (
+from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkDurations,
     FlopsBenchmarkResults,

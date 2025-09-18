@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
-from counted_float._core.counting.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
 
 
 # =================================================================================================

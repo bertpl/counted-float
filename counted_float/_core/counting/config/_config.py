@@ -1,4 +1,5 @@
-from ..models import FlopWeights
+from counted_float._core.models import FlopWeights
+
 from ._defaults import get_default_consensus_flop_weights
 
 

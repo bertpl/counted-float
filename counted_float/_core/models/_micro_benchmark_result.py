@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import numpy as np
 
-from counted_float._core.counting.models import MyBaseModel, Quantiles
+from ._base import MyBaseModel
 
 
 class SingleRunResult(MyBaseModel):
@@ -11,6 +13,14 @@ class SingleRunResult(MyBaseModel):
 
     def nsecs_per_op(self) -> float:
         return self.t_nsecs / self.n_operations
+
+
+class Quantiles(MyBaseModel):
+    """Class to represent a fixed set of quantiles of an (empirical) distribution."""
+
+    q25: float
+    q50: float
+    q75: float
 
 
 class MicroBenchmarkResult(MyBaseModel):

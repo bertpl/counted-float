@@ -2,7 +2,7 @@ import pytest
 
 from counted_float._core.benchmarking._flops_benchmark_suite import FlopsBenchmarkSuite
 from counted_float._core.benchmarking._flops_micro_benchmark import FlopsMicroBenchmark
-from counted_float._core.counting.models import FlopsBenchmarkResults, FlopType
+from counted_float._core.models import FlopsBenchmarkResults, FlopType
 
 
 def test_flops_benchmarking_suite_get():

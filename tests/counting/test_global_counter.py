@@ -1,5 +1,5 @@
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER, GlobalFlopCounter
-from counted_float._core.counting.models import FlopCounts
+from counted_float._core.models import FlopCounts
 
 
 def test_global_counter_fixture(global_counter):

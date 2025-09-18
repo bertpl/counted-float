@@ -2,7 +2,7 @@ from importlib.resources import files
 
 from pydantic import ValidationError
 
-from counted_float._core.counting.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
 
 DATA_PACKAGE = "counted_float.data"
 

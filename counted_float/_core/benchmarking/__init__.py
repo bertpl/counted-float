@@ -1,6 +1,6 @@
 from importlib.metadata import version
 
-from counted_float._core.counting.models import FlopsBenchmarkResults
+from counted_float._core.models import FlopsBenchmarkResults
 
 from ._flops_benchmark_suite import FlopsBenchmarkSuite
 

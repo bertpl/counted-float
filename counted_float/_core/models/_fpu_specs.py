@@ -4,8 +4,8 @@ import math
 
 from pydantic import field_validator
 
-from . import FlopType
 from ._base import MyBaseModel
+from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
 from ._fpu_instruction import FPUInstruction
 
