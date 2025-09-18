@@ -24,6 +24,9 @@ Roadmap = "https://github.com/bertpl/counted-float/milestones"
 numba = [
     "numba>=0.50",
 ]
+cli = [
+    "click>=8.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]
