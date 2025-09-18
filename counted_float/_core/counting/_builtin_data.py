@@ -2,7 +2,9 @@ from importlib.resources import files
 
 from pydantic import ValidationError
 
-from counted_float._core.counting.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+
+DATA_PACKAGE = "counted_float.data"
 
 
 # =================================================================================================
@@ -47,7 +49,7 @@ class BuiltInData:
         """
         return {
             key: _construct_flop_weights_from_json_str(json_str)
-            for key, json_str in _load_json_files_as_dict(files("counted_float._core.data")).items()
+            for key, json_str in _load_json_files_as_dict(files(DATA_PACKAGE)).items()
             if key_filter in key
         }
 
@@ -58,7 +60,7 @@ class BuiltInData:
     def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
             key: FlopsBenchmarkResults.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files("counted_float._core.data.benchmarks")).items()
+            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.benchmarks")).items()
         }
 
     # -------------------------------------------------------------------------
@@ -68,7 +70,7 @@ class BuiltInData:
     def specs(cls) -> dict[str, InstructionLatencies]:
         return {
             key: InstructionLatencies.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files("counted_float._core.data.specs")).items()
+            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.specs")).items()
         }
 
 

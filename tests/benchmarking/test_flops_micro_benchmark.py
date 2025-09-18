@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float._core.benchmarking._flops_micro_benchmark import FlopsMicroBenchmark
-from counted_float._core.benchmarking._models import MicroBenchmarkResult, SingleRunResult
+from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 
 
 def test_flops_micro_benchmark():

@@ -2,7 +2,7 @@ import pytest
 
 from counted_float._core.counting.config import get_active_flop_weights, set_active_flop_weights
 from counted_float._core.counting.config._config import Config
-from counted_float._core.counting.models import FlopType, FlopWeights
+from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.mark.parametrize(

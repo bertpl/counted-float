@@ -3,6 +3,7 @@ from __future__ import annotations
 from ._base import MyBaseModel
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
+from ._micro_benchmark_result import Quantiles
 
 
 # =================================================================================================
@@ -30,14 +31,6 @@ class BenchmarkSettings(MyBaseModel):
 # =================================================================================================
 #  Main Flops Benchmark Information
 # =================================================================================================
-class Quantiles(MyBaseModel):
-    """Class to represent a fixed set of quantiles of an (empirical) distribution."""
-
-    q25: float
-    q50: float
-    q75: float
-
-
 class FlopsBenchmarkDurations(MyBaseModel):
     # baseline + flops benchmarking results in nanoseconds per <array_size> flops
     baseline: Quantiles

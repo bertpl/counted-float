@@ -4,7 +4,7 @@ as well as providing .pause() and .resume() methods to control flop counting.
 """
 
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER
-from counted_float._core.counting.models import FlopCounts
+from counted_float._core.models import FlopCounts
 
 
 # =================================================================================================

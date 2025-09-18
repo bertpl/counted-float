@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-from ._models import MicroBenchmarkResult, SingleRunResult
+from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
+
 from ._time_utils import Timer, format_time_durations
 
 
