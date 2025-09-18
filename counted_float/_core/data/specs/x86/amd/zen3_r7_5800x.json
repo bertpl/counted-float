@@ -2,7 +2,7 @@
     "notes": [
         "Data from Agner Fog's instruction tables",
         "https://www.agner.org/optimize/instruction_tables.pdf",
-        "pages 129-130, column 'latency'"
+        "pages 117-119, column 'latency'"
     ],
     "latencies": {
         "FABS": {
@@ -19,19 +19,19 @@
         },
         "FTST": null,
         "FRNDINT": {
-            "min_cycles": 5,
-            "max_cycles": 5
+            "min_cycles": 4,
+            "max_cycles": 4
         },
         "FADD": {
-            "min_cycles": 7,
+            "min_cycles": 6,
             "max_cycles": 7
         },
         "FSUB": {
-            "min_cycles": 7,
+            "min_cycles": 6,
             "max_cycles": 7
         },
         "FMUL": {
-            "min_cycles": 7,
+            "min_cycles": 6,
             "max_cycles": 7
         },
         "FDIV": {
