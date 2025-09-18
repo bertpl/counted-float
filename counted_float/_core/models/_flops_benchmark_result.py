@@ -19,6 +19,7 @@ class SystemInfo(MyBaseModel):
     platform_python_compiler: str
     psutil_cpu_count_logical: int
     psutil_cpu_count_physical: int
+    psutil_cpu_freq_mhz: int = 1_000  # for backwards compatibility with older benchmark results
 
 
 class BenchmarkSettings(MyBaseModel):

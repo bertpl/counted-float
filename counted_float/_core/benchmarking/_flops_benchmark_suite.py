@@ -61,6 +61,7 @@ class FlopsBenchmarkSuite:
                 platform_python_compiler=platform.python_compiler(),
                 psutil_cpu_count_logical=psutil.cpu_count(logical=True),
                 psutil_cpu_count_physical=psutil.cpu_count(logical=False),
+                psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
             ),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
