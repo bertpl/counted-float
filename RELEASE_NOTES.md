@@ -10,6 +10,7 @@
 
 ### Improvements
 - Add CPU frequency to benchmark system_info.
+- Rename installed command `run_flops_benchmark` -> `counted_float` 
 
 ### Bug Fixes
 /
@@ -24,7 +25,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool instal ...` + add instructions to readme.
+- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool install ...` + add instructions to readme.
 - add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
 - rename flop_weight configuration methods
   - `get_flop_weights` --> `get_active_flop_weights`
