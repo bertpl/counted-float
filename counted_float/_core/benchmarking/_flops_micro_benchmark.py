@@ -33,7 +33,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
     """
 
     def __init__(self, name: str, f: Callable, size: int):
-        super().__init__(name=name, single_operation=f"{size} flops")
+        super().__init__(name=name, single_operation=f"{size} iterations")
         self.size = size
         self.f = f
         self.n_operations = 0

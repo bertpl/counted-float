@@ -25,7 +25,7 @@ class FlopsBenchmarkSuite:
         array_size: int = 1000,
         n_runs_total: int = 30,
         n_runs_warmup: int = 10,
-        n_seconds_per_run_target: float = 0.5,
+        n_seconds_per_run_target: float = 0.1,
     ) -> FlopsBenchmarkResults:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
@@ -49,8 +49,8 @@ class FlopsBenchmarkSuite:
             for flop_type, benchmark in benchmarks.items()
         }
 
-        # put results in appropriate format & return
-        return FlopsBenchmarkResults(
+        # put results in appropriate format
+        result = FlopsBenchmarkResults(
             system_info=SystemInfo(
                 platform_processor=platform.processor(),
                 platform_machine=platform.machine(),
@@ -74,6 +74,13 @@ class FlopsBenchmarkSuite:
                 flops={flop_type: results_dict[flop_type] for flop_type in FlopType},
             ),
         )
+
+        # show estimated latencies (in cpu clock cycles) per benchmark
+        print()
+        result.show_estimated_latencies()
+
+        # return result
+        return result
 
     # -------------------------------------------------------------------------
     #  Static methods
