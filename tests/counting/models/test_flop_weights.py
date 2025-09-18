@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from counted_float._core.counting.models._flop_type import FlopType
@@ -33,6 +35,22 @@ def test_flop_weights_construction(
     # check if result is correct
     assert all([isinstance(k, FlopType) for k in flop_weights.weights.keys()])
     assert set(FlopType) == set(flop_weights.weights.keys())
+
+
+@pytest.mark.parametrize("has_missing_data", [True, False])
+def test_flop_weights_has_missing_data(sample_flop_weights_dict_by_enum, has_missing_data: bool):
+    # --- arrange -----------------------------------------
+    weights_dict = sample_flop_weights_dict_by_enum
+    if has_missing_data:
+        weights_dict[FlopType.SQRT] = math.nan  # introduce missing data
+
+    flop_weights = FlopWeights(weights=weights_dict)
+
+    # --- act ---------------------------------------------
+    flag = flop_weights.has_missing_data()
+
+    # --- assert ------------------------------------------
+    assert flag == has_missing_data
 
 
 def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
@@ -72,3 +90,23 @@ def test_flop_weights_show(sample_flop_weights_dict_by_str):
 
     # --- act ---------------------------------------------
     flop_weights.show()
+
+
+@pytest.mark.parametrize("fill_missing_data", [True, False])
+def test_flop_weights_as_geo_mean(sample_flop_weights_dict_by_enum, fill_missing_data: bool):
+    # --- arrange -----------------------------------------
+    weights1 = FlopWeights(weights=sample_flop_weights_dict_by_enum)
+
+    weights2_dict = {k: v + 1 for k, v in sample_flop_weights_dict_by_enum.items()}
+    weights2 = FlopWeights(weights=weights2_dict)
+
+    # --- act ---------------------------------------------
+    geo_mean_weights = FlopWeights.as_geo_mean(
+        all_flop_weights=[weights1, weights2],
+        fill_missing_data=fill_missing_data,  # there is no missing data, so should not have any effect
+    )
+
+    # --- assert ------------------------------------------
+    for flop_type in FlopType:
+        expected = math.sqrt(weights1.weights[flop_type] * weights2.weights[flop_type])
+        assert math.isclose(geo_mean_weights.weights[flop_type], expected, rel_tol=1e-15, abs_tol=1e-15)
