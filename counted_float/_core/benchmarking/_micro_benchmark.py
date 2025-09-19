@@ -77,7 +77,11 @@ class MicroBenchmark(ABC):
         )
         stats = benchmark_result.summary_stats()
         s_time_duration = format_time_durations(nsec_q25=stats.q25, nsec_q50=stats.q50, nsec_q75=stats.q75)
-        print(f"   {s_time_duration} / {self.single_operation}")
+        s_extra_info = self._compute_extra_result_info(benchmark_result)
+        if s_extra_info:
+            print(f"   {s_time_duration} / {self.single_operation}  [{s_extra_info}]")
+        else:
+            print(f"   {s_time_duration} / {self.single_operation}")
 
         # return quantiles
         return benchmark_result
@@ -97,6 +101,10 @@ class MicroBenchmark(ABC):
             n_operations=n_operations,
             t_nsecs=t.t_elapsed_nsec(),
         )
+
+    def _compute_extra_result_info(self, result: MicroBenchmarkResult) -> str:
+        """Compute extra info from a benchmark result to be displayed at the end of the line in the console."""
+        return ""
 
     @abstractmethod
     def _prepare_benchmark(self, n_operations: int):
