@@ -50,7 +50,7 @@ class FlopsBenchmarkSuite:
         }
 
         # put results in appropriate format
-        result = FlopsBenchmarkResults(
+        return FlopsBenchmarkResults(
             system_info=SystemInfo(
                 platform_processor=platform.processor(),
                 platform_machine=platform.machine(),
@@ -74,13 +74,6 @@ class FlopsBenchmarkSuite:
                 flops={flop_type: results_dict[flop_type] for flop_type in FlopType},
             ),
         )
-
-        # show estimated latencies (in cpu clock cycles) per benchmark
-        print()
-        result.show_estimated_latencies()
-
-        # return result
-        return result
 
     # -------------------------------------------------------------------------
     #  Static methods

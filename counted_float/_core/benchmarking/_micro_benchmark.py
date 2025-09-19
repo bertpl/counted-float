@@ -79,7 +79,7 @@ class MicroBenchmark(ABC):
         s_time_duration = format_time_durations(nsec_q25=stats.q25, nsec_q50=stats.q50, nsec_q75=stats.q75)
         s_extra_info = self._compute_extra_result_info(benchmark_result)
         if s_extra_info:
-            print(f"   {s_time_duration} / {self.single_operation}  [{s_extra_info}]")
+            print(f"   {s_time_duration} / {self.single_operation}     [{s_extra_info}]")
         else:
             print(f"   {s_time_duration} / {self.single_operation}")
 

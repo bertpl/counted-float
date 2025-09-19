@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from counted_float._core.utils import per_op_latency_str
+
 from ._base import MyBaseModel
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
@@ -61,16 +63,3 @@ class FlopsBenchmarkResults(MyBaseModel):
 
         # step 3) convert to FlopWeights
         return FlopWeights.from_abs_flop_costs(flop_costs=flop_durations_ns)
-
-    def show_estimated_latencies(self):
-        def quantiles_to_latency_str(_nsec_q: Quantiles) -> str:
-            nsec_per_clock_cycle = 1000 / self.system_info.psutil_cpu_freq_mhz
-            latency_q25 = (_nsec_q.q25 / self.benchmark_settings.array_size) / nsec_per_clock_cycle
-            latency_q50 = (_nsec_q.q50 / self.benchmark_settings.array_size) / nsec_per_clock_cycle
-            latency_q75 = (_nsec_q.q75 / self.benchmark_settings.array_size) / nsec_per_clock_cycle
-            return f"{latency_q50:4.1f} ± {0.5 * (latency_q75 - latency_q25):.1f} clock cycles / iteration"
-
-        print("Estimated latencies")
-        print(f"   baseline".ljust(40) + quantiles_to_latency_str(self.results_ns.baseline))
-        for flop_type, nsec_quantiles in self.results_ns.flops.items():
-            print(f"   {flop_type.long_name()}".ljust(40) + quantiles_to_latency_str(nsec_quantiles))

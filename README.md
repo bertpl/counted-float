@@ -259,45 +259,43 @@ floating point operations as follows:
 ```
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
-
-Running FLOPS benchmarks using counted-float 0.9.0 ...
-
-baseline                           : wwwwwwwwww....................    187.97 ns ±    0.52 ns / 1000 flops
-FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    307.23 ns ±    8.37 ns / 1000 flops
-FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    301.36 ns ±    7.22 ns / 1000 flops
-FlopType.RND        [round(x)]     : wwwwwwwwww....................    302.96 ns ±    8.39 ns / 1000 flops
-FlopType.MINUS      [-x]           : wwwwwwwwww....................    304.00 ns ±    7.99 ns / 1000 flops
-FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    319.64 ns ±    6.71 ns / 1000 flops
-FlopType.GTE        [x>=y]         : wwwwwwwwww....................    325.35 ns ±    9.26 ns / 1000 flops
-FlopType.LTE        [x<=y]         : wwwwwwwwww....................    323.17 ns ±   11.45 ns / 1000 flops
-FlopType.ADD        [x+y]          : wwwwwwwwww....................    316.96 ns ±   11.11 ns / 1000 flops
-FlopType.SUB        [x-y]          : wwwwwwwwww....................    318.59 ns ±    9.36 ns / 1000 flops
-FlopType.MUL        [x*y]          : wwwwwwwwww....................    318.11 ns ±    7.16 ns / 1000 flops
-FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    449.06 ns ±    2.42 ns / 1000 flops
-FlopType.DIV        [x/y]          : wwwwwwwwww....................    483.70 ns ±    2.00 ns / 1000 flops
-FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.77 µs ±    0.00 µs / 1000 flops
-FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.13 µs ±    0.01 µs / 1000 flops
-FlopType.POW        [x^y]          : wwwwwwwwww....................      6.53 µs ±    0.00 µs / 1000 flops
+Running FLOPS benchmarks using counted-float 0.9.2 ...
+baseline                           : wwwwwwwwww....................    188.89 ns ±    2.62 ns / 1000 iterations     [latency/iter :  0.77 ± 0.01 cpu cycles]
+FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    339.20 ns ±   20.06 ns / 1000 iterations     [latency/iter :  1.38 ± 0.08 cpu cycles]
+FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    314.95 ns ±    4.48 ns / 1000 iterations     [latency/iter :  1.28 ± 0.02 cpu cycles]
+FlopType.RND        [round(x)]     : wwwwwwwwww....................    311.01 ns ±   12.96 ns / 1000 iterations     [latency/iter :  1.26 ± 0.05 cpu cycles]
+FlopType.MINUS      [-x]           : wwwwwwwwww....................    303.57 ns ±   14.33 ns / 1000 iterations     [latency/iter :  1.23 ± 0.06 cpu cycles]
+FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    325.99 ns ±   14.33 ns / 1000 iterations     [latency/iter :  1.32 ± 0.06 cpu cycles]
+FlopType.GTE        [x>=y]         : wwwwwwwwww....................    342.92 ns ±   21.39 ns / 1000 iterations     [latency/iter :  1.39 ± 0.09 cpu cycles]
+FlopType.LTE        [x<=y]         : wwwwwwwwww....................    323.02 ns ±   11.09 ns / 1000 iterations     [latency/iter :  1.31 ± 0.04 cpu cycles]
+FlopType.ADD        [x+y]          : wwwwwwwwww....................    322.55 ns ±   16.32 ns / 1000 iterations     [latency/iter :  1.31 ± 0.07 cpu cycles]
+FlopType.SUB        [x-y]          : wwwwwwwwww....................    332.51 ns ±    8.88 ns / 1000 iterations     [latency/iter :  1.35 ± 0.04 cpu cycles]
+FlopType.MUL        [x*y]          : wwwwwwwwww....................    317.17 ns ±   17.71 ns / 1000 iterations     [latency/iter :  1.29 ± 0.07 cpu cycles]
+FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    439.35 ns ±   10.36 ns / 1000 iterations     [latency/iter :  1.78 ± 0.04 cpu cycles]
+FlopType.DIV        [x/y]          : wwwwwwwwww....................    488.04 ns ±    7.84 ns / 1000 iterations     [latency/iter :  1.98 ± 0.03 cpu cycles]
+FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.78 µs ±    0.01 µs / 1000 iterations     [latency/iter :  7.21 ± 0.04 cpu cycles]
+FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.14 µs ±    0.03 µs / 1000 iterations     [latency/iter :  8.68 ± 0.13 cpu cycles]
+FlopType.POW        [x^y]          : wwwwwwwwww....................      6.37 µs ±    0.08 µs / 1000 iterations     [latency/iter : 25.83 ± 0.32 cpu cycles]
 
 
 >>> results.flop_weights.show() 
 
 {
-    FlopType.ABS        [abs(x)]        :   0.83953
-    FlopType.MINUS      [-x]            :   0.85441
-    FlopType.EQUALS     [x==y]          :   1.04173
-    FlopType.GTE        [x>=y]          :   1.02677
-    FlopType.LTE        [x<=y]          :   0.99542
-    FlopType.CMP_ZERO   [x>=0]          :   0.89041
-    FlopType.RND        [round(x)]      :   0.88915
-    FlopType.ADD        [x+y]           :   0.96007
-    FlopType.SUB        [x-y]           :   0.98034
-    FlopType.MUL        [x*y]           :   1.01992
-    FlopType.DIV        [x/y]           :   2.17358
-    FlopType.SQRT       [sqrt(x)]       :   1.95006
-    FlopType.POW2       [2^x]           :  11.65331
-    FlopType.LOG2       [log2(x)]       :  14.38278
-    FlopType.POW        [x^y]           :  46.72479
+    FlopType.ABS        [abs(x)]        :   1.10886
+    FlopType.MINUS      [-x]            :   0.84606
+    FlopType.EQUALS     [x==y]          :   1.01141
+    FlopType.GTE        [x>=y]          :   1.13633
+    FlopType.LTE        [x<=y]          :   0.98952
+    FlopType.CMP_ZERO   [x>=0]          :   0.92996
+    FlopType.RND        [round(x)]      :   0.90091
+    FlopType.ADD        [x+y]           :   0.98605
+    FlopType.SUB        [x-y]           :   1.05954
+    FlopType.MUL        [x*y]           :   0.94635
+    FlopType.DIV        [x/y]           :   2.20698
+    FlopType.SQRT       [sqrt(x)]       :   1.84771
+    FlopType.POW2       [2^x]           :  11.72854
+    FlopType.LOG2       [log2(x)]       :  14.39841
+    FlopType.POW        [x^y]           :  45.58640
 }
 ```
 
