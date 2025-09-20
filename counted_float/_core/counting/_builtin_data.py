@@ -9,10 +9,10 @@ from rich.console import Console
 from counted_float._core.models import (
     FlopsBenchmarkResults,
     FlopWeights,
+    InstructionLatencies,
     InstructionLatencies_ARM,
     InstructionLatencies_SSE2,
     InstructionLatencies_x87,
-    InstructionLatenciesBase,
 )
 
 DATA_PACKAGE = "counted_float.data"
@@ -78,16 +78,9 @@ class BuiltInData:
     #  Specs
     # -------------------------------------------------------------------------
     @classmethod
-    def specs(cls) -> dict[str, InstructionLatencies_x87 | InstructionLatenciesBase]:
+    def specs(cls) -> dict[str, InstructionLatencies]:
         return {
-            key: _deserialize_as_any_pydantic_class(
-                json_str,
-                [
-                    InstructionLatencies_x87,
-                    InstructionLatencies_SSE2,
-                    InstructionLatencies_ARM,
-                ],
-            )  # noqa
+            key: InstructionLatencies.model_validate_json(json_str)
             for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.specs")).items()
         }
 
@@ -170,9 +163,7 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
         json_str,
         [
             FlopsBenchmarkResults,
-            InstructionLatencies_x87,
-            InstructionLatencies_SSE2,
-            InstructionLatencies_ARM,
+            InstructionLatencies,
         ],
     ).flop_weights()
 
