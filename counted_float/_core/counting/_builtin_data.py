@@ -1,8 +1,11 @@
+from __future__ import annotations
+
+import math
 from importlib.resources import files
 
 from pydantic import ValidationError
 
-from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights, InstructionLatencies
 
 DATA_PACKAGE = "counted_float.data"
 
@@ -72,6 +75,16 @@ class BuiltInData:
             key: InstructionLatencies.model_validate_json(json_str)
             for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.specs")).items()
         }
+
+    # -------------------------------------------------------------------------
+    #  Visualization
+    # -------------------------------------------------------------------------
+    @classmethod
+    def show(cls, key_filter: str = ""):
+        """Show flow weights of all built-in data, optionally satisfying key_filter."""
+        fw_nested_dict = _flat_to_nested_dict(cls.get_flop_weights_dict(key_filter))
+        tree_view = FlopWeightsTreeView.from_nested_dict(name="ALL", nested_dict=fw_nested_dict)
+        tree_view.show()
 
 
 # =================================================================================================
@@ -147,3 +160,101 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
 
     # none of the supported classes worked
     raise ValueError("Input JSON string does not represent a known data structure.")
+
+
+class FlopWeightsTreeView:
+    # -------------------------------------------------------------------------
+    #  Constructor
+    # -------------------------------------------------------------------------
+    def __init__(self, name: str, children: FlopWeights | list[FlopWeightsTreeView]):
+        # --- init ----------------------------------------
+        self.lst_indent: list[int] = []
+        self.lst_tree_str: list[str] = []
+        self.lst_flop_weights: list[FlopWeights] = []
+
+        # --- populate ------------------------------------
+        if isinstance(children, FlopWeights):
+            # this is a LEAF
+            self.lst_indent = [0]
+            self.lst_tree_str = [name]
+            self.lst_flop_weights = [children]
+        else:
+            # this is a BRANCH
+
+            # 1] root node
+            self.lst_indent = [0]
+            self.lst_tree_str = [name]
+            self.lst_flop_weights = [
+                FlopWeights.as_geo_mean(
+                    [
+                        child.lst_flop_weights[0]  # = avg of each sub-branch
+                        for child in children
+                    ]
+                )
+            ]
+
+            # 2] child nodes
+            for i_child, child in enumerate(children):
+                for i_line, (indent, tree_str, flop_weights) in enumerate(
+                    zip(
+                        child.lst_indent,
+                        child.lst_tree_str,
+                        child.lst_flop_weights,
+                    )
+                ):
+                    self.lst_indent.append(1 + indent)
+                    #
+                    if i_child < len(children) - 1:
+                        if i_line == 0:
+                            self.lst_tree_str.append(f" \u251c\u2500{tree_str}")
+                        else:
+                            self.lst_tree_str.append(f" \u2502 {tree_str}")
+                    else:
+                        if i_line == 0:
+                            self.lst_tree_str.append(f" \u2514\u2500{tree_str}")
+                        else:
+                            self.lst_tree_str.append(f"   {tree_str}")
+                    self.lst_flop_weights.append(flop_weights)
+
+    # -------------------------------------------------------------------------
+    #  Visualization
+    # -------------------------------------------------------------------------
+    def show(self):
+        # --- prep ----------------------------------------
+        tree_width = 5 + max([len(line) for line in self.lst_tree_str])
+        col_width = 10
+
+        # --- legend --------------------------------------
+        legend = " " * tree_width
+        for flop_type in FlopType:
+            legend += flop_type.name.rjust(col_width)
+        print(legend)
+
+        # --- actual tree view ----------------------------
+        for indent, tree_str, flop_weights in zip(self.lst_indent, self.lst_tree_str, self.lst_flop_weights):
+            line = tree_str.ljust(tree_width)
+            for flop_type in FlopType:
+                w = flop_weights.weights[flop_type]
+                if math.isnan(w):
+                    line += "/ ".rjust(col_width)
+                elif isinstance(w, int):
+                    line += str(w).rjust(col_width)
+                else:
+                    line += f"{w:.2f}".rjust(col_width)
+
+            print(line)
+
+    # -------------------------------------------------------------------------
+    #  Factory methods
+    # -------------------------------------------------------------------------
+    @classmethod
+    def from_nested_dict(cls, name: str, nested_dict: dict[str, dict | FlopWeights]) -> FlopWeightsTreeView:
+        members = []
+        for key in sorted(nested_dict.keys()):
+            value = nested_dict[key]
+            if isinstance(value, FlopWeights):
+                members.append(FlopWeightsTreeView(name=key, children=value))
+            else:
+                members.append(FlopWeightsTreeView.from_nested_dict(name=key, nested_dict=value))
+
+        return FlopWeightsTreeView(name=name, children=members)

@@ -72,6 +72,15 @@ def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):
 
 
 # =================================================================================================
+#  Visualization
+# =================================================================================================
+def test_built_in_data_show():
+    # minimalistic test to at least check we don't raise exceptions
+    BuiltInData.show()
+    BuiltInData.show(key_filter="amd")
+
+
+# =================================================================================================
 #  Helpers
 # =================================================================================================
 def test_builtin_data_flat_to_nested_dict():
