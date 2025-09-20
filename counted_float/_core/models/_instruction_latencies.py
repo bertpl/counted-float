@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import math
-from abc import ABC, abstractmethod
 from typing import Annotated, Literal, Union
 
 from pydantic import Field
@@ -15,8 +14,8 @@ from ._flop_weights import FlopWeights
 #  Single-Instruction Latency
 # =================================================================================================
 class Latency(MyBaseModel):
-    min_cycles: int
-    max_cycles: int
+    min_cycles: float
+    max_cycles: float
 
     def geo_mean(self) -> float:
         """Calculate the geometric mean of min and max cycles."""
