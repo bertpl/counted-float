@@ -2,28 +2,35 @@
     "notes": [
         "Data taken from:",
         "https://developer.arm.com/documentation/EPM128372/latest/",
-        "FPU data processing instructions - aarch64 - exec latency",
-        "FCHS=FNEG, FTST=FCMPZ, FRNDINT=FCVT"
+        "FPU data processing instructions - aarch64 - exec latency"
     ],
     "latencies": {
-        "architecture": "x87",
+        "architecture": "arm",
         "FABS": {
             "min_cycles": 4,
             "max_cycles": 4
         },
-        "FCHS": {
+        "FCVTZS": {
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "SCVTF": {
+            "min_cycles": 5,
+            "max_cycles": 5
+        },
+        "FNEG": {
             "min_cycles": 4,
             "max_cycles": 4
         },
-        "FCOM": {
+        "FCMP": {
             "min_cycles": 1,
             "max_cycles": 1
         },
-        "FTST": {
-            "min_cycles": 1,
-            "max_cycles": 1
+        "FMAX": {
+            "min_cycles": 4,
+            "max_cycles": 4
         },
-        "FRNDINT": {
+        "FMIN": {
             "min_cycles": 4,
             "max_cycles": 4
         },
@@ -46,8 +53,6 @@
         "FSQRT": {
             "min_cycles": 22,
             "max_cycles": 22
-        },
-        "F2XM1": null,
-        "FYL2X": null
+        }
     }
 }

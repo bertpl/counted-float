@@ -38,11 +38,11 @@ class FlopWeights(MyBaseModel):
     # -------------------------------------------------------------------------
     @field_validator("weights")
     @classmethod
-    def check_all_flop_types_present(cls, v: dict[FlopType, float | int]) -> dict[FlopType, float | int]:
+    def ensure_all_flop_types_present(cls, v: dict[FlopType, float | int]) -> dict[FlopType, float | int]:
         # make sure all FlopType enum members are present
-        missing = [member for member in FlopType if member not in v]
-        if missing:
-            raise ValueError(f"Missing weights for flop types: {missing}")
+        for flop_type in FlopType:
+            if flop_type not in v:
+                v[flop_type] = math.nan
         return v
 
     @field_serializer("weights")

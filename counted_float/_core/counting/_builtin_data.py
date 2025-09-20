@@ -6,14 +6,7 @@ from importlib.resources import files
 from pydantic import BaseModel, ValidationError
 from rich.console import Console
 
-from counted_float._core.models import (
-    FlopsBenchmarkResults,
-    FlopWeights,
-    InstructionLatencies,
-    InstructionLatencies_ARM,
-    InstructionLatencies_SSE2,
-    InstructionLatencies_x87,
-)
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
 
 DATA_PACKAGE = "counted_float.data"
 

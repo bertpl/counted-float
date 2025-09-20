@@ -10,11 +10,10 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data. 
-- Add support for SSE2- and ARM-specific FPU instruction latencies in unified way with legacy x87 instructions
+- Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data.
 
 ### Improvements
-/ 
+- Replace all x87-ISA based latency data & models with SSE2- or ARM-based data & data models
 
 ### Bug Fixes
 /

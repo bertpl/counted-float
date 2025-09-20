@@ -12,6 +12,5 @@ from ._instruction_latencies import (
     InstructionLatencies,
     InstructionLatencies_ARM,
     InstructionLatencies_SSE2,
-    InstructionLatencies_x87,
 )
 from ._micro_benchmark_result import MicroBenchmarkResult, Quantiles, SingleRunResult

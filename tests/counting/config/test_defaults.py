@@ -16,7 +16,6 @@ from counted_float._core.models import FlopType, FlopWeights
     [
         get_default_consensus_flop_weights,
         get_default_empirical_flop_weights,
-        get_default_theoretical_flop_weights,
     ],
 )
 @pytest.mark.parametrize("rounded", [True, False])
@@ -60,6 +59,7 @@ def test_consensus_flop_weights():
         min_value = min(fw_theoretical.weights[flop_type], fw_empirical.weights[flop_type])
         max_value = max(fw_theoretical.weights[flop_type], fw_empirical.weights[flop_type])
 
-        assert min_value <= fw_consensus.weights[flop_type] <= max_value, (
-            f"consensus cost for '{flop_type}' should be between theoretical and empirical values"
-        )
+        if (not math.isnan(min_value)) and (not math.isnan(max_value)):
+            assert min_value <= fw_consensus.weights[flop_type] <= max_value, (
+                f"consensus cost for '{flop_type}' should be between theoretical and empirical values"
+            )
