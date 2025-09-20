@@ -7,7 +7,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data. 
 
 ### Improvements
 / 
