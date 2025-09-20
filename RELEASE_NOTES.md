@@ -6,7 +6,8 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- Add estimation of CPU latencies for benchmark results (per iter of benchmark) & show while running benchmark
+- Add estimation of CPU latencies for benchmark results & show while running benchmark
+- Show uncertainty as % when benchmarking
 
 ### Improvements
 - Add CPU frequency to benchmark system_info.

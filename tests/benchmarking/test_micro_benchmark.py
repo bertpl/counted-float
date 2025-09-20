@@ -3,8 +3,8 @@ import time
 import pytest
 
 from counted_float._core.benchmarking._micro_benchmark import MicroBenchmark
-from counted_float._core.benchmarking._time_utils import Timer
 from counted_float._core.models import MicroBenchmarkResult
+from counted_float._core.utils import Timer
 
 
 class DummyMicroBenchmark(MicroBenchmark):
