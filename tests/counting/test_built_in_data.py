@@ -1,7 +1,12 @@
 import pytest
 
 from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
-from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import (
+    FlopsBenchmarkResults,
+    FlopWeights,
+    InstructionLatencies_x87,
+    InstructionLatenciesBase,
+)
 
 
 # =================================================================================================
@@ -24,7 +29,7 @@ def test_builtin_data_specs():
     result = BuiltInData.specs()
 
     # --- assert ------------------------------------------
-    assert all(isinstance(v, InstructionLatencies) for v in result.values())
+    assert all(isinstance(v, InstructionLatencies_x87 | InstructionLatenciesBase) for v in result.values())
     assert len(result) == 11  # update as we add data
 
 

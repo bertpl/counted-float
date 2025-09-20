@@ -1,7 +1,7 @@
 from counted_float._core.compatibility import StrEnum
 
 
-class FPUInstruction(StrEnum):
+class FPUInstruction_x87(StrEnum):
     """
     Enum of relevant x87 FPU instructions.
     Background:
