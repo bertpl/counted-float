@@ -28,6 +28,11 @@ class FlopWeights(MyBaseModel):
         """Check if any flop type has missing data (i.e. weight is NaN)."""
         return any(math.isnan(v) for v in self.weights.values())
 
+    def get_sorted_flop_types(self) -> list[FlopType]:
+        """Return flop types sorted in ascending order of corresponding weights."""
+        sorted_flop_weights_and_types = sorted(zip(self.weights.values(), self.weights.keys()))
+        return [flop_type for _, flop_type in sorted_flop_weights_and_types]
+
     # -------------------------------------------------------------------------
     #  Validation
     # -------------------------------------------------------------------------

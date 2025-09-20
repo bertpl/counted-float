@@ -4,6 +4,7 @@ import math
 from importlib.resources import files
 
 from pydantic import ValidationError
+from rich.console import Console
 
 from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights, InstructionLatencies
 
@@ -169,6 +170,7 @@ class FlopWeightsTreeView:
     def __init__(self, name: str, children: FlopWeights | list[FlopWeightsTreeView]):
         # --- init ----------------------------------------
         self.lst_indent: list[int] = []
+        self.lst_is_leaf: list[bool] = []
         self.lst_tree_str: list[str] = []
         self.lst_flop_weights: list[FlopWeights] = []
 
@@ -176,6 +178,7 @@ class FlopWeightsTreeView:
         if isinstance(children, FlopWeights):
             # this is a LEAF
             self.lst_indent = [0]
+            self.lst_is_leaf = [True]
             self.lst_tree_str = [name]
             self.lst_flop_weights = [children]
         else:
@@ -183,6 +186,7 @@ class FlopWeightsTreeView:
 
             # 1] root node
             self.lst_indent = [0]
+            self.lst_is_leaf = [False]
             self.lst_tree_str = [name]
             self.lst_flop_weights = [
                 FlopWeights.as_geo_mean(
@@ -195,14 +199,16 @@ class FlopWeightsTreeView:
 
             # 2] child nodes
             for i_child, child in enumerate(children):
-                for i_line, (indent, tree_str, flop_weights) in enumerate(
+                for i_line, (indent, is_leaf, tree_str, flop_weights) in enumerate(
                     zip(
                         child.lst_indent,
+                        child.lst_is_leaf,
                         child.lst_tree_str,
                         child.lst_flop_weights,
                     )
                 ):
                     self.lst_indent.append(1 + indent)
+                    self.lst_is_leaf.append(is_leaf)
                     #
                     if i_child < len(children) - 1:
                         if i_line == 0:
@@ -221,28 +227,54 @@ class FlopWeightsTreeView:
     # -------------------------------------------------------------------------
     def show(self):
         # --- prep ----------------------------------------
+        console = Console()
+        console_width = console.width
         tree_width = 5 + max([len(line) for line in self.lst_tree_str])
         col_width = 10
+        sorted_flop_types = self.lst_flop_weights[0].get_sorted_flop_types()
+        max_indent = max(self.lst_indent)
 
-        # --- legend --------------------------------------
-        legend = " " * tree_width
-        for flop_type in FlopType:
-            legend += flop_type.name.rjust(col_width)
-        print(legend)
+        n_cols_per_block = int((console_width - tree_width) / col_width)
+        flop_types_per_block = [
+            sorted_flop_types[i_start : i_start + n_cols_per_block]
+            for i_start in range(0, len(sorted_flop_types), n_cols_per_block)
+        ]
 
-        # --- actual tree view ----------------------------
-        for indent, tree_str, flop_weights in zip(self.lst_indent, self.lst_tree_str, self.lst_flop_weights):
-            line = tree_str.ljust(tree_width)
-            for flop_type in FlopType:
-                w = flop_weights.weights[flop_type]
-                if math.isnan(w):
-                    line += "/ ".rjust(col_width)
-                elif isinstance(w, int):
-                    line += str(w).rjust(col_width)
+        # --- show data -----------------------------------
+        for flop_types in flop_types_per_block:
+            # --- legend ---
+            legend = " " * tree_width
+            for flop_type in flop_types:
+                legend += flop_type.name.rjust(col_width)
+            console.print(legend, style="bold white on black")
+
+            # --- actual tree view ---
+            for indent, is_leaf, tree_str, flop_weights in zip(
+                self.lst_indent,
+                self.lst_is_leaf,
+                self.lst_tree_str,
+                self.lst_flop_weights,
+            ):
+                line = tree_str.ljust(tree_width)
+                for flop_type in flop_types:
+                    w = flop_weights.weights[flop_type]
+                    if math.isnan(w):
+                        line += "/ ".rjust(col_width)
+                    elif isinstance(w, int):
+                        line += str(w).rjust(col_width)
+                    else:
+                        line += f"{w:.2f}".rjust(col_width)
+
+                if not is_leaf:
+                    txt_clr = "bold white"
+                    h = hex(max(16, int(100 * (max_indent - indent) / max_indent)))[-2:]
+                    bg_clr = f"#{h}{h}{h}"
                 else:
-                    line += f"{w:.2f}".rjust(col_width)
+                    txt_clr = "white"
+                    bg_clr = f"black"
+                console.print(line, style=f"{txt_clr} on {bg_clr}", highlight=False)
 
-            print(line)
+            print()
 
     # -------------------------------------------------------------------------
     #  Factory methods
