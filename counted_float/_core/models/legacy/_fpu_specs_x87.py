@@ -4,31 +4,23 @@ import math
 
 from pydantic import field_validator
 
-from ._base import MyBaseModel
-from ._flop_type import FlopType
-from ._flop_weights import FlopWeights
-from ._fpu_instruction import FPUInstruction
+from counted_float._core.models._base import MyBaseModel
+from counted_float._core.models._flop_type import FlopType
+from counted_float._core.models._flop_weights import FlopWeights
+from counted_float._core.models._instruction_latencies import Latency
+
+from ._fpu_instruction_x87 import FPUInstruction_x87
 
 
-class Latency(MyBaseModel):
-    min_cycles: int
-    max_cycles: int
-
-    def geo_mean(self) -> float:
-        """Calculate the geometric mean of min and max cycles."""
-        return math.sqrt(self.min_cycles * self.max_cycles)
-
-
-class InstructionLatencies(MyBaseModel):
+class InstructionLatencies_x87(MyBaseModel):
     """Provides FPU instruction latency (in min/max processor cycles) per flop type."""
 
     notes: list[str] | None = [""]
-    latencies: dict[FPUInstruction, Latency | None]
+    latencies: dict[FPUInstruction_x87, Latency | None]
 
     # -------------------------------------------------------------------------
     #  Helpers
     # -------------------------------------------------------------------------
-    @property
     def flop_weights(self) -> FlopWeights:
         """
         Calculates estimated flop weights based on instruction latencies.
@@ -63,7 +55,7 @@ class InstructionLatencies(MyBaseModel):
         lat = {k: math.nan if v is None else v.geo_mean() for k, v in self.latencies.items()}
 
         # step 2) convert instruction latencies to estimated flop costs
-        I = FPUInstruction
+        I = FPUInstruction_x87
         est_flop_type_latencies = {
             FlopType.ABS: lat[I.FABS],
             FlopType.MINUS: lat[I.FCHS],
@@ -90,9 +82,11 @@ class InstructionLatencies(MyBaseModel):
     # -------------------------------------------------------------------------
     @field_validator("latencies")
     @classmethod
-    def check_all_instructions_present(cls, v: dict[FPUInstruction, Latency]) -> dict[FPUInstruction, Latency]:
-        # make sure all FPUInstruction enum members are present
-        missing = [member for member in FPUInstruction if member not in v]
-        if missing:
-            raise ValueError(f"Missing latencies for FPU instructions: {missing}")
+    def check_all_instructions_present(
+        cls, v: dict[FPUInstruction_x87, Latency | None]
+    ) -> dict[FPUInstruction_x87, Latency | None]:
+        # ensure all FPUInstruction enum members are present
+        for member in FPUInstruction_x87:
+            if member not in v:
+                v[member] = None
         return v
