@@ -8,6 +8,7 @@
 ### What's New
 - Add estimation of CPU latencies for benchmark results & show while running benchmark
 - Show uncertainty as % when benchmarking
+- Add CLI command `show-data`
 
 ### Improvements
 - Add CPU frequency to benchmark system_info.
