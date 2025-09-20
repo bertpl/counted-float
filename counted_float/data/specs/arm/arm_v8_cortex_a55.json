@@ -6,6 +6,7 @@
         "FCHS=FNEG, FTST=FCMPZ, FRNDINT=FCVT"
     ],
     "latencies": {
+        "architecture": "x87",
         "FABS": {
             "min_cycles": 4,
             "max_cycles": 4

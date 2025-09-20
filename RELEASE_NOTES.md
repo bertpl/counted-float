@@ -3,12 +3,15 @@
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.3
 > *(under development)*
-> > *---Summary---*
+> > This release heavily focuses on rectifying, documenting and streamlining
+> > How we use external flop latency data sources (analyses, spec sheets),
+> > to improve reliability and consistency of these data sources with the goal 
+> > & scope of the package.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
 - Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data. 
-- Add support for SSE2- and ARM-specific FPU instruction latencies
+- Add support for SSE2- and ARM-specific FPU instruction latencies in unified way with legacy x87 instructions
 
 ### Improvements
 / 

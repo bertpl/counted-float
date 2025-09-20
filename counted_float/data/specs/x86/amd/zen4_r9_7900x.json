@@ -5,6 +5,7 @@
         "pages 129-130, column 'latency'"
     ],
     "latencies": {
+        "architecture": "x87",
         "FABS": {
             "min_cycles": 1,
             "max_cycles": 1

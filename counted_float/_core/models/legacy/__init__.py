@@ -1,2 +1,0 @@
-from ._fpu_instruction_x87 import FPUInstruction_x87
-from ._fpu_specs_x87 import InstructionLatencies_x87
