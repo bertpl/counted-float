@@ -1,0 +1,70 @@
+{
+    "notes": [
+        "Data taken from:",
+        "https://developer.arm.com/documentation/PJDOC1505342170538636/latest/",
+        "FPU data processing instructions - aarch64 - exec latency"
+    ],
+    "latencies": {
+        "architecture": "arm",
+        "FABS": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FCVTZS": {
+            "notes": "",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "SCVTF": {
+            "notes": "",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FNEG": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FCMP": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FMAX": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FMIN": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FADD": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FSUB": {
+            "notes": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "FMUL": {
+            "notes": "",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "FDIV": {
+            "notes": "",
+            "min_cycles": 13,
+            "max_cycles": 13
+        },
+        "FSQRT": {
+            "notes": "",
+            "min_cycles": 13,
+            "max_cycles": 13
+        }
+    }
+}

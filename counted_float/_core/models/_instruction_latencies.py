@@ -28,11 +28,12 @@ class Latency(MyBaseModel):
     @model_validator(mode="before")
     @classmethod
     def check_min_max_cycles(cls, values):
-        # Fill in missing values if just 1 of 2 is missing, assuming a 2x range
+        # Fill in missing values if just 1 of 2 is missing
+        #   (assuming min=max; which is making the least assumptions, as this is the case in most instructions)
         if (values.get("min_cycles") is None) and (values.get("max_cycles") is not None):
-            values["min_cycles"] = 0.5 * values["max_cycles"]
+            values["min_cycles"] = values["max_cycles"]
         elif (values.get("min_cycles") is not None) and (values.get("max_cycles") is None):
-            values["max_cycles"] = 2.0 * values["min_cycles"]
+            values["max_cycles"] = values["min_cycles"]
 
         # Avoid 0 values.  (which in principle can happen in corner cases, but which confuses our analysis)
         if values.get("min_cycles") is not None:

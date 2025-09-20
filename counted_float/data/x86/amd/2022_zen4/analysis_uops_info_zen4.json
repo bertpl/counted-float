@@ -1,0 +1,69 @@
+{
+    "notes": [
+        "Data from uops.info/table.html",
+        "Zen 4 - SSE - Measurements - Latency"
+    ],
+    "latencies": {
+        "architecture": "sse2",
+        "ANDPD": {
+            "note": "https://uops.info/html-lat/ZEN4/ANDPD_XMM_XMM-Measurements.html",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "CVTSD2SI": {
+            "note": "https://uops.info/html-lat/ZEN4/CVTSD2SI_R64_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 9
+        },
+        "CVTSI2SD": {
+            "note": "https://uops.info/html-lat/ZEN4/CVTSI2SD_XMM_R64-Measurements.html",
+            "min_cycles": 3,
+            "max_cycles": 8
+        },
+        "XORPD": {
+            "note": "https://uops.info/html-lat/ZEN4/XORPD_XMM_XMM-Measurements.html",
+            "min_cycles": 0,
+            "max_cycles": 1
+        },
+        "UCOMISD": {
+            "note": "https://uops.info/html-lat/ZEN4/UCOMISD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 7
+        },
+        "MAXSD": {
+            "note": "https://uops.info/html-lat/ZEN4/MAXSD_XMM_XMM-Measurements.html",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "MINSD": {
+            "note": "https://uops.info/html-lat/ZEN4/MINSD_XMM_XMM-Measurements.html",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "ADDSD": {
+            "note": "https://uops.info/html-lat/ZEN4/ADDSD_XMM_XMM-Measurements.html",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "SUBSD": {
+            "note": "https://uops.info/html-lat/ZEN4/SUBSD_XMM_XMM-Measurements.html",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "MULSD": {
+            "note": "https://uops.info/html-lat/ZEN4/MULSD_XMM_XMM-Measurements.html",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "DIVSD": {
+            "note": "https://uops.info/html-lat/ZEN4/DIVSD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 13
+        },
+        "SQRTSD": {
+            "note": "https://uops.info/html-lat/ZEN4/SQRTSD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 21
+        }
+    }
+}

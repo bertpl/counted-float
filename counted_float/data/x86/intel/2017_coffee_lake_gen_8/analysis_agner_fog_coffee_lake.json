@@ -1,0 +1,71 @@
+{
+    "notes": [
+        "Data from Agner Fog's instruction tables",
+        "https://www.agner.org/optimize/instruction_tables.pdf",
+        "pages 341-345, column 'latency'",
+        ""
+    ],
+    "latencies": {
+        "architecture": "sse2",
+        "ANDPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "CVTSD2SI": {
+            "note": "",
+            "min_cycles": 6,
+            "max_cycles": 6
+        },
+        "CVTSI2SD": {
+            "note": "",
+            "min_cycles": 6,
+            "max_cycles": 6
+        },
+        "XORPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "UCOMISD": {
+            "note": "",
+            "min_cycles": null,
+            "max_cycles": null
+        },
+        "MAXSD": {
+            "note": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "MINSD": {
+            "notes": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "ADDSD": {
+            "notes": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "SUBSD": {
+            "notes": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "MULSD": {
+            "notes": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "DIVSD": {
+            "notes": "",
+            "min_cycles": 13,
+            "max_cycles": 14
+        },
+        "SQRTSD": {
+            "notes": "",
+            "min_cycles": 15,
+            "max_cycles": 16
+        }
+    }
+}

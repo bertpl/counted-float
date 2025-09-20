@@ -4,12 +4,11 @@ from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nes
 from counted_float._core.models import (
     FlopsBenchmarkResults,
     FlopWeights,
-    InstructionLatencies,
 )
 
 
 # =================================================================================================
-#  Benchmarks
+#  Built-in benchmarks
 # =================================================================================================
 def test_builtin_data_benchmarks():
     # --- act ---------------------------------------------
@@ -21,21 +20,9 @@ def test_builtin_data_benchmarks():
 
 
 # =================================================================================================
-#  Specs
-# =================================================================================================
-def test_builtin_data_specs():
-    # --- act ---------------------------------------------
-    result = BuiltInData.specs()
-
-    # --- assert ------------------------------------------
-    assert all(isinstance(v, InstructionLatencies) for v in result.values())
-    assert len(result) == 11  # update as we add data
-
-
-# =================================================================================================
 #  FlopWeights
 # =================================================================================================
-@pytest.mark.parametrize("key_filter", [".", "specs.", "benchmarks.", "arm", "x86"])
+@pytest.mark.parametrize("key_filter", [".", "benchmark", "specs", "analysis", "arm", "x86"])
 def test_builtin_data_get_flop_weights(key_filter: str):
     # --- act ---------------------------------------------
     result = BuiltInData.get_flop_weights(key_filter=key_filter)
@@ -56,11 +43,12 @@ def test_builtin_data_get_flop_weights_invalid_key():
 @pytest.mark.parametrize(
     "key_filter, n_expected",
     [
-        (".", 14),
-        ("specs.", 11),
+        (".", 16),
         ("benchmarks.", 3),
+        ("ext_analyses.", 6),
+        ("ext_specs.", 7),
         ("arm", 6),
-        ("x86", 8),
+        ("x86", 10),
     ],
 )
 def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):

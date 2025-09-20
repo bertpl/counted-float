@@ -64,17 +64,8 @@ class BuiltInData:
     def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
             key: FlopsBenchmarkResults.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.benchmarks")).items()
-        }
-
-    # -------------------------------------------------------------------------
-    #  Specs
-    # -------------------------------------------------------------------------
-    @classmethod
-    def specs(cls) -> dict[str, InstructionLatencies]:
-        return {
-            key: InstructionLatencies.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.specs")).items()
+            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}")).items()
+            if "benchmark" in key
         }
 
     # -------------------------------------------------------------------------
