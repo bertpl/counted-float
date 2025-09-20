@@ -4,7 +4,7 @@ import numpy as np
 import psutil
 
 from counted_float._core.compatibility import is_numba_installed, numba
-from counted_float._core.counting.models import (
+from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkDurations,
     FlopsBenchmarkResults,
@@ -25,7 +25,7 @@ class FlopsBenchmarkSuite:
         array_size: int = 1000,
         n_runs_total: int = 30,
         n_runs_warmup: int = 10,
-        n_seconds_per_run_target: float = 0.5,
+        n_seconds_per_run_target: float = 0.01,
     ) -> FlopsBenchmarkResults:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
@@ -49,7 +49,7 @@ class FlopsBenchmarkSuite:
             for flop_type, benchmark in benchmarks.items()
         }
 
-        # put results in appropriate format & return
+        # put results in appropriate format
         return FlopsBenchmarkResults(
             system_info=SystemInfo(
                 platform_processor=platform.processor(),
@@ -61,6 +61,7 @@ class FlopsBenchmarkSuite:
                 platform_python_compiler=platform.python_compiler(),
                 psutil_cpu_count_logical=psutil.cpu_count(logical=True),
                 psutil_cpu_count_physical=psutil.cpu_count(logical=False),
+                psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
             ),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,

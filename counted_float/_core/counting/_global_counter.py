@@ -1,4 +1,4 @@
-from counted_float._core.counting.models import FlopCounts
+from counted_float._core.models import FlopCounts
 
 
 class GlobalFlopCounter:

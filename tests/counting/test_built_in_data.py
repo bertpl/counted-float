@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
-from counted_float._core.counting.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
 
 
 # =================================================================================================
@@ -69,6 +69,15 @@ def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):
     # --- assert ------------------------------------------
     assert len(results) == n_expected
     assert all(key in full_dict.keys() for key in results.keys())
+
+
+# =================================================================================================
+#  Visualization
+# =================================================================================================
+def test_built_in_data_show():
+    # minimalistic test to at least check we don't raise exceptions
+    BuiltInData.show()
+    BuiltInData.show(key_filter="amd")
 
 
 # =================================================================================================

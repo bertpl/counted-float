@@ -2,8 +2,7 @@ import math
 
 import pytest
 
-from counted_float._core.counting.models._flop_type import FlopType
-from counted_float._core.counting.models._flop_weights import FlopWeights
+from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.fixture

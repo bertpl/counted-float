@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 
+from counted_float._core.models import FlopCounts
+
 from ._global_counter import GLOBAL_COUNTER
-from .models import FlopCounts
 
 
 class CountedFloat(float):

@@ -3,7 +3,7 @@ import random
 
 from counted_float import FlopWeights
 from counted_float._core.counting.config import get_active_flop_weights
-from counted_float._core.counting.models import FlopCounts, FlopType
+from counted_float._core.models import FlopCounts, FlopType
 
 
 def test_flop_counts_field_names():

@@ -1,4 +1,4 @@
-from counted_float._core.counting.models import FlopType
+from counted_float._core.models import FlopType
 
 
 def test_flop_type_long_name():

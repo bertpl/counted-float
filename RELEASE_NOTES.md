@@ -1,12 +1,33 @@
 # Release Notes
 
 <!------------------------------------------------------------------------------------------------->
+## v0.9.2
+*(under development)*
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- Add estimation of CPU latencies for benchmark results & show while running benchmark
+- Show uncertainty as % when benchmarking
+- Add CLI command `show-data`
+
+### Improvements
+- Add CPU frequency to benchmark system_info.
+- Rename installed command `run_flops_benchmark` -> `counted_float` 
+
+### Bug Fixes
+/
+
+### Internal
+- Simplify internal package folder structure (no changes in user-facing import paths)
+
+
+<!------------------------------------------------------------------------------------------------->
 ## v0.9.1
 *(2025-09-18)*
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool instal ...` + add instructions to readme.
+- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool install ...` + add instructions to readme.
 - add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
 - rename flop_weight configuration methods
   - `get_flop_weights` --> `get_active_flop_weights`

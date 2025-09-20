@@ -1,7 +1,9 @@
 from abc import ABC, abstractmethod
 
-from ._models import MicroBenchmarkResult, SingleRunResult
-from ._time_utils import Timer, format_time_durations
+import psutil
+
+from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
+from counted_float._core.utils import Timer, compute_latency, format_latency, format_time_duration
 
 
 # =================================================================================================
@@ -74,11 +76,21 @@ class MicroBenchmark(ABC):
             warmup_runs=warmup_runs,
             benchmark_runs=benchmark_runs,
         )
-        stats = benchmark_result.summary_stats()
-        s_time_duration = format_time_durations(nsec_q25=stats.q25, nsec_q50=stats.q50, nsec_q75=stats.q75)
-        print(f"   {s_time_duration} / {self.single_operation}")
 
-        # return quantiles
+        # display duration estimates
+        stats = benchmark_result.summary_stats()
+        s_time_duration = format_time_duration(nsec=stats.q50)
+        s_latency = format_latency(n_cycles=compute_latency(nsec=stats.q50, cpu_freq_mhz=psutil.cpu_freq().current))
+        s_uncertainty = f"{50 * (stats.q75 - stats.q25) / stats.q50:4.1f}%"
+        print(f"   ({s_time_duration} = {s_latency}) ± {s_uncertainty}  /  {self.single_operation}")
+        #
+        # s_extra_info = self._compute_extra_result_info(benchmark_result)
+        # if s_extra_info:
+        #     print(f"   {s_time_duration} / {self.single_operation}     [{s_extra_info}]")
+        # else:
+        #     print(f"   {s_time_duration} / {self.single_operation}")
+
+        # return final result
         return benchmark_result
 
     def run_once(self, n_operations: int) -> SingleRunResult:

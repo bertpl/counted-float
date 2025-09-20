@@ -8,7 +8,7 @@ from counted_float._core.counting.config._defaults import (
     get_default_empirical_flop_weights,
     get_default_theoretical_flop_weights,
 )
-from counted_float._core.counting.models import FlopType, FlopWeights
+from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.mark.parametrize(
