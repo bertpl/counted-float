@@ -1,10 +1,6 @@
 from typing import Callable
 
 import numpy as np
-import psutil
-
-from counted_float._core.models import MicroBenchmarkResult
-from counted_float._core.utils import per_op_latency_str
 
 from ._micro_benchmark import MicroBenchmark
 
@@ -61,13 +57,3 @@ class FlopsMicroBenchmark(MicroBenchmark):
         # repeat 'f' n_operations times, each time on the same data
         for _ in range(self.n_operations):
             self.f(self.size, self.in_f1, self.in_f2, self.out_f, self.out_i)
-
-    def _compute_extra_result_info(self, result: MicroBenchmarkResult) -> str:
-        quantiles = result.summary_stats()
-        latency_str = per_op_latency_str(
-            nsec_mean=quantiles.q50,
-            nsec_std=0.5 * (quantiles.q75 - quantiles.q25),
-            n_ops=self.size,
-            cpu_freq_mhz=psutil.cpu_freq().current,
-        )
-        return f"latency/iter : {latency_str} cpu cycles"

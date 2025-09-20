@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from counted_float._core.utils import per_op_latency_str
-
 from ._base import MyBaseModel
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights

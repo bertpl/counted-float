@@ -259,43 +259,44 @@ floating point operations as follows:
 ```
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
-Running FLOPS benchmarks using counted-float 0.9.2 ...
-baseline                           : wwwwwwwwww....................    188.89 ns ±    2.62 ns / 1000 iterations     [latency/iter :  0.77 ± 0.01 cpu cycles]
-FlopType.ABS        [abs(x)]       : wwwwwwwwww....................    339.20 ns ±   20.06 ns / 1000 iterations     [latency/iter :  1.38 ± 0.08 cpu cycles]
-FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................    314.95 ns ±    4.48 ns / 1000 iterations     [latency/iter :  1.28 ± 0.02 cpu cycles]
-FlopType.RND        [round(x)]     : wwwwwwwwww....................    311.01 ns ±   12.96 ns / 1000 iterations     [latency/iter :  1.26 ± 0.05 cpu cycles]
-FlopType.MINUS      [-x]           : wwwwwwwwww....................    303.57 ns ±   14.33 ns / 1000 iterations     [latency/iter :  1.23 ± 0.06 cpu cycles]
-FlopType.EQUALS     [x==y]         : wwwwwwwwww....................    325.99 ns ±   14.33 ns / 1000 iterations     [latency/iter :  1.32 ± 0.06 cpu cycles]
-FlopType.GTE        [x>=y]         : wwwwwwwwww....................    342.92 ns ±   21.39 ns / 1000 iterations     [latency/iter :  1.39 ± 0.09 cpu cycles]
-FlopType.LTE        [x<=y]         : wwwwwwwwww....................    323.02 ns ±   11.09 ns / 1000 iterations     [latency/iter :  1.31 ± 0.04 cpu cycles]
-FlopType.ADD        [x+y]          : wwwwwwwwww....................    322.55 ns ±   16.32 ns / 1000 iterations     [latency/iter :  1.31 ± 0.07 cpu cycles]
-FlopType.SUB        [x-y]          : wwwwwwwwww....................    332.51 ns ±    8.88 ns / 1000 iterations     [latency/iter :  1.35 ± 0.04 cpu cycles]
-FlopType.MUL        [x*y]          : wwwwwwwwww....................    317.17 ns ±   17.71 ns / 1000 iterations     [latency/iter :  1.29 ± 0.07 cpu cycles]
-FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................    439.35 ns ±   10.36 ns / 1000 iterations     [latency/iter :  1.78 ± 0.04 cpu cycles]
-FlopType.DIV        [x/y]          : wwwwwwwwww....................    488.04 ns ±    7.84 ns / 1000 iterations     [latency/iter :  1.98 ± 0.03 cpu cycles]
-FlopType.POW2       [2^x]          : wwwwwwwwww....................      1.78 µs ±    0.01 µs / 1000 iterations     [latency/iter :  7.21 ± 0.04 cpu cycles]
-FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................      2.14 µs ±    0.03 µs / 1000 iterations     [latency/iter :  8.68 ± 0.13 cpu cycles]
-FlopType.POW        [x^y]          : wwwwwwwwww....................      6.37 µs ±    0.08 µs / 1000 iterations     [latency/iter : 25.83 ± 0.32 cpu cycles]
 
+Running FLOPS benchmarks using counted-float 0.9.2 ...
+
+baseline                           : wwwwwwwwww....................   ( 187.03 ns =   759 cpu cycles) ±  0.6%  /  1000 iterations
+FlopType.ABS        [abs(x)]       : wwwwwwwwww....................   ( 303.31 ns = 1.23K cpu cycles) ±  1.7%  /  1000 iterations
+FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................   ( 302.19 ns = 1.23K cpu cycles) ±  3.0%  /  1000 iterations
+FlopType.RND        [round(x)]     : wwwwwwwwww....................   ( 305.95 ns = 1.24K cpu cycles) ±  4.8%  /  1000 iterations
+FlopType.MINUS      [-x]           : wwwwwwwwww....................   ( 306.31 ns = 1.24K cpu cycles) ±  2.6%  /  1000 iterations
+FlopType.EQUALS     [x==y]         : wwwwwwwwww....................   ( 320.59 ns = 1.30K cpu cycles) ±  3.9%  /  1000 iterations
+FlopType.GTE        [x>=y]         : wwwwwwwwww....................   ( 331.51 ns = 1.34K cpu cycles) ±  2.9%  /  1000 iterations
+FlopType.LTE        [x<=y]         : wwwwwwwwww....................   ( 333.81 ns = 1.35K cpu cycles) ±  1.0%  /  1000 iterations
+FlopType.ADD        [x+y]          : wwwwwwwwww....................   ( 315.84 ns = 1.28K cpu cycles) ±  3.2%  /  1000 iterations
+FlopType.SUB        [x-y]          : wwwwwwwwww....................   ( 335.49 ns = 1.36K cpu cycles) ±  3.8%  /  1000 iterations
+FlopType.MUL        [x*y]          : wwwwwwwwww....................   ( 325.65 ns = 1.32K cpu cycles) ±  3.0%  /  1000 iterations
+FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................   ( 443.30 ns = 1.80K cpu cycles) ±  2.6%  /  1000 iterations
+FlopType.DIV        [x/y]          : wwwwwwwwww....................   ( 491.51 ns = 1.99K cpu cycles) ±  1.1%  /  1000 iterations
+FlopType.POW2       [2^x]          : wwwwwwwwww....................   (   1.79 µs = 7.28K cpu cycles) ±  0.3%  /  1000 iterations
+FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................   (   2.17 µs = 8.80K cpu cycles) ±  0.8%  /  1000 iterations
+FlopType.POW        [x^y]          : wwwwwwwwww....................   (   6.32 µs = 25.6K cpu cycles) ±  0.7%  /  1000 iterations
 
 >>> results.flop_weights.show() 
 
 {
-    FlopType.ABS        [abs(x)]        :   1.10886
-    FlopType.MINUS      [-x]            :   0.84606
-    FlopType.EQUALS     [x==y]          :   1.01141
-    FlopType.GTE        [x>=y]          :   1.13633
-    FlopType.LTE        [x<=y]          :   0.98952
-    FlopType.CMP_ZERO   [x>=0]          :   0.92996
-    FlopType.RND        [round(x)]      :   0.90091
-    FlopType.ADD        [x+y]           :   0.98605
-    FlopType.SUB        [x-y]           :   1.05954
-    FlopType.MUL        [x*y]           :   0.94635
-    FlopType.DIV        [x/y]           :   2.20698
-    FlopType.SQRT       [sqrt(x)]       :   1.84771
-    FlopType.POW2       [2^x]           :  11.72854
-    FlopType.LOG2       [log2(x)]       :  14.39841
-    FlopType.POW        [x^y]           :  45.58640
+    FlopType.ABS        [abs(x)]        :   0.84769
+    FlopType.MINUS      [-x]            :   0.86954
+    FlopType.EQUALS     [x==y]          :   0.97369
+    FlopType.GTE        [x>=y]          :   1.05327
+    FlopType.LTE        [x<=y]          :   1.07007
+    FlopType.CMP_ZERO   [x>=0]          :   0.83957
+    FlopType.RND        [round(x)]      :   0.86695
+    FlopType.ADD        [x+y]           :   0.93905
+    FlopType.SUB        [x-y]           :   1.08227
+    FlopType.MUL        [x*y]           :   1.01055
+    FlopType.DIV        [x/y]           :   2.21970
+    FlopType.SQRT       [sqrt(x)]       :   1.86822
+    FlopType.POW2       [2^x]           :  11.72183
+    FlopType.LOG2       [log2(x)]       :  14.45542
+    FlopType.POW        [x^y]           :  44.68266
 }
 ```
 
