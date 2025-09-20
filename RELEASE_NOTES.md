@@ -1,8 +1,9 @@
 # Release Notes
 
 <!------------------------------------------------------------------------------------------------->
-## v0.9.3
-*(under development)*
+> ## v0.9.3
+> *(under development)*
+> > *---Summary---*
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
@@ -18,8 +19,13 @@
 /
 
 <!------------------------------------------------------------------------------------------------->
-## v0.9.2
-*(2025-09-20)*
+> ## v0.9.2
+> *(2025-09-20)*
+>
+> > Add functionality for creating more clarity on included data & estimated cpu latencies
+> > while benchmarking.  This should make it easier to perform sanity checks on built-in data
+> > and interpret results.  This is a precursor to improving overall quality of both benchmarking
+> > and data based on external analyses / spec sheets.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
@@ -39,8 +45,10 @@
 
 
 <!------------------------------------------------------------------------------------------------->
-## v0.9.1
-*(2025-09-18)*
+> ## v0.9.1
+> *(2025-09-18)*
+> > Structural change in how built-in data is stored (flexible hierarchical structure) + allow missing data.
+> > This is a step towards future-proofing the design for later inclusion of additional data sources.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
@@ -63,13 +71,17 @@
 - CI/CD - fix bug with custom PAT
 
 <!------------------------------------------------------------------------------------------------->
-## v0.9.0
-*(skipped)*
+> ## v0.9.0
+> *(skipped)*
+> > Removed for avoiding including documents that are public but intended to be mirrored.
 <!------------------------------------------------------------------------------------------------->
 
+--> *See v0.9.1*
+
 <!------------------------------------------------------------------------------------------------->
-## v0.8.4
-*(2025-09-13)*
+> ## v0.8.4
+> *(2025-09-13)*
+> > Further improvements for more complete look on pypi.org, with added release notes + internal cleanup.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
@@ -86,9 +98,12 @@
 - CI/CD - Use custom PAT for git actions to allow improved rulesets
 
 <!------------------------------------------------------------------------------------------------->
-## v0.8.3
-*(2025-09-06)*
+> ## v0.8.3
+> *(2025-09-06)*
+> > Improved handling of optional dependencies, exposing the entire feature set,
+> > independent of the installed optional dependencies.  Also represent significant internal simplification.
 <!------------------------------------------------------------------------------------------------->
+
 ### What's New
 /
 
@@ -105,9 +120,11 @@
 /
 
 <!------------------------------------------------------------------------------------------------->
-## v0.8.2
-*(2025-09-05)*
+> ## v0.8.2
+> *(2025-09-05)*
+> > Add splash screen, mostly for visual appeal on pypi.org & github. 
 <!------------------------------------------------------------------------------------------------->
+
 ### What's New
 - add splash screen to README.md
 
@@ -121,9 +138,11 @@
 - clean up CI/CD pipeline
 
 <!------------------------------------------------------------------------------------------------->
-## v0.8.1
-*(2025-08-12)*
+> ## v0.8.1
+> *(2025-08-12)*
+> > Small improvements for more complete look on pypi.org.
 <!------------------------------------------------------------------------------------------------->
+
 ### What's New
 /
 
@@ -137,9 +156,11 @@
 /
 
 <!------------------------------------------------------------------------------------------------->
-## v0.8.0
-*(2025-08-11)*
+> ## v0.8.0
+> *(2025-08-11)*
+> > This is the initial release, supporting flop counting & benchmarking.
 <!------------------------------------------------------------------------------------------------->
+
 ### What's New
 - initial feature-complete version
 - full readme file with usage instructions
