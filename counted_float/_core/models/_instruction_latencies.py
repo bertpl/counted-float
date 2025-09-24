@@ -20,7 +20,10 @@ class Latency(MyBaseModel):
 
     def geo_mean(self) -> float:
         """Calculate the geometric mean of min and max cycles."""
-        return math.sqrt(self.min_cycles * self.max_cycles)
+        if (self.min_cycles is None) or (self.max_cycles is None):
+            return math.nan
+        else:
+            return math.sqrt(self.min_cycles * self.max_cycles)
 
     @model_validator(mode="before")
     @classmethod

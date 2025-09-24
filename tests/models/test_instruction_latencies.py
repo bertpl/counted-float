@@ -1,3 +1,5 @@
+import math
+
 import pytest
 
 from counted_float._core.models._instruction_latencies import (
@@ -46,6 +48,27 @@ def test_latency_missing_values(
     # --- assert ------------------------------------------
     assert latency.min_cycles == expected_min_cycles
     assert latency.max_cycles == expected_max_cycles
+
+
+@pytest.mark.parametrize(
+    "min_cycles, max_cycles, expected_geo_mean",
+    [
+        (1.0, 4.0, 2.0),
+        (None, None, math.nan),
+    ],
+)
+def test_latency_geomean(min_cycles: float | None, max_cycles: float | None, expected_geo_mean: float):
+    # --- arrange -----------------------------------------
+    latency = Latency(min_cycles=min_cycles, max_cycles=max_cycles)
+
+    # --- act ---------------------------------------------
+    geo_mean = latency.geo_mean()
+
+    # --- assert ------------------------------------------
+    if math.isnan(expected_geo_mean):
+        assert math.isnan(geo_mean)
+    else:
+        assert geo_mean == expected_geo_mean
 
 
 # =================================================================================================
