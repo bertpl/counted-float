@@ -53,35 +53,35 @@ class InstructionLatencies_SSE2(MyBaseModel):
     # --- primary fields ----------------------------------
     architecture: Literal["sse2"] = "sse2"
 
-    ANDPD: Latency | None = None  # abs(x)
-    CVTSD2SI: Latency | None = None  # double -> int
-    CVTSI2SD: Latency | None = None  # int -> double
-    XORPD: Latency | None = None  # -x
-    UCOMISD: Latency | None = None  # x < == > y, x < == > 0    NOTE: should be ranges of UCOMISD & COMISD merged
-    MAXSD: Latency | None = None  # max(x,y)
-    MINSD: Latency | None = None  # min(x,y)
-    ADDSD: Latency | None = None  # x+y
-    SUBSD: Latency | None = None  # x-y
-    MULSD: Latency | None = None  # x*y
-    DIVSD: Latency | None = None  # x/y
-    SQRTSD: Latency | None = None  # sqrt(x)
+    ANDPD: Latency = Latency()  # abs(x)
+    CVTSD2SI: Latency = Latency()  # double -> int
+    CVTSI2SD: Latency = Latency()  # int -> double
+    XORPD: Latency = Latency()  # -x
+    UCOMISD: Latency = Latency()  # x < == > y, x < == > 0    NOTE: should be ranges of UCOMISD & COMISD merged
+    MAXSD: Latency = Latency()  # max(x,y)
+    MINSD: Latency = Latency()  # min(x,y)
+    ADDSD: Latency = Latency()  # x+y
+    SUBSD: Latency = Latency()  # x-y
+    MULSD: Latency = Latency()  # x*y
+    DIVSD: Latency = Latency()  # x/y
+    SQRTSD: Latency = Latency()  # sqrt(x)
 
     # --- helpers -----------------------------------------
     def flop_weights(self) -> FlopWeights:
         return FlopWeights.from_abs_flop_costs(
             {
-                FlopType.ABS: _geo_mean_latency(self.ANDPD),
-                FlopType.MINUS: _geo_mean_latency(self.XORPD),
-                FlopType.EQUALS: _geo_mean_latency(self.UCOMISD),
-                FlopType.GTE: _geo_mean_latency(self.UCOMISD),
-                FlopType.LTE: _geo_mean_latency(self.UCOMISD),
-                FlopType.CMP_ZERO: _geo_mean_latency(self.UCOMISD),
-                FlopType.RND: _geo_mean_latency(self.CVTSD2SI),
-                FlopType.ADD: _geo_mean_latency(self.ADDSD),
-                FlopType.SUB: _geo_mean_latency(self.SUBSD),
-                FlopType.MUL: _geo_mean_latency(self.MULSD),
-                FlopType.DIV: _geo_mean_latency(self.DIVSD),
-                FlopType.SQRT: _geo_mean_latency(self.SQRTSD),
+                FlopType.ABS: self.ANDPD.geo_mean(),
+                FlopType.MINUS: self.XORPD.geo_mean(),
+                FlopType.EQUALS: self.UCOMISD.geo_mean(),
+                FlopType.GTE: self.UCOMISD.geo_mean(),
+                FlopType.LTE: self.UCOMISD.geo_mean(),
+                FlopType.CMP_ZERO: self.UCOMISD.geo_mean(),
+                FlopType.RND: self.CVTSD2SI.geo_mean(),
+                FlopType.ADD: self.ADDSD.geo_mean(),
+                FlopType.SUB: self.SUBSD.geo_mean(),
+                FlopType.MUL: self.MULSD.geo_mean(),
+                FlopType.DIV: self.DIVSD.geo_mean(),
+                FlopType.SQRT: self.SQRTSD.geo_mean(),
             }
         )
 
@@ -95,35 +95,35 @@ class InstructionLatencies_ARM(MyBaseModel):
     # --- primary fields ----------------------------------
     architecture: Literal["arm"] = "arm"
 
-    FABS: Latency | None = None  # abs(x)
-    FCVTZS: Latency | None = None  # double -> int
-    SCVTF: Latency | None = None  # int -> double
-    FNEG: Latency | None = None  # -x
-    FCMP: Latency | None = None  # x < == > y, x < == > 0
-    FMAX: Latency | None = None  # max(x,y)
-    FMIN: Latency | None = None  # min(x,y)
-    FADD: Latency | None = None  # x+y
-    FSUB: Latency | None = None  # x-y
-    FMUL: Latency | None = None  # x*y
-    FDIV: Latency | None = None  # x/y
-    FSQRT: Latency | None = None  # sqrt(x)
+    FABS: Latency = Latency()  # abs(x)
+    FCVTZS: Latency = Latency()  # double -> int
+    SCVTF: Latency = Latency()  # int -> double
+    FNEG: Latency = Latency()  # -x
+    FCMP: Latency = Latency()  # x < == > y, x < == > 0
+    FMAX: Latency = Latency()  # max(x,y)
+    FMIN: Latency = Latency()  # min(x,y)
+    FADD: Latency = Latency()  # x+y
+    FSUB: Latency = Latency()  # x-y
+    FMUL: Latency = Latency()  # x*y
+    FDIV: Latency = Latency()  # x/y
+    FSQRT: Latency = Latency()  # sqrt(x)
 
     # --- helpers -----------------------------------------
     def flop_weights(self) -> FlopWeights:
         return FlopWeights.from_abs_flop_costs(
             {
-                FlopType.ABS: _geo_mean_latency(self.FABS),
-                FlopType.MINUS: _geo_mean_latency(self.FNEG),
-                FlopType.EQUALS: _geo_mean_latency(self.FCMP),
-                FlopType.GTE: _geo_mean_latency(self.FCMP),
-                FlopType.LTE: _geo_mean_latency(self.FCMP),
-                FlopType.CMP_ZERO: _geo_mean_latency(self.FCMP),
-                FlopType.RND: _geo_mean_latency(self.FCVTZS),
-                FlopType.ADD: _geo_mean_latency(self.FADD),
-                FlopType.SUB: _geo_mean_latency(self.FSUB),
-                FlopType.MUL: _geo_mean_latency(self.FMUL),
-                FlopType.DIV: _geo_mean_latency(self.FDIV),
-                FlopType.SQRT: _geo_mean_latency(self.FSQRT),
+                FlopType.ABS: self.FABS.geo_mean(),
+                FlopType.MINUS: self.FNEG.geo_mean(),
+                FlopType.EQUALS: self.FCMP.geo_mean(),
+                FlopType.GTE: self.FCMP.geo_mean(),
+                FlopType.LTE: self.FCMP.geo_mean(),
+                FlopType.CMP_ZERO: self.FCMP.geo_mean(),
+                FlopType.RND: self.FCVTZS.geo_mean(),
+                FlopType.ADD: self.FADD.geo_mean(),
+                FlopType.SUB: self.FSUB.geo_mean(),
+                FlopType.MUL: self.FMUL.geo_mean(),
+                FlopType.DIV: self.FDIV.geo_mean(),
+                FlopType.SQRT: self.FSQRT.geo_mean(),
             }
         )
 
@@ -143,13 +143,3 @@ class InstructionLatencies(MyBaseModel):
 
     def flop_weights(self) -> FlopWeights:
         return self.latencies.flop_weights()
-
-
-# =================================================================================================
-#  Misc helpers
-# =================================================================================================
-def _geo_mean_latency(lat: Latency | None) -> float:
-    if isinstance(lat, Latency):
-        return lat.geo_mean()
-    else:
-        return math.nan
