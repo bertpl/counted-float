@@ -103,14 +103,8 @@ class FlopWeights(MyBaseModel):
         As a reference duration, we take the geometric mean of the costs for EQUALS, ADD, SUB, and MUL operations.
         """
 
-        # step 1) compute reference duration based on 4 simple flop types that should be about equally fast on most CPUs
-        ref_values = [
-            flop_costs[FlopType.EQUALS],
-            flop_costs[FlopType.ADD],
-            flop_costs[FlopType.SUB],
-            flop_costs[FlopType.MUL],
-        ]
-        ref_cost = geo_mean([v for v in ref_values if not math.isnan(v)])  # ignore any missing data
+        # step 1) compute reference duration based on 1 simple flop type (SUB, MUL and a few others are usually very close)
+        ref_cost = flop_costs[FlopType.ADD]
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(
