@@ -23,7 +23,10 @@
             "min_cycles": 1,
             "max_cycles": 1
         },
-        "UCOMISD": null,
+        "UCOMISD": {
+            "min_cycles": null,
+            "max_cycles": null
+        },
         "MAXSD": {
             "min_cycles": 4,
             "max_cycles": 4

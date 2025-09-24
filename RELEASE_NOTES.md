@@ -14,6 +14,7 @@
 
 ### Improvements
 - Replace all x87-ISA based latency data & models with SSE2- or ARM-based data & data models
+- Allow partially missing latency data (e.g. missing min_cycles)
 
 ### Bug Fixes
 /
