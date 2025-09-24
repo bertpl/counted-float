@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Annotated, Literal, Union
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
@@ -14,12 +14,31 @@ from ._flop_weights import FlopWeights
 #  Single-Instruction Latency
 # =================================================================================================
 class Latency(MyBaseModel):
-    min_cycles: float
-    max_cycles: float
+    note: str = ""
+    min_cycles: float | None = None
+    max_cycles: float | None = None
 
     def geo_mean(self) -> float:
         """Calculate the geometric mean of min and max cycles."""
         return math.sqrt(self.min_cycles * self.max_cycles)
+
+    @model_validator(mode="before")
+    @classmethod
+    def check_min_max_cycles(cls, values):
+        # Fill in missing values if just 1 of 2 is missing, assuming a 2x range
+        if (values.get("min_cycles") is None) and (values.get("max_cycles") is not None):
+            values["min_cycles"] = 0.5 * values["max_cycles"]
+        elif (values.get("min_cycles") is not None) and (values.get("max_cycles") is None):
+            values["max_cycles"] = 2.0 * values["min_cycles"]
+
+        # Avoid 0 values.  (which in principle can happen in corner cases, but which confuses our analysis)
+        if values.get("min_cycles") is not None:
+            values["min_cycles"] = max(1.0, values["min_cycles"])
+        if values.get("max_cycles") is not None:
+            values["max_cycles"] = max(1.0, values["max_cycles"])
+
+        # Return processed values
+        return values
 
 
 # =================================================================================================

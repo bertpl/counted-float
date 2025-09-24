@@ -4,9 +4,53 @@ from counted_float._core.models._instruction_latencies import (
     InstructionLatencies,
     InstructionLatencies_ARM,
     InstructionLatencies_SSE2,
+    Latency,
 )
 
 
+# =================================================================================================
+#  Latency
+# =================================================================================================
+@pytest.mark.parametrize(
+    "min_cycles, max_cycles, expected_min_cycles, expected_max_cycles",
+    [
+        (1.0, 1.0, 1.0, 1.0),
+        (1.0, 2.0, 1.0, 2.0),
+        (1.0, 10.0, 1.0, 10.0),
+        (None, 10.0, 5.0, 10.0),
+        (1.0, None, 1.0, 2.0),
+        (None, None, None, None),
+        (0.0, 1.0, 1.0, 1.0),
+        (0.0, 0.0, 1.0, 1.0),
+    ],
+    ids=[
+        "normal_1",
+        "normal_2",
+        "normal_3",
+        "min_cycles_missing",
+        "max_cycles_missing",
+        "both_missing",
+        "min_cycles_0",
+        "both_0",
+    ],
+)
+def test_latency_missing_values(
+    min_cycles: float | None,
+    max_cycles: float | None,
+    expected_min_cycles: float | None,
+    expected_max_cycles: float | None,
+):
+    # --- act ---------------------------------------------
+    latency = Latency(min_cycles=min_cycles, max_cycles=max_cycles)
+
+    # --- assert ------------------------------------------
+    assert latency.min_cycles == expected_min_cycles
+    assert latency.max_cycles == expected_max_cycles
+
+
+# =================================================================================================
+#  InstructionLatencies
+# =================================================================================================
 @pytest.mark.parametrize(
     "pydantic_cls",
     [
