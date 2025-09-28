@@ -20,3 +20,5 @@ def test_package_info():
     assert ("." in package_info.numba) or (package_info.numba == "<not_installed>")  # optional
     assert "." in package_info.numpy  # not optional
     assert "." in package_info.psutil  # not optional
+    assert "." in package_info.py_cpuinfo  # not optional
+

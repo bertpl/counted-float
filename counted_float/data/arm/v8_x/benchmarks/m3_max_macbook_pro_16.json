@@ -5,7 +5,8 @@
             "llvmlite": "unknown",
             "numba": "unknown",
             "numpy": "unknown",
-            "psutil": "unknown"
+            "psutil": "unknown",
+            "py_cpuinfo": "unknown"
         },
         "platform_processor": "arm",
         "platform_machine": "arm64",

@@ -57,9 +57,10 @@ class PackageInfo(MyBaseModel):
     numba: str
     numpy: str
     psutil: str
+    py_cpuinfo: str
 
     @classmethod
-    def from_system(cls):
+    def from_system(cls) -> PackageInfo:
         def get_package_version(_package: str) -> str:
             try:
                 return version(_package)
@@ -67,9 +68,12 @@ class PackageInfo(MyBaseModel):
                 return "<not_installed>"
 
         return PackageInfo(
-            counted_float=get_package_version("counted_float"),
+            counted_float=get_package_version("counted-float"),
             llvmlite=get_package_version("llvmlite"),
             numba=get_package_version("numba"),
             numpy=get_package_version("numpy"),
             psutil=get_package_version("psutil"),
+            py_cpuinfo=get_package_version("py-cpuinfo"),
+        )
+
         )
