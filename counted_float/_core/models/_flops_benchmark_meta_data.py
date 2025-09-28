@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import platform
 from importlib.metadata import PackageNotFoundError, version
+
+import psutil
 
 from ._base import MyBaseModel
 
@@ -28,7 +31,22 @@ class SystemInfo(MyBaseModel):
     platform_python_compiler: str
     psutil_cpu_count_logical: int
     psutil_cpu_count_physical: int
-    psutil_cpu_freq_mhz: int = 1_000  # for backwards compatibility with older benchmark results
+    psutil_cpu_freq_mhz: int = 1_000  # default value for backwards compatibility with older benchmark results
+
+    @classmethod
+    def from_system(cls) -> SystemInfo:
+        return SystemInfo(
+            platform_processor=platform.processor(),
+            platform_machine=platform.machine(),
+            platform_system=platform.system(),
+            platform_release=platform.release(),
+            platform_python_version=platform.python_version(),
+            platform_python_implementation=platform.python_implementation(),
+            platform_python_compiler=platform.python_compiler(),
+            psutil_cpu_count_logical=psutil.cpu_count(logical=True),
+            psutil_cpu_count_physical=psutil.cpu_count(logical=False),
+            psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
+        )
 
 
 class PackageInfo(MyBaseModel):

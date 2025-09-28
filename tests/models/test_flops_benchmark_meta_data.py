@@ -1,4 +1,12 @@
-from counted_float._core.models._flops_benchmark_meta_data import PackageInfo
+from counted_float._core.models._flops_benchmark_meta_data import PackageInfo, SystemInfo
+
+
+def test_system_info():
+    # --- act ---------------------------------------------
+    system_info = SystemInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert isinstance(system_info, SystemInfo)
 
 
 def test_package_info():

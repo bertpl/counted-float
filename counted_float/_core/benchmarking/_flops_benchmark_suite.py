@@ -51,18 +51,7 @@ class FlopsBenchmarkSuite:
 
         # put results in appropriate format
         return FlopsBenchmarkResults(
-            system_info=SystemInfo(
-                platform_processor=platform.processor(),
-                platform_machine=platform.machine(),
-                platform_system=platform.system(),
-                platform_release=platform.release(),
-                platform_python_version=platform.python_version(),
-                platform_python_implementation=platform.python_implementation(),
-                platform_python_compiler=platform.python_compiler(),
-                psutil_cpu_count_logical=psutil.cpu_count(logical=True),
-                psutil_cpu_count_physical=psutil.cpu_count(logical=False),
-                psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
-            ),
+            system_info=SystemInfo.from_system(),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
                 n_runs_total=n_runs_total,
