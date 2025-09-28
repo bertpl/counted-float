@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from importlib.metadata import version
+from importlib.metadata import PackageNotFoundError, version
 
 from ._base import MyBaseModel
 
@@ -30,3 +30,24 @@ class SystemInfo(MyBaseModel):
     psutil_cpu_count_physical: int
     psutil_cpu_freq_mhz: int = 1_000  # for backwards compatibility with older benchmark results
 
+
+class PackageInfo(MyBaseModel):
+    counted_float: str
+    numba: str
+    numpy: str
+    psutil: str
+
+    @classmethod
+    def from_system(cls):
+        def get_package_version(_package: str) -> str:
+            try:
+                return version(_package)
+            except PackageNotFoundError:
+                return "<not_installed>"
+
+        return PackageInfo(
+            counted_float=get_package_version("counted_float"),
+            numba=get_package_version("numba"),
+            numpy=get_package_version("numpy"),
+            psutil=get_package_version("psutil"),
+        )
