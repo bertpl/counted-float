@@ -1,8 +1,8 @@
-# Release Notes
+# Change Log
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.3
-> *(under development)*
+> *(2025-09-28)*
 > > This release heavily focuses on rectifying, documenting and streamlining
 > > How we use external flop latency data sources (analyses, spec sheets),
 > > to improve reliability and consistency of these data sources with the goal 
