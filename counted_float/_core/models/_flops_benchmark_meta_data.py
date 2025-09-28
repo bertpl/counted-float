@@ -3,6 +3,7 @@ from __future__ import annotations
 import platform
 from importlib.metadata import PackageNotFoundError, version
 
+import cpuinfo
 import psutil
 
 from ._base import MyBaseModel
@@ -76,4 +77,33 @@ class PackageInfo(MyBaseModel):
             py_cpuinfo=get_package_version("py-cpuinfo"),
         )
 
+
+class ProcessorInfo(MyBaseModel):
+    description: str
+    architecture: str
+    n_logical_core_count: int
+    n_physical_core_count: int
+    min_freq_mhz: int
+    max_freq_mhz: int
+
+    @classmethod
+    def from_system(cls) -> ProcessorInfo:
+        cpu_info_dict = cpuinfo.get_cpu_info()
+        return ProcessorInfo(
+            description=cpu_info_dict.get("brand_raw", ""),
+            architecture=" - ".join(
+                [
+                    s
+                    for s in [
+                        cpu_info_dict.get("arch_string_raw"),
+                        cpu_info_dict.get("arch"),
+                        f"{cpu_info_dict.get('bits')}-bits" if cpu_info_dict.get("bits") else None,
+                    ]
+                    if s
+                ]
+            ),
+            n_logical_core_count=psutil.cpu_count(logical=True),
+            n_physical_core_count=psutil.cpu_count(logical=False),
+            min_freq_mhz=int(psutil.cpu_freq().min),
+            max_freq_mhz=int(psutil.cpu_freq().max),
         )

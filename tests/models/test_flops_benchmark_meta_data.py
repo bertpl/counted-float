@@ -1,4 +1,4 @@
-from counted_float._core.models._flops_benchmark_meta_data import PackageInfo, SystemInfo
+from counted_float._core.models._flops_benchmark_meta_data import PackageInfo, ProcessorInfo, SystemInfo
 
 
 def test_system_info():
@@ -22,3 +22,11 @@ def test_package_info():
     assert "." in package_info.psutil  # not optional
     assert "." in package_info.py_cpuinfo  # not optional
 
+
+def test_processor_info():
+    # --- act ---------------------------------------------
+    processor_info = ProcessorInfo.from_system()
+    processor_info.show()
+
+    # --- assert ------------------------------------------
+    assert isinstance(processor_info, ProcessorInfo)
