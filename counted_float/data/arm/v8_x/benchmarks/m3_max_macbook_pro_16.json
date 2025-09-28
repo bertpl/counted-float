@@ -8,6 +8,11 @@
             "min_freq_mhz": 1020,
             "max_freq_mhz": 4056
         },
+        "python_info": {
+            "version": "3.13.5",
+            "implementation": "CPython",
+            "compiler": "Clang 20.1.4"
+        },
         "package_info": {
             "counted_float": "unknown",
             "llvmlite": "unknown",
@@ -17,10 +22,7 @@
             "py_cpuinfo": "unknown"
         },
         "platform_system": "Darwin",
-        "platform_release": "24.5.0",
-        "platform_python_version": "3.13.5",
-        "platform_python_implementation": "CPython",
-        "platform_python_compiler": "Clang 20.1.4 "
+        "platform_release": "24.5.0"
     },
     "benchmark_settings": {
         "array_size": 1000,

@@ -8,6 +8,11 @@
             "min_freq_mhz": 0,
             "max_freq_mhz": 0
         },
+        "python_info": {
+            "version": "3.11.7",
+            "implementation": "CPython",
+            "compiler": "GCC 11.2.0"
+        },
         "package_info": {
             "counted_float": "unknown",
             "llvmlite": "unknown",
@@ -17,10 +22,7 @@
             "py_cpuinfo": "unknown"
         },
         "platform_system": "Linux",
-        "platform_release": "5.15.0-94-generic",
-        "platform_python_version": "3.11.7",
-        "platform_python_implementation": "CPython",
-        "platform_python_compiler": "GCC 11.2.0"
+        "platform_release": "5.15.0-94-generic"
     },
     "benchmark_settings": {
         "array_size": 1000,

@@ -24,54 +24,27 @@ class BenchmarkSettings(MyBaseModel):
 # =================================================================================================
 class SystemInfo(MyBaseModel):
     processor_info: ProcessorInfo
+    python_info: PythonInfo
     package_info: PackageInfo
     platform_system: str
     platform_release: str
-    platform_python_version: str
-    platform_python_implementation: str
-    platform_python_compiler: str
     psutil_cpu_freq_mhz: int = 1_000  # default value for backwards compatibility with older benchmark results
 
     @classmethod
     def from_system(cls) -> SystemInfo:
         return SystemInfo(
             processor_info=ProcessorInfo.from_system(),
+            python_info=PythonInfo.from_system(),
             package_info=PackageInfo.from_system(),
             platform_system=platform.system(),
             platform_release=platform.release(),
-            platform_python_version=platform.python_version(),
-            platform_python_implementation=platform.python_implementation(),
-            platform_python_compiler=platform.python_compiler(),
             psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
         )
 
 
-class PackageInfo(MyBaseModel):
-    counted_float: str
-    llvmlite: str
-    numba: str
-    numpy: str
-    psutil: str
-    py_cpuinfo: str
-
-    @classmethod
-    def from_system(cls) -> PackageInfo:
-        def get_package_version(_package: str) -> str:
-            try:
-                return version(_package)
-            except PackageNotFoundError:
-                return "<not_installed>"
-
-        return PackageInfo(
-            counted_float=get_package_version("counted-float"),
-            llvmlite=get_package_version("llvmlite"),
-            numba=get_package_version("numba"),
-            numpy=get_package_version("numpy"),
-            psutil=get_package_version("psutil"),
-            py_cpuinfo=get_package_version("py-cpuinfo"),
-        )
-
-
+# =================================================================================================
+#  Sub-models
+# =================================================================================================
 class ProcessorInfo(MyBaseModel):
     description: str
     architecture: str
@@ -100,4 +73,44 @@ class ProcessorInfo(MyBaseModel):
             n_physical_core_count=psutil.cpu_count(logical=False),
             min_freq_mhz=int(psutil.cpu_freq().min),
             max_freq_mhz=int(psutil.cpu_freq().max),
+        )
+
+
+class PythonInfo(MyBaseModel):
+    version: str
+    implementation: str
+    compiler: str
+
+    @classmethod
+    def from_system(cls) -> PythonInfo:
+        return PythonInfo(
+            version=platform.python_version(),
+            implementation=platform.python_implementation(),
+            compiler=platform.python_compiler(),
+        )
+
+
+class PackageInfo(MyBaseModel):
+    counted_float: str
+    llvmlite: str
+    numba: str
+    numpy: str
+    psutil: str
+    py_cpuinfo: str
+
+    @classmethod
+    def from_system(cls) -> PackageInfo:
+        def get_package_version(_package: str) -> str:
+            try:
+                return version(_package)
+            except PackageNotFoundError:
+                return "<not_installed>"
+
+        return PackageInfo(
+            counted_float=get_package_version("counted-float"),
+            llvmlite=get_package_version("llvmlite"),
+            numba=get_package_version("numba"),
+            numpy=get_package_version("numpy"),
+            psutil=get_package_version("psutil"),
+            py_cpuinfo=get_package_version("py-cpuinfo"),
         )
