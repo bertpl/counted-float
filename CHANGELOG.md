@@ -11,7 +11,7 @@
 /
 
 ### Improvements
-/
+- Make SystemInfo (sub-model of benchmark results) more complete & granular, providing explicit package info, OS info, ...
 
 ### Bug Fixes
 /
