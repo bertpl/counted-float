@@ -1,14 +1,32 @@
 {
     "system_info": {
-        "platform_processor": "x86_64",
-        "platform_machine": "x86_64",
-        "platform_system": "Linux",
-        "platform_release": "5.15.0-94-generic",
-        "platform_python_version": "3.11.7",
-        "platform_python_implementation": "CPython",
-        "platform_python_compiler": "GCC 11.2.0",
-        "psutil_cpu_count_logical": 12,
-        "psutil_cpu_count_physical": 10
+        "processor_info": {
+            "description": "Intel Core i7 - 1265u",
+            "architecture": "x86_64 - x86_64 - 64-bits",
+            "n_logical_core_count": 12,
+            "n_physical_core_count": 10,
+            "min_freq_mhz": 0,
+            "max_freq_mhz": 0
+        },
+        "os_info": {
+            "platform": "unknown",
+            "system": "Linux",
+            "release": "5.15.0-94-generic",
+            "version": "unknown"
+        },
+        "python_info": {
+            "version": "3.11.7",
+            "implementation": "CPython",
+            "compiler": "GCC 11.2.0"
+        },
+        "package_info": {
+            "counted_float": "unknown",
+            "llvmlite": "unknown",
+            "numba": "unknown",
+            "numpy": "unknown",
+            "psutil": "unknown",
+            "py_cpuinfo": "unknown"
+        }
     },
     "benchmark_settings": {
         "array_size": 1000,
