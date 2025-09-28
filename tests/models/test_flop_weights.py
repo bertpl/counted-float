@@ -65,7 +65,7 @@ def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
 
 
 @pytest.mark.parametrize("use_dict_by_str", [True, False])
-def test_flop_weights_incorrect_construction(
+def test_flop_weights_missing_flop_types(
     sample_flop_weights_dict_by_enum, sample_flop_weights_dict_by_str, use_dict_by_str: bool
 ) -> None:
     # --- arrange -----------------------------------------
@@ -78,8 +78,8 @@ def test_flop_weights_incorrect_construction(
     del weights_dict[FlopType.ABS]
 
     # --- act ---------------------------------------------
-    with pytest.raises(ValueError):
-        _ = FlopWeights(weights=weights_dict)
+    flop_weights = FlopWeights(weights=weights_dict)
+    assert math.isnan(flop_weights.weights[FlopType.ABS])
 
 
 def test_flop_weights_show(sample_flop_weights_dict_by_str):

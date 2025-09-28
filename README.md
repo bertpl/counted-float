@@ -1,8 +1,8 @@
 <!--START_SECTION:images-->
 ![shields.io-python-versions](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.9.2/badge-test-count.svg)
-![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.9.2/badge-coverage.svg)
-![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.9.2/splash.webp)
+![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.9.3/badge-test-count.svg)
+![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.9.3/badge-coverage.svg)
+![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.9.3/splash.webp)
 <!--END_SECTION:images-->
 
 # counted-float
@@ -127,7 +127,10 @@ counts.total_count()         # 2
 ## 2.3. Weighted FLOP counting
 
 The `counted_float` package contains a set of default, built-in FLOP weights, based on both empirical measurements
-and theoretical estimates of the relative cost of different floating point operations.
+and theoretical estimates of the relative cost of different floating point operations. 
+
+See [fpu_data_sources.md](https://github.com/bertpl/counted-float/tree/develop/docs/analysis_methodology.md) for
+rationale behind choice of data sources and methodology.
 
 ```
 >>> from counted_float.config import get_flop_weights

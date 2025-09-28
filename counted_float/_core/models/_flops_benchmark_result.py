@@ -43,7 +43,6 @@ class FlopsBenchmarkResults(MyBaseModel):
     benchmark_settings: BenchmarkSettings
     results_ns: FlopsBenchmarkDurations
 
-    @property
     def flop_weights(self) -> FlopWeights:
         """
         Returns normalized weights for each flop type based on the benchmark results.

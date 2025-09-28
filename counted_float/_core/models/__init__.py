@@ -8,6 +8,9 @@ from ._flops_benchmark_result import (
     FlopsBenchmarkResults,
     SystemInfo,
 )
-from ._fpu_instruction import FPUInstruction
-from ._fpu_specs import InstructionLatencies
+from ._instruction_latencies import (
+    InstructionLatencies,
+    InstructionLatencies_ARM,
+    InstructionLatencies_SSE2,
+)
 from ._micro_benchmark_result import MicroBenchmarkResult, Quantiles, SingleRunResult

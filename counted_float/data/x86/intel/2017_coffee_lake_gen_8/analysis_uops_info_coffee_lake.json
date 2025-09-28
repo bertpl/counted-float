@@ -1,0 +1,69 @@
+{
+    "notes": [
+        "Data from uops.info/table.html",
+        "Coffee Lake - SSE - Measurements - Latency"
+    ],
+    "latencies": {
+        "architecture": "sse2",
+        "ANDPD": {
+            "note": "https://uops.info/html-lat/CFL/ANDPD_XMM_XMM-Measurements.html",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "CVTSD2SI": {
+            "note": "https://uops.info/html-lat/CFL/CVTSD2SI_R64_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 7
+        },
+        "CVTSI2SD": {
+            "note": "https://uops.info/html-lat/CFL/CVTSI2SD_XMM_R64-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 7
+        },
+        "XORPD": {
+            "note": "https://uops.info/html-lat/CFL/XORPD_XMM_XMM-Measurements.html",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "UCOMISD": {
+            "note": "https://uops.info/html-lat/CFL/UCOMISD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 3
+        },
+        "MAXSD": {
+            "note": "https://uops.info/html-lat/CFL/MAXSD_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "MINSD": {
+            "note": "https://uops.info/html-lat/CFL/MINSD_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "ADDSD": {
+            "note": "https://uops.info/html-lat/CFL/ADDSD_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "SUBSD": {
+            "note": "https://uops.info/html-lat/CFL/SUBSD_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "MULSD": {
+            "note": "https://uops.info/html-lat/CFL/MULSD_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "DIVSD": {
+            "note": "https://uops.info/html-lat/CFL/DIVSD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 15
+        },
+        "SQRTSD": {
+            "note": "https://uops.info/html-lat/CFL/SQRTSD_XMM_XMM-Measurements.html",
+            "min_cycles": null,
+            "max_cycles": 19
+        }
+    }
+}

@@ -3,10 +3,10 @@ from __future__ import annotations
 import math
 from importlib.resources import files
 
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from rich.console import Console
 
-from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights, InstructionLatencies
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
 
 DATA_PACKAGE = "counted_float.data"
 
@@ -64,17 +64,8 @@ class BuiltInData:
     def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
             key: FlopsBenchmarkResults.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.benchmarks")).items()
-        }
-
-    # -------------------------------------------------------------------------
-    #  Specs
-    # -------------------------------------------------------------------------
-    @classmethod
-    def specs(cls) -> dict[str, InstructionLatencies]:
-        return {
-            key: InstructionLatencies.model_validate_json(json_str)
-            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}.specs")).items()
+            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}")).items()
+            if "benchmark" in key
         }
 
     # -------------------------------------------------------------------------
@@ -146,16 +137,27 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
     """
     Construct a FlopWeights instance from a JSON string, where the JSON string can represent either...
       - FlopsBenchmarkResults
-      - InstructionLatencies
+      - InstructionLatencies_<x>
     :param json_str: (str) JSON string representing either of the aforementioned data structures.
     :return: FlopWeights instance extracted from the input data.
     """
 
     # try all supported classes, all of which have a .flop_weights property
-    for pydantic_cls in [FlopsBenchmarkResults, InstructionLatencies]:
+    return _deserialize_as_any_pydantic_class(
+        json_str,
+        [
+            FlopsBenchmarkResults,
+            InstructionLatencies,
+        ],
+    ).flop_weights()
+
+
+def _deserialize_as_any_pydantic_class(json_str: str, pydantic_classes: list[type[BaseModel]]):
+    # try all supported classes
+    for pydantic_cls in pydantic_classes:
         try:
             obj = pydantic_cls.model_validate_json(json_str)
-            return obj.flop_weights
+            return obj
         except ValidationError:
             continue
 

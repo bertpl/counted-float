@@ -8,7 +8,6 @@ from ._core.models import (
     FlopsBenchmarkResults,
     FlopType,
     FlopWeights,
-    FPUInstruction,
     Quantiles,
     SystemInfo,
 )
@@ -23,7 +22,6 @@ __all__ = [
     "FlopsBenchmarkResults",
     "FlopType",
     "FlopWeights",
-    "FPUInstruction",
     "PauseFlopCounting",
     "Quantiles",
     "SystemInfo",

@@ -1,0 +1,70 @@
+{
+    "notes": [
+        "Data from 'Software Optimization Guide for zen5 microarchitecture'",
+        "https://docs.amd.com/v/u/en-US/58455_1.00",
+        "'Latency' column of included spreadsheet"
+    ],
+    "latencies": {
+        "architecture": "sse2",
+        "ANDPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "CVTSD2SI": {
+            "note": "",
+            "min_cycles": null,
+            "max_cycles": null
+        },
+        "CVTSI2SD": {
+            "note": "",
+            "min_cycles": null,
+            "max_cycles": null
+        },
+        "XORPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "UCOMISD": {
+            "note": "",
+            "min_cycles": null,
+            "max_cycles": null
+        },
+        "MAXSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "MINSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "ADDSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "SUBSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "MULSD": {
+            "note": "",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "DIVSD": {
+            "note": "",
+            "min_cycles": 13,
+            "max_cycles": 13
+        },
+        "SQRTSD": {
+            "note": "",
+            "min_cycles": 20,
+            "max_cycles": 20
+        }
+    }
+}

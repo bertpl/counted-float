@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 0  # Fetch all history for accurate diff
 
       - name: Check for release notes
-        uses: ./.github/actions/check_release_notes
+        uses: ./.github/actions/check_changelog
         with:
           uv_version: ${{ vars.UV_VERSION }}
           git_ref: ${{ github.event.pull_request.base.ref }}

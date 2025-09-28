@@ -1,6 +1,6 @@
 [project]
 name = "counted-float"
-version = "0.9.2"
+version = "0.9.3"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -17,7 +17,7 @@ counted_float = "counted_float._core._cli:cli"
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
-ChangeLog = "https://github.com/bertpl/counted-float/blob/develop/RELEASE_NOTES.md"
+ChangeLog = "https://github.com/bertpl/counted-float/blob/develop/CHANGELOG.md"
 Issues = "https://github.com/bertpl/counted-float/issues"
 Roadmap = "https://github.com/bertpl/counted-float/milestones"
 

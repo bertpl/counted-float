@@ -1,0 +1,71 @@
+{
+    "notes": [
+        "Data from 'Intel® Processors and Processor Cores Based on Golden Cove Microarchitecture Instruction Throughput and Latency'",
+        "https://www.intel.com/content/www/us/en/content-details/723498/intel-processors-and-processor-cores-based-on-golden-cove-microarchitecture-instruction-throughput-and-latency.html",
+        "'Latency' column of included spreadsheet",
+        "Raptor Cove = Golden Cove, except for frequency range & cache / memory logic."
+    ],
+    "latencies": {
+        "architecture": "sse2",
+        "ANDPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "CVTSD2SI": {
+            "note": "",
+            "min_cycles": 7,
+            "max_cycles": 7
+        },
+        "CVTSI2SD": {
+            "note": "",
+            "min_cycles": 5,
+            "max_cycles": 5
+        },
+        "XORPD": {
+            "note": "",
+            "min_cycles": 1,
+            "max_cycles": 1
+        },
+        "UCOMISD": {
+            "note": "",
+            "min_cycles": 3,
+            "max_cycles": 3
+        },
+        "MAXSD": {
+            "note": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "MINSD": {
+            "note": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "ADDSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "SUBSD": {
+            "note": "",
+            "min_cycles": 2,
+            "max_cycles": 2
+        },
+        "MULSD": {
+            "note": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
+        "DIVSD": {
+            "note": "",
+            "min_cycles": 14,
+            "max_cycles": 14
+        },
+        "SQRTSD": {
+            "note": "",
+            "min_cycles": 18,
+            "max_cycles": 18
+        }
+    }
+}
