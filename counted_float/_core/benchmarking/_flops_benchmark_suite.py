@@ -45,7 +45,7 @@ class FlopsBenchmarkSuite:
                 n_runs_total=n_runs_total,
                 n_runs_warmup=n_runs_warmup,
                 n_seconds_per_run_target=n_seconds_per_run_target,
-            ).summary_stats()
+            ).summary_stats_nsecs_per_op()
             for flop_type, benchmark in benchmarks.items()
         }
 

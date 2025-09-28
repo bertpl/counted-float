@@ -78,17 +78,11 @@ class MicroBenchmark(ABC):
         )
 
         # display duration estimates
-        stats = benchmark_result.summary_stats()
+        stats = benchmark_result.summary_stats_nsecs_per_op()
         s_time_duration = format_time_duration(nsec=stats.q50)
         s_latency = format_latency(n_cycles=compute_latency(nsec=stats.q50, cpu_freq_mhz=psutil.cpu_freq().current))
         s_uncertainty = f"{50 * (stats.q75 - stats.q25) / stats.q50:4.1f}%"
         print(f"   ({s_time_duration} = {s_latency}) ± {s_uncertainty}  /  {self.single_operation}")
-        #
-        # s_extra_info = self._compute_extra_result_info(benchmark_result)
-        # if s_extra_info:
-        #     print(f"   {s_time_duration} / {self.single_operation}     [{s_extra_info}]")
-        # else:
-        #     print(f"   {s_time_duration} / {self.single_operation}")
 
         # return final result
         return benchmark_result
@@ -107,6 +101,7 @@ class MicroBenchmark(ABC):
         return SingleRunResult(
             n_operations=n_operations,
             t_nsecs=t.t_elapsed_nsec(),
+            t_cycles=0.001 * t.t_elapsed_nsec() * psutil.cpu_freq().current,  # 1 cycle if e.g. nsec=1, cpu_freq=1000
         )
 
     @abstractmethod
