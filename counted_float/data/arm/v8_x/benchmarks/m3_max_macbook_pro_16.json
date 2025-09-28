@@ -1,5 +1,13 @@
 {
     "system_info": {
+        "processor_info": {
+            "description": "Apple M3 Max",
+            "architecture": "arm64 - ARM_8 - 64-bits",
+            "n_logical_core_count": 16,
+            "n_physical_core_count": 16,
+            "min_freq_mhz": 1020,
+            "max_freq_mhz": 4056
+        },
         "package_info": {
             "counted_float": "unknown",
             "llvmlite": "unknown",
@@ -8,15 +16,11 @@
             "psutil": "unknown",
             "py_cpuinfo": "unknown"
         },
-        "platform_processor": "arm",
-        "platform_machine": "arm64",
         "platform_system": "Darwin",
         "platform_release": "24.5.0",
         "platform_python_version": "3.13.5",
         "platform_python_implementation": "CPython",
-        "platform_python_compiler": "Clang 20.1.4 ",
-        "psutil_cpu_count_logical": 16,
-        "psutil_cpu_count_physical": 16
+        "platform_python_compiler": "Clang 20.1.4 "
     },
     "benchmark_settings": {
         "array_size": 1000,
