@@ -22,6 +22,7 @@ class BenchmarkSettings(MyBaseModel):
 #  System Info
 # =================================================================================================
 class SystemInfo(MyBaseModel):
+    package_info: PackageInfo
     platform_processor: str
     platform_machine: str
     platform_system: str
@@ -36,6 +37,7 @@ class SystemInfo(MyBaseModel):
     @classmethod
     def from_system(cls) -> SystemInfo:
         return SystemInfo(
+            package_info=PackageInfo.from_system(),
             platform_processor=platform.processor(),
             platform_machine=platform.machine(),
             platform_system=platform.system(),

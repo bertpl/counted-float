@@ -1,5 +1,11 @@
 {
     "system_info": {
+        "package_info": {
+            "counted_float": "unknown",
+            "numba": "unknown",
+            "numpy": "unknown",
+            "psutil": "unknown"
+        },
         "platform_processor": "arm",
         "platform_machine": "arm64",
         "platform_system": "Darwin",
