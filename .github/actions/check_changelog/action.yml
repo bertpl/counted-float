@@ -1,6 +1,6 @@
-name: Check Release Notes
+name: Check ChangeLog
 author: bertpluymers
-description: Check if Release Notes is part of PR & has version number in it
+description: Check if ChangeLog is part of PR & has version number in it
 
 inputs:
     uv_version:
@@ -29,20 +29,20 @@ runs:
         run: |
           git fetch origin ${{ inputs.git_ref }}
           CHANGED_FILES=$(git diff --name-only origin/${{ inputs.git_ref }}...HEAD)
-          if echo "$CHANGED_FILES" | grep -q "RELEASE_NOTES.md"; then
-            echo "RELEASE_NOTES.md found in diff --> OK"
+          if echo "$CHANGED_FILES" | grep -q "CHANGELOG.md"; then
+            echo "CHANGELOG.md found in diff --> OK"
           else
-            echo "RELEASE_NOTES.md NOT found in diff --> FAIL"
+            echo "CHANGELOG.md NOT found in diff --> FAIL"
             exit -1
           fi
 
-      - name: Check if release notes contain current version
+      - name: Check if change log contains current version
         shell: bash
         run: |
           CURRENT_VERSION=$(uv version --short)
-          if grep -q "$CURRENT_VERSION" RELEASE_NOTES.md; then
-            echo "RELEASE_NOTES.md contains current version $CURRENT_VERSION --> OK"
+          if grep -q "$CURRENT_VERSION" CHANGELOG.md; then
+            echo "CHANGELOG.md contains current version $CURRENT_VERSION --> OK"
           else
-            echo "RELEASE_NOTES.md does NOT contain current version $CURRENT_VERSION --> FAIL"
+            echo "CHANGELOG.md does NOT contain current version $CURRENT_VERSION --> FAIL"
             exit -1
           fi
