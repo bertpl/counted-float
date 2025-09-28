@@ -1,6 +1,25 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v0.9.4
+> *(under development)*
+> > This release focuses on rectifying the benchmarking setup, where it is important to test execution ***latency***
+> > rather than ***throughput*** & extending the scope of flops that we can model & capture.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v0.9.3
 > *(2025-09-28)*
 > > This release heavily focuses on rectifying, documenting and streamlining
