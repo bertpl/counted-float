@@ -4,12 +4,11 @@ from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nes
 from counted_float._core.models import (
     FlopsBenchmarkResults,
     FlopWeights,
-    InstructionLatencies,
 )
 
 
 # =================================================================================================
-#  Benchmarks
+#  Built-in benchmarks
 # =================================================================================================
 def test_builtin_data_benchmarks():
     # --- act ---------------------------------------------
@@ -17,25 +16,13 @@ def test_builtin_data_benchmarks():
 
     # --- assert ------------------------------------------
     assert all(isinstance(v, FlopsBenchmarkResults) for v in result.values())
-    assert len(result) == 3  # update as we add data
-
-
-# =================================================================================================
-#  Specs
-# =================================================================================================
-def test_builtin_data_specs():
-    # --- act ---------------------------------------------
-    result = BuiltInData.specs()
-
-    # --- assert ------------------------------------------
-    assert all(isinstance(v, InstructionLatencies) for v in result.values())
-    assert len(result) == 11  # update as we add data
+    assert len(result) == 2  # update as we add data
 
 
 # =================================================================================================
 #  FlopWeights
 # =================================================================================================
-@pytest.mark.parametrize("key_filter", [".", "specs.", "benchmarks.", "arm", "x86"])
+@pytest.mark.parametrize("key_filter", [".", "benchmark", "specs", "analysis", "arm", "x86"])
 def test_builtin_data_get_flop_weights(key_filter: str):
     # --- act ---------------------------------------------
     result = BuiltInData.get_flop_weights(key_filter=key_filter)
@@ -56,11 +43,12 @@ def test_builtin_data_get_flop_weights_invalid_key():
 @pytest.mark.parametrize(
     "key_filter, n_expected",
     [
-        (".", 14),
-        ("specs.", 11),
-        ("benchmarks.", 3),
-        ("arm", 6),
-        ("x86", 8),
+        (".", 30),
+        ("benchmark", 2),
+        ("analysis", 12),
+        ("specs", 16),
+        ("arm", 12),
+        ("x86", 18),
     ],
 )
 def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):

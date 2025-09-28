@@ -11,6 +11,8 @@
 
 ### What's New
 - Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data.
+- Add various instruction latencies based on uops.info, Agner Fog & Intel/AMD/ARM spec sheets + reorganize data 
+- Add documentation on ecosystem of x86/arm ISAs, cores & cpus + provide rationale for selection of included data
 
 ### Improvements
 - Replace all x87-ISA based latency data & models with SSE2- or ARM-based data & data models

@@ -129,7 +129,7 @@ counts.total_count()         # 2
 The `counted_float` package contains a set of default, built-in FLOP weights, based on both empirical measurements
 and theoretical estimates of the relative cost of different floating point operations. 
 
-See [fpu_data_sources.md](https://github.com/bertpl/counted-float/tree/develop/counted_float/data/fpu_data_sources.md) for
+See [fpu_data_sources.md](https://github.com/bertpl/counted-float/tree/develop/docs/analysis_methodology.md) for
 rationale behind choice of data sources and methodology.
 
 ```
