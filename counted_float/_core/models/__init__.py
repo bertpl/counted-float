@@ -8,6 +8,8 @@ from ._flops_benchmark_result import (
     FlopsBenchmarkResults,
     SystemInfo,
 )
+from ._flops_benchmark_result_v2 import FlopsBenchmarkResults_V2
+from ._flops_benchmark_type import FlopsBenchmarkType
 from ._instruction_latencies import (
     InstructionLatencies,
     InstructionLatencies_ARM,

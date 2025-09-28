@@ -6,7 +6,12 @@ from importlib.resources import files
 from pydantic import BaseModel, ValidationError
 from rich.console import Console
 
-from counted_float._core.models import FlopsBenchmarkResults, FlopWeights, InstructionLatencies
+from counted_float._core.models import (
+    FlopsBenchmarkResults,
+    FlopsBenchmarkResults_V2,
+    FlopWeights,
+    InstructionLatencies,
+)
 
 DATA_PACKAGE = "counted_float.data"
 
@@ -147,6 +152,7 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
         json_str,
         [
             FlopsBenchmarkResults,
+            FlopsBenchmarkResults_V2,
             InstructionLatencies,
         ],
     ).flop_weights()

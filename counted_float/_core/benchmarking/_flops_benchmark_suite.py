@@ -51,7 +51,7 @@ class FlopsBenchmarkSuite:
 
         # put results in appropriate format
         return FlopsBenchmarkResults(
-            system_info=SystemInfo.from_system(),
+            system=SystemInfo.from_system(),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
                 n_runs_total=n_runs_total,

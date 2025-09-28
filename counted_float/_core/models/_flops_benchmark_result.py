@@ -17,7 +17,7 @@ class FlopsBenchmarkDurations(MyBaseModel):
 
 
 class FlopsBenchmarkResults(MyBaseModel):
-    system_info: SystemInfo
+    system: SystemInfo
     benchmark_settings: BenchmarkSettings
     results_ns: FlopsBenchmarkDurations
 
