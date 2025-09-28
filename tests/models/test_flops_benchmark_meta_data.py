@@ -16,6 +16,7 @@ def test_package_info():
     # --- assert ------------------------------------------
     assert isinstance(package_info, PackageInfo)
     assert "." in package_info.counted_float
+    assert ("." in package_info.llvmlite) or (package_info.llvmlite == "<not_installed>")  # optional
     assert ("." in package_info.numba) or (package_info.numba == "<not_installed>")  # optional
     assert "." in package_info.numpy  # not optional
     assert "." in package_info.psutil  # not optional

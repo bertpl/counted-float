@@ -2,6 +2,7 @@
     "system_info": {
         "package_info": {
             "counted_float": "unknown",
+            "llvmlite": "unknown",
             "numba": "unknown",
             "numpy": "unknown",
             "psutil": "unknown"

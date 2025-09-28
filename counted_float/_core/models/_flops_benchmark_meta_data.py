@@ -53,6 +53,7 @@ class SystemInfo(MyBaseModel):
 
 class PackageInfo(MyBaseModel):
     counted_float: str
+    llvmlite: str
     numba: str
     numpy: str
     psutil: str
@@ -67,6 +68,7 @@ class PackageInfo(MyBaseModel):
 
         return PackageInfo(
             counted_float=get_package_version("counted_float"),
+            llvmlite=get_package_version("llvmlite"),
             numba=get_package_version("numba"),
             numpy=get_package_version("numpy"),
             psutil=get_package_version("psutil"),
