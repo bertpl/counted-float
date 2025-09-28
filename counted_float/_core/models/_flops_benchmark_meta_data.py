@@ -24,20 +24,18 @@ class BenchmarkSettings(MyBaseModel):
 # =================================================================================================
 class SystemInfo(MyBaseModel):
     processor_info: ProcessorInfo
+    os_info: OSInfo
     python_info: PythonInfo
     package_info: PackageInfo
-    platform_system: str
-    platform_release: str
     psutil_cpu_freq_mhz: int = 1_000  # default value for backwards compatibility with older benchmark results
 
     @classmethod
     def from_system(cls) -> SystemInfo:
         return SystemInfo(
             processor_info=ProcessorInfo.from_system(),
+            os_info=OSInfo.from_system(),
             python_info=PythonInfo.from_system(),
             package_info=PackageInfo.from_system(),
-            platform_system=platform.system(),
-            platform_release=platform.release(),
             psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
         )
 
@@ -73,6 +71,22 @@ class ProcessorInfo(MyBaseModel):
             n_physical_core_count=psutil.cpu_count(logical=False),
             min_freq_mhz=int(psutil.cpu_freq().min),
             max_freq_mhz=int(psutil.cpu_freq().max),
+        )
+
+
+class OSInfo(MyBaseModel):
+    platform: str
+    system: str
+    release: str
+    version: str
+
+    @classmethod
+    def from_system(cls) -> OSInfo:
+        return OSInfo(
+            platform=platform.platform(),
+            system=platform.system(),
+            release=platform.release(),
+            version=platform.version(),
         )
 
 

@@ -8,6 +8,12 @@
             "min_freq_mhz": 0,
             "max_freq_mhz": 0
         },
+        "os_info": {
+            "platform": "unknown",
+            "system": "Linux",
+            "release": "5.15.0-94-generic",
+            "version": "unknown"
+        },
         "python_info": {
             "version": "3.11.7",
             "implementation": "CPython",
@@ -20,9 +26,7 @@
             "numpy": "unknown",
             "psutil": "unknown",
             "py_cpuinfo": "unknown"
-        },
-        "platform_system": "Linux",
-        "platform_release": "5.15.0-94-generic"
+        }
     },
     "benchmark_settings": {
         "array_size": 1000,

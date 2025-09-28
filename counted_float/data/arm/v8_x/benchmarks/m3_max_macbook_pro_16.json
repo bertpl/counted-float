@@ -8,6 +8,12 @@
             "min_freq_mhz": 1020,
             "max_freq_mhz": 4056
         },
+        "os_info": {
+            "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:55 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6031"
+        },
         "python_info": {
             "version": "3.13.5",
             "implementation": "CPython",
@@ -20,9 +26,7 @@
             "numpy": "unknown",
             "psutil": "unknown",
             "py_cpuinfo": "unknown"
-        },
-        "platform_system": "Darwin",
-        "platform_release": "24.5.0"
+        }
     },
     "benchmark_settings": {
         "array_size": 1000,
