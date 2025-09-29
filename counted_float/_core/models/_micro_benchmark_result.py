@@ -26,6 +26,10 @@ class Quantiles(MyBaseModel):
     q50: float
     q75: float
 
+    def format_uncertainty(self) -> str:
+        # return uncertainty as a % in string format
+        return f"{50 * (self.q75 - self.q25) / self.q50:4.1f}%"
+
 
 class MicroBenchmarkResult(MyBaseModel):
     """Results of all runs in the micro-benchmark_runs (warmup_runs + actual benchmark_runs runs)."""

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import psutil
 
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
-from counted_float._core.utils import Timer, compute_latency, format_latency, format_time_duration
+from counted_float._core.utils import Timer, convert_nsecs_to_cycles, format_latency, format_time_duration
 
 
 # =================================================================================================
@@ -78,11 +78,11 @@ class MicroBenchmark(ABC):
         )
 
         # display duration estimates
-        stats = benchmark_result.summary_stats_nsecs_per_op()
-        s_time_duration = format_time_duration(nsec=stats.q50)
-        s_latency = format_latency(n_cycles=compute_latency(nsec=stats.q50, cpu_freq_mhz=psutil.cpu_freq().current))
-        s_uncertainty = f"{50 * (stats.q75 - stats.q25) / stats.q50:4.1f}%"
-        print(f"   ({s_time_duration} = {s_latency}) ± {s_uncertainty}  /  {self.single_operation}")
+        stats_nsecs = benchmark_result.summary_stats_nsecs_per_op()
+        stats_cycles = benchmark_result.summary_stats_cycles_per_op()
+        s_time_duration = f"{format_time_duration(stats_nsecs.q50)} ± {stats_nsecs.format_uncertainty()}"
+        s_latency = f"{format_latency(stats_cycles.q50)} ± {stats_cycles.format_uncertainty()}"
+        print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_operation}")
 
         # return final result
         return benchmark_result
@@ -101,7 +101,7 @@ class MicroBenchmark(ABC):
         return SingleRunResult(
             n_operations=n_operations,
             t_nsecs=t.t_elapsed_nsec(),
-            t_cycles=0.001 * t.t_elapsed_nsec() * psutil.cpu_freq().current,  # 1 cycle if e.g. nsec=1, cpu_freq=1000
+            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=psutil.cpu_freq().current),
         )
 
     @abstractmethod
