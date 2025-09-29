@@ -12,6 +12,7 @@
 
 ### Improvements
 - Make SystemInfo (sub-model of benchmark results) more complete & granular, providing explicit package info, OS info, ...
+- Also capture cpu frequency after each benchmark run & estimate cpu latencies, allowing to extract benchmark durations in terms of nanoseconds or cpu cycles (q25, q50, q75)
 
 ### Bug Fixes
 /

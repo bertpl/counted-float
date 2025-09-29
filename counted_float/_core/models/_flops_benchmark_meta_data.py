@@ -27,7 +27,6 @@ class SystemInfo(MyBaseModel):
     os_info: OSInfo
     python_info: PythonInfo
     package_info: PackageInfo
-    psutil_cpu_freq_mhz: int = 1_000  # default value for backwards compatibility with older benchmark results
 
     @classmethod
     def from_system(cls) -> SystemInfo:
@@ -36,7 +35,6 @@ class SystemInfo(MyBaseModel):
             os_info=OSInfo.from_system(),
             python_info=PythonInfo.from_system(),
             package_info=PackageInfo.from_system(),
-            psutil_cpu_freq_mhz=int(psutil.cpu_freq().current),
         )
 
 
