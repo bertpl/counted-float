@@ -314,7 +314,7 @@ uv tool install git+https://github.com/bertpl/counted-float@develop[numba,cli]  
 ```
 This installs the `counted_float` command-line tool, which can be used to e.g. run flops benchmarks.
 
-## 4.1 Running benchmarks
+## 4.1. Running benchmarks
 
 ```
 counted_float benchmark
