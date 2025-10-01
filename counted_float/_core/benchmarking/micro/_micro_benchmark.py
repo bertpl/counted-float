@@ -88,7 +88,7 @@ class MicroBenchmark(ABC):
         return benchmark_result
 
     def run_once(self, n_operations: int) -> SingleRunResult:
-        """Runs benchmark_runs once for a given # of operations and returns time in nanoseconds per operation"""
+        """Runs benchmark_runs once for a given # of operations and returns time in nanoseconds & cpu cycles per operation"""
 
         # prepare
         self._prepare_benchmark(n_operations)
