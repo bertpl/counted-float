@@ -2,10 +2,10 @@ from ._base import MyBaseModel
 from ._flop_counts import FlopCounts
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
-from ._flops_benchmark_result import (
+from ._flops_benchmark_result_v1 import (
     BenchmarkSettings,
     FlopsBenchmarkDurations,
-    FlopsBenchmarkResults,
+    FlopsBenchmarkResults_V1,
     SystemInfo,
 )
 from ._flops_benchmark_result_v2 import FlopsBenchmarkResults_V2

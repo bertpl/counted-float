@@ -1,10 +1,10 @@
 import pytest
 
-from counted_float._core.benchmarking._flops_micro_benchmark import FlopsMicroBenchmark
+from counted_float._core.benchmarking.flops_v1 import FlopsMicroBenchmark_V1
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 
 
-def test_flops_micro_benchmark():
+def test_flops_micro_benchmark_v1():
     # --- arrange -----------------------------------------
     import numpy as np
 
@@ -12,7 +12,7 @@ def test_flops_micro_benchmark():
         for i in range(n):
             out_f[i] = (2 * in_f1[i]) + in_f2[i]
 
-    benchmark = FlopsMicroBenchmark(name="test", f=test_function, size=1234)
+    benchmark = FlopsMicroBenchmark_V1(name="test", f=test_function, size=1234)
 
     # --- act ---------------------------------------------
     single_run_result = benchmark.run_once(n_operations=10)

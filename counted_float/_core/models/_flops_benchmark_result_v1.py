@@ -16,7 +16,7 @@ class FlopsBenchmarkDurations(MyBaseModel):
     flops: dict[FlopType, Quantiles]
 
 
-class FlopsBenchmarkResults(MyBaseModel):
+class FlopsBenchmarkResults_V1(MyBaseModel):
     system: SystemInfo
     benchmark_settings: BenchmarkSettings
     results_ns: FlopsBenchmarkDurations

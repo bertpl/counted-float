@@ -1,10 +1,7 @@
 import pytest
 
 from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
-from counted_float._core.models import (
-    FlopsBenchmarkResults,
-    FlopWeights,
-)
+from counted_float._core.models import FlopsBenchmarkResults_V1, FlopWeights
 
 
 # =================================================================================================
@@ -15,7 +12,7 @@ def test_builtin_data_benchmarks():
     result = BuiltInData.benchmarks()
 
     # --- assert ------------------------------------------
-    assert all(isinstance(v, FlopsBenchmarkResults) for v in result.values())
+    assert all(isinstance(v, FlopsBenchmarkResults_V1) for v in result.values())
     assert len(result) == 3  # update as we add data
 
 

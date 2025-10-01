@@ -1,22 +1,19 @@
-import platform
-
 import numpy as np
-import psutil
 
 from counted_float._core.compatibility import is_numba_installed, numba
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkDurations,
-    FlopsBenchmarkResults,
+    FlopsBenchmarkResults_V1,
     FlopType,
     Quantiles,
     SystemInfo,
 )
 
-from ._flops_micro_benchmark import FlopsMicroBenchmark
+from ._flops_micro_benchmark_v1 import FlopsMicroBenchmark_V1
 
 
-class FlopsBenchmarkSuite:
+class FlopsBenchmarkSuite_V1:
     # -------------------------------------------------------------------------
     #  Main API
     # -------------------------------------------------------------------------
@@ -26,7 +23,7 @@ class FlopsBenchmarkSuite:
         n_runs_total: int = 30,
         n_runs_warmup: int = 10,
         n_seconds_per_run_target: float = 0.01,
-    ) -> FlopsBenchmarkResults:
+    ) -> FlopsBenchmarkResults_V1:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
         """
@@ -50,7 +47,7 @@ class FlopsBenchmarkSuite:
         }
 
         # put results in appropriate format
-        return FlopsBenchmarkResults(
+        return FlopsBenchmarkResults_V1(
             system=SystemInfo.from_system(),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
@@ -68,7 +65,7 @@ class FlopsBenchmarkSuite:
     #  Static methods
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_flops_benchmarking_suite(size: int) -> dict[FlopType | None, FlopsMicroBenchmark]:
+    def get_flops_benchmarking_suite(size: int) -> dict[FlopType | None, FlopsMicroBenchmark_V1]:
         """
         Returns a benchmark for each FlopType + None (=baseline test), of requested array size.
         """
@@ -157,7 +154,7 @@ class FlopsBenchmarkSuite:
 
         # --- return in appropriate format ----------------
         return {
-            key: FlopsMicroBenchmark(name=name, f=f, size=size)
+            key: FlopsMicroBenchmark_V1(name=name, f=f, size=size)
             for key, name, f in [
                 (key, key.long_name() if key else "baseline", f)
                 for key, f in [

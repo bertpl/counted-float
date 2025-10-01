@@ -2,10 +2,10 @@ from typing import Callable
 
 import numpy as np
 
-from ._micro_benchmark import MicroBenchmark
+from counted_float._core.benchmarking.micro import MicroBenchmark
 
 
-class FlopsMicroBenchmark(MicroBenchmark):
+class FlopsMicroBenchmark_V1(MicroBenchmark):
     """
     Base class for benchmark that checks speed of a certain type of floating point operation.
 
