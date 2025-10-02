@@ -15,7 +15,7 @@ def test_flops_micro_benchmark_v1():
     benchmark = FlopsMicroBenchmark_V1(name="test", f=test_function, size=1234)
 
     # --- act ---------------------------------------------
-    single_run_result = benchmark.run_once(n_operations=10)
+    single_run_result = benchmark.run_once(n_executions=10)
     multi_run_result = benchmark.run_many(n_runs_total=10, n_runs_warmup=2, n_seconds_per_run_target=0.01)
 
     # --- assert ------------------------------------------

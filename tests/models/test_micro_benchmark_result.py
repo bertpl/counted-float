@@ -9,14 +9,14 @@ from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 def test_single_run_result():
     # --- arrange -----------------------------------------
     srr = SingleRunResult(
-        n_operations=10,
+        n_executions=10,
         t_nsecs=1234,
         t_cycles=4567,
     )
 
     # --- act & assert ------------------------------------
-    assert srr.nsecs_per_op() == pytest.approx(123.4, rel=1e-15)
-    assert srr.cycles_per_op() == pytest.approx(456.7, rel=1e-15)
+    assert srr.nsecs_per_exec() == pytest.approx(123.4, rel=1e-15)
+    assert srr.cycles_per_exec() == pytest.approx(456.7, rel=1e-15)
 
 
 # =================================================================================================
@@ -28,7 +28,7 @@ def test_micro_benchmark_result():
         warmup_runs=[],
         benchmark_runs=[
             SingleRunResult(
-                n_operations=10,
+                n_executions=10,
                 t_nsecs=1.0 + i,  # 1.0 -> 11.0
                 t_cycles=2.0 + i,  # 2.0 -> 12.0
             )
