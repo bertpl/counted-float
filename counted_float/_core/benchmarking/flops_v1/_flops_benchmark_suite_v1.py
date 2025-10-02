@@ -25,7 +25,7 @@ class FlopsBenchmarkSuite_V1:
         n_seconds_per_run_target: float = 0.01,
     ) -> FlopsBenchmarkResults_V1:
         """
-        Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
+        Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults_V1 object.
         """
 
         # warn if needed
@@ -42,7 +42,7 @@ class FlopsBenchmarkSuite_V1:
                 n_runs_total=n_runs_total,
                 n_runs_warmup=n_runs_warmup,
                 n_seconds_per_run_target=n_seconds_per_run_target,
-            ).summary_stats_nsecs_per_op()
+            ).summary_stats_nsecs_per_exec()
             for flop_type, benchmark in benchmarks.items()
         }
 

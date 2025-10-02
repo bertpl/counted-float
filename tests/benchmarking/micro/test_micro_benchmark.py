@@ -69,9 +69,9 @@ def test_micro_benchmark(n_runs_total: int, n_runs_warmup: int, n_seconds_per_ru
     assert isinstance(results, MicroBenchmarkResult)
     assert len(results.benchmark_runs) == n_runs_total - n_runs_warmup
     assert len(results.warmup_runs) == n_runs_warmup
-    assert results.summary_stats_nsecs_per_op().q25 < 1.1 * nsec_per_exec, (
+    assert results.summary_stats_nsecs_per_exec().q25 < 1.1 * nsec_per_exec, (
         "estimated time range should approx. enclose actual time"
     )
-    assert results.summary_stats_nsecs_per_op().q75 > 0.9 * nsec_per_exec, (
+    assert results.summary_stats_nsecs_per_exec().q75 > 0.9 * nsec_per_exec, (
         "estimated time range should approx. enclose actual time"
     )

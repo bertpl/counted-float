@@ -37,9 +37,9 @@ def test_micro_benchmark_result():
     )
 
     # --- act & assert ------------------------------------
-    assert mbr.summary_stats_nsecs_per_op().q25 == pytest.approx(0.35, rel=1e-15)
-    assert mbr.summary_stats_nsecs_per_op().q50 == pytest.approx(0.60, rel=1e-15)
-    assert mbr.summary_stats_nsecs_per_op().q75 == pytest.approx(0.85, rel=1e-15)
-    assert mbr.summary_stats_cycles_per_op().q25 == pytest.approx(0.45, rel=1e-15)
-    assert mbr.summary_stats_cycles_per_op().q50 == pytest.approx(0.70, rel=1e-15)
-    assert mbr.summary_stats_cycles_per_op().q75 == pytest.approx(0.95, rel=1e-15)
+    assert mbr.summary_stats_nsecs_per_exec().q25 == pytest.approx(0.35, rel=1e-15)
+    assert mbr.summary_stats_nsecs_per_exec().q50 == pytest.approx(0.60, rel=1e-15)
+    assert mbr.summary_stats_nsecs_per_exec().q75 == pytest.approx(0.85, rel=1e-15)
+    assert mbr.summary_stats_cycles_per_exec().q25 == pytest.approx(0.45, rel=1e-15)
+    assert mbr.summary_stats_cycles_per_exec().q50 == pytest.approx(0.70, rel=1e-15)
+    assert mbr.summary_stats_cycles_per_exec().q75 == pytest.approx(0.95, rel=1e-15)
