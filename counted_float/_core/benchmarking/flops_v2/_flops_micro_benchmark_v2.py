@@ -1,9 +1,10 @@
-from abc import abstractmethod
 from typing import Callable
 
 import numpy as np
 
 from counted_float._core.benchmarking.micro import MicroBenchmark
+
+from ._array_generator import ArrayGenerator
 
 
 class FlopsMicroBenchmark_V2(MicroBenchmark):
@@ -41,9 +42,10 @@ class FlopsMicroBenchmark_V2(MicroBenchmark):
     operations, so we can make representative estimates of the number of FLOPS executed by instrumented algorithms.
     """
 
-    def __init__(self, name: str, f: Callable, size: int):
+    def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable):
         super().__init__(name=name, single_execution=f"{size} iterations")
         self.size = size
+        self.array_init = array_init
         self.f = f
         self.n_executions = 0
         # input arrays
@@ -55,7 +57,7 @@ class FlopsMicroBenchmark_V2(MicroBenchmark):
     def _prepare_benchmark(self, n_executions: int):
         self.n_executions = n_executions
         # input array
-        self.in_f = self._prepare_in_f_array(self.size)
+        self.in_f = self.array_init.new_array(self.size)
         # output arrays
         self.out_f: np.ndarray = np.full(self.size, 0.0, dtype=float)
         self.out_i: np.ndarray = np.full(self.size, 0, dtype=int)
@@ -64,7 +66,3 @@ class FlopsMicroBenchmark_V2(MicroBenchmark):
         # repeat 'f' n_executions times, each time on the same data
         for _ in range(self.n_executions):
             self.f(self.size, self.in_f, self.out_f, self.out_i)
-
-    @abstractmethod
-    def _prepare_in_f_array(self, size: int) -> np.ndarray:
-        raise NotImplementedError()
