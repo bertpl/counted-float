@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -39,7 +40,8 @@ class ArrayGeneratorLinear(ArrayGenerator):
         self.max_value = max_value
 
     def new_array(self, size: int) -> np.ndarray:
-        return self.min_value + _random_balanced_values(size) * (self.max_value - self.min_value)
+        uniform_values = 0.5 * (1.0 + _random_balanced_values(size))  # uniform random values in [0,1]
+        return self.min_value + uniform_values * (self.max_value - self.min_value)
 
 
 class ArrayGeneratorLog(ArrayGenerator):
@@ -49,14 +51,26 @@ class ArrayGeneratorLog(ArrayGenerator):
         self.max_value = max_value
 
     def new_array(self, size: int) -> np.ndarray:
-        return self.min_value * (self.max_value / self.min_value) ** _random_balanced_values(size)
+        uniform_values = 0.5 * (1.0 + _random_balanced_values(size))  # uniform random values in [0,1]
+        return self.min_value * (self.max_value / self.min_value) ** uniform_values
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
 def _random_balanced_values(size: int) -> np.ndarray:
-    """Returns random values in (0,1), with avg=0.5"""
-    v = np.linspace(0.5 / size, 1 - (0.5 / size), size)
-    np.random.shuffle(v)
-    return v
+    """
+    Returns random values in [-1,1], such that...
+      - mean value == 0.0
+      - cumulative sum of any arbitrary first n values also lies within [-1,1]
+    """
+    cumsum = 0.0
+    lst = []
+    for i in range(size - 1):
+        next_min_value = max(-1.0, -1.0 - cumsum)
+        next_max_value = min(1.0, 1.0 - cumsum)
+        next_value = random.uniform(next_min_value, next_max_value)
+        lst.append(next_value)
+        cumsum += next_value
+    lst.append(-cumsum)
+    return np.array(lst)
