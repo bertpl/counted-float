@@ -63,6 +63,5 @@ class FlopsMicroBenchmark_V2(MicroBenchmark):
         self.out_i: np.ndarray = np.full(self.size, 0, dtype=int)
 
     def _run_benchmark(self):
-        # repeat 'f' n_executions times, each time on the same data
-        for _ in range(self.n_executions):
-            self.f(self.size, self.in_f, self.out_f, self.out_i)
+        # call 'f' with appropriate n_executions & size parameters
+        self.f(self.n_executions, self.size, self.in_f, self.out_f, self.out_i)
