@@ -66,9 +66,9 @@ class BuiltInData:
     #  Benchmarks
     # -------------------------------------------------------------------------
     @classmethod
-    def benchmarks(cls) -> dict[str, FlopsBenchmarkResults_V1]:
+    def benchmarks(cls) -> dict[str, FlopsBenchmarkResults_V1 | FlopsBenchmarkResults_V2]:
         return {
-            key: FlopsBenchmarkResults_V1.model_validate_json(json_str)
+            key: _deserialize_as_any_pydantic_class(json_str, [FlopsBenchmarkResults_V1, FlopsBenchmarkResults_V2])
             for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}")).items()
             if "benchmark" in key
         }
