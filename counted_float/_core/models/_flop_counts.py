@@ -23,6 +23,8 @@ class FlopCounts:
     LTE: int = 0
     CMP_ZERO: int = 0
     RND: int = 0
+    F2I: int = 0
+    I2F: int = 0
     ADD: int = 0
     SUB: int = 0
     MUL: int = 0
