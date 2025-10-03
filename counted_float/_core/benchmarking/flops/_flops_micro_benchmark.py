@@ -7,7 +7,7 @@ from counted_float._core.benchmarking.micro import MicroBenchmark
 from ._array_generator import ArrayGenerator
 
 
-class FlopsMicroBenchmark_V2(MicroBenchmark):
+class FlopsMicroBenchmark(MicroBenchmark):
     """
     Base class for benchmark that estimates execution time (in cpu cycles) of certain combinations of floating-point
       operations.  These can then be combined to estimate execution time (in cpu cycles) of individual floating-point

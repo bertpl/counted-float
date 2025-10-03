@@ -1,23 +1,23 @@
-from counted_float._core.benchmarking.flops_v2 import FlopsBenchmarkSuite_V2, FlopsMicroBenchmark_V2
+from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
 from counted_float._core.models import FlopsBenchmarkResults_V2, FlopsBenchmarkType
 
 
 def test_flops_benchmarking_suite_get():
     # --- arrange -----------------------------------------
-    suite = FlopsBenchmarkSuite_V2()
+    suite = FlopsBenchmarkSuite()
 
     # --- act ---------------------------------------------
     benchmarks = suite.get_flops_benchmarking_suite(size=12345)
 
     # --- assert ------------------------------------------
     assert all([fbt in benchmarks.keys() for fbt in FlopsBenchmarkType])
-    assert all([isinstance(v, FlopsMicroBenchmark_V2) for v in benchmarks.values()])
+    assert all([isinstance(v, FlopsMicroBenchmark) for v in benchmarks.values()])
     assert all([v.size == 12345 for v in benchmarks.values()])
 
 
 def test_flops_benchmarking_suite_run():
     # --- arrange -----------------------------------------
-    suite = FlopsBenchmarkSuite_V2()
+    suite = FlopsBenchmarkSuite()
 
     # --- act ---------------------------------------------
     result = suite.run(

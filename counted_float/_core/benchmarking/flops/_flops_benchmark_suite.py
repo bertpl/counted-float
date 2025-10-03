@@ -13,12 +13,12 @@ from counted_float._core.models import (
 )
 
 from ._array_generator import ArrayGenerator
-from ._flops_micro_benchmark_v2 import FlopsMicroBenchmark_V2
+from ._flops_micro_benchmark import FlopsMicroBenchmark
 
 FBT = FlopsBenchmarkType
 
 
-class FlopsBenchmarkSuite_V2:
+class FlopsBenchmarkSuite:
     # -------------------------------------------------------------------------
     #  Main API
     # -------------------------------------------------------------------------
@@ -98,7 +98,7 @@ class FlopsBenchmarkSuite_V2:
     #  Static methods
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark_V2]:
+    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:
         """
         Returns a benchmark for each FlopsBenchmarkType, of requested array size.
         """
@@ -265,7 +265,7 @@ class FlopsBenchmarkSuite_V2:
 
         # --- return in appropriate format ----------------
         return {
-            key: FlopsMicroBenchmark_V2(name=str(key), size=size, f=f, array_init=array_init)
+            key: FlopsMicroBenchmark(name=str(key), size=size, f=f, array_init=array_init)
             for key, f, array_init in [
                 (FBT.BASELINE, f_baseline, ArrayGenerator.lin_range(min_value=1.0, max_value=2.0)),
                 (FBT.ADD, f_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
