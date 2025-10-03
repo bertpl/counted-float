@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import pytest
 
-from counted_float._core.benchmarking.flops_v2._array_generator import (
+from counted_float._core.benchmarking.flops._array_generator import (
     ArrayGenerator,
     ArrayGeneratorLinear,
     ArrayGeneratorLog,
