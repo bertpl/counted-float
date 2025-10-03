@@ -1,6 +1,5 @@
 from importlib.metadata import version
 
-from .flops_v1 import FlopsBenchmarkResults_V1, FlopsBenchmarkSuite_V1
 from .flops_v2 import FlopsBenchmarkResults_V2, FlopsBenchmarkSuite_V2
 
 

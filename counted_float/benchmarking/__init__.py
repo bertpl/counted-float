@@ -1,6 +1,6 @@
-from counted_float._core.benchmarking import FlopsBenchmarkResults_V1, run_flops_benchmark
+from counted_float._core.benchmarking import FlopsBenchmarkResults_V2, run_flops_benchmark
 
 __all__ = [
-    "FlopsBenchmarkResults_V1",
+    "FlopsBenchmarkResults_V2",
     "run_flops_benchmark",
 ]
