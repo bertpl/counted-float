@@ -12,6 +12,11 @@
             "min_cycles": 1,
             "max_cycles": 1
         },
+        "ROUNDSD": {
+            "note": "",
+            "min_cycles": 8,
+            "max_cycles": 8
+        },
         "CVTSD2SI": {
             "note": "",
             "min_cycles": 7,
