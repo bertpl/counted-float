@@ -2,10 +2,10 @@ from typing import Callable
 
 import numpy as np
 
-from ._micro_benchmark import MicroBenchmark
+from counted_float._core.benchmarking.micro import MicroBenchmark
 
 
-class FlopsMicroBenchmark(MicroBenchmark):
+class FlopsMicroBenchmark_V1(MicroBenchmark):
     """
     Base class for benchmark that checks speed of a certain type of floating point operation.
 
@@ -33,10 +33,10 @@ class FlopsMicroBenchmark(MicroBenchmark):
     """
 
     def __init__(self, name: str, f: Callable, size: int):
-        super().__init__(name=name, single_operation=f"{size} iterations")
+        super().__init__(name=name, single_execution=f"{size} iterations")
         self.size = size
         self.f = f
-        self.n_operations = 0
+        self.n_executions = 0
         # input arrays
         self.in_f1: np.ndarray = np.zeros(size, dtype=float)
         self.in_f2: np.ndarray = np.zeros(size, dtype=float)
@@ -44,8 +44,8 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.out_f: np.ndarray = np.zeros(size, dtype=float)
         self.out_i: np.ndarray = np.zeros(size, dtype=int)
 
-    def _prepare_benchmark(self, n_operations: int):
-        self.n_operations = n_operations
+    def _prepare_benchmark(self, n_executions: int):
+        self.n_executions = n_executions
         # input arrays
         self.in_f1 = 10 * np.random.rand(self.size)
         self.in_f2 = 10 * np.random.rand(self.size)
@@ -54,6 +54,6 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.out_i: np.ndarray = np.full(self.size, 0, dtype=int)
 
     def _run_benchmark(self):
-        # repeat 'f' n_operations times, each time on the same data
-        for _ in range(self.n_operations):
+        # repeat 'f' n_executions times, each time on the same data
+        for _ in range(self.n_executions):
             self.f(self.size, self.in_f1, self.in_f2, self.out_f, self.out_i)

@@ -1,6 +1,6 @@
 {
-    "system_info": {
-        "processor_info": {
+    "system": {
+        "processor": {
             "description": "Intel Core i7 - 1265u",
             "architecture": "x86_64 - x86_64 - 64-bits",
             "n_logical_core_count": 12,
@@ -8,18 +8,18 @@
             "min_freq_mhz": 0,
             "max_freq_mhz": 0
         },
-        "os_info": {
+        "os": {
             "platform": "unknown",
             "system": "Linux",
             "release": "5.15.0-94-generic",
             "version": "unknown"
         },
-        "python_info": {
+        "python": {
             "version": "3.11.7",
             "implementation": "CPython",
             "compiler": "GCC 11.2.0"
         },
-        "package_info": {
+        "packages": {
             "counted_float": "unknown",
             "llvmlite": "unknown",
             "numba": "unknown",

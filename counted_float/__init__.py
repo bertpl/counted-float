@@ -5,7 +5,7 @@ from ._core.counting import BuiltInData, CountedFloat, FlopCountingContext, Paus
 from ._core.models import (
     FlopCounts,
     FlopsBenchmarkDurations,
-    FlopsBenchmarkResults,
+    FlopsBenchmarkResults_V1,
     FlopType,
     FlopWeights,
     Quantiles,
@@ -19,7 +19,7 @@ __all__ = [
     "FlopCountingContext",
     "FlopCounts",
     "FlopsBenchmarkDurations",
-    "FlopsBenchmarkResults",
+    "FlopsBenchmarkResults_V1",
     "FlopType",
     "FlopWeights",
     "PauseFlopCounting",

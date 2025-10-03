@@ -23,18 +23,18 @@ class BenchmarkSettings(MyBaseModel):
 #  System Info
 # =================================================================================================
 class SystemInfo(MyBaseModel):
-    processor_info: ProcessorInfo
-    os_info: OSInfo
-    python_info: PythonInfo
-    package_info: PackageInfo
+    processor: ProcessorInfo
+    os: OSInfo
+    python: PythonInfo
+    packages: PackagesInfo
 
     @classmethod
     def from_system(cls) -> SystemInfo:
         return SystemInfo(
-            processor_info=ProcessorInfo.from_system(),
-            os_info=OSInfo.from_system(),
-            python_info=PythonInfo.from_system(),
-            package_info=PackageInfo.from_system(),
+            processor=ProcessorInfo.from_system(),
+            os=OSInfo.from_system(),
+            python=PythonInfo.from_system(),
+            packages=PackagesInfo.from_system(),
         )
 
 
@@ -102,7 +102,7 @@ class PythonInfo(MyBaseModel):
         )
 
 
-class PackageInfo(MyBaseModel):
+class PackagesInfo(MyBaseModel):
     counted_float: str
     llvmlite: str
     numba: str
@@ -111,14 +111,14 @@ class PackageInfo(MyBaseModel):
     py_cpuinfo: str
 
     @classmethod
-    def from_system(cls) -> PackageInfo:
+    def from_system(cls) -> PackagesInfo:
         def get_package_version(_package: str) -> str:
             try:
                 return version(_package)
             except PackageNotFoundError:
                 return "<not_installed>"
 
-        return PackageInfo(
+        return PackagesInfo(
             counted_float=get_package_version("counted-float"),
             llvmlite=get_package_version("llvmlite"),
             numba=get_package_version("numba"),
