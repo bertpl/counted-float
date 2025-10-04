@@ -14,8 +14,8 @@ class FlopType(StrEnum):
     GTE = "x>=y"
     LTE = "x<=y"
     CMP_ZERO = "x>=0"
-    RND = "round(x)"  # float -> float
-    F2I = "int(x)"  # float -> int, also includes math.floor(x), math.ceil(x)
+    RND = "round(x,0)"  # float -> float
+    F2I = "int(x)"  # float -> int, also includes round(x), math.floor(x), math.ceil(x)
     I2F = "float(x)"  # int -> float
     ADD = "x+y"
     SUB = "x-y"

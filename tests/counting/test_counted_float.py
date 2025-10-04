@@ -269,6 +269,20 @@ def test_counted_float_math_ge_zero(f: float):
     assert f_ge_zero == cf_ge_zero
 
 
+@pytest.mark.parametrize("n_digits", [0, 1])
+@pytest.mark.parametrize("f", [-1.0, 0.0, -math.pi, math.e])
+def test_counted_float_math_round_n(f: float, n_digits: int):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(f)
+    # --- act ---------------------------------------------
+    f_round = round(f, n_digits)
+    cf_round = round(cf, n_digits)
+
+    # --- assert ------------------------------------------
+    assert isinstance(cf_round, float)
+    assert f_round == cf_round
+
+
 @pytest.mark.parametrize("f", [-1.0, 0.0, -math.pi, math.e])
 def test_counted_float_math_round(f: float):
     # --- arrange -----------------------------------------
@@ -280,15 +294,6 @@ def test_counted_float_math_round(f: float):
     # --- assert ------------------------------------------
     assert isinstance(cf_round, int)
     assert f_round == cf_round
-
-
-def test_counted_float_math_round_value_error():
-    # --- arrange -----------------------------------------
-    cf = CountedFloat(math.pi)
-
-    # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
-        round(cf, 2)  # not supported by CountedFloat
 
 
 @pytest.mark.parametrize("f", [-1.0, 0.0, -math.pi, math.e])
@@ -631,16 +636,25 @@ def test_counted_float_counts_ge(global_counter):
     assert global_counter.GTE == 3
 
 
-def test_counted_float_counts_round(global_counter):
+@pytest.mark.parametrize(
+    "ndigits, expected_n_rnd, expected_n_f2i",
+    [
+        (None, 0, 1),  # round to int -> F2I
+        (0, 1, 0),  # round to float -> RND
+        (1, 1, 0),  # round to float -> RND
+    ],
+)
+def test_counted_float_counts_round(global_counter, ndigits, expected_n_rnd: int, expected_n_f2i: int):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
     # --- act ---------------------------------------------
-    _ = round(cf)
+    _ = round(cf, ndigits)
 
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 1
-    assert global_counter.RND == 1
+    assert global_counter.RND == expected_n_rnd
+    assert global_counter.F2I == expected_n_f2i
 
 
 def test_counted_float_counts_floor(global_counter):
@@ -652,7 +666,7 @@ def test_counted_float_counts_floor(global_counter):
 
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 1
-    assert global_counter.RND == 1
+    assert global_counter.F2I == 1
 
 
 def test_counted_float_counts_ceil(global_counter):
@@ -664,7 +678,31 @@ def test_counted_float_counts_ceil(global_counter):
 
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 1
-    assert global_counter.RND == 1
+    assert global_counter.F2I == 1
+
+
+def test_counted_float_counts_int(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = int(cf)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.F2I == 1
+
+
+def test_counted_float_counts_trunc(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = math.trunc(cf)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.F2I == 1
 
 
 def test_counted_float_counts_add(global_counter):

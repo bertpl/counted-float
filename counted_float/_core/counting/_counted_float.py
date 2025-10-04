@@ -96,21 +96,38 @@ class CountedFloat(float):
         return super().__ge__(other)
 
     def __round__(self, n=None) -> int:
-        """round(x, n)"""
-        if n:
-            raise ValueError("only n==None or n==0 are supported in a CountedFloat")
-        GLOBAL_COUNTER.incr_rnd()  # assuming n=0, otherwise we can't reliably count the flops
-        return super().__round__()
+        """
+        round(x, n)
+          n = None -> round to nearest integer and return int
+          n = 0    -> round to nearest integer and return float
+          n > 0    -> round to n decimal places and return float
+        """
+        if n is None:
+            GLOBAL_COUNTER.incr_f2i()  # will round and return int
+        else:
+            GLOBAL_COUNTER.incr_rnd()  # will round and return float
+
+        return super().__round__(n)
 
     def __floor__(self) -> int:
         """math.floor(x)"""
-        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_f2i()
         return super().__floor__()
 
     def __ceil__(self) -> int:
         """math.ceil(x)"""
-        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_f2i()
         return super().__ceil__()
+
+    def __int__(self) -> int:
+        """int(x)"""
+        GLOBAL_COUNTER.incr_f2i()
+        return super().__int__()
+
+    def __trunc__(self) -> int:
+        """int(x)"""
+        GLOBAL_COUNTER.incr_f2i()
+        return super().__trunc__()
 
     def __add__(self, other) -> CountedFloat:
         """x+other"""
