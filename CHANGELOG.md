@@ -8,7 +8,8 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- differentiate between different rounding operations (float->float & float->int) and add counting of int->float where possible.
+  - this introduces 2 new flop types: `F2I` and `I2F`
 
 ### Improvements
 - Make SystemInfo (sub-model of benchmark results) more complete & granular, providing explicit package info, OS info, ...

@@ -33,8 +33,10 @@ class FlopsBenchmarkResults_V1(MyBaseModel):
         median_baseline_ns = self.results_ns.baseline.q50
         median_flops_ns = {k: v.q50 for k, v in self.results_ns.flops.items()}
 
-        # step 2) surplus durations for each flop type, on top of baseline duration
-        flop_durations_ns = {flop_type: median_flops_ns[flop_type] - median_baseline_ns for flop_type in FlopType}
+        # step 2) surplus durations for each benchmarked flop type, on top of baseline duration
+        flop_durations_ns = {
+            flop_type: median_ns - median_baseline_ns for flop_type, median_ns in median_flops_ns.items()
+        }
 
         # step 3) convert to FlopWeights
         return FlopWeights.from_abs_flop_costs(flop_costs=flop_durations_ns)

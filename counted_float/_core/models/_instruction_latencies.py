@@ -55,6 +55,7 @@ class InstructionLatencies_SSE2(MyBaseModel):
     architecture: Literal["sse2"] = "sse2"
 
     ANDPD: Latency = Latency()  # abs(x)
+    ROUNDSD: Latency = Latency()  # round(x,0)   (float -> float)
     CVTSD2SI: Latency = Latency()  # double -> int
     CVTSI2SD: Latency = Latency()  # int -> double
     XORPD: Latency = Latency()  # -x
@@ -77,7 +78,9 @@ class InstructionLatencies_SSE2(MyBaseModel):
                 FlopType.GTE: self.UCOMISD.geo_mean(),
                 FlopType.LTE: self.UCOMISD.geo_mean(),
                 FlopType.CMP_ZERO: self.UCOMISD.geo_mean(),
-                FlopType.RND: self.CVTSD2SI.geo_mean(),
+                FlopType.RND: self.ROUNDSD.geo_mean(),
+                FlopType.F2I: self.CVTSD2SI.geo_mean(),
+                FlopType.I2F: self.CVTSI2SD.geo_mean(),
                 FlopType.ADD: self.ADDSD.geo_mean(),
                 FlopType.SUB: self.SUBSD.geo_mean(),
                 FlopType.MUL: self.MULSD.geo_mean(),
@@ -97,6 +100,7 @@ class InstructionLatencies_ARM(MyBaseModel):
     architecture: Literal["arm"] = "arm"
 
     FABS: Latency = Latency()  # abs(x)
+    FRINT: Latency = Latency()  # round(x,0)   (float -> float)
     FCVTZS: Latency = Latency()  # double -> int
     SCVTF: Latency = Latency()  # int -> double
     FNEG: Latency = Latency()  # -x
@@ -119,7 +123,9 @@ class InstructionLatencies_ARM(MyBaseModel):
                 FlopType.GTE: self.FCMP.geo_mean(),
                 FlopType.LTE: self.FCMP.geo_mean(),
                 FlopType.CMP_ZERO: self.FCMP.geo_mean(),
-                FlopType.RND: self.FCVTZS.geo_mean(),
+                FlopType.RND: self.FRINT.geo_mean(),
+                FlopType.F2I: self.FCVTZS.geo_mean(),
+                FlopType.I2F: self.SCVTF.geo_mean(),
                 FlopType.ADD: self.FADD.geo_mean(),
                 FlopType.SUB: self.FSUB.geo_mean(),
                 FlopType.MUL: self.FMUL.geo_mean(),

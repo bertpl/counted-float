@@ -143,7 +143,7 @@ rationale behind choice of data sources and methodology.
     FlopType.GTE        [x>=y]          :    1
     FlopType.LTE        [x<=y]          :    1
     FlopType.CMP_ZERO   [x>=0]          :    1
-    FlopType.RND        [round(x)]      :    1
+    FlopType.RND        [round(x,0)]    :    1
     FlopType.ADD        [x+y]           :    1
     FlopType.SUB        [x-y]           :    1
     FlopType.MUL        [x*y]           :    1
@@ -206,7 +206,7 @@ from counted_float.config import get_default_empirical_flop_weights, get_default
     FlopType.GTE        [x>=y]          :   0.94684
     FlopType.LTE        [x<=y]          :   0.93101
     FlopType.CMP_ZERO   [x>=0]          :   0.82204
-    FlopType.RND        [round(x)]      :   0.96944
+    FlopType.RND        [round(x,0)]    :   0.96944
     FlopType.ADD        [x+y]           :   0.89296
     FlopType.SUB        [x-y]           :   1.14383
     FlopType.MUL        [x*y]           :   1.04677
@@ -237,7 +237,7 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.GTE        [x>=y]          :   0.89744
     FlopType.LTE        [x<=y]          :   0.89744
     FlopType.CMP_ZERO   [x>=0]          :   0.84762
-    FlopType.RND        [round(x)]      :   2.63592
+    FlopType.RND        [round(x,0)]    :   2.63592
     FlopType.ADD        [x+y]           :   0.86616
     FlopType.SUB        [x-y]           :   1.10411
     FlopType.MUL        [x*y]           :   1.16515
@@ -268,7 +268,7 @@ Running FLOPS benchmarks using counted-float 0.9.4 ...
 baseline                           : wwwwwwwwww....................   [ 177.53 ns ±  2.0% |   720 cpu cycles ±  2.0% ]  /  1000 iterations
 FlopType.ABS        [abs(x)]       : wwwwwwwwww....................   [ 286.71 ns ±  5.7% | 1.16K cpu cycles ±  5.7% ]  /  1000 iterations
 FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................   [ 294.71 ns ±  3.6% | 1.20K cpu cycles ±  3.6% ]  /  1000 iterations
-FlopType.RND        [round(x)]     : wwwwwwwwww....................   [ 291.74 ns ±  6.1% | 1.18K cpu cycles ±  6.1% ]  /  1000 iterations
+FlopType.RND        [round(x,0)]   : wwwwwwwwww....................   [ 291.74 ns ±  6.1% | 1.18K cpu cycles ±  6.1% ]  /  1000 iterations
 FlopType.MINUS      [-x]           : wwwwwwwwww....................   [ 291.81 ns ±  5.8% | 1.18K cpu cycles ±  5.8% ]  /  1000 iterations
 FlopType.EQUALS     [x==y]         : wwwwwwwwww....................   [ 297.70 ns ±  4.2% | 1.21K cpu cycles ±  4.2% ]  /  1000 iterations
 FlopType.GTE        [x>=y]         : wwwwwwwwww....................   [ 301.59 ns ±  3.2% | 1.22K cpu cycles ±  3.2% ]  /  1000 iterations
@@ -291,7 +291,7 @@ FlopType.POW        [x^y]          : wwwwwwwwww....................   [   6.14 �
     FlopType.GTE        [x>=y]          :   1.10812
     FlopType.LTE        [x<=y]          :   1.05609
     FlopType.CMP_ZERO   [x>=0]          :   1.04665
-    FlopType.RND        [round(x)]      :   1.02017
+    FlopType.RND        [round(x,0)]    :   1.02017
     FlopType.ADD        [x+y]           :   1.00000
     FlopType.SUB        [x-y]           :   1.00328
     FlopType.MUL        [x*y]           :   1.14268
