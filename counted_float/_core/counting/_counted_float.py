@@ -21,8 +21,10 @@ class CountedFloat(float):
     # -------------------------------------------------------------------------
     #  CONSTRUCTOR
     # -------------------------------------------------------------------------
-    def __new__(cls, value: float):
-        self = super().__new__(cls, value)
+    def __new__(cls, value: float | int):
+        if isinstance(value, int):
+            GLOBAL_COUNTER.incr_i2f()
+        self = super().__new__(cls, float(value))
         return self
 
     def __str__(self):
@@ -52,6 +54,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_equals()
         return super().__eq__(other)
 
@@ -60,6 +64,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_equals()
         return super().__ne__(other)
 
@@ -68,6 +74,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_lte()
         return super().__lt__(other)
 
@@ -76,6 +84,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_lte()
         return super().__le__(other)
 
@@ -84,6 +94,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_gte()
         return super().__gt__(other)
 
@@ -92,6 +104,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 0:
             GLOBAL_COUNTER.incr_cmp_zero()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_gte()
         return super().__ge__(other)
 
@@ -132,41 +146,57 @@ class CountedFloat(float):
     def __add__(self, other) -> CountedFloat:
         """x+other"""
         GLOBAL_COUNTER.incr_add()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__add__(other))
 
     def __radd__(self, other) -> CountedFloat:
         """other+x"""
         GLOBAL_COUNTER.incr_add()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__radd__(other))
 
     def __sub__(self, other) -> CountedFloat:
         """x-other"""
         GLOBAL_COUNTER.incr_sub()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__sub__(other))
 
     def __rsub__(self, other) -> CountedFloat:
         """other-x"""
         GLOBAL_COUNTER.incr_sub()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rsub__(other))
 
     def __mul__(self, other) -> CountedFloat:
         """x*other or other*x"""
         GLOBAL_COUNTER.incr_mul()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__mul__(other))
 
     def __rmul__(self, other) -> CountedFloat:
         """other*x"""
         GLOBAL_COUNTER.incr_mul()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rmul__(other))
 
     def __truediv__(self, other) -> CountedFloat:
         """x/other"""
         GLOBAL_COUNTER.incr_div()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__truediv__(other))
 
     def __rtruediv__(self, other) -> CountedFloat:
         """other/x"""
         GLOBAL_COUNTER.incr_div()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rtruediv__(other))
 
     def __pow__(self, other) -> CountedFloat:
@@ -174,6 +204,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
         return CountedFloat(super().__pow__(other))
 
@@ -182,6 +214,8 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_pow2()
         else:
+            if isinstance(other, int):
+                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
         return CountedFloat(super().__rpow__(other))
 

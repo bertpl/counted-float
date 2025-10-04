@@ -72,6 +72,9 @@ class GlobalFlopCounter:
     def incr_f2i(self):
         self.__counts.F2I += self.__incr
 
+    def incr_i2f(self):
+        self.__counts.I2F += self.__incr
+
     def incr_add(self):
         self.__counts.ADD += self.__incr
 
