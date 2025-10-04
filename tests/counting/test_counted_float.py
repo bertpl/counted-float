@@ -547,10 +547,9 @@ def test_counted_float_counts_eq(global_counter):
     _ = cf == 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.EQUALS == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 def test_counted_float_counts_ne(global_counter):
@@ -565,10 +564,9 @@ def test_counted_float_counts_ne(global_counter):
     _ = cf != 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.EQUALS == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 def test_counted_float_counts_lt(global_counter):
@@ -583,10 +581,9 @@ def test_counted_float_counts_lt(global_counter):
     _ = cf < 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.LTE == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 def test_counted_float_counts_le(global_counter):
@@ -601,10 +598,9 @@ def test_counted_float_counts_le(global_counter):
     _ = cf <= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.LTE == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 def test_counted_float_counts_gt(global_counter):
@@ -619,10 +615,9 @@ def test_counted_float_counts_gt(global_counter):
     _ = cf > 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.GTE == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 @pytest.mark.parametrize("min_max_fun", [min, max])
@@ -648,7 +643,7 @@ def test_counted_float_counts_min_max(
     cf_min_max = min_max_fun(left, right)
 
     # --- assert ------------------------------------------
-    assert global_counter.LTE + global_counter.GTE == 1
+    assert global_counter.COMP == 1
     assert global_counter.I2F == n_integers
     assert f_min_max == cf_min_max
 
@@ -665,10 +660,9 @@ def test_counted_float_counts_ge(global_counter):
     _ = cf >= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.CMP_ZERO == 1
-    assert global_counter.GTE == 4
-    assert global_counter.I2F == 1
+    assert global_counter.total_count() == 7
+    assert global_counter.COMP == 5
+    assert global_counter.I2F == 2
 
 
 @pytest.mark.parametrize(

@@ -54,17 +54,8 @@ class GlobalFlopCounter:
     def incr_minus(self):
         self.__counts.MINUS += self.__incr
 
-    def incr_equals(self):
-        self.__counts.EQUALS += self.__incr
-
-    def incr_gte(self):
-        self.__counts.GTE += self.__incr
-
-    def incr_lte(self):
-        self.__counts.LTE += self.__incr
-
-    def incr_cmp_zero(self):
-        self.__counts.CMP_ZERO += self.__incr
+    def incr_comp(self):
+        self.__counts.COMP += self.__incr
 
     def incr_rnd(self):
         self.__counts.RND += self.__incr
