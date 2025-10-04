@@ -1,14 +1,32 @@
 {
-    "system_info": {
-        "platform_processor": "arm",
-        "platform_machine": "arm64",
-        "platform_system": "Darwin",
-        "platform_release": "24.5.0",
-        "platform_python_version": "3.13.5",
-        "platform_python_implementation": "CPython",
-        "platform_python_compiler": "Clang 20.1.4 ",
-        "psutil_cpu_count_logical": 16,
-        "psutil_cpu_count_physical": 16
+    "system": {
+        "processor": {
+            "description": "Apple M3 Max",
+            "architecture": "arm64 - ARM_8 - 64-bits",
+            "n_logical_core_count": 16,
+            "n_physical_core_count": 16,
+            "min_freq_mhz": 1020,
+            "max_freq_mhz": 4056
+        },
+        "os": {
+            "platform": "macOS-15.6.1-arm64-arm-64bit-Mach-O",
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Mon Jul 14 11:30:55 PDT 2025; root:xnu-11417.140.69~1/RELEASE_ARM64_T6031"
+        },
+        "python": {
+            "version": "3.13.5",
+            "implementation": "CPython",
+            "compiler": "Clang 20.1.4"
+        },
+        "packages": {
+            "counted_float": "unknown",
+            "llvmlite": "unknown",
+            "numba": "unknown",
+            "numpy": "unknown",
+            "psutil": "unknown",
+            "py_cpuinfo": "unknown"
+        }
     },
     "benchmark_settings": {
         "array_size": 1000,
@@ -33,7 +51,7 @@
                 "q50": 303.58112640145805,
                 "q75": 306.1948869947011
             },
-            "round(x)": {
+            "round(x,0)": {
                 "q25": 298.31250819549473,
                 "q50": 304.39334992215333,
                 "q75": 311.7635501410813

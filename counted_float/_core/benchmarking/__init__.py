@@ -1,11 +1,9 @@
 from importlib.metadata import version
 
-from counted_float._core.models import FlopsBenchmarkResults
-
-from ._flops_benchmark_suite import FlopsBenchmarkSuite
+from .flops import FlopsBenchmarkResults_V2, FlopsBenchmarkSuite
 
 
-def run_flops_benchmark() -> FlopsBenchmarkResults:
+def run_flops_benchmark() -> FlopsBenchmarkResults_V2:
     """Run the flops benchmark suite with default settings returns a FlopsBenchmarkResults object."""
 
     print()

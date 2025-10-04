@@ -10,6 +10,11 @@
             "min_cycles": 1,
             "max_cycles": 1
         },
+        "ROUNDSD": {
+            "note": "https://uops.info/html-lat/ZEN3/ROUNDSD_XMM_XMM_I8-Measurements.html",
+            "min_cycles": 0,
+            "max_cycles": 3
+        },
         "CVTSD2SI": {
             "note": "https://uops.info/html-lat/ZEN3/CVTSD2SI_R64_XMM-Measurements.html",
             "min_cycles": null,

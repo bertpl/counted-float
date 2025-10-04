@@ -21,8 +21,9 @@ type of code does not lend itself to being easily vectorized, hence we ignore ve
 
 ## 1.3. 64-bit instruction sets
 
-More specifically, this means that for x86 CPUs we need to focus on scalar SSE2 instructions, rather than the still-supported
-but rarely used 32-bit-era x87 instructions.
+More specifically, this means that for x86 CPUs we need to focus on scalar SSE2 or higher instructions, rather than the still-supported
+but rarely used 32-bit-era x87 instructions.  The most recent instructions that we can assume to be present are SSE4.1,
+which were introduced in AMD Bulldozer and Intel Penryn designs, which are older than what we consider here.
 
 For ARM processors, we should focus on arm v8-A or higher (AARCH64/ARM64).
 
@@ -57,32 +58,33 @@ Given the mentioned PROs & CONs, these 3 sources can be considered complementary
 # 3. Instruction Mappings
 
 The table below shows the mapping between math operations & FPU instructions for different architectures.  
-x87 instructions are provided fyi; for x86 CPUs only SSE2 scalar instructions are considered. 
+x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructions are considered. 
 
-| math        | x87                           | SSE2           | ARM v8/9 |
-|-------------|-------------------------------|----------------|----------|
-| abs(x)      | FABS                          | ANDPD (1)      | FABS     |
-| double->int | FRND                          | CVTSD2SI       | FCVTZS   | 
-| int->double | ?                             | CVTSI2SD       | SCVTF    |
-| -x          | FCHS                          | XORPD (1)      | FNEG     |
-| x > 0       | FTST                          | (U)COMISD (2)  | FCMP     |
-| x == 0      | FTST                          | (U)COMISD (2)  | FCMP     |
-| x < 0       | FTST                          | (U)COMISD (2)  | FCMP     |
-| x > y       | FCOM                          | (U)COMISD (2)  | FCMP     |
-| x == y      | FCOM                          | (U)COMISD (2)  | FCMP     |
-| x < y       | FCOM                          | (U)COMISD (2)  | FCMP     |
-| max(x,y)    | ?                             | MAXSD          | FMAX     | 
-| min(x,y)    | ?                             | MINSD          | FMIN     | 
-| x + y       | FADD                          | ADDSD          | FADD     |
-| x - y       | FSUB                          | SUBSD          | FSUB     |
-| x*y         | FMUL                          | MULSD          | FMUL     |
-| x/y         | FDIV                          | DIVSD          | FDIV     |
-| sqrt(x)     | FSQRT                         | SQRTSD         | FSQRT    |
-| log2(x)     | FYL2X                         | /              | /        |
-| exp2(x)     | F2XM1 + FADD + FSCALE         | /              | /        |
-| x^y         | FYL2X + F2XM1 + FADD + FSCALE | /              | /        |
-| sin(x)      | FSIN + ?                      | /              | /        |
-| cos(x)      | FCOS + ?                      | /              | /        |
+| math                   | x87                           | SSE(2/3/4.1)  | ARM v8/9       |
+|------------------------|-------------------------------|---------------|----------------|
+| abs(x)                 | FABS                          | ANDPD (1)     | FABS           |
+| round (double->double) | ?                             | ROUNDSD       | FRINT(N/P/Z/A) |
+| double->int            | FRND                          | CVTSD2SI      | FCVTZS         | 
+| int->double            | ?                             | CVTSI2SD      | SCVTF          |
+| -x                     | FCHS                          | XORPD (1)     | FNEG           |
+| x > 0                  | FTST                          | (U)COMISD (2) | FCMP           |
+| x == 0                 | FTST                          | (U)COMISD (2) | FCMP           |
+| x < 0                  | FTST                          | (U)COMISD (2) | FCMP           |
+| x > y                  | FCOM                          | (U)COMISD (2) | FCMP           |
+| x == y                 | FCOM                          | (U)COMISD (2) | FCMP           |
+| x < y                  | FCOM                          | (U)COMISD (2) | FCMP           |
+| max(x,y)               | ?                             | MAXSD         | FMAX           | 
+| min(x,y)               | ?                             | MINSD         | FMIN           | 
+| x + y                  | FADD                          | ADDSD         | FADD           |
+| x - y                  | FSUB                          | SUBSD         | FSUB           |
+| x*y                    | FMUL                          | MULSD         | FMUL           |
+| x/y                    | FDIV                          | DIVSD         | FDIV           |
+| sqrt(x)                | FSQRT                         | SQRTSD        | FSQRT          |
+| log2(x)                | FYL2X                         | /             | /              |
+| exp2(x)                | F2XM1 + FADD + FSCALE         | /             | /              |
+| x^y                    | FYL2X + F2XM1 + FADD + FSCALE | /             | /              |
+| sin(x)                 | FSIN + ?                      | /             | /              |
+| cos(x)                 | FCOS + ?                      | /             | /              |
 
 **NOTES**
 - ***(1)*** These instructions don't have Scalar versions (only Packed versions)

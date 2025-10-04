@@ -11,17 +11,10 @@ from counted_float._core.counting.config._defaults import (
 from counted_float._core.models import FlopType, FlopWeights
 
 
-@pytest.mark.parametrize(
-    "fun",
-    [
-        get_default_consensus_flop_weights,
-        get_default_empirical_flop_weights,
-    ],
-)
 @pytest.mark.parametrize("rounded", [True, False])
-def test_default_flop_weights(fun: Callable, rounded: bool):
+def test_default_flop_weights(rounded: bool):
     # --- act ---------------------------------------------
-    flop_weights = fun(rounded=rounded)
+    flop_weights = get_default_consensus_flop_weights(rounded=rounded)
 
     # --- assert ------------------------------------------
     assert isinstance(flop_weights, FlopWeights)

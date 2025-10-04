@@ -1,6 +1,28 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v0.9.4
+> *(under development)*
+> > This release focuses on rectifying the benchmarking setup, where it is important to test execution ***latency***
+> > rather than ***throughput*** & extending the scope of flops that we can model & capture.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- differentiate between different rounding operations (float->float & float->int) and add counting of int->float where possible.
+  - this introduces 2 new flop types: `F2I` and `I2F`
+
+### Improvements
+- Make SystemInfo (sub-model of benchmark results) more complete & granular, providing explicit package info, OS info, ...
+- Also capture cpu frequency after each benchmark run & estimate cpu latencies, allowing to extract benchmark durations in terms of nanoseconds or cpu cycles (q25, q50, q75)
+- Replace flops benchmarking methods to ensure we test full end-to-end latency, instead of throughput, by ensuring all operations form dependent chains
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v0.9.3
 > *(2025-09-28)*
 > > This release heavily focuses on rectifying, documenting and streamlining
