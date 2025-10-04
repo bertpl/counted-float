@@ -192,12 +192,12 @@ set_active_flop_weights(weights=FlopWeights(...))  # insert own weights here
 
 ### 2.5.1. Default, pre-aggregated flop weights
 
-Built-in empirical, theoretical and consensus built-in flop weights can be inspected using the following functions:
+Built-in flop weights can be inspected using the following functions:
 
 ```python
-from counted_float.config import get_default_empirical_flop_weights, get_default_theoretical_flop_weights, get_default_consensus_flop_weights
+from counted_float.config import get_default_consensus_flop_weights
 
->>> get_default_empirical_flop_weights(rounded=False).show()
+>>> get_default_consensus_flop_weights(rounded=False).show()
 
 {
     FlopType.ABS        [abs(x)]        :   0.90744
@@ -218,7 +218,7 @@ from counted_float.config import get_default_empirical_flop_weights, get_default
 }
 ```
 
-The default weights that are configured in the package are the integer-rounded `consensus` weights.
+The default weights that are configured out-of-the-box in the package are the integer-rounded `consensus` weights.
 
 ### 2.5.2. Custom-aggregated flop weights
 
@@ -248,11 +248,6 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.POW        [x^y]           :  40.16390
 }
 ```
-
-The 3 built-in *default* flop weights are simply presets for the `key_filter` argument:  
-* `get_default_empirical_flop_weights()` --> `get_built_in_flop_weights(key_filter="benchmarks")`
-* `get_default_theoretical_flop_weights()` --> `get_built_in_flop_weights(key_filter="specs")`
-* `get_default_consensus_flop_weights()` --> `get_built_in_flop_weights(key_filter="")`
 
 # 3. Benchmarking
 
