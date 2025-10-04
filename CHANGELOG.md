@@ -1,10 +1,28 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v0.9.4
+> ## v0.9.5
 > *(under development)*
+> > This release focuses on simplifying & extended the modelled FlopTypes.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- extend readme with detailed description of how each flop type is counted & analysed.
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.9.4
+> *(2025-10-04)*
 > > This release focuses on rectifying the benchmarking setup, where it is important to test execution ***latency***
-> > rather than ***throughput*** & extending the scope of flops that we can model & capture.
+> > rather than ***throughput***.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New

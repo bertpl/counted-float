@@ -55,7 +55,7 @@ class InstructionLatencies_SSE2(MyBaseModel):
     architecture: Literal["sse2"] = "sse2"
 
     ANDPD: Latency = Latency()  # abs(x)
-    ROUNDSD: Latency = Latency()  # round(x,0)   (float -> float)
+    ROUNDSD: Latency = Latency()  # round        (float -> float)
     CVTSD2SI: Latency = Latency()  # double -> int
     CVTSI2SD: Latency = Latency()  # int -> double
     XORPD: Latency = Latency()  # -x
@@ -100,7 +100,7 @@ class InstructionLatencies_ARM(MyBaseModel):
     architecture: Literal["arm"] = "arm"
 
     FABS: Latency = Latency()  # abs(x)
-    FRINT: Latency = Latency()  # round(x,0)   (float -> float)
+    FRINT: Latency = Latency()  # round        (float -> float)
     FCVTZS: Latency = Latency()  # double -> int
     SCVTF: Latency = Latency()  # int -> double
     FNEG: Latency = Latency()  # -x
