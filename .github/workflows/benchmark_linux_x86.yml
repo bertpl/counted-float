@@ -1,0 +1,14 @@
+name: benchmark_linux_x86.yml
+on:
+  workflow_dispatch:
+
+jobs:
+  run_benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run counted_float benchmark
+        uses: ./.github/actions/benchmark
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
