@@ -19,9 +19,17 @@ class FlopType(StrEnum):
     MUL = "x*y"
     DIV = "x/y"
     SQRT = "sqrt(x)"
-    POW2 = "2^x"
+    CBRT = "cbrt(x)"
+    EXP = "e^x"
+    EXP2 = "2^x"
+    EXP10 = "10^x"
+    LOG = "log(x)"
     LOG2 = "log2(x)"
+    LOG10 = "log10(x)"
     POW = "x^y"
+    SIN = "sin(x)"
+    COS = "cos(x)"
+    TAN = "tan(x)"
 
     def long_name(self) -> str:
         return f"FlopType.{self.name:<9}  [{self.value}]"

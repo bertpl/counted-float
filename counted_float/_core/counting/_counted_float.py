@@ -194,7 +194,9 @@ class CountedFloat(float):
     def __rpow__(self, other) -> CountedFloat:
         """other**x"""
         if isinstance(other, int) and other == 2:
-            GLOBAL_COUNTER.incr_pow2()
+            GLOBAL_COUNTER.incr_exp2()
+        elif isinstance(other, int) and other == 10:
+            GLOBAL_COUNTER.incr_exp10()
         else:
             if isinstance(other, int):
                 GLOBAL_COUNTER.incr_i2f()
@@ -203,10 +205,18 @@ class CountedFloat(float):
 
 
 # -------------------------------------------------------------------------
-#  override some methods of math module
+#  monkey-patch some methods of math module
 # -------------------------------------------------------------------------
 original_math_sqrt = math.sqrt
+original_math_cbrt = math.cbrt
+original_math_log = math.log
 original_math_log2 = math.log2
+original_math_log10 = math.log10
+original_math_exp = math.exp
+original_math_exp2 = math.exp2
+original_math_sin = math.sin
+original_math_cos = math.cos
+original_math_tan = math.tan
 
 
 def math_sqrt(x: float) -> float | CountedFloat:
@@ -217,6 +227,22 @@ def math_sqrt(x: float) -> float | CountedFloat:
         return original_math_sqrt(x)
 
 
+def math_cbrt(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_cbrt()
+        return CountedFloat(original_math_cbrt(x))
+    else:
+        return original_math_cbrt(x)
+
+
+def math_log(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_log()
+        return CountedFloat(original_math_log(x))
+    else:
+        return original_math_log(x)
+
+
 def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_log2()
@@ -225,11 +251,67 @@ def math_log2(x: float) -> float | CountedFloat:
         return original_math_log2(x)
 
 
+def math_log10(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_log10()
+        return CountedFloat(original_math_log10(x))
+    else:
+        return original_math_log10(x)
+
+
+def math_exp(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_exp()
+        return CountedFloat(original_math_exp(x))
+    else:
+        return original_math_exp(x)
+
+
+def math_exp2(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_exp2()
+        return CountedFloat(original_math_exp2(x))
+    else:
+        return original_math_exp2(x)
+
+
 def math_pow(x: float, y: float) -> float | CountedFloat:
     return x**y
 
 
+def math_sin(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_sin()
+        return CountedFloat(original_math_sin(x))
+    else:
+        return original_math_sin(x)
+
+
+def math_cos(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_cos()
+        return CountedFloat(original_math_cos(x))
+    else:
+        return original_math_cos(x)
+
+
+def math_tan(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_tan()
+        return CountedFloat(original_math_tan(x))
+    else:
+        return original_math_tan(x)
+
+
 # override math module methods
 math.sqrt = math_sqrt
+math.cbrt = math_cbrt
+math.log = math_log
 math.log2 = math_log2
+math.log10 = math_log10
+math.exp = math_exp
+math.exp2 = math_exp2
 math.pow = math_pow
+math.sin = math_sin
+math.cos = math_cos
+math.tan = math_tan

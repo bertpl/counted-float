@@ -39,7 +39,7 @@ ensure results of math operations where at least one operand is a `CountedFloat`
 This way we ensure flop counting is a 'closed system'.
 
 On top of this, we monkey-patch the `math` module to ensure that all math operations
-that require counting (`sqrt`, `log2`, `pow`) are also instrumented.
+that require counting (`sqrt`, `log2`, `pow`, ...) are also instrumented.
 
 **Example 1**:
 
@@ -133,25 +133,32 @@ See [fpu_data_sources.md](https://github.com/bertpl/counted-float/tree/develop/d
 rationale behind choice of data sources and methodology.
 
 ```
->>> from counted_float.config import get_flop_weights
->>> get_flop_weights().show()
+>>> from counted_float.config import get_active_flop_weights
+>>> get_active_flop_weights().show()
 
 {
     FlopType.ABS        [abs(x)]        :    1
     FlopType.MINUS      [-x]            :    1
-    FlopType.EQUALS     [x==y]          :    1
-    FlopType.GTE        [x>=y]          :    1
-    FlopType.LTE        [x<=y]          :    1
-    FlopType.CMP_ZERO   [x>=0]          :    1
-    FlopType.RND        [round]         :    1
+    FlopType.COMP       [x<=y]          :    1
+    FlopType.RND        [round]         :    2
+    FlopType.F2I        [float->int]    :    2
+    FlopType.I2F        [int->float]    :    2
     FlopType.ADD        [x+y]           :    1
     FlopType.SUB        [x-y]           :    1
     FlopType.MUL        [x*y]           :    1
-    FlopType.DIV        [x/y]           :    3
-    FlopType.SQRT       [sqrt(x)]       :    3
-    FlopType.POW2       [2^x]           :   12
-    FlopType.LOG2       [log2(x)]       :   14
-    FlopType.POW        [x^y]           :   33
+    FlopType.DIV        [x/y]           :    5
+    FlopType.SQRT       [sqrt(x)]       :    6
+    FlopType.CBRT       [cbrt(x)]       :   42
+    FlopType.EXP        [e^x]           :   19
+    FlopType.EXP2       [2^x]           :   29
+    FlopType.EXP10      [10^x]          :   23
+    FlopType.LOG        [log(x)]        :   19
+    FlopType.LOG2       [log2(x)]       :   24
+    FlopType.LOG10      [log10(x)]      :   19
+    FlopType.POW        [x^y]           :   62
+    FlopType.SIN        [sin(x)]        :   32
+    FlopType.COS        [cos(x)]        :   31
+    FlopType.TAN        [tan(x)]        :   34
 }
 ```
 These weights will be used by default when extracting total weighted flop costs:
@@ -170,7 +177,7 @@ with FlopCountingContext() as ctx:
     _ = math.log2(cf2)
     
 flop_counts = ctx.flop_counts()
-total_cost = flop_counts.total_weighted_cost()  # 1 + 33 + 14 = 48
+total_cost = flop_counts.total_weighted_cost()  # 1 + 62 + 24 = 87
 ```
 Note that the `total_weighted_cost` method will use the default flop weights as returned by `get_flop_weights()`.  This can be
 overridden by either configuring different flop weights (see next section) or by setting the `weights` argument of the `total_weighted_cost()` method.
@@ -200,21 +207,28 @@ from counted_float.config import get_default_consensus_flop_weights
 >>> get_default_consensus_flop_weights(rounded=False).show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.90744
-    FlopType.MINUS      [-x]            :   0.80068
-    FlopType.EQUALS     [x==y]          :   0.93532
-    FlopType.GTE        [x>=y]          :   0.94684
-    FlopType.LTE        [x<=y]          :   0.93101
-    FlopType.CMP_ZERO   [x>=0]          :   0.82204
-    FlopType.RND        [round]         :   0.96944
-    FlopType.ADD        [x+y]           :   0.89296
-    FlopType.SUB        [x-y]           :   1.14383
-    FlopType.MUL        [x*y]           :   1.04677
-    FlopType.DIV        [x/y]           :   3.10940
-    FlopType.SQRT       [sqrt(x)]       :   2.56566
-    FlopType.POW2       [2^x]           :  10.80030
-    FlopType.LOG2       [log2(x)]       :  16.32770
-    FlopType.POW        [x^y]           :  40.50382
+    FlopType.ABS        [abs(x)]        :   0.63673
+    FlopType.MINUS      [-x]            :   0.64396
+    FlopType.COMP       [x<=y]          :   1.20756
+    FlopType.RND        [round]         :   1.54041
+    FlopType.F2I        [float->int]    :   1.99099
+    FlopType.I2F        [int->float]    :   1.84601
+    FlopType.ADD        [x+y]           :   1.00000
+    FlopType.SUB        [x-y]           :   1.00586
+    FlopType.MUL        [x*y]           :   1.37238
+    FlopType.DIV        [x/y]           :   5.07465
+    FlopType.SQRT       [sqrt(x)]       :   5.90559
+    FlopType.CBRT       [cbrt(x)]       :  42.39375
+    FlopType.EXP        [e^x]           :  18.58228
+    FlopType.EXP2       [2^x]           :  28.88672
+    FlopType.EXP10      [10^x]          :  22.86839
+    FlopType.LOG        [log(x)]        :  18.89135
+    FlopType.LOG2       [log2(x)]       :  24.34792
+    FlopType.LOG10      [log10(x)]      :  18.55085
+    FlopType.POW        [x^y]           :  61.79155
+    FlopType.SIN        [sin(x)]        :  31.91490
+    FlopType.COS        [cos(x)]        :  30.79295
+    FlopType.TAN        [tan(x)]        :  34.37970
 }
 ```
 
@@ -228,24 +242,31 @@ the geometric mean.
 ```python
 from counted_float.config import get_builtin_flop_weights
 
->>> get_builtin_flop_weights(key_filter="intel").show()
+>>> get_builtin_flop_weights(key_filter="arm").show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.56708
-    FlopType.MINUS      [-x]            :   0.44910
-    FlopType.EQUALS     [x==y]          :   0.89744
-    FlopType.GTE        [x>=y]          :   0.89744
-    FlopType.LTE        [x<=y]          :   0.89744
-    FlopType.CMP_ZERO   [x>=0]          :   0.84762
-    FlopType.RND        [round]         :   2.63592
-    FlopType.ADD        [x+y]           :   0.86616
-    FlopType.SUB        [x-y]           :   1.10411
-    FlopType.MUL        [x*y]           :   1.16515
-    FlopType.DIV        [x/y]           :   4.55230
-    FlopType.SQRT       [sqrt(x)]       :   4.37234
-    FlopType.POW2       [2^x]           :  14.78792
-    FlopType.LOG2       [log2(x)]       :  20.51270
-    FlopType.POW        [x^y]           :  40.16390
+    FlopType.ABS        [abs(x)]        :   0.97313
+    FlopType.MINUS      [-x]            :   0.99098
+    FlopType.COMP       [x<=y]          :   1.03987
+    FlopType.RND        [round]         :   1.35111
+    FlopType.F2I        [float->int]    :   1.52648
+    FlopType.I2F        [int->float]    :   1.63320
+    FlopType.ADD        [x+y]           :   1.00000
+    FlopType.SUB        [x-y]           :   1.00058
+    FlopType.MUL        [x*y]           :   1.44952
+    FlopType.DIV        [x/y]           :   5.00897
+    FlopType.SQRT       [sqrt(x)]       :   5.15597
+    FlopType.CBRT       [cbrt(x)]       :  39.30448
+    FlopType.EXP        [e^x]           :  17.22817
+    FlopType.EXP2       [2^x]           :  15.82232
+    FlopType.EXP10      [10^x]          :  21.20195
+    FlopType.LOG        [log(x)]        :  17.51472
+    FlopType.LOG2       [log2(x)]       :  18.32529
+    FlopType.LOG10      [log10(x)]      :  17.19903
+    FlopType.POW        [x^y]           :  47.63289
+    FlopType.SIN        [sin(x)]        :  29.58923
+    FlopType.COS        [cos(x)]        :  28.54904
+    FlopType.TAN        [tan(x)]        :  31.87442
 }
 ```
 
@@ -258,43 +279,62 @@ floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-Running FLOPS benchmarks using counted-float 0.9.4 ...
+Running FLOPS benchmarks using counted-float 0.9.5 ...
+(Expected duration: ~87.8 seconds)
 
-baseline                           : wwwwwwwwww....................   [ 177.53 ns ±  2.0% |   720 cpu cycles ±  2.0% ]  /  1000 iterations
-FlopType.ABS        [abs(x)]       : wwwwwwwwww....................   [ 286.71 ns ±  5.7% | 1.16K cpu cycles ±  5.7% ]  /  1000 iterations
-FlopType.CMP_ZERO   [x>=0]         : wwwwwwwwww....................   [ 294.71 ns ±  3.6% | 1.20K cpu cycles ±  3.6% ]  /  1000 iterations
-FlopType.RND        [round]        : wwwwwwwwww....................   [ 291.74 ns ±  6.1% | 1.18K cpu cycles ±  6.1% ]  /  1000 iterations
-FlopType.MINUS      [-x]           : wwwwwwwwww....................   [ 291.81 ns ±  5.8% | 1.18K cpu cycles ±  5.8% ]  /  1000 iterations
-FlopType.EQUALS     [x==y]         : wwwwwwwwww....................   [ 297.70 ns ±  4.2% | 1.21K cpu cycles ±  4.2% ]  /  1000 iterations
-FlopType.GTE        [x>=y]         : wwwwwwwwww....................   [ 301.59 ns ±  3.2% | 1.22K cpu cycles ±  3.2% ]  /  1000 iterations
-FlopType.LTE        [x<=y]         : wwwwwwwwww....................   [ 295.77 ns ±  2.2% | 1.20K cpu cycles ±  2.2% ]  /  1000 iterations
-FlopType.ADD        [x+y]          : wwwwwwwwww....................   [ 289.49 ns ±  2.6% | 1.17K cpu cycles ±  2.6% ]  /  1000 iterations
-FlopType.SUB        [x-y]          : wwwwwwwwww....................   [ 289.85 ns ±  1.7% | 1.18K cpu cycles ±  1.7% ]  /  1000 iterations
-FlopType.MUL        [x*y]          : wwwwwwwwww....................   [ 305.46 ns ±  2.8% | 1.24K cpu cycles ±  2.8% ]  /  1000 iterations
-FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................   [ 435.30 ns ±  0.5% | 1.77K cpu cycles ±  0.5% ]  /  1000 iterations
-FlopType.DIV        [x/y]          : wwwwwwwwww....................   [ 479.90 ns ±  1.2% | 1.95K cpu cycles ±  1.2% ]  /  1000 iterations
-FlopType.POW2       [2^x]          : wwwwwwwwww....................   [   1.78 µs ±  0.1% | 7.22K cpu cycles ±  0.1% ]  /  1000 iterations
-FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................   [   2.17 µs ±  0.6% | 8.80K cpu cycles ±  0.6% ]  /  1000 iterations
-FlopType.POW        [x^y]          : wwwwwwwwww....................   [   6.14 µs ±  0.4% | 24.9K cpu cycles ±  0.4% ]  /  1000 iterations
+baseline                           : wwwwwwwwwwwwwww.........................   [  74.43 ns ±  2.6% |   302 cpu cycles ±  2.6% ]  /  1000 iterations
+add                                : wwwwwwwwwwwwwww.........................   [ 662.35 ns ±  0.2% | 2.69K cpu cycles ±  0.2% ]  /  1000 iterations
+add_minus                          : wwwwwwwwwwwwwww.........................   [   1.23 µs ±  0.2% | 4.98K cpu cycles ±  0.2% ]  /  1000 iterations
+add_abs                            : wwwwwwwwwwwwwww.........................   [   1.23 µs ±  0.4% | 4.99K cpu cycles ±  0.4% ]  /  1000 iterations
+add_add                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.23K cpu cycles ±  0.2% ]  /  1000 iterations
+add_sub                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.23K cpu cycles ±  0.2% ]  /  1000 iterations
+add_round                          : wwwwwwwwwwwwwww.........................   [   1.44 µs ±  0.1% | 5.84K cpu cycles ±  0.1% ]  /  1000 iterations
+add_sqrt                           : wwwwwwwwwwwwwww.........................   [   3.96 µs ±  0.2% | 16.1K cpu cycles ±  0.2% ]  /  1000 iterations
+add_cbrt                           : wwwwwwwwwwwwwww.........................   [  25.42 µs ±  0.2% |  103K cpu cycles ±  0.2% ]  /  1000 iterations
+add_log                            : wwwwwwwwwwwwwww.........................   [  11.69 µs ±  0.3% | 47.4K cpu cycles ±  0.3% ]  /  1000 iterations
+add_log_exp                        : wwwwwwwwwwwwwww.........................   [  22.57 µs ±  0.1% | 91.5K cpu cycles ±  0.1% ]  /  1000 iterations
+add_log2                           : wwwwwwwwwwwwwww.........................   [  12.00 µs ±  0.2% | 48.7K cpu cycles ±  0.2% ]  /  1000 iterations
+add_log2_exp2                      : wwwwwwwwwwwwwww.........................   [  22.48 µs ±  0.2% | 91.2K cpu cycles ±  0.2% ]  /  1000 iterations
+add_log10                          : wwwwwwwwwwwwwww.........................   [  11.50 µs ±  0.2% | 46.6K cpu cycles ±  0.2% ]  /  1000 iterations
+add_log10_exp10                    : wwwwwwwwwwwwwww.........................   [  24.68 µs ±  0.2% |  100K cpu cycles ±  0.2% ]  /  1000 iterations
+add_sin                            : wwwwwwwwwwwwwww.........................   [  18.64 µs ±  0.3% | 75.6K cpu cycles ±  0.3% ]  /  1000 iterations
+add_cos                            : wwwwwwwwwwwwwww.........................   [  18.92 µs ±  0.3% | 76.7K cpu cycles ±  0.3% ]  /  1000 iterations
+add_tan                            : wwwwwwwwwwwwwww.........................   [  20.91 µs ±  0.2% | 84.8K cpu cycles ±  0.2% ]  /  1000 iterations
+pow                                : wwwwwwwwwwwwwww.........................   [  24.12 µs ±  0.3% | 97.8K cpu cycles ±  0.3% ]  /  1000 iterations
+pow_pow                            : wwwwwwwwwwwwwww.........................   [  48.15 µs ±  0.2% |  195K cpu cycles ±  0.2% ]  /  1000 iterations
+sub                                : wwwwwwwwwwwwwww.........................   [ 661.55 ns ±  0.2% | 2.68K cpu cycles ±  0.2% ]  /  1000 iterations
+sub_sub                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.24K cpu cycles ±  0.2% ]  /  1000 iterations
+mul                                : wwwwwwwwwwwwwww.........................   [ 961.78 ns ±  0.2% | 3.90K cpu cycles ±  0.2% ]  /  1000 iterations
+mul_mul                            : wwwwwwwwwwwwwww.........................   [   1.92 µs ±  0.2% | 7.78K cpu cycles ±  0.2% ]  /  1000 iterations
+div                                : wwwwwwwwwwwwwww.........................   [   2.45 µs ±  0.2% | 9.92K cpu cycles ±  0.2% ]  /  1000 iterations
+div_div                            : wwwwwwwwwwwwwww.........................   [   5.00 µs ±  0.2% | 20.3K cpu cycles ±  0.2% ]  /  1000 iterations
+lte_addsub                         : wwwwwwwwwwwwwww.........................   [   1.71 µs ±  0.2% | 6.94K cpu cycles ±  0.2% ]  /  1000 iterations
 
 >>> results.flop_weights.show() 
 
 {
-    FlopType.ABS        [abs(x)]        :   0.97517
-    FlopType.MINUS      [-x]            :   1.02074
-    FlopType.EQUALS     [x==y]          :   1.07339
-    FlopType.GTE        [x>=y]          :   1.10812
-    FlopType.LTE        [x<=y]          :   1.05609
-    FlopType.CMP_ZERO   [x>=0]          :   1.04665
-    FlopType.RND        [round]         :   1.02017
+    FlopType.ABS        [abs(x)]        :   0.90556
+    FlopType.MINUS      [-x]            :   0.90089
+    FlopType.COMP       [x<=y]          :   1.67297
+    FlopType.RND        [round]         :   1.24118
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00328
-    FlopType.MUL        [x*y]           :   1.14268
-    FlopType.DIV        [x/y]           :   2.70079
-    FlopType.SQRT       [sqrt(x)]       :   2.30238
-    FlopType.POW2       [2^x]           :  14.30722
-    FlopType.LOG2       [log2(x)]       :  17.79592
-    FlopType.POW        [x^y]           :  53.26393
+    FlopType.SUB        [x-y]           :   0.99928
+    FlopType.MUL        [x*y]           :   1.52656
+    FlopType.DIV        [x/y]           :   4.06589
+    FlopType.SQRT       [sqrt(x)]       :   5.26487
+    FlopType.CBRT       [cbrt(x)]       :  39.49190
+    FlopType.EXP        [e^x]           :  17.34508
+    FlopType.EXP2       [2^x]           :  16.70475
+    FlopType.EXP10      [10^x]          :  21.03351
+    FlopType.LOG        [log(x)]        :  17.59412
+    FlopType.LOG2       [log2(x)]       :  18.08932
+    FlopType.LOG10      [log10(x)]      :  17.27955
+    FlopType.POW        [x^y]           :  38.32044
+    FlopType.SIN        [sin(x)]        :  28.67006
+    FlopType.COS        [cos(x)]        :  29.11818
+    FlopType.TAN        [tan(x)]        :  32.28703
+    FlopType.F2I        [float->int]    :       nan
+    FlopType.I2F        [int->float]    :       nan
 }
 ```
 
@@ -320,33 +360,61 @@ after which the results will be shown as .json.
 
 ```
 [~] counted_float show-data
-                                           MINUS       ABS  CMP_ZERO       LTE    EQUALS       GTE       ADD       SUB       MUL       RND      SQRT       DIV      POW2      LOG2       POW
-ALL                                         0.59      0.63      0.74      0.90      0.90      0.90      0.92      1.05      1.15      1.25      3.55      3.57     12.33     14.68     34.01
- ├─benchmarks                               0.80      0.91      0.82      0.93      0.94      0.95      0.89      1.14      1.05      0.97      2.57      3.11     10.80     16.33     40.50
- │  ├─arm                                   0.99      0.79      0.88      1.00      1.01      1.04      0.99      1.00      1.00      0.88      1.83      2.17     11.46     14.24     45.98
- │  │  └─apple                              0.99      0.79      0.88      1.00      1.01      1.04      0.99      1.00      1.00      0.88      1.83      2.17     11.46     14.24     45.98
- │  │     └─m3_max_macbook_pro_16           0.99      0.79      0.88      1.00      1.01      1.04      0.99      1.00      1.00      0.88      1.83      2.17     11.46     14.24     45.98
- │  └─x86                                   0.65      1.04      0.77      0.87      0.87      0.87      0.81      1.31      1.09      1.07      3.59      4.46     10.18     18.72     35.68
- │     └─intel                              0.65      1.04      0.77      0.87      0.87      0.87      0.81      1.31      1.09      1.07      3.59      4.46     10.18     18.72     35.68
- │        ├─gen12_i7_1265u                  1.06      1.08      1.26      1.24      1.24      1.24      0.85      1.02      0.93      3.94      6.38      8.69     20.67     40.99     87.44
- │        └─gen7_i5_7200u                   0.40      0.99      0.47      0.60      0.60      0.60      0.77      1.68      1.29      0.29      2.03      2.29      5.01      8.55     14.56
- └─specs                                    0.43      0.43      0.67      0.86      0.86      0.86      0.96      0.96      1.27      1.61      4.92      4.09     14.08     13.20     28.56
-    ├─arm                                   0.82      0.82      0.65      0.65      0.65      0.65      1.03      1.03      1.45      1.35      5.92      5.53        /         /         / 
-    │  ├─arm_v7a_cortex_a9                  0.32      0.32      0.32      0.32      0.32      0.32      1.28      1.28      1.92      1.28     10.22      7.99        /         /         / 
-    │  ├─arm_v8_cortex_a55                  1.41      1.41      0.35      0.35      0.35      0.35      1.41      1.41      1.41      1.41      7.78      7.78        /         /         / 
-    │  ├─arm_v8_cortex_a76                  0.90      0.90      0.90      0.90      0.90      0.90      0.90      0.90      1.36      1.36      4.93      4.63        /         /         / 
-    │  ├─arm_v9_cortex_x1                   0.90      0.90      0.90      0.90      0.90      0.90      0.90      0.90      1.36      1.36      4.78      4.63        /         /         / 
-    │  ├─arm_v9_cortex_x2                   0.90      0.90      0.90      0.90      0.90      0.90      0.90      0.90      1.36      1.36      4.78      4.63        /         /         / 
-    │  └─arm_v9_cortex_x3                   0.90      0.90      0.90      0.90      0.90      0.90      0.90      0.90      1.36      1.36      4.78      4.63        /         /         / 
-    └─x86                                   0.23      0.23      0.70      1.14      1.14      1.14      0.89      0.89      1.11      1.92      4.09      3.02     12.96     12.15     26.29
-       ├─amd                                0.17      0.17        /       1.45      1.45      1.45      0.88      0.88      0.88      0.59      3.26      2.04      7.89      6.93     15.71
-       │  ├─zen3_r7_5800x                   0.14      0.14        /       1.49      1.49      1.49      0.88      0.88      0.88      0.54      3.38      2.03      7.40      6.62     14.90
-       │  ├─zen4_r9_7900x                   0.13      0.13        /       1.40      1.40      1.40      0.89      0.89      0.89      0.64      3.19      1.91      6.99      6.25     14.13
-       │  └─zen5_r7_9800x3d                 0.29      0.29        /       1.47      1.47      1.47      0.88      0.88      0.88      0.59      3.23      2.20      9.51      8.03     18.42
-       └─intel                              0.30      0.30      0.90      0.90      0.90      0.90      0.90      0.90      1.39      6.28      5.12      4.47     21.27     21.31     43.97
-          ├─gen09_coffee_lake               0.29      0.29      0.88      0.88      0.88      0.88      0.88      0.88      1.47      6.16      5.03      4.39     21.16     20.74     43.37
-          ├─gen10_cannon_lake               0.29      0.29      0.88      0.88      0.88      0.88      0.88      0.88      1.47      6.16      5.03      4.39     21.16     20.74     43.37
-          └─gen11_tiger_lake                0.31      0.31      0.93      0.93      0.93      0.93      0.93      0.93      1.24      6.51      5.32      4.64     21.49     22.48     45.21
+
+                                                       ABS     MINUS       ADD       SUB      COMP       MUL       RND       I2F       F2I       DIV      SQRT     LOG10       EXP       LOG     EXP10      LOG2      EXP2       COS       SIN       TAN      CBRT       POW
+ALL                                                   0.64      0.64      1.00      1.01      1.21      1.37      1.54      1.85      1.99      5.07      5.91     18.55     18.58     18.89     22.87     24.35     28.89     30.79     31.91     34.38     42.39     61.79
+ ├─arm                                                0.97      0.99      1.00      1.00      1.04      1.45      1.35      1.63      1.53      5.01      5.16     17.20     17.23     17.51     21.20     18.33     15.82     28.55     29.59     31.87     39.30     47.63
+ │  ├─v8_x                                            0.92      0.97      1.00      1.00      1.12      1.35      1.25      1.94      1.58      3.88      4.09     16.56     16.59     16.86     20.41     17.64     15.23     27.48     28.49     30.69     37.84     45.86
+ │  │  ├─benchmarks                                   0.85      0.95      1.00      1.00      1.26      1.22      1.05        /         /       2.93      3.12     15.11     15.14     15.39     18.63     16.10     13.90     25.09     26.00     28.01     34.54     41.85
+ │  │  │  ├─m3_max_macbook_pro_16                     0.80      1.00      1.00      1.01      1.01      1.01      0.89        /         /       2.19      1.85        /         /         /         /      14.40     11.59        /         /         /         /      46.48
+ │  │  │  └─m3_max_macbook_pro_16_v2                  0.90      0.90      1.00      1.00      1.58      1.47      1.24        /         /       3.93      5.25     17.23     17.26     17.55     21.24     18.01     16.68     28.60     29.64     31.93     39.38     37.68
+ │  │  └─specs                                        1.00      1.00      1.00      1.00      1.00      1.50      1.50      2.12      1.73      5.12      5.37        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v8_cortex_a76                         1.00      1.00      1.00      1.00      1.00      1.50      1.50      3.00      2.00      5.12      5.45        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v9_cortex_n1                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      3.00      2.00      5.12      5.45        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v9_cortex_v1                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     └─arm_v9_cortex_x1                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  ├─v9_0                                            1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │  └─specs                                        1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v9_cortex_n2                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v9_cortex_v2                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     ├─arm_v9_cortex_x2                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  │     └─arm_v9_cortex_x3                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      5.12      5.29        /         /         /         /         /         /         /         /         /         /         / 
+ │  └─v9_2                                            1.00      1.00      1.00      1.00      1.00      1.50      1.31      1.50      1.50      6.33      6.33        /         /         /         /         /         /         /         /         /         /         / 
+ │     └─specs                                        1.00      1.00      1.00      1.00      1.00      1.50      1.31      1.50      1.50      6.33      6.33        /         /         /         /         /         /         /         /         /         /         / 
+ │        ├─arm_v9_cortex_v3                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      6.50      6.50        /         /         /         /         /         /         /         /         /         /         / 
+ │        ├─arm_v9_cortex_x4                          1.00      1.00      1.00      1.00      1.00      1.50      1.50      1.50      1.50      6.50      6.50        /         /         /         /         /         /         /         /         /         /         / 
+ │        └─arm_v9_cortex_x925                        1.00      1.00      1.00      1.00      1.00      1.50      1.00      1.50      1.50      6.00      6.00        /         /         /         /         /         /         /         /         /         /         / 
+ └─x86                                                0.42      0.42      1.00      1.01      1.40      1.30      1.76      2.09      2.60      5.14      6.76        /         /         /         /      32.35     52.74        /         /         /         /      80.16
+    ├─amd                                             0.44      0.44      1.00      1.01      1.81      1.18      1.02      2.19      2.61      4.85      6.94        /         /         /         /      32.91    173.48        /         /         /         /      94.73
+    │  ├─2017_zen1                                    0.46      0.48      1.00      1.04      1.57      1.14      1.14      2.22      3.51      4.46      5.06        /         /         /         /      32.94    173.63        /         /         /         /      94.81
+    │  │  ├─analysis_uops_info_zen1+                  0.33      0.33      1.00      1.00      2.33      1.33      0.67      2.11      3.33      4.33      6.67        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  └─benchmark_ryzen_1700x                     0.64      0.69      1.00      1.08      1.06      0.97      1.97        /         /       4.58      3.83        /         /         /         /      34.68    182.82        /         /         /         /      99.82
+    │  ├─2020_zen3                                    0.33      0.33      1.00      1.00      1.97      1.01      0.76      2.01      2.45      4.42      6.67        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  ├─analysis_agner_fog_r7_5800x               0.33      0.33      1.00      1.00      1.67        /       1.00      2.33      2.00      4.50      6.67        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  └─analysis_uops_info_zen3                   0.33      0.33      1.00      1.00      2.33      1.00      0.58      1.73      3.00      4.33      6.67        /         /         /         /         /         /         /         /         /         /         / 
+    │  ├─2022_zen4                                    0.33      0.33      1.00      1.00      1.28      1.02      0.83      1.63      2.00      4.33      6.89        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  ├─analysis_agner_fog_r9_7900x               0.33      0.33      1.00      1.00      1.33        /       1.00      2.00      2.00      4.33      7.00        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  ├─analysis_uops_info_zen4                   0.33      0.33      1.00      1.00      2.33      1.00      0.58      1.63      3.00      4.33      7.00        /         /         /         /         /         /         /         /         /         /         / 
+    │  │  └─specs_amd                                 0.33      0.33      1.00      1.00      0.67      1.00      1.00      1.33      1.33      4.33      6.67        /         /         /         /         /         /         /         /         /         /         / 
+    │  └─2024_zen5                                    0.71      0.71      1.00      1.00      2.72      1.66      1.50      3.17      2.72      6.50     10.00        /         /         /         /         /         /         /         /         /         /         / 
+    │     ├─analysis_agner_fog_r7_9800x3d             1.00      1.00      1.00      1.00      3.00        /       1.50      3.50      3.00      6.50     10.00        /         /         /         /         /         /         /         /         /         /         / 
+    │     └─specs_amd                                 0.50      0.50      1.00      1.00        /       1.50      1.50        /         /       6.50     10.00        /         /         /         /         /         /         /         /         /         /         / 
+    └─intel                                           0.40      0.40      1.00      1.01      1.09      1.43      3.02      1.99      2.58      5.45      6.59        /         /         /         /      31.80     16.03        /         /         /         /      67.83
+       ├─2017_coffee_lake_gen_8                       0.25      0.25      1.00      1.00      0.74      1.00      2.00      1.41      1.62      3.56      4.29        /         /         /         /         /         /         /         /         /         /         / 
+       │  ├─analysis_agner_fog_coffee_lake            0.25      0.25      1.00      1.00        /       1.00      2.00      1.50      1.50      3.37      3.87        /         /         /         /         /         /         /         /         /         /         / 
+       │  └─analysis_uops_info_coffee_lake            0.25      0.25      1.00      1.00      0.75      1.00      2.00      1.32      1.75      3.75      4.75        /         /         /         /         /         /         /         /         /         /         / 
+       ├─2019_sunny_cove_gen_10                       0.25      0.25      1.00      1.00      0.66      0.98      2.00      1.38      1.66      3.62      4.44        /         /         /         /         /         /         /         /         /         /         / 
+       │  ├─analysis_agner_fog_ice_lake               0.25      0.25      1.00      1.00      0.50        /       2.00      1.50      1.50      3.37      3.87        /         /         /         /         /         /         /         /         /         /         / 
+       │  ├─analysis_uops_info_ice_lake               0.25      0.25      1.00      1.00      0.75      1.00      2.00      1.32      1.75      3.75      4.75        /         /         /         /         /         /         /         /         /         /         / 
+       │  └─analysis_uops_info_tiger_lake             0.25      0.25      1.00      1.00      0.75      1.00      2.00      1.32      1.75      3.75      4.75        /         /         /         /         /         /         /         /         /         /         / 
+       ├─2021_golden_cove_gen_12                      0.64      0.64      1.00      1.07      1.39      1.53      3.93      2.54      3.46      7.61      8.07        /         /         /         /      40.46     20.40        /         /         /         /      86.31
+       │  ├─analysis_uops_info_alder_lake_p           0.41      0.41      1.00      1.00      1.22      1.63      3.27      2.16      2.86      6.12      7.76        /         /         /         /         /         /         /         /         /         /         / 
+       │  ├─benchmark_core_i7_1265u                   1.28      1.25      1.00      1.21      1.47      1.10      4.65        /         /      10.27      7.54        /         /         /         /      48.46     24.43        /         /         /         /     103.37
+       │  └─specs_intel                               0.50      0.50      1.00      1.00      1.50      2.00      4.00      2.50      3.50      7.00      9.00        /         /         /         /         /         /         /         /         /         /         / 
+       ├─2022_raptor_cove_gen_13_14                   0.50      0.50      1.00      1.00      1.50      2.00      4.00      2.50      3.50      7.00      9.00        /         /         /         /         /         /         /         /         /         /         / 
+       │  └─specs_intel                               0.50      0.50      1.00      1.00      1.50      2.00      4.00      2.50      3.50      7.00      9.00        /         /         /         /         /         /         /         /         /         /         / 
+       └─2023_redwood_cove_ultra_1                    0.50      0.50      1.00      1.00      1.50      2.00      4.00      2.50      3.50      7.00      9.00        /         /         /         /         /         /         /         /         /         /         / 
+          └─specs_intel                               0.50      0.50      1.00      1.00      1.50      2.00      4.00      2.50      3.50      7.00      9.00        /         /         /         /         /         /         /         /         /         /         / 
 ```
 
 # 5. Known limitations
@@ -378,33 +446,12 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** Unary minus (`-x`) for `CountedFloat`
 - **Not counted:** Negation on non-CountedFloat, numpy negation
 
-### FlopType.EQUALS (`x==y`)
+### FlopType.COMP (`x<=y`, `x>y`, `x==y`, `x==0.0`, ...)
 - Relevant CPU instructions
   - **ARM:** `FCMP`
   - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x == y` or `x != y` for `CountedFloat`
+- **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and `min(x,y)`, `max(x,y)` for `CountedFloat`
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.GTE (`x>=y`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x >= y`, `x > y` for `CountedFloat`
-- **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.LTE (`x<=y`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x <= y`, `x < y` for `CountedFloat`
-- **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.CMP_ZERO (`x>=0`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** Comparisons of `CountedFloat` to zero (e.g., `x == 0`, `x >= 0`, `x <= 0`)
-- **Not counted:** Comparisons to zero for non-CountedFloat
 
 ### FlopType.RND (`round`)
 - Relevant CPU instructions
@@ -462,12 +509,40 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `math.sqrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.sqrt`, sqrt on non-CountedFloat
 
-### FlopType.POW2 (`2^x`)
+### FlopType.CBRT (`cbrt(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `2 ** x` or `pow(2, x)` for `CountedFloat`
-- **Not counted:** `pow2` on non-CountedFloat, `numpy.pow2`
+- **Counted Python operations:** `math.cbrt(x)` for `CountedFloat`
+- **Not counted:** `numpy.cbrt`, cbrt on non-CountedFloat
+
+### FlopType.EXP (`e^x`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.exp(x)` for `CountedFloat`
+- **Not counted:** `math.exp(x)` on non-CountedFloat, `numpy.exp`, `math.expm1`, `math.e ** x`
+
+### FlopType.EXP2 (`2^x`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `2 ** x`, `pow(2, x)` or `math.exp2(x)` for `CountedFloat`
+- **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
+
+### FlopType.EXP10 (`10^x`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `10 ** x`, `pow(10, x)` for `CountedFloat`
+- **Not counted:** `10 ** x` on non-CountedFloat
+
+### FlopType.LOG (`log(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.log(x)` for `CountedFloat`
+- **Not counted:** `numpy.log`, log on non-CountedFloat
 
 ### FlopType.LOG2 (`log2(x)`)
 - Relevant CPU instructions
@@ -476,9 +551,37 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `math.log2(x)` for `CountedFloat`
 - **Not counted:** `numpy.log2`, log2 on non-CountedFloat
 
+### FlopType.LOG10 (`log10(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.log10(x)` for `CountedFloat`
+- **Not counted:** `numpy.log10`, log10 on non-CountedFloat
+
 ### FlopType.POW (`x^y`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
 - **Counted Python operations:** `x ** y`, `pow(x, y)` for `CountedFloat`
 - **Not counted:** `pow` on non-CountedFloat, `numpy.pow`
+
+### FlopType.SIN (`sin(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.sin(x)` for `CountedFloat`
+- **Not counted:** `sin` on non-CountedFloat, `numpy.sin`
+
+### FlopType.COS (`cos(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.cos(x)` for `CountedFloat`
+- **Not counted:** `cos` on non-CountedFloat, `numpy.cos`
+
+### FlopType.TAN (`tan(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.tan(x)` for `CountedFloat`
+- **Not counted:** `tan` on non-CountedFloat, `numpy.tan

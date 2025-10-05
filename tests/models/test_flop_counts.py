@@ -24,7 +24,7 @@ def test_flop_counts_field_names():
 def test_flop_counts_construction():
     # --- act ---------------------------------------------
     fc_0 = FlopCounts()
-    fc_1 = FlopCounts(ADD=5, SQRT=6)
+    fc_1 = FlopCounts(ADD=5, SQRT=6, TAN=3)
     fc_2 = FlopCounts(**{field_name: i + 1 for i, field_name in enumerate(FlopCounts.field_names())})
 
     expected_values = {
@@ -39,9 +39,17 @@ def test_flop_counts_construction():
         "MUL": [0, 0, 9],
         "DIV": [0, 0, 10],
         "SQRT": [0, 6, 11],
-        "POW2": [0, 0, 12],
-        "LOG2": [0, 0, 13],
-        "POW": [0, 0, 14],
+        "CBRT": [0, 0, 12],
+        "EXP": [0, 0, 13],
+        "EXP2": [0, 0, 14],
+        "EXP10": [0, 0, 15],
+        "LOG": [0, 0, 16],
+        "LOG2": [0, 0, 17],
+        "LOG10": [0, 0, 18],
+        "POW": [0, 0, 19],
+        "SIN": [0, 0, 20],
+        "COS": [0, 0, 21],
+        "TAN": [0, 3, 22],
     }
 
     # --- assert ------------------------------------------
