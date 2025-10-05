@@ -6,6 +6,8 @@ from importlib.metadata import PackageNotFoundError, version
 import cpuinfo
 import psutil
 
+from counted_float._core.utils._cpu_freq import get_cpu_frequency_min_max
+
 from ._base import MyBaseModel
 
 
@@ -67,8 +69,8 @@ class ProcessorInfo(MyBaseModel):
             ),
             n_logical_core_count=psutil.cpu_count(logical=True),
             n_physical_core_count=psutil.cpu_count(logical=False),
-            min_freq_mhz=int(psutil.cpu_freq().min),
-            max_freq_mhz=int(psutil.cpu_freq().max),
+            min_freq_mhz=int(get_cpu_frequency_min_max()[0]),
+            max_freq_mhz=int(get_cpu_frequency_min_max()[1]),
         )
 
 

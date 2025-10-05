@@ -8,14 +8,15 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- add updated benchmark data
+  - Apple M3 Max, Apple M4 Pro, AMD Ryzen 1700x, intel i7-8850U  
 
 
 ### Improvements
 /
 
 ### Bug Fixes
-/
+- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners)
 
 ### Internal
 /
