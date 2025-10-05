@@ -881,15 +881,17 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = math.exp(cf)  # EXP
     _ = 2**cf  # EXP2
     _ = math.exp2(cf)  # EXP2
+    _ = 10**cf  # EXP10
     _ = cf**2  # MUL
     _ = i**cf  # POW + I2F
     _ = cf**i  # POW + I2F
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 15
+    assert global_counter.total_count() == 16
     assert global_counter.POW == 9
     assert global_counter.EXP == 1
     assert global_counter.EXP2 == 2
+    assert global_counter.EXP10 == 1
     assert global_counter.MUL == 1
     assert global_counter.I2F == 2
 
@@ -941,11 +943,13 @@ def test_counted_float_counts_log(global_counter):
     # --- act ---------------------------------------------
     _ = math.log(cf)
     _ = math.log2(cf)
+    _ = math.log10(cf)
     # NOTE: The below is not counted; such simple expressions can often be precomputed and shipped as a constant.
     #       If this needs to be counted, first convert to CountedFloat.
     _ = math.log2(3)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 2
+    assert global_counter.total_count() == 3
     assert global_counter.LOG == 1
     assert global_counter.LOG2 == 1
+    assert global_counter.LOG10 == 1

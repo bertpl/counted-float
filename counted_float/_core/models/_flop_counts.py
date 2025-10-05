@@ -29,8 +29,10 @@ class FlopCounts:
     SQRT: int = 0
     EXP: int = 0
     EXP2: int = 0
+    EXP10: int = 0
     LOG: int = 0
     LOG2: int = 0
+    LOG10: int = 0
     POW: int = 0
 
     # --- math --------------------------------------------

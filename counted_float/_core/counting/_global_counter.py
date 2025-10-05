@@ -87,11 +87,17 @@ class GlobalFlopCounter:
     def incr_exp2(self):
         self.__counts.EXP2 += self.__incr
 
+    def incr_exp10(self):
+        self.__counts.EXP10 += self.__incr
+
     def incr_log(self):
         self.__counts.LOG += self.__incr
 
     def incr_log2(self):
         self.__counts.LOG2 += self.__incr
+
+    def incr_log10(self):
+        self.__counts.LOG10 += self.__incr
 
     def incr_pow(self):
         self.__counts.POW += self.__incr

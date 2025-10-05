@@ -75,8 +75,10 @@ class FlopsBenchmarkSuite:
             FlopType.SQRT: n_cycles_per_op[FBT.ADD_SQRT].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.EXP: n_cycles_per_op[FBT.ADD_LOG_EXP].q50 - n_cycles_per_op[FBT.ADD_LOG].q50,
             FlopType.EXP2: n_cycles_per_op[FBT.ADD_LOG2_EXP2].q50 - n_cycles_per_op[FBT.ADD_LOG2].q50,
+            FlopType.EXP10: n_cycles_per_op[FBT.ADD_LOG10_EXP10].q50 - n_cycles_per_op[FBT.ADD_LOG10].q50,
             FlopType.LOG: n_cycles_per_op[FBT.ADD_LOG].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.LOG2: n_cycles_per_op[FBT.ADD_LOG2].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.LOG10: n_cycles_per_op[FBT.ADD_LOG10].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.POW: n_cycles_per_op[FBT.POW_POW].q50 - n_cycles_per_op[FBT.POW].q50,
         }
 
@@ -201,6 +203,22 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
+        def f_add_log10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = np.log10(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_log10_exp10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = 10 ** np.log10(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
         def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
             for _ in range(n_executions):
                 tmp = math.e
@@ -294,6 +312,8 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_LOG_EXP, f_add_log_exp, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG2, f_add_log2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG2_EXP2, f_add_log2_exp2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG10, f_add_log10, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG10_EXP10, f_add_log10_exp10, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.POW, f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.POW_POW, f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.SUB, f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),

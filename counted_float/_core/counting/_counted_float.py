@@ -195,6 +195,8 @@ class CountedFloat(float):
         """other**x"""
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_exp2()
+        if isinstance(other, int) and other == 10:
+            GLOBAL_COUNTER.incr_exp10()
         else:
             if isinstance(other, int):
                 GLOBAL_COUNTER.incr_i2f()
@@ -208,6 +210,7 @@ class CountedFloat(float):
 original_math_sqrt = math.sqrt
 original_math_log = math.log
 original_math_log2 = math.log2
+original_math_log10 = math.log10
 original_math_exp = math.exp
 original_math_exp2 = math.exp2
 
@@ -236,6 +239,14 @@ def math_log2(x: float) -> float | CountedFloat:
         return original_math_log2(x)
 
 
+def math_log10(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_log2()
+        return CountedFloat(original_math_log10(x))
+    else:
+        return original_math_log10(x)
+
+
 def math_exp(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_exp()
@@ -260,6 +271,7 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
 math.sqrt = math_sqrt
 math.log = math_log
 math.log2 = math_log2
+math.log10 = math_log10
 math.exp = math_exp
 math.exp2 = math_exp2
 math.pow = math_pow

@@ -15,6 +15,8 @@ class FlopsBenchmarkType(StrEnum):
     ADD_LOG_EXP = "add_log_exp"
     ADD_LOG2 = "add_log2"
     ADD_LOG2_EXP2 = "add_log2_exp2"
+    ADD_LOG10 = "add_log10"
+    ADD_LOG10_EXP10 = "add_log10_exp10"
     POW = "pow"
     POW_POW = "pow_pow"
     SUB = "sub"

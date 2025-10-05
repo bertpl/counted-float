@@ -21,8 +21,10 @@ class FlopType(StrEnum):
     SQRT = "sqrt(x)"
     EXP = "e^x"
     EXP2 = "2^x"
+    EXP10 = "10^x"
     LOG = "log(x)"
     LOG2 = "log2(x)"
+    LOG10 = "log10(x)"
     POW = "x^y"
 
     def long_name(self) -> str:

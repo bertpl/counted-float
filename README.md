@@ -39,7 +39,7 @@ ensure results of math operations where at least one operand is a `CountedFloat`
 This way we ensure flop counting is a 'closed system'.
 
 On top of this, we monkey-patch the `math` module to ensure that all math operations
-that require counting (`sqrt`, `log2`, `pow`) are also instrumented.
+that require counting (`sqrt`, `log2`, `pow`, ...) are also instrumented.
 
 **Example 1**:
 
@@ -455,6 +455,13 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `2 ** x`, `pow(2, x)` or `math.exp2(x)` for `CountedFloat`
 - **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
 
+### FlopType.EXP10 (`10^x`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `10 ** x`, `pow(10, x)` for `CountedFloat`
+- **Not counted:** `10 ** x` on non-CountedFloat
+
 ### FlopType.LOG (`log(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
@@ -468,6 +475,13 @@ This appendix provides detailed information about how each floating-point operat
   - **x86:** (software)
 - **Counted Python operations:** `math.log2(x)` for `CountedFloat`
 - **Not counted:** `numpy.log2`, log2 on non-CountedFloat
+
+### FlopType.LOG10 (`log10(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.log10(x)` for `CountedFloat`
+- **Not counted:** `numpy.log10`, log10 on non-CountedFloat
 
 ### FlopType.POW (`x^y`)
 - Relevant CPU instructions
