@@ -878,7 +878,7 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = (cf**f) ** f  # 2 x POW
     _ = (f**cf) ** f  # 2 x POW
     _ = cf**cf  # POW
-    _ = 2**cf  # POW2
+    _ = 2**cf  # EXP2
     _ = cf**2  # MUL
     _ = i**cf  # POW + I2F
     _ = cf**i  # POW + I2F
@@ -886,7 +886,7 @@ def test_counted_float_counts_pow_1(global_counter):
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 13
     assert global_counter.POW == 9
-    assert global_counter.POW2 == 1
+    assert global_counter.EXP2 == 1
     assert global_counter.MUL == 1
     assert global_counter.I2F == 2
 
@@ -903,7 +903,7 @@ def test_counted_float_counts_pow_2(global_counter):
     _ = math.pow(math.pow(cf, f), f)  # 2 x POW
     _ = math.pow(math.pow(f, cf), f)  # 2 x POW
     _ = math.pow(cf, cf)  # POW
-    _ = math.pow(2, cf)  # POW2
+    _ = math.pow(2, cf)  # EXP2
     _ = math.pow(cf, 2)  # MUL
     _ = math.pow(i, cf)  # POW + I2F
     _ = math.pow(cf, i)  # POW + I2F
@@ -911,7 +911,7 @@ def test_counted_float_counts_pow_2(global_counter):
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 13
     assert global_counter.POW == 9
-    assert global_counter.POW2 == 1
+    assert global_counter.EXP2 == 1
     assert global_counter.MUL == 1
     assert global_counter.I2F == 2
 

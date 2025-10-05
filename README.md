@@ -149,7 +149,7 @@ rationale behind choice of data sources and methodology.
     FlopType.MUL        [x*y]           :    1
     FlopType.DIV        [x/y]           :    3
     FlopType.SQRT       [sqrt(x)]       :    3
-    FlopType.POW2       [2^x]           :   12
+    FlopType.EXP2       [2^x]           :   12
     FlopType.LOG2       [log2(x)]       :   14
     FlopType.POW        [x^y]           :   33
 }
@@ -212,7 +212,7 @@ from counted_float.config import get_default_consensus_flop_weights
     FlopType.MUL        [x*y]           :   1.04677
     FlopType.DIV        [x/y]           :   3.10940
     FlopType.SQRT       [sqrt(x)]       :   2.56566
-    FlopType.POW2       [2^x]           :  10.80030
+    FlopType.EXP2       [2^x]           :  10.80030
     FlopType.LOG2       [log2(x)]       :  16.32770
     FlopType.POW        [x^y]           :  40.50382
 }
@@ -243,7 +243,7 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.MUL        [x*y]           :   1.16515
     FlopType.DIV        [x/y]           :   4.55230
     FlopType.SQRT       [sqrt(x)]       :   4.37234
-    FlopType.POW2       [2^x]           :  14.78792
+    FlopType.EXP2       [2^x]           :  14.78792
     FlopType.LOG2       [log2(x)]       :  20.51270
     FlopType.POW        [x^y]           :  40.16390
 }
@@ -273,7 +273,7 @@ FlopType.SUB        [x-y]          : wwwwwwwwww....................   [ 289.85 n
 FlopType.MUL        [x*y]          : wwwwwwwwww....................   [ 305.46 ns ±  2.8% | 1.24K cpu cycles ±  2.8% ]  /  1000 iterations
 FlopType.SQRT       [sqrt(x)]      : wwwwwwwwww....................   [ 435.30 ns ±  0.5% | 1.77K cpu cycles ±  0.5% ]  /  1000 iterations
 FlopType.DIV        [x/y]          : wwwwwwwwww....................   [ 479.90 ns ±  1.2% | 1.95K cpu cycles ±  1.2% ]  /  1000 iterations
-FlopType.POW2       [2^x]          : wwwwwwwwww....................   [   1.78 µs ±  0.1% | 7.22K cpu cycles ±  0.1% ]  /  1000 iterations
+FlopType.EXP2       [2^x]          : wwwwwwwwww....................   [   1.78 µs ±  0.1% | 7.22K cpu cycles ±  0.1% ]  /  1000 iterations
 FlopType.LOG2       [log2(x)]      : wwwwwwwwww....................   [   2.17 µs ±  0.6% | 8.80K cpu cycles ±  0.6% ]  /  1000 iterations
 FlopType.POW        [x^y]          : wwwwwwwwww....................   [   6.14 µs ±  0.4% | 24.9K cpu cycles ±  0.4% ]  /  1000 iterations
 
@@ -292,7 +292,7 @@ FlopType.POW        [x^y]          : wwwwwwwwww....................   [   6.14 �
     FlopType.MUL        [x*y]           :   1.14268
     FlopType.DIV        [x/y]           :   2.70079
     FlopType.SQRT       [sqrt(x)]       :   2.30238
-    FlopType.POW2       [2^x]           :  14.30722
+    FlopType.EXP2       [2^x]           :  14.30722
     FlopType.LOG2       [log2(x)]       :  17.79592
     FlopType.POW        [x^y]           :  53.26393
 }
@@ -320,7 +320,7 @@ after which the results will be shown as .json.
 
 ```
 [~] counted_float show-data
-                                           MINUS       ABS  CMP_ZERO       LTE    EQUALS       GTE       ADD       SUB       MUL       RND      SQRT       DIV      POW2      LOG2       POW
+                                           MINUS       ABS  CMP_ZERO       LTE    EQUALS       GTE       ADD       SUB       MUL       RND      SQRT       DIV      EXP2      LOG2       POW
 ALL                                         0.59      0.63      0.74      0.90      0.90      0.90      0.92      1.05      1.15      1.25      3.55      3.57     12.33     14.68     34.01
  ├─benchmarks                               0.80      0.91      0.82      0.93      0.94      0.95      0.89      1.14      1.05      0.97      2.57      3.11     10.80     16.33     40.50
  │  ├─arm                                   0.99      0.79      0.88      1.00      1.01      1.04      0.99      1.00      1.00      0.88      1.83      2.17     11.46     14.24     45.98
@@ -462,12 +462,12 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `math.sqrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.sqrt`, sqrt on non-CountedFloat
 
-### FlopType.POW2 (`2^x`)
+### FlopType.EXP2 (`2^x`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
 - **Counted Python operations:** `2 ** x` or `pow(2, x)` for `CountedFloat`
-- **Not counted:** `pow2` on non-CountedFloat, `numpy.pow2`
+- **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
 
 ### FlopType.LOG2 (`log2(x)`)
 - Relevant CPU instructions

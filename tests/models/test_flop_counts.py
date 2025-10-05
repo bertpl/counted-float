@@ -39,7 +39,7 @@ def test_flop_counts_construction():
         "MUL": [0, 0, 9],
         "DIV": [0, 0, 10],
         "SQRT": [0, 6, 11],
-        "POW2": [0, 0, 12],
+        "EXP2": [0, 0, 12],
         "LOG2": [0, 0, 13],
         "POW": [0, 0, 14],
     }

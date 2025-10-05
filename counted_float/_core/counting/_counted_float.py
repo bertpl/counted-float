@@ -194,7 +194,7 @@ class CountedFloat(float):
     def __rpow__(self, other) -> CountedFloat:
         """other**x"""
         if isinstance(other, int) and other == 2:
-            GLOBAL_COUNTER.incr_pow2()
+            GLOBAL_COUNTER.incr_exp2()
         else:
             if isinstance(other, int):
                 GLOBAL_COUNTER.incr_i2f()

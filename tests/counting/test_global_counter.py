@@ -103,11 +103,11 @@ def test_global_counter_pause_resume(global_counter):
     global_counter.incr_rnd()
     global_counter.resume()
     global_counter.resume()
-    global_counter.incr_pow2()
+    global_counter.incr_exp2()
 
     # --- assert 3 ----------------------------------------
     assert global_counter.flop_counts().total_count() == 4
     assert global_counter.flop_counts().MUL == 1
     assert global_counter.flop_counts().DIV == 2
-    assert global_counter.flop_counts().POW2 == 1
+    assert global_counter.flop_counts().EXP2 == 1
     assert global_counter.is_active()
