@@ -879,14 +879,15 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = (f**cf) ** f  # 2 x POW
     _ = cf**cf  # POW
     _ = 2**cf  # EXP2
+    _ = math.exp2(cf)  # EXP2
     _ = cf**2  # MUL
     _ = i**cf  # POW + I2F
     _ = cf**i  # POW + I2F
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 13
+    assert global_counter.total_count() == 14
     assert global_counter.POW == 9
-    assert global_counter.EXP2 == 1
+    assert global_counter.EXP2 == 2
     assert global_counter.MUL == 1
     assert global_counter.I2F == 2
 
