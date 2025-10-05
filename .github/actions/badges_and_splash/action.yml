@@ -37,7 +37,7 @@ runs:
             uv venv
             source .venv/bin/activate
             uv sync
-            uv run --python 3.10 pytest ./tests --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
+            uv run --python 3.11 pytest ./tests --junitxml=junit.xml --cov=./counted_float/ --cov-report=xml
             uv run --python 3.13 --all-extras pytest ./tests --junitxml=junit.xml --cov=./counted_float/ --cov-append --cov-report=xml          
 
       - name: Generate badges
