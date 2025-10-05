@@ -2,18 +2,21 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.5
-> *(under development)*
-> > This release focuses on simplifying & extended the modelled FlopTypes.
+> *(2025-10-05)*
+> > This release focuses on simplifying & extending the modelled FlopTypes.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
+- Add `FlopType.EXP`, `FlopType.LOG`, `FlopType.EXP10`, `FlopType.LOG10`, `FlopType.CBRT`, `FlopType.SIN`, `FlopType.COS`, `FlopType.TAN`
 - Remove support for Python 3.10 - so we can assume `math.cbrt` is available
 - Extend readme with detailed description of how each flop type is counted & analysed.
 
 
 ### Improvements
 - Remove outdated `get_default_empirical_flop_weights` & `get_default_theoretical_flop_weights`, as it's now advised to use `get_builtin_flop_weights` with custom filtering.
-- Merge comparison FlopType members EQUALS, TE, LTE, CMP_ZERO into single COMP  (compilers typically map these to the same instruction)
+- Merge comparison `FlopType` members `EQUALS`, `GTE`, `LTE`, `CMP_ZERO` into single `COMP`  (compilers typically map these to the same instruction)
+- Rename `FlopType.POW2` -> `FlopType.EXP2` for consistency
+- Add estimated total time for running benchmark
 
 ### Bug Fixes
 /
