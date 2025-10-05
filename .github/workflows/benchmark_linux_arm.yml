@@ -1,0 +1,18 @@
+name: benchmark_linux_arm.yml
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - main
+      - develop
+
+jobs:
+  run_benchmark:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run counted_float benchmark
+        uses: ./.github/actions/benchmark
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
