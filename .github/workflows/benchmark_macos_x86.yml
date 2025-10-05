@@ -1,10 +1,6 @@
 name: benchmark_macos_x86.yml
 on:
   workflow_dispatch:
-  push:
-    branches-ignore:
-      - main
-      - develop
 
 jobs:
   run_benchmark:

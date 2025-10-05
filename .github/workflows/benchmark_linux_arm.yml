@@ -1,10 +1,6 @@
 name: benchmark_linux_arm.yml
 on:
   workflow_dispatch:
-  push:
-    branches-ignore:
-      - main
-      - develop
 
 jobs:
   run_benchmark:
