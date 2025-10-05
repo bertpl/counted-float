@@ -105,6 +105,15 @@ class GlobalFlopCounter:
     def incr_pow(self):
         self.__counts.POW += self.__incr
 
+    def incr_sin(self):
+        self.__counts.SIN += self.__incr
+
+    def incr_cos(self):
+        self.__counts.COS += self.__incr
+
+    def incr_tan(self):
+        self.__counts.TAN += self.__incr
+
 
 # --- global variable through which we access the global counter ---
 GLOBAL_COUNTER = GlobalFlopCounter()

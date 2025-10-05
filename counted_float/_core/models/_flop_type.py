@@ -27,6 +27,9 @@ class FlopType(StrEnum):
     LOG2 = "log2(x)"
     LOG10 = "log10(x)"
     POW = "x^y"
+    SIN = "sin(x)"
+    COS = "cos(x)"
+    TAN = "tan(x)"
 
     def long_name(self) -> str:
         return f"FlopType.{self.name:<9}  [{self.value}]"

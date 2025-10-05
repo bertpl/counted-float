@@ -968,3 +968,24 @@ def test_counted_float_counts_log(global_counter):
     assert global_counter.LOG == 1
     assert global_counter.LOG2 == 1
     assert global_counter.LOG10 == 1
+
+
+def test_counted_float_counts_sin_cos_tan(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = math.sin(cf)
+
+    _ = math.cos(cf)
+    _ = math.cos(cf)
+
+    _ = math.tan(cf)
+    _ = math.tan(cf)
+    _ = math.tan(cf)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 6
+    assert global_counter.SIN == 1
+    assert global_counter.COS == 2
+    assert global_counter.TAN == 3

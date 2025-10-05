@@ -35,6 +35,9 @@ class FlopCounts:
     LOG2: int = 0
     LOG10: int = 0
     POW: int = 0
+    SIN: int = 0
+    COS: int = 0
+    TAN: int = 0
 
     # --- math --------------------------------------------
     def __add__(self, other: FlopCounts) -> FlopCounts:

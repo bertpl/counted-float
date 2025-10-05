@@ -496,3 +496,24 @@ This appendix provides detailed information about how each floating-point operat
   - **x86:** (software)
 - **Counted Python operations:** `x ** y`, `pow(x, y)` for `CountedFloat`
 - **Not counted:** `pow` on non-CountedFloat, `numpy.pow`
+
+### FlopType.SIN (`sin(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.sin(x)` for `CountedFloat`
+- **Not counted:** `sin` on non-CountedFloat, `numpy.sin`
+
+### FlopType.COS (`cos(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.cos(x)` for `CountedFloat`
+- **Not counted:** `cos` on non-CountedFloat, `numpy.cos`
+
+### FlopType.TAN (`tan(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.tan(x)` for `CountedFloat`
+- **Not counted:** `tan` on non-CountedFloat, `numpy.tan

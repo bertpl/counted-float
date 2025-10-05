@@ -214,6 +214,9 @@ original_math_log2 = math.log2
 original_math_log10 = math.log10
 original_math_exp = math.exp
 original_math_exp2 = math.exp2
+original_math_sin = math.sin
+original_math_cos = math.cos
+original_math_tan = math.tan
 
 
 def math_sqrt(x: float) -> float | CountedFloat:
@@ -276,6 +279,30 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
     return x**y
 
 
+def math_sin(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_sin()
+        return CountedFloat(original_math_sin(x))
+    else:
+        return original_math_sin(x)
+
+
+def math_cos(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_cos()
+        return CountedFloat(original_math_cos(x))
+    else:
+        return original_math_cos(x)
+
+
+def math_tan(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_tan()
+        return CountedFloat(original_math_tan(x))
+    else:
+        return original_math_tan(x)
+
+
 # override math module methods
 math.sqrt = math_sqrt
 math.cbrt = math_cbrt
@@ -285,3 +312,6 @@ math.log10 = math_log10
 math.exp = math_exp
 math.exp2 = math_exp2
 math.pow = math_pow
+math.sin = math_sin
+math.cos = math_cos
+math.tan = math_tan
