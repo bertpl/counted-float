@@ -1,4 +1,5 @@
 import math
+from importlib.metadata import version
 
 import numpy as np
 
@@ -25,8 +26,8 @@ class FlopsBenchmarkSuite:
     def run(
         self,
         array_size: int = 1000,
-        n_runs_total: int = 30,
-        n_runs_warmup: int = 10,
+        n_runs_total: int = 40,
+        n_runs_warmup: int = 15,
         n_seconds_per_run_target: float = 0.1,
     ) -> FlopsBenchmarkResults_V2:
         """
@@ -39,6 +40,13 @@ class FlopsBenchmarkSuite:
             print("'numba' was not found; results of this benchmark will be wildly inaccurate & unusable.")
             print("Install this package with the numba optional dependency: 'pip install counted-float[numba]'")
             print("========= WARNING =========")
+
+        print()
+        print(f"Running FLOPS benchmarks using counted-float {version('counted-float')} ...")
+        print(
+            f"(Expected duration: ~{(n_runs_total - n_runs_warmup / 2) * n_seconds_per_run_target * len(FlopsBenchmarkType):.1f} seconds)"
+        )
+        print()
 
         # run actual benchmarks
         benchmarks = self.get_flops_benchmarking_suite(size=array_size)
