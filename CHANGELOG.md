@@ -11,6 +11,7 @@
 - add updated benchmark data
   - Apple M3 Max, Apple M4 Pro, AMD Ryzen 1700x, Intel i7-8850U  
   - ARM Neoverse N2, Apple M1, AMD Epyc 7003, Intel i7-8700B
+- remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
 
 ### Improvements
 /
