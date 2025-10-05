@@ -81,8 +81,14 @@ class GlobalFlopCounter:
     def incr_sqrt(self):
         self.__counts.SQRT += self.__incr
 
+    def incr_exp(self):
+        self.__counts.EXP += self.__incr
+
     def incr_exp2(self):
         self.__counts.EXP2 += self.__incr
+
+    def incr_log(self):
+        self.__counts.LOG += self.__incr
 
     def incr_log2(self):
         self.__counts.LOG2 += self.__incr

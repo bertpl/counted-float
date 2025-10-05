@@ -27,7 +27,9 @@ class FlopCounts:
     MUL: int = 0
     DIV: int = 0
     SQRT: int = 0
+    EXP: int = 0
     EXP2: int = 0
+    LOG: int = 0
     LOG2: int = 0
     POW: int = 0
 

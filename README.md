@@ -441,12 +441,26 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `math.sqrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.sqrt`, sqrt on non-CountedFloat
 
+### FlopType.EXP (`e^x`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.exp(x)` for `CountedFloat`
+- **Not counted:** `math.exp(x)` on non-CountedFloat, `numpy.exp`, `math.expm1`, `math.e ** x`
+
 ### FlopType.EXP2 (`2^x`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
 - **Counted Python operations:** `2 ** x`, `pow(2, x)` or `math.exp2(x)` for `CountedFloat`
 - **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
+
+### FlopType.LOG (`log(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.log(x)` for `CountedFloat`
+- **Not counted:** `numpy.log`, log on non-CountedFloat
 
 ### FlopType.LOG2 (`log2(x)`)
 - Relevant CPU instructions

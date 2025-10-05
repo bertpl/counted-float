@@ -206,7 +206,9 @@ class CountedFloat(float):
 #  monkey-patch some methods of math module
 # -------------------------------------------------------------------------
 original_math_sqrt = math.sqrt
+original_math_log = math.log
 original_math_log2 = math.log2
+original_math_exp = math.exp
 original_math_exp2 = math.exp2
 
 
@@ -218,12 +220,28 @@ def math_sqrt(x: float) -> float | CountedFloat:
         return original_math_sqrt(x)
 
 
+def math_log(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_log()
+        return CountedFloat(original_math_log(x))
+    else:
+        return original_math_log(x)
+
+
 def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_log2()
         return CountedFloat(original_math_log2(x))
     else:
         return original_math_log2(x)
+
+
+def math_exp(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_exp()
+        return CountedFloat(original_math_exp(x))
+    else:
+        return original_math_exp(x)
 
 
 def math_exp2(x: float) -> float | CountedFloat:
@@ -240,6 +258,8 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
 
 # override math module methods
 math.sqrt = math_sqrt
+math.log = math_log
 math.log2 = math_log2
+math.exp = math_exp
 math.exp2 = math_exp2
 math.pow = math_pow
