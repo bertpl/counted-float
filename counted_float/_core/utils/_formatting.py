@@ -32,17 +32,17 @@ def _format_nsec_as_s(nsec: float) -> str:
 #  Format latencies
 # =================================================================================================
 def format_latency(n_cycles: float) -> str:
-    if n_cycles < 10:
+    if round(n_cycles, 2) < 10:
         return f" {n_cycles:4.2f} cpu cycles"
-    elif n_cycles < 100:
+    elif round(n_cycles, 1) < 100:
         return f" {n_cycles:4.1f} cpu cycles"
-    elif n_cycles < 1_000:
+    elif round(n_cycles, 0) < 1_000:
         return f" {n_cycles:4.0f} cpu cycles"
-    elif n_cycles < 10_000:
+    elif round(n_cycles, -1) < 10_000:
         return f"{n_cycles / 1e3:4.2f}K cpu cycles"
-    elif n_cycles < 100_000:
+    elif round(n_cycles, -2) < 100_000:
         return f"{n_cycles / 1e3:4.1f}K cpu cycles"
-    elif n_cycles < 1_000_000:
+    elif round(n_cycles, -3) < 1_000_000:
         return f"{n_cycles / 1e3:4.0f}K cpu cycles"
     else:
         return f"{n_cycles / 1e6:4.2f}M cpu cycles"
