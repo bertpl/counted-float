@@ -441,6 +441,13 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** `math.sqrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.sqrt`, sqrt on non-CountedFloat
 
+### FlopType.CBRT (`cbrt(x)`)
+- Relevant CPU instructions
+  - **ARM:** (software)
+  - **x86:** (software)
+- **Counted Python operations:** `math.cbrt(x)` for `CountedFloat`
+- **Not counted:** `numpy.cbrt`, cbrt on non-CountedFloat
+
 ### FlopType.EXP (`e^x`)
 - Relevant CPU instructions
   - **ARM:** (software)

@@ -208,6 +208,7 @@ class CountedFloat(float):
 #  monkey-patch some methods of math module
 # -------------------------------------------------------------------------
 original_math_sqrt = math.sqrt
+original_math_cbrt = math.cbrt
 original_math_log = math.log
 original_math_log2 = math.log2
 original_math_log10 = math.log10
@@ -221,6 +222,14 @@ def math_sqrt(x: float) -> float | CountedFloat:
         return CountedFloat(original_math_sqrt(x))
     else:
         return original_math_sqrt(x)
+
+
+def math_cbrt(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_cbrt()
+        return CountedFloat(original_math_cbrt(x))
+    else:
+        return original_math_cbrt(x)
 
 
 def math_log(x: float) -> float | CountedFloat:
@@ -269,6 +278,7 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
 
 # override math module methods
 math.sqrt = math_sqrt
+math.cbrt = math_cbrt
 math.log = math_log
 math.log2 = math_log2
 math.log10 = math_log10

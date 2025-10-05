@@ -936,6 +936,21 @@ def test_counted_float_counts_sqrt(global_counter):
     assert global_counter.SQRT == 1
 
 
+def test_counted_float_counts_cbrt(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = math.cbrt(cf)
+    # NOTE: The below is not counted; such simple expressions can often be precomputed and shipped as a constant.
+    #       If this needs to be counted, first convert to CountedFloat.
+    _ = math.cbrt(3)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.CBRT == 1
+
+
 def test_counted_float_counts_log(global_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)

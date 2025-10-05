@@ -19,6 +19,7 @@ class FlopType(StrEnum):
     MUL = "x*y"
     DIV = "x/y"
     SQRT = "sqrt(x)"
+    CBRT = "cbrt(x)"
     EXP = "e^x"
     EXP2 = "2^x"
     EXP10 = "10^x"

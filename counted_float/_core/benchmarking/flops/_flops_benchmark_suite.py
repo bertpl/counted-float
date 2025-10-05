@@ -73,6 +73,7 @@ class FlopsBenchmarkSuite:
             FlopType.MUL: n_cycles_per_op[FBT.MUL_MUL].q50 - n_cycles_per_op[FBT.MUL].q50,
             FlopType.DIV: n_cycles_per_op[FBT.DIV_DIV].q50 - n_cycles_per_op[FBT.DIV].q50,
             FlopType.SQRT: n_cycles_per_op[FBT.ADD_SQRT].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.CBRT: n_cycles_per_op[FBT.ADD_CBRT].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.EXP: n_cycles_per_op[FBT.ADD_LOG_EXP].q50 - n_cycles_per_op[FBT.ADD_LOG].q50,
             FlopType.EXP2: n_cycles_per_op[FBT.ADD_LOG2_EXP2].q50 - n_cycles_per_op[FBT.ADD_LOG2].q50,
             FlopType.EXP10: n_cycles_per_op[FBT.ADD_LOG10_EXP10].q50 - n_cycles_per_op[FBT.ADD_LOG10].q50,
@@ -168,6 +169,14 @@ class FlopsBenchmarkSuite:
                 tmp = math.e
                 for i in range(n):
                     tmp = math.sqrt(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = np.cbrt(tmp + in_f[i])
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
@@ -308,6 +317,7 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_SUB, f_add_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_ROUND, f_add_round, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_SQRT, f_add_sqrt, ArrayGenerator.lin_range(min_value=0.0, max_value=1e16)),
+                (FBT.ADD_CBRT, f_add_cbrt, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_LOG, f_add_log, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG_EXP, f_add_log_exp, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG2, f_add_log2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
