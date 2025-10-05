@@ -3,9 +3,8 @@ name = "counted-float"
 version = "0.9.5"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "backports-strenum>=1.3.1",
     "pydantic>=2.0.0",
     "numpy>=1.20",
     "psutil>=5.0",
@@ -44,7 +43,7 @@ packages = ["counted_float"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py313"
 
 [tool.ruff.lint]
 select = ["I"]

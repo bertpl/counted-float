@@ -1,4 +1,4 @@
-from counted_float._core.compatibility import StrEnum
+from enum import StrEnum
 
 
 class FlopType(StrEnum):
