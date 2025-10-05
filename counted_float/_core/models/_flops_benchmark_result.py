@@ -11,7 +11,7 @@ from ._micro_benchmark_result import Quantiles
 # =================================================================================================
 #  Main Flops Benchmark Information
 # =================================================================================================
-class FlopsBenchmarkResults_V2(MyBaseModel):
+class FlopsBenchmarkResults(MyBaseModel):
     # --- meta-data ---
     system: SystemInfo
     benchmark_settings: BenchmarkSettings

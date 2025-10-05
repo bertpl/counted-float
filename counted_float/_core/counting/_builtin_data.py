@@ -7,8 +7,7 @@ from pydantic import BaseModel, ValidationError
 from rich.console import Console
 
 from counted_float._core.models import (
-    FlopsBenchmarkResults_V1,
-    FlopsBenchmarkResults_V2,
+    FlopsBenchmarkResults,
     FlopWeights,
     InstructionLatencies,
 )
@@ -66,9 +65,9 @@ class BuiltInData:
     #  Benchmarks
     # -------------------------------------------------------------------------
     @classmethod
-    def benchmarks(cls) -> dict[str, FlopsBenchmarkResults_V1 | FlopsBenchmarkResults_V2]:
+    def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
-            key: _deserialize_as_any_pydantic_class(json_str, [FlopsBenchmarkResults_V1, FlopsBenchmarkResults_V2])
+            key: _deserialize_as_any_pydantic_class(json_str, [FlopsBenchmarkResults])
             for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}")).items()
             if "benchmark" in key
         }
@@ -151,8 +150,7 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
     return _deserialize_as_any_pydantic_class(
         json_str,
         [
-            FlopsBenchmarkResults_V1,
-            FlopsBenchmarkResults_V2,
+            FlopsBenchmarkResults,
             InstructionLatencies,
         ],
     ).flop_weights()
