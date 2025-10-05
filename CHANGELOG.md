@@ -9,6 +9,7 @@
 ### What's New
 - extend readme with detailed description of how each flop type is counted & analysed.
 - removed outdated `get_default_empirical_flop_weights` & `get_default_theoretical_flop_weights`, as it's now advised to use `get_builtin_flop_weights` with custom filtering.
+- merge comparison FlopType members EQUALS, TE, LTE, CMP_ZERO into single COMP  (compilers typically map these to the same instruction)
 
 ### Improvements
 /
