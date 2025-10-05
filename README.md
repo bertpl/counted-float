@@ -378,33 +378,12 @@ This appendix provides detailed information about how each floating-point operat
 - **Counted Python operations:** Unary minus (`-x`) for `CountedFloat`
 - **Not counted:** Negation on non-CountedFloat, numpy negation
 
-### FlopType.EQUALS (`x==y`)
+### FlopType.COMP (`x<=y`, `x>y`, `x==y`, `x==0.0`, ...)
 - Relevant CPU instructions
   - **ARM:** `FCMP`
   - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x == y` or `x != y` for `CountedFloat`
+- **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and `min(x,y)`, `max(x,y)` for `CountedFloat`
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.GTE (`x>=y`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x >= y`, `x > y` for `CountedFloat`
-- **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.LTE (`x<=y`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** `x <= y`, `x < y` for `CountedFloat`
-- **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-
-### FlopType.CMP_ZERO (`x>=0`)
-- Relevant CPU instructions
-  - **ARM:** `FCMP`
-  - **x86:** `(U)COMISD`
-- **Counted Python operations:** Comparisons of `CountedFloat` to zero (e.g., `x == 0`, `x >= 0`, `x <= 0`)
-- **Not counted:** Comparisons to zero for non-CountedFloat
 
 ### FlopType.RND (`round`)
 - Relevant CPU instructions
@@ -466,7 +445,7 @@ This appendix provides detailed information about how each floating-point operat
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `2 ** x` or `pow(2, x)` for `CountedFloat`
+- **Counted Python operations:** `2 ** x`, `pow(2, x)` or `math.exp2(x)` for `CountedFloat`
 - **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
 
 ### FlopType.LOG2 (`log2(x)`)
