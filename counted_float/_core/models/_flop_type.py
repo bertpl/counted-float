@@ -10,10 +10,7 @@ class FlopType(StrEnum):
 
     ABS = "abs(x)"
     MINUS = "-x"
-    EQUALS = "x==y"
-    GTE = "x>=y"
-    LTE = "x<=y"
-    CMP_ZERO = "x>=0"
+    COMP = "x<=y"  # includes x>=y, x==y, x<y, x>y, as well as comparison to 0
     RND = "round"  # round float -> float
     F2I = "float->int"  # float -> int, also includes round(x), math.floor(x), math.ceil(x)
     I2F = "int->float"  # int -> float

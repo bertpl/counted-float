@@ -51,62 +51,44 @@ class CountedFloat(float):
 
     def __eq__(self, other) -> bool:
         """x==other or other==x"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_equals()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__eq__(other)
 
     def __ne__(self, other) -> bool:
         """x!=other or other!=x"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_equals()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__ne__(other)
 
     def __lt__(self, other):
         """x<other"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_lte()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__lt__(other)
 
     def __le__(self, other):
         """x<=other"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_lte()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__le__(other)
 
     def __gt__(self, other):
         """x>other"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_gte()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__gt__(other)
 
     def __ge__(self, other):
         """x>=other"""
-        if isinstance(other, int) and other == 0:
-            GLOBAL_COUNTER.incr_cmp_zero()
-        else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
-            GLOBAL_COUNTER.incr_gte()
+        if isinstance(other, int):
+            GLOBAL_COUNTER.incr_i2f()
+        GLOBAL_COUNTER.incr_comp()
         return super().__ge__(other)
 
     def __round__(self, n=None) -> int:

@@ -18,10 +18,7 @@ class FlopCounts:
     # --- Counting fields ---------------------------------
     ABS: int = 0
     MINUS: int = 0
-    EQUALS: int = 0
-    GTE: int = 0
-    LTE: int = 0
-    CMP_ZERO: int = 0
+    COMP: int = 0
     RND: int = 0
     F2I: int = 0
     I2F: int = 0

@@ -66,10 +66,7 @@ class FlopsBenchmarkSuite:
         estimated_flop_latencies = {
             FlopType.ABS: n_cycles_per_op[FBT.ADD_ABS].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.MINUS: n_cycles_per_op[FBT.ADD_MINUS].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.EQUALS: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
-            FlopType.GTE: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
-            FlopType.LTE: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
-            FlopType.CMP_ZERO: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
+            FlopType.COMP: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
             FlopType.RND: n_cycles_per_op[FBT.ADD_ROUND].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.ADD: n_cycles_per_op[FBT.ADD_ADD].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.SUB: n_cycles_per_op[FBT.ADD_SUB].q50 - n_cycles_per_op[FBT.ADD].q50,

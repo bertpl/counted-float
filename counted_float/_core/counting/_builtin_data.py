@@ -160,13 +160,11 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
 
 def _deserialize_as_any_pydantic_class(json_str: str, pydantic_classes: list[type[BaseModel]]):
     # try all supported classes
-    print(json_str)
     for pydantic_cls in pydantic_classes:
         try:
             obj = pydantic_cls.model_validate_json(json_str)
             return obj
-        except ValidationError as e:
-            print(e)
+        except ValidationError:
             continue
 
     # none of the supported classes worked
