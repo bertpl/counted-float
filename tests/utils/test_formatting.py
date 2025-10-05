@@ -105,6 +105,7 @@ def test_format_time_duration(nsec: float, expected_result: str) -> None:
         (12300.000000000, "12.3K cpu cycles"),
         (123000.00000000, " 123K cpu cycles"),
         (1230000.0000000, "1.23M cpu cycles"),
+        (9999.9999999999, "10.0K cpu cycles"),
     ],
 )
 def test_format_latency(n_cycles: float, expected_result: str):

@@ -24,27 +24,32 @@ def test_flop_counts_field_names():
 def test_flop_counts_construction():
     # --- act ---------------------------------------------
     fc_0 = FlopCounts()
-    fc_1 = FlopCounts(ADD=5, SQRT=6)
+    fc_1 = FlopCounts(ADD=5, SQRT=6, TAN=3)
     fc_2 = FlopCounts(**{field_name: i + 1 for i, field_name in enumerate(FlopCounts.field_names())})
 
     expected_values = {
         "ABS": [0, 0, 1],
         "MINUS": [0, 0, 2],
-        "EQUALS": [0, 0, 3],
-        "GTE": [0, 0, 4],
-        "LTE": [0, 0, 5],
-        "CMP_ZERO": [0, 0, 6],
-        "RND": [0, 0, 7],
-        "F2I": [0, 0, 8],
-        "I2F": [0, 0, 9],
-        "ADD": [0, 5, 10],
-        "SUB": [0, 0, 11],
-        "MUL": [0, 0, 12],
-        "DIV": [0, 0, 13],
-        "SQRT": [0, 6, 14],
-        "POW2": [0, 0, 15],
-        "LOG2": [0, 0, 16],
-        "POW": [0, 0, 17],
+        "COMP": [0, 0, 3],
+        "RND": [0, 0, 4],
+        "F2I": [0, 0, 5],
+        "I2F": [0, 0, 6],
+        "ADD": [0, 5, 7],
+        "SUB": [0, 0, 8],
+        "MUL": [0, 0, 9],
+        "DIV": [0, 0, 10],
+        "SQRT": [0, 6, 11],
+        "CBRT": [0, 0, 12],
+        "EXP": [0, 0, 13],
+        "EXP2": [0, 0, 14],
+        "EXP10": [0, 0, 15],
+        "LOG": [0, 0, 16],
+        "LOG2": [0, 0, 17],
+        "LOG10": [0, 0, 18],
+        "POW": [0, 0, 19],
+        "SIN": [0, 0, 20],
+        "COS": [0, 0, 21],
+        "TAN": [0, 3, 22],
     }
 
     # --- assert ------------------------------------------

@@ -1,4 +1,4 @@
-from counted_float._core.compatibility import StrEnum
+from enum import StrEnum
 
 
 class FlopsBenchmarkType(StrEnum):
@@ -11,8 +11,16 @@ class FlopsBenchmarkType(StrEnum):
     ADD_SUB = "add_sub"
     ADD_ROUND = "add_round"
     ADD_SQRT = "add_sqrt"
+    ADD_CBRT = "add_cbrt"
+    ADD_LOG = "add_log"
+    ADD_LOG_EXP = "add_log_exp"
     ADD_LOG2 = "add_log2"
-    ADD_LOG2_POW2 = "add_log2_pow2"
+    ADD_LOG2_EXP2 = "add_log2_exp2"
+    ADD_LOG10 = "add_log10"
+    ADD_LOG10_EXP10 = "add_log10_exp10"
+    ADD_SIN = "add_sin"
+    ADD_COS = "add_cos"
+    ADD_TAN = "add_tan"
     POW = "pow"
     POW_POW = "pow_pow"
     SUB = "sub"

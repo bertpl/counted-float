@@ -1,15 +1,39 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v0.9.4
-> *(under development)*
-> > This release focuses on rectifying the benchmarking setup, where it is important to test execution ***latency***
-> > rather than ***throughput*** & extending the scope of flops that we can model & capture.
+> ## v0.9.5
+> *(2025-10-05)*
+> > This release focuses on simplifying & extending the modelled FlopTypes.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- differentiate between different rounding operations (float->float & float->int) and add counting of int->float where possible.
-  - this introduces 2 new flop types: `F2I` and `I2F`
+- Add `FlopType.EXP`, `FlopType.LOG`, `FlopType.EXP10`, `FlopType.LOG10`, `FlopType.CBRT`, `FlopType.SIN`, `FlopType.COS`, `FlopType.TAN`
+- Remove support for Python 3.10 - so we can assume `math.cbrt` is available
+- Extend readme with detailed description of how each flop type is counted & analysed.
+
+
+### Improvements
+- Remove outdated `get_default_empirical_flop_weights` & `get_default_theoretical_flop_weights`, as it's now advised to use `get_builtin_flop_weights` with custom filtering.
+- Merge comparison `FlopType` members `EQUALS`, `GTE`, `LTE`, `CMP_ZERO` into single `COMP`  (compilers typically map these to the same instruction)
+- Rename `FlopType.POW2` -> `FlopType.EXP2` for consistency
+- Add estimated total time for running benchmark
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.9.4
+> *(2025-10-04)*
+> > This release focuses on rectifying the benchmarking setup, where it is important to test execution ***latency***
+> > rather than ***throughput***.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- Differentiate between different rounding operations (float->float & float->int) and add counting of int->float where possible.
+  - This introduces 2 new flop types: `F2I` and `I2F`
 
 ### Improvements
 - Make SystemInfo (sub-model of benchmark results) more complete & granular, providing explicit package info, OS info, ...
@@ -81,17 +105,17 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- add command line command `run_flops_benchmark` that is runnable after installing with `uv tool install ...` + add instructions to readme.
-- add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
-- rename flop_weight configuration methods
+- Add command line command `run_flops_benchmark` that is runnable after installing with `uv tool install ...` + add instructions to readme.
+- Add hierarchical organization of spec analyses & benchmark results, enabling weighting scheme where e.g. # of results per processor type / brand does not influence the overall weight of that category.
+- Rename flop_weight configuration methods
   - `get_flop_weights` --> `get_active_flop_weights`
   - `set_flop_weights` --> `set_active_flop_weights`
-- add `notes` field to InstructionLatency class, to allow adding human-readable attribution of data source etc...
-- add additional FPU specs for ARM v7 (Cortex A9), ARM v8 (Cortex A55, A76) and ARM v9 (Cortex X1, X2, X3)
+- Add `notes` field to InstructionLatency class, to allow adding human-readable attribution of data source etc...
+- Add additional FPU specs for ARM v7 (Cortex A9), ARM v8 (Cortex A55, A76) and ARM v9 (Cortex X1, X2, X3)
 
 ### Improvements
-- improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
-- allow missing data in instruction latency data (`specs` data-folder), in which case missing data is imputed from neighboring data.
+- Improve output formatting of benchmark results & improve conciseness of microbenchmark output ('operation' vs '1000 flops')
+- Allow missing data in instruction latency data (`specs` data-folder), in which case missing data is imputed from neighboring data.
 
 ### Bug Fixes
 /
@@ -137,10 +161,10 @@
 /
 
 ### Improvements
-- simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba'), 
+- Simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba'), 
   all functionality is now usable with and without this optional dependency. 
   However, running benchmarks without numba will result in a warning, since results are expect to be wildly inaccurate. 
-- improve test coverage generation by running coverage analysis in various settings (Python 3.10 & 3.13; with and without numba)
+- Improve test coverage generation by running coverage analysis in various settings (Python 3.10 & 3.13; with and without numba)
 
 ### Bug Fixes
 /
@@ -155,7 +179,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- add splash screen to README.md
+- Add splash screen to README.md
 
 ### Improvements
 /
@@ -176,7 +200,7 @@
 /
 
 ### Improvements
-- add links to GitHub code, issues, ... to pyproject.toml to show up on pypi.org
+- Add links to GitHub code, issues, ... to pyproject.toml to show up on pypi.org
 
 ### Bug Fixes
 /
@@ -191,9 +215,9 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-- initial feature-complete version
-- full readme file with usage instructions
-- full test suite & automatic badge generation for README.md
+- Initial feature-complete version
+- Full readme file with usage instructions
+- Full test suite & automatic badge generation for README.md
 
 ### Improvements
 /
@@ -202,4 +226,4 @@
 /
 
 ### Internal
-- initial CI/CD pipeline
+- Initial CI/CD pipeline

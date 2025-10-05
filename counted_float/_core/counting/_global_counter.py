@@ -54,17 +54,8 @@ class GlobalFlopCounter:
     def incr_minus(self):
         self.__counts.MINUS += self.__incr
 
-    def incr_equals(self):
-        self.__counts.EQUALS += self.__incr
-
-    def incr_gte(self):
-        self.__counts.GTE += self.__incr
-
-    def incr_lte(self):
-        self.__counts.LTE += self.__incr
-
-    def incr_cmp_zero(self):
-        self.__counts.CMP_ZERO += self.__incr
+    def incr_comp(self):
+        self.__counts.COMP += self.__incr
 
     def incr_rnd(self):
         self.__counts.RND += self.__incr
@@ -90,14 +81,38 @@ class GlobalFlopCounter:
     def incr_sqrt(self):
         self.__counts.SQRT += self.__incr
 
-    def incr_pow2(self):
-        self.__counts.POW2 += self.__incr
+    def incr_cbrt(self):
+        self.__counts.CBRT += self.__incr
+
+    def incr_exp(self):
+        self.__counts.EXP += self.__incr
+
+    def incr_exp2(self):
+        self.__counts.EXP2 += self.__incr
+
+    def incr_exp10(self):
+        self.__counts.EXP10 += self.__incr
+
+    def incr_log(self):
+        self.__counts.LOG += self.__incr
 
     def incr_log2(self):
         self.__counts.LOG2 += self.__incr
 
+    def incr_log10(self):
+        self.__counts.LOG10 += self.__incr
+
     def incr_pow(self):
         self.__counts.POW += self.__incr
+
+    def incr_sin(self):
+        self.__counts.SIN += self.__incr
+
+    def incr_cos(self):
+        self.__counts.COS += self.__incr
+
+    def incr_tan(self):
+        self.__counts.TAN += self.__incr
 
 
 # --- global variable through which we access the global counter ---

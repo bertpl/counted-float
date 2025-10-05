@@ -1,4 +1,4 @@
-from counted_float._core.compatibility import StrEnum
+from enum import StrEnum
 
 
 class FlopType(StrEnum):
@@ -10,21 +10,26 @@ class FlopType(StrEnum):
 
     ABS = "abs(x)"
     MINUS = "-x"
-    EQUALS = "x==y"
-    GTE = "x>=y"
-    LTE = "x<=y"
-    CMP_ZERO = "x>=0"
-    RND = "round(x,0)"  # float -> float
-    F2I = "int(x)"  # float -> int, also includes round(x), math.floor(x), math.ceil(x)
-    I2F = "float(x)"  # int -> float
+    COMP = "x<=y"  # includes x>=y, x==y, x<y, x>y, as well as comparison to 0
+    RND = "round"  # round float -> float
+    F2I = "float->int"  # float -> int, also includes round(x), math.floor(x), math.ceil(x)
+    I2F = "int->float"  # int -> float
     ADD = "x+y"
     SUB = "x-y"
     MUL = "x*y"
     DIV = "x/y"
     SQRT = "sqrt(x)"
-    POW2 = "2^x"
+    CBRT = "cbrt(x)"
+    EXP = "e^x"
+    EXP2 = "2^x"
+    EXP10 = "10^x"
+    LOG = "log(x)"
     LOG2 = "log2(x)"
+    LOG10 = "log10(x)"
     POW = "x^y"
+    SIN = "sin(x)"
+    COS = "cos(x)"
+    TAN = "tan(x)"
 
     def long_name(self) -> str:
         return f"FlopType.{self.name:<9}  [{self.value}]"

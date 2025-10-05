@@ -18,10 +18,7 @@ class FlopCounts:
     # --- Counting fields ---------------------------------
     ABS: int = 0
     MINUS: int = 0
-    EQUALS: int = 0
-    GTE: int = 0
-    LTE: int = 0
-    CMP_ZERO: int = 0
+    COMP: int = 0
     RND: int = 0
     F2I: int = 0
     I2F: int = 0
@@ -30,9 +27,17 @@ class FlopCounts:
     MUL: int = 0
     DIV: int = 0
     SQRT: int = 0
-    POW2: int = 0
+    CBRT: int = 0
+    EXP: int = 0
+    EXP2: int = 0
+    EXP10: int = 0
+    LOG: int = 0
     LOG2: int = 0
+    LOG10: int = 0
     POW: int = 0
+    SIN: int = 0
+    COS: int = 0
+    TAN: int = 0
 
     # --- math --------------------------------------------
     def __add__(self, other: FlopCounts) -> FlopCounts:
