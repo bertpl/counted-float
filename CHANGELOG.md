@@ -17,7 +17,7 @@
 /
 
 ### Bug Fixes
-- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners)
+- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners) or in different units (MHz vs GHz)
 
 ### Internal
 /
