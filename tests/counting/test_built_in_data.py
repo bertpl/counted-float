@@ -13,7 +13,7 @@ def test_builtin_data_benchmarks():
 
     # --- assert ------------------------------------------
     assert all(isinstance(v, FlopsBenchmarkResults) for v in result.values())
-    assert len(result) == 9  # update as we add data
+    assert len(result) == 10  # update as we add data
 
 
 # =================================================================================================
@@ -40,11 +40,11 @@ def test_builtin_data_get_flop_weights_invalid_key():
 @pytest.mark.parametrize(
     "key_filter, n_expected",
     [
-        (".", 37),
-        ("benchmark", 9),
+        (".", 38),
+        ("benchmark", 10),
         ("analysis", 12),
         ("specs", 16),
-        ("arm", 15),
+        ("arm", 16),
         ("x86", 22),
     ],
 )

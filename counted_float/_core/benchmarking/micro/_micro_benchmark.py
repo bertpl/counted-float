@@ -1,8 +1,13 @@
 from abc import ABC, abstractmethod
 
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
-from counted_float._core.utils import Timer, convert_nsecs_to_cycles, format_latency, format_time_duration
-from counted_float._core.utils._cpu_freq import get_cpu_frequency_current
+from counted_float._core.utils import (
+    Timer,
+    convert_nsecs_to_cycles,
+    format_latency,
+    format_time_duration,
+    get_cpu_frequency_mhz_current,
+)
 
 
 # =================================================================================================
@@ -100,7 +105,7 @@ class MicroBenchmark(ABC):
         return SingleRunResult(
             n_executions=n_executions,
             t_nsecs=t.t_elapsed_nsec(),
-            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=get_cpu_frequency_current()),
+            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=get_cpu_frequency_mhz_current()),
         )
 
     @abstractmethod

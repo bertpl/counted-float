@@ -9,15 +9,19 @@
 
 ### What's New
 - add updated benchmark data
-  - Apple M3 Max, Apple M4 Pro, AMD Ryzen 1700x, Intel i7-8850U  
-  - ARM Neoverse N2, Apple M1, AMD Epyc 7003, Intel i7-8700B
+  - **arm**
+    - ***Apple***: M1, M3, M3 Max, M4 Pro
+    - ***Other***: Azure Cobalt 100 (Neoverse N2)
+  - **x86**
+    - ***AMD***: Ryzen 1700x, Epyc 7003
+    - ***Intel***: i7-8850U (Kaby Lake), i7-8700B (Coffee Lake)
 - remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
 
 ### Improvements
 /
 
 ### Bug Fixes
-- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners)
+- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners) or in different units (MHz vs GHz)
 
 ### Internal
 /
