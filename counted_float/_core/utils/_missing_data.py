@@ -35,7 +35,11 @@ def impute_missing_data(data: np.ndarray) -> np.ndarray:
             ]
 
             # overall exact correction is geo_mean of these factors, which we'll apply with step e_step
-            c_row_correct[i_row] = geo_mean(factors) ** e_step if factors else np.nan
+            try:
+                c_row_correct[i_row] = geo_mean(factors) ** e_step if factors else np.nan
+            except TypeError as e:
+                print(e)
+                pass
 
         # compute correction factors for c_cols
         c_col_correct = np.zeros(n_cols)
