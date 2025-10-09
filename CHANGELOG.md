@@ -7,13 +7,13 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- add `benchmark-counted-float` cli command to compare `float` vs `CountedFloat` performance + updated readme with instructions & results.s
 
 ### Improvements
 /
 
 ### Bug Fixes
-/
+- update outdated Known Limitations section in readme
 
 ### Internal
 /
