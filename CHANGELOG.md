@@ -2,6 +2,24 @@
 
 
 <!------------------------------------------------------------------------------------------------->
+> ## v0.9.7
+> *(under development)*
+> > Relatively minor update release, with a few quality-of-life improvements.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v0.9.6
 > *(2025-10-09)*
 > > Given the changes of previous versions, this release updates & extends benchmark data, resulting in a total of 19 benchmarks (8 x arm, 11 x x86).
