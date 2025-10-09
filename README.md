@@ -257,28 +257,28 @@ from counted_float.config import get_builtin_flop_weights
 >>> get_builtin_flop_weights(key_filter="arm").show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.97313
-    FlopType.MINUS      [-x]            :   0.99098
-    FlopType.COMP       [x<=y]          :   1.03987
-    FlopType.RND        [round]         :   1.35111
-    FlopType.F2I        [float->int]    :   1.52648
-    FlopType.I2F        [int->float]    :   1.63320
+    FlopType.COMP       [x<=y]          :   0.65000
+    FlopType.MINUS      [-x]            :   0.90000
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00058
-    FlopType.MUL        [x*y]           :   1.44952
-    FlopType.DIV        [x/y]           :   5.00897
-    FlopType.SQRT       [sqrt(x)]       :   5.15597
-    FlopType.CBRT       [cbrt(x)]       :  39.30448
-    FlopType.EXP        [e^x]           :  17.22817
-    FlopType.EXP2       [2^x]           :  15.82232
-    FlopType.EXP10      [10^x]          :  21.20195
-    FlopType.LOG        [log(x)]        :  17.51472
-    FlopType.LOG2       [log2(x)]       :  18.32529
-    FlopType.LOG10      [log10(x)]      :  17.19903
-    FlopType.POW        [x^y]           :  47.63289
-    FlopType.SIN        [sin(x)]        :  29.58923
-    FlopType.COS        [cos(x)]        :  28.54904
-    FlopType.TAN        [tan(x)]        :  31.87442
+    FlopType.SUB        [x-y]           :   1.00000
+    FlopType.ABS        [abs(x)]        :   1.10000
+    FlopType.F2I        [float->int]    :   1.50000
+    FlopType.MUL        [x*y]           :   1.50000
+    FlopType.I2F        [int->float]    :   1.60000
+    FlopType.RND        [round]         :   1.60000
+    FlopType.DIV        [x/y]           :   6.00000
+    FlopType.SQRT       [sqrt(x)]       :   7.50000
+    FlopType.EXP2       [2^x]           :  16.00000
+    FlopType.EXP        [e^x]           :  18.00000
+    FlopType.LOG        [log(x)]        :  20.00000
+    FlopType.LOG2       [log2(x)]       :  20.00000
+    FlopType.EXP10      [10^x]          :  24.00000
+    FlopType.LOG10      [log10(x)]      :  24.00000
+    FlopType.COS        [cos(x)]        :  33.00000
+    FlopType.SIN        [sin(x)]        :  33.00000
+    FlopType.POW        [x^y]           :  40.00000
+    FlopType.CBRT       [cbrt(x)]       :  45.00000
+    FlopType.TAN        [tan(x)]        :  45.00000
 }
 ```
 
