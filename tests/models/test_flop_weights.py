@@ -2,6 +2,7 @@ import math
 
 import pytest
 
+from counted_float._core.counting.config import get_builtin_flop_weights
 from counted_float._core.models import FlopType, FlopWeights
 
 
@@ -109,3 +110,15 @@ def test_flop_weights_as_geo_mean(sample_flop_weights_dict_by_enum, fill_missing
     for flop_type in FlopType:
         expected = math.sqrt(weights1.weights[flop_type] * weights2.weights[flop_type])
         assert math.isclose(geo_mean_weights.weights[flop_type], expected, rel_tol=1e-15, abs_tol=1e-15)
+
+
+@pytest.mark.parametrize("rounding_mode", [None, "nearest_int", "10%"])
+@pytest.mark.parametrize("key_filter", ["", "benchmark", "spec"])
+def test_flop_weights_show(key_filter: str, rounding_mode: None | str):
+    # make sure FlopWeights.show() doesn't raise exceptions, for int/float and with/without nan values
+
+    # --- arrange -----------------------------------------
+    flop_weights = get_builtin_flop_weights(key_filter, rounding_mode)
+
+    # --- act & assert ------------------------------------
+    flop_weights.show()

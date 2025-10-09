@@ -16,7 +16,7 @@
 - update outdated Known Limitations section in readme
 
 ### Internal
-/
+- Improve unit test coverage to ~99%
 
 
 <!------------------------------------------------------------------------------------------------->

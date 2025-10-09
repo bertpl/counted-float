@@ -12,13 +12,12 @@ from counted_float._core.utils import round_number
         (0.9, "nearest_int", 1.0),
         (1.0, "nearest_int", 1.0),
         (1.7, "nearest_int", 2.0),
+        (0.0, "10%", 0.0),
         (1.0, "10%", 1.0),
         (1.04, "10%", 1.0),
         (1.05, "10%", 1.1),
-        (1.06, "10%", 1.1),
         (1.14, "10%", 1.1),
         (1.15, "10%", 1.2),
-        (1.16, "10%", 1.2),
         (1.24, "10%", 1.2),
         (1.25, "10%", 1.3),
         (8.4, "10%", 8.0),
@@ -26,7 +25,15 @@ from counted_float._core.utils import round_number
         (0.84, "10%", 0.8),
     ],
 )
-def test_round_number(value: float, mode: None | Literal["nearest_int", "10%"], expected_value: int | float):
+@pytest.mark.parametrize("negative", [False, True])
+def test_round_number(
+    value: float, mode: None | Literal["nearest_int", "10%"], expected_value: int | float, negative: bool
+):
+    # --- arrange -----------------------------------------
+    if negative:
+        value = -value
+        expected_value = -expected_value
+
     # --- act ---------------------------------------------
     rounded = round_number(value, mode)
 

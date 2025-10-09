@@ -115,9 +115,9 @@ class MicroBenchmark(ABC):
           run by the MicroBenchmarkRunner class to ensure that the benchmark_runs runs for a reasonable amount of time
             (e.g. 1 second per run).
         """
-        raise NotImplementedError()
+        ...
 
     @abstractmethod
     def _run_benchmark(self):
         """Run benchmark_runs.  This method is called multiple times and the time spent here is measured."""
-        raise NotImplementedError()
+        ...
