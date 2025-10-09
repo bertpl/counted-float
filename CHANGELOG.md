@@ -3,8 +3,8 @@
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.6
-> *(under development)*
-> > Given the changes of previous versions, this release updates & extends benchmark data.
+> *(2025-10-09)*
+> > Given the changes of previous versions, this release updates & extends benchmark data, resulting in a total of 19 benchmarks (8 x arm, 11 x x86).
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
