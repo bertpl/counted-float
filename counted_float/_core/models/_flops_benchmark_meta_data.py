@@ -48,8 +48,8 @@ class ProcessorInfo(MyBaseModel):
     architecture: str
     n_logical_core_count: int
     n_physical_core_count: int
-    min_freq_mhz: int
-    max_freq_mhz: int
+    min_freq_mhz: int | None
+    max_freq_mhz: int | None
 
     @classmethod
     def from_system(cls) -> ProcessorInfo:
