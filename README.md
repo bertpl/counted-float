@@ -15,6 +15,10 @@ The target application area is evaluation of research prototypes of numerical al
 useful for estimating total computational cost, in cases where benchmarking a compiled version (C, Rust, ...) is not 
 feasible or desirable.
 
+Flop weights are computed using a highly curated dataset spanning a wide range of modern CPUs:
+- 19 benchmarks, 16 spec sheets, 12 third party measurements (Agner Fog, uops.info)
+- covering x86 (Intel, AMD) and ARM (Apple, AWS, Azure) architectures
+
 # 1. Installation
 
 Use you favorite package manager such as `uv` or `pip`:
