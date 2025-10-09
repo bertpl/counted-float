@@ -8,7 +8,7 @@
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
-/
+- add new, default `"10%"` rounding mode for flop weights, reflecting a balance between accuracy & readability, while conveying the message these are approximate at best.
 
 ### Improvements
 /
