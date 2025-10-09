@@ -67,7 +67,7 @@ class FlopWeights(MyBaseModel):
     # -------------------------------------------------------------------------
     def show(self):
         print("{")
-        for k, v in self.weights.items():
+        for k, v in sorted(self.weights.items(), key=lambda kv: (kv[1], kv[0].long_name())):
             if isinstance(v, float):
                 print(f"    {k.long_name()}".ljust(40) + f": {v:9.5f}")
             else:
