@@ -1,8 +1,8 @@
 <!--START_SECTION:images-->
 ![shields.io-python-versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v1.0.0/badge-test-count.svg)
-![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v1.0.0/badge-coverage.svg)
-![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v1.0.0/splash.webp)
+![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v1.0.1/badge-test-count.svg)
+![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v1.0.1/badge-coverage.svg)
+![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v1.0.1/splash.webp)
 <!--END_SECTION:images-->
 
 # counted-float
