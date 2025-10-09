@@ -278,7 +278,8 @@ class FlopWeightsTreeView:
                 else:
                     txt_clr = "white"
                     bg_clr = f"black"
-                console.print(line, style=f"{txt_clr} on {bg_clr}", highlight=False)
+                line = line[: 3 * indent] + f"[{txt_clr} on {bg_clr}]" + line[3 * indent :] + "[/]"
+                console.print(line, highlight=False)
 
             print()
 
