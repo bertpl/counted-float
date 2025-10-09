@@ -69,8 +69,8 @@ class ProcessorInfo(MyBaseModel):
             ),
             n_logical_core_count=psutil.cpu_count(logical=True),
             n_physical_core_count=psutil.cpu_count(logical=False),
-            min_freq_mhz=int(get_cpu_frequency_mhz_min()),
-            max_freq_mhz=int(get_cpu_frequency_mhz_max()),
+            min_freq_mhz=int(get_cpu_frequency_mhz_min() or 0.0) or None,
+            max_freq_mhz=int(get_cpu_frequency_mhz_max() or 0.0) or None,
         )
 
 
