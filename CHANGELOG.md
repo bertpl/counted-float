@@ -1,5 +1,41 @@
 # Change Log
 
+<!------------------------------------------------------------------------------------------------->
+> ## v1.0.0
+> *(under development)*
+> > Final details to justify bump to v1.0.0.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.9.7
+> *(2025-10-09)*
+> > Relatively minor update release, with a few quality-of-life improvements.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- Add new, default `"10%"` rounding mode for flop weights, reflecting a balance between accuracy & readability, while conveying the message these are approximate at best.
+
+### Improvements
+- Improve readability of built-in data visualization by using colored instead of grey bands.
+
+### Bug Fixes
+- rename one wrongly named benchmark file (remove `gh_` as it was obtained locally and not using GitHub CI/CD).
+
+### Internal
+/
 
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.6

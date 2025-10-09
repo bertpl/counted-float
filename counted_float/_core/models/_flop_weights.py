@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable
+from typing import Iterable, Literal
 
 import numpy as np
 from pydantic import field_serializer, field_validator
 
-from counted_float._core.utils import geo_mean, impute_missing_data
+from counted_float._core.utils import geo_mean, impute_missing_data, round_number
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
@@ -18,11 +18,23 @@ class FlopWeights(MyBaseModel):
     # -------------------------------------------------------------------------
     #  Helpers
     # -------------------------------------------------------------------------
-    def round(self) -> FlopWeights:
-        """Round all weights to the nearest integer, with minimum of 1."""
-        return FlopWeights(
-            weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
-        )
+    def round(self, mode: Literal["nearest_int", "10%"] = "10%") -> FlopWeights:
+        """
+        Round all weights according to specified mode:
+           - "10%" (default)   : round to nearest round number with ~10% accuracy and max. 2 significant non-0 digits
+                                      (e.g. 1.234 -> 1.2, 12.34 -> 12, 123.4 -> 120)
+           - "nearest_int"     : round to nearest int with minimum of 1
+        """
+        if mode == "nearest_int":
+            return FlopWeights(
+                weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
+            )
+        else:
+            return FlopWeights(
+                weights={
+                    k: math.nan if math.isnan(v) else round_number(v, mode="10%") for k, v in self.weights.items()
+                },
+            )
 
     def has_missing_data(self) -> bool:
         """Check if any flop type has missing data (i.e. weight is NaN)."""
@@ -55,7 +67,7 @@ class FlopWeights(MyBaseModel):
     # -------------------------------------------------------------------------
     def show(self):
         print("{")
-        for k, v in self.weights.items():
+        for k, v in sorted(self.weights.items(), key=lambda kv: (kv[1], kv[0].long_name())):
             if isinstance(v, float):
                 print(f"    {k.long_name()}".ljust(40) + f": {v:9.5f}")
             else:

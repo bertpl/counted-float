@@ -1,8 +1,8 @@
 <!--START_SECTION:images-->
 ![shields.io-python-versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.9.6/badge-test-count.svg)
-![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.9.6/badge-coverage.svg)
-![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.9.6/splash.webp)
+![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/v0.9.7/badge-test-count.svg)
+![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/v0.9.7/badge-coverage.svg)
+![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/v0.9.7/splash.webp)
 <!--END_SECTION:images-->
 
 # counted-float
@@ -141,30 +141,33 @@ rationale behind choice of data sources and methodology.
 >>> get_active_flop_weights().show()
 
 {
-    FlopType.ABS        [abs(x)]        :    1
-    FlopType.MINUS      [-x]            :    1
-    FlopType.COMP       [x<=y]          :    1
-    FlopType.RND        [round]         :    2
-    FlopType.F2I        [float->int]    :    2
-    FlopType.I2F        [int->float]    :    2
-    FlopType.ADD        [x+y]           :    1
-    FlopType.SUB        [x-y]           :    1
-    FlopType.MUL        [x*y]           :    1
-    FlopType.DIV        [x/y]           :    5
-    FlopType.SQRT       [sqrt(x)]       :    6
-    FlopType.CBRT       [cbrt(x)]       :   42
-    FlopType.EXP        [e^x]           :   19
-    FlopType.EXP2       [2^x]           :   29
-    FlopType.EXP10      [10^x]          :   23
-    FlopType.LOG        [log(x)]        :   19
-    FlopType.LOG2       [log2(x)]       :   24
-    FlopType.LOG10      [log10(x)]      :   19
-    FlopType.POW        [x^y]           :   62
-    FlopType.SIN        [sin(x)]        :   32
-    FlopType.COS        [cos(x)]        :   31
-    FlopType.TAN        [tan(x)]        :   34
+    FlopType.MINUS      [-x]            :   0.45000
+    FlopType.ABS        [abs(x)]        :   0.70000
+    FlopType.ADD        [x+y]           :   1.00000
+    FlopType.COMP       [x<=y]          :   1.00000
+    FlopType.SUB        [x-y]           :   1.00000
+    FlopType.MUL        [x*y]           :   1.40000
+    FlopType.RND        [round]         :   1.80000
+    FlopType.F2I        [float->int]    :   2.00000
+    FlopType.I2F        [int->float]    :   2.00000
+    FlopType.DIV        [x/y]           :   5.50000
+    FlopType.SQRT       [sqrt(x)]       :   7.50000
+    FlopType.EXP2       [2^x]           :  16.00000
+    FlopType.EXP        [e^x]           :  18.00000
+    FlopType.LOG        [log(x)]        :  20.00000
+    FlopType.LOG2       [log2(x)]       :  22.00000
+    FlopType.EXP10      [10^x]          :  24.00000
+    FlopType.LOG10      [log10(x)]      :  24.00000
+    FlopType.COS        [cos(x)]        :  30.00000
+    FlopType.SIN        [sin(x)]        :  30.00000
+    FlopType.POW        [x^y]           :  40.00000
+    FlopType.TAN        [tan(x)]        :  40.00000
+    FlopType.CBRT       [cbrt(x)]       :  45.00000
 }
 ```
+Note that these weights are rounded up to the ~10% closest semi-round number, reflecting a balance between accuracy and readability,
+while conveying the message that these weights should be used as approximations only.  See further down for the different rounding modes.
+
 These weights will be used by default when extracting total weighted flop costs:
 
 ```python
@@ -181,7 +184,7 @@ with FlopCountingContext() as ctx:
     _ = math.log2(cf2)
     
 flop_counts = ctx.flop_counts()
-total_cost = flop_counts.total_weighted_cost()  # 1 + 62 + 24 = 87
+total_cost = flop_counts.total_weighted_cost()  # 1 + 40 + 22 = 63
 ```
 Note that the `total_weighted_cost` method will use the default flop weights as returned by `get_flop_weights()`.  This can be
 overridden by either configuring different flop weights (see next section) or by setting the `weights` argument of the `total_weighted_cost()` method.
@@ -208,33 +211,38 @@ Built-in flop weights can be inspected using the following functions:
 ```python
 from counted_float.config import get_default_consensus_flop_weights
 
->>> get_default_consensus_flop_weights(rounded=False).show()
+>>> get_default_consensus_flop_weights(rounding_mode=None).show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.63673
-    FlopType.MINUS      [-x]            :   0.64396
-    FlopType.COMP       [x<=y]          :   1.20756
-    FlopType.RND        [round]         :   1.54041
-    FlopType.F2I        [float->int]    :   1.99099
-    FlopType.I2F        [int->float]    :   1.84601
+    FlopType.MINUS      [-x]            :   0.46773
+    FlopType.ABS        [abs(x)]        :   0.70012
+    FlopType.COMP       [x<=y]          :   0.96923
+    FlopType.SUB        [x-y]           :   0.99846
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00586
-    FlopType.MUL        [x*y]           :   1.37238
-    FlopType.DIV        [x/y]           :   5.07465
-    FlopType.SQRT       [sqrt(x)]       :   5.90559
-    FlopType.CBRT       [cbrt(x)]       :  42.39375
-    FlopType.EXP        [e^x]           :  18.58228
-    FlopType.EXP2       [2^x]           :  28.88672
-    FlopType.EXP10      [10^x]          :  22.86839
-    FlopType.LOG        [log(x)]        :  18.89135
-    FlopType.LOG2       [log2(x)]       :  24.34792
-    FlopType.LOG10      [log10(x)]      :  18.55085
-    FlopType.POW        [x^y]           :  61.79155
-    FlopType.SIN        [sin(x)]        :  31.91490
-    FlopType.COS        [cos(x)]        :  30.79295
-    FlopType.TAN        [tan(x)]        :  34.37970
+    FlopType.MUL        [x*y]           :   1.39950
+    FlopType.RND        [round]         :   1.77232
+    FlopType.F2I        [float->int]    :   1.91485
+    FlopType.I2F        [int->float]    :   1.92200
+    FlopType.DIV        [x/y]           :   5.53105
+    FlopType.SQRT       [sqrt(x)]       :   7.35657
+    FlopType.EXP2       [2^x]           :  15.85687
+    FlopType.EXP        [e^x]           :  17.51909
+    FlopType.LOG        [log(x)]        :  19.00419
+    FlopType.LOG2       [log2(x)]       :  22.38002
+    FlopType.EXP10      [10^x]          :  23.02693
+    FlopType.LOG10      [log10(x)]      :  24.65718
+    FlopType.SIN        [sin(x)]        :  30.40612
+    FlopType.COS        [cos(x)]        :  31.39434
+    FlopType.POW        [x^y]           :  41.81031
+    FlopType.TAN        [tan(x)]        :  42.15636
+    FlopType.CBRT       [cbrt(x)]       :  44.32376
 }
 ```
+There are 3 rounding modes:
+- `None` -> no rounding
+- `"nearest_int"` -> round up/down to nearest integer, with a minimum of 1
+- `"10%"` -> round to nearest semi-round number within ~10% (default)
+
 
 The default weights that are configured out-of-the-box in the package are the integer-rounded `consensus` weights.
 
@@ -249,28 +257,28 @@ from counted_float.config import get_builtin_flop_weights
 >>> get_builtin_flop_weights(key_filter="arm").show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.97313
-    FlopType.MINUS      [-x]            :   0.99098
-    FlopType.COMP       [x<=y]          :   1.03987
-    FlopType.RND        [round]         :   1.35111
-    FlopType.F2I        [float->int]    :   1.52648
-    FlopType.I2F        [int->float]    :   1.63320
+    FlopType.COMP       [x<=y]          :   0.65000
+    FlopType.MINUS      [-x]            :   0.90000
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00058
-    FlopType.MUL        [x*y]           :   1.44952
-    FlopType.DIV        [x/y]           :   5.00897
-    FlopType.SQRT       [sqrt(x)]       :   5.15597
-    FlopType.CBRT       [cbrt(x)]       :  39.30448
-    FlopType.EXP        [e^x]           :  17.22817
-    FlopType.EXP2       [2^x]           :  15.82232
-    FlopType.EXP10      [10^x]          :  21.20195
-    FlopType.LOG        [log(x)]        :  17.51472
-    FlopType.LOG2       [log2(x)]       :  18.32529
-    FlopType.LOG10      [log10(x)]      :  17.19903
-    FlopType.POW        [x^y]           :  47.63289
-    FlopType.SIN        [sin(x)]        :  29.58923
-    FlopType.COS        [cos(x)]        :  28.54904
-    FlopType.TAN        [tan(x)]        :  31.87442
+    FlopType.SUB        [x-y]           :   1.00000
+    FlopType.ABS        [abs(x)]        :   1.10000
+    FlopType.F2I        [float->int]    :   1.50000
+    FlopType.MUL        [x*y]           :   1.50000
+    FlopType.I2F        [int->float]    :   1.60000
+    FlopType.RND        [round]         :   1.60000
+    FlopType.DIV        [x/y]           :   6.00000
+    FlopType.SQRT       [sqrt(x)]       :   7.50000
+    FlopType.EXP2       [2^x]           :  16.00000
+    FlopType.EXP        [e^x]           :  18.00000
+    FlopType.LOG        [log(x)]        :  20.00000
+    FlopType.LOG2       [log2(x)]       :  20.00000
+    FlopType.EXP10      [10^x]          :  24.00000
+    FlopType.LOG10      [log10(x)]      :  24.00000
+    FlopType.COS        [cos(x)]        :  33.00000
+    FlopType.SIN        [sin(x)]        :  33.00000
+    FlopType.POW        [x^y]           :  40.00000
+    FlopType.CBRT       [cbrt(x)]       :  45.00000
+    FlopType.TAN        [tan(x)]        :  45.00000
 }
 ```
 
@@ -314,29 +322,29 @@ div                                : wwwwwwwwwwwwwww.........................   
 div_div                            : wwwwwwwwwwwwwww.........................   [   5.00 µs ±  0.2% | 20.3K cpu cycles ±  0.2% ]  /  1000 iterations
 lte_addsub                         : wwwwwwwwwwwwwww.........................   [   1.71 µs ±  0.2% | 6.94K cpu cycles ±  0.2% ]  /  1000 iterations
 
->>> results.flop_weights.show() 
+>>> results.flop_weights().show() 
 
 {
-    FlopType.ABS        [abs(x)]        :   0.90556
-    FlopType.MINUS      [-x]            :   0.90089
-    FlopType.COMP       [x<=y]          :   1.67297
-    FlopType.RND        [round]         :   1.24118
+    FlopType.ABS        [abs(x)]        :   0.89904
+    FlopType.MINUS      [-x]            :   0.90935
+    FlopType.SUB        [x-y]           :   0.99676
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   0.99928
-    FlopType.MUL        [x*y]           :   1.52656
-    FlopType.DIV        [x/y]           :   4.06589
-    FlopType.SQRT       [sqrt(x)]       :   5.26487
-    FlopType.CBRT       [cbrt(x)]       :  39.49190
-    FlopType.EXP        [e^x]           :  17.34508
-    FlopType.EXP2       [2^x]           :  16.70475
-    FlopType.EXP10      [10^x]          :  21.03351
-    FlopType.LOG        [log(x)]        :  17.59412
-    FlopType.LOG2       [log2(x)]       :  18.08932
-    FlopType.LOG10      [log10(x)]      :  17.27955
-    FlopType.POW        [x^y]           :  38.32044
-    FlopType.SIN        [sin(x)]        :  28.67006
-    FlopType.COS        [cos(x)]        :  29.11818
-    FlopType.TAN        [tan(x)]        :  32.28703
+    FlopType.RND        [round]         :   1.24397
+    FlopType.MUL        [x*y]           :   1.55516
+    FlopType.COMP       [x<=y]          :   1.69018
+    FlopType.DIV        [x/y]           :   4.12333
+    FlopType.SQRT       [sqrt(x)]       :   5.42419
+    FlopType.EXP2       [2^x]           :  16.95266
+    FlopType.LOG10      [log10(x)]      :  17.60079
+    FlopType.EXP        [e^x]           :  17.76250
+    FlopType.LOG        [log(x)]        :  17.86149
+    FlopType.LOG2       [log2(x)]       :  18.42380
+    FlopType.EXP10      [10^x]          :  21.50729
+    FlopType.SIN        [sin(x)]        :  29.31571
+    FlopType.COS        [cos(x)]        :  29.56218
+    FlopType.TAN        [tan(x)]        :  32.88570
+    FlopType.POW        [x^y]           :  39.35018
+    FlopType.CBRT       [cbrt(x)]       :  40.16857
     FlopType.F2I        [float->int]    :       nan
     FlopType.I2F        [int->float]    :       nan
 }
