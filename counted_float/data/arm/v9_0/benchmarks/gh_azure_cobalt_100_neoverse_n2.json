@@ -5,8 +5,8 @@
             "architecture": "aarch64 - ARM_8 - 64-bits",
             "n_logical_core_count": 4,
             "n_physical_core_count": 4,
-            "min_freq_mhz": 0,
-            "max_freq_mhz": 1000
+            "min_freq_mhz": null,
+            "max_freq_mhz": null
         },
         "os": {
             "platform": "Linux-6.11.0-1018-azure-aarch64-with-glibc2.39",
