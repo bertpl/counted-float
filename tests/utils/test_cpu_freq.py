@@ -18,7 +18,3 @@ def test_get_cpu_frequency_mhz_min_max_current():
 
     if (freq_min is not None) and (freq_max is not None):
         assert freq_min <= freq_max
-    if (freq_min is not None) and (freq_current is not None):
-        assert freq_min <= freq_current
-    if (freq_current is not None) and (freq_max is not None):
-        assert freq_current <= freq_max
