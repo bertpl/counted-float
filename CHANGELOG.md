@@ -16,6 +16,7 @@
     - ***AMD***: Ryzen 1700x, Epyc 7003
     - ***Intel***: i7-8850U (Kaby Lake), i7-8700B (Coffee Lake)
 - remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
+- all filtering by `key` in `show-data` CLI command, using new `--key_filter` optional argument
 
 ### Improvements
 - Improve robustness of CPU frequency detection on various environments

@@ -19,5 +19,6 @@ def benchmark():
 
 
 @cli.command(short_help="show all built-in data")
-def show_data():
-    BuiltInData.show()
+@click.option("--key_filter", default="", help="Optional key filter for built-in data")
+def show_data(key_filter: str):
+    BuiltInData.show(key_filter=key_filter)
