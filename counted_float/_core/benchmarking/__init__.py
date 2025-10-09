@@ -2,10 +2,10 @@ from .counted_float import BenchmarkCountedFloat, BenchmarkFloat, CountedFloatBe
 from .flops import FlopsBenchmarkResults, FlopsBenchmarkSuite
 
 
-def run_flops_benchmark() -> FlopsBenchmarkResults:
+def run_flops_benchmark(n_seconds_per_run_target: float = 0.1) -> FlopsBenchmarkResults:
     """Run the flops benchmark suite with default settings returns a FlopsBenchmarkResults object."""
 
-    benchmark_results = FlopsBenchmarkSuite().run()
+    benchmark_results = FlopsBenchmarkSuite().run(n_seconds_per_run_target=n_seconds_per_run_target)
 
     print()
 
