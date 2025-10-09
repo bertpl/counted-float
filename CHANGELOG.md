@@ -11,10 +11,10 @@
 - add updated benchmark data
   - **arm**
     - ***Apple***: M1, M3, M3 Max, M4 Pro
-    - ***Other***: Azure Cobalt 100 (Neoverse N2)
+    - ***Other***: Azure Cobalt 100 (Neoverse N2), AWS Graviton 2 (Neoverse N1), 3 (Neoverse V1), 4 (Neoverse V2)
   - **x86**
-    - ***AMD***: Ryzen 1700x, Epyc 7003
-    - ***Intel***: i7-8850U (Kaby Lake), i7-8700B (Coffee Lake)
+    - ***AMD***: Ryzen 1700x (zen1), Epyc zen3, zen4, zen5
+    - ***Intel***: i7-8850U (Kaby Lake), i7-8700B (Coffee Lake), Xeon scalable Gen3 (Ice Lake SP), Gen4 (Sapphire Rapids), Gen5 (Emerald Rapids), Xeon 6 (Granite Rapids)
 - remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
 - all filtering by `key` in `show-data` CLI command, using new `--key_filter` optional argument
 
