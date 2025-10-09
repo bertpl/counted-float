@@ -1,7 +1,7 @@
 import click
 
 from counted_float import BuiltInData
-from counted_float.benchmarking import run_flops_benchmark
+from counted_float._core.benchmarking import run_counted_float_benchmark, run_flops_benchmark
 
 
 # -------------------------------------------------------------------------
@@ -22,3 +22,9 @@ def benchmark():
 @click.option("--key_filter", default="", help="Optional key filter for built-in data")
 def show_data(key_filter: str):
     BuiltInData.show(key_filter=key_filter)
+
+
+@cli.command(short_help="run benchmark of float vs CountedFloat performance")
+def benchmark_counted_float():
+    result = run_counted_float_benchmark()
+    result.show()

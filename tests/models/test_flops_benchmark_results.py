@@ -9,4 +9,6 @@ def test_flops_benchmark_results_show():
     flops_benchmark_results: FlopsBenchmarkResults = list(BuiltInData.benchmarks().values()).pop()
 
     # --- act ---------------------------------------------
+    s_str = str(flops_benchmark_results)
+    s_repr = repr(flops_benchmark_results)
     flops_benchmark_results.show()
