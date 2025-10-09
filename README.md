@@ -446,10 +446,38 @@ ALL                                                            0.47      0.70   
  
 ```
 
-# 5. Known limitations
+## 4.2. Test performance of `CountedFloat` vs `float`
+
+```
+[~] counted_float benchmark-counted-float
+```
+See next section for results.
+
+# 5. Performance impact
+
+Obviously, using `CountedFloat` instead of regular `float` will have a performance impact due to the overhead of counting operations.
+It is not advised to use `CountedFloat` for production code, but just for research code for which you want to estimate the floating-point operation count.
+
+Micro-benchmarking of a bisection algorithm using `counted_float benchmark-counted-float` teaches us this:
+```
+------------------------------------------------------------------------------------------------------------------------
+Running CountedFloat benchmark...
+
+float                              : wwwwwwwwwwwwwww...................................   [  12.34 µs ±  1.2% | 50.1K cpu cycles ±  1.2% ]  /  execution
+CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 459.95 µs ±  0.2% | 1.87M cpu cycles ±  0.2% ]  /  execution
+------------------------------------------------------------------------------------------------------------------------
+
+CountedFloat Benchmark Results:
+  Bisection using float        :   12.34 µs / execution
+  Bisection using CountedFloat :  459.95 µs / execution
+
+CountedFloat is 37.3x slower than float
+```
+
+# 6. Known limitations
 
 - currently any non-Python-built-in math operations are not counted (e.g. `numpy`)
-- not all Python built-in math operations are counted (e.g. `log`, `log10`, `exp`, `exp10`)
+- not all Python built-in math operations are counted (e.g. hyperbolic functions)
 - flop weights should be taken with a grain of salt and should only provide relative ballpark estimates w.r.t computational complexity.  Production implementations in a compiled language could have vastly differing performance depending on cpu cache sizes, branch prediction misses, compiler optimizations using vector operations (AVX etc...), etc...
  
 # Appendix A - Flop counting / analysis details
