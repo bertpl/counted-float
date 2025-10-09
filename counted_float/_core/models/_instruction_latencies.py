@@ -18,31 +18,20 @@ class Latency(MyBaseModel):
     min_cycles: float | None = None
     max_cycles: float | None = None
 
-    def geo_mean(self) -> float:
-        """Calculate the geometric mean of min and max cycles."""
-        if (self.min_cycles is None) or (self.max_cycles is None):
-            return math.nan
-        else:
-            return math.sqrt(self.min_cycles * self.max_cycles)
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_min_max_cycles(cls, values):
-        # Fill in missing values if just 1 of 2 is missing
-        #   (assuming min=max; which is making the least assumptions, as this is the case in most instructions)
-        if (values.get("min_cycles") is None) and (values.get("max_cycles") is not None):
-            values["min_cycles"] = values["max_cycles"]
-        elif (values.get("min_cycles") is not None) and (values.get("max_cycles") is None):
-            values["max_cycles"] = values["min_cycles"]
-
-        # Avoid 0 values.  (which in principle can happen in corner cases, but which confuses our analysis)
-        if values.get("min_cycles") is not None:
-            values["min_cycles"] = max(1.0, values["min_cycles"])
-        if values.get("max_cycles") is not None:
-            values["max_cycles"] = max(1.0, values["max_cycles"])
-
-        # Return processed values
-        return values
+    def consensus(self) -> float:
+        """
+        Calculate the consensus value of min/max cycles. max(min_cycles, max_cycles) correlates best with benchmarks.
+        This always either returns a value > 0 or math.nan (if both min_cycles and max_cycles are None).
+        """
+        match (self.min_cycles, self.max_cycles):
+            case (None, None):
+                return math.nan
+            case (None, _):
+                return max(1.0, self.max_cycles)
+            case (_, None):
+                return max(1.0, self.min_cycles)
+            case (_, _):
+                return max(1.0, self.min_cycles, self.max_cycles)
 
 
 # =================================================================================================
@@ -72,17 +61,17 @@ class InstructionLatencies_SSE2(MyBaseModel):
     def flop_weights(self) -> FlopWeights:
         return FlopWeights.from_abs_flop_costs(
             {
-                FlopType.ABS: self.ANDPD.geo_mean(),
-                FlopType.MINUS: self.XORPD.geo_mean(),
-                FlopType.COMP: self.UCOMISD.geo_mean(),
-                FlopType.RND: self.ROUNDSD.geo_mean(),
-                FlopType.F2I: self.CVTSD2SI.geo_mean(),
-                FlopType.I2F: self.CVTSI2SD.geo_mean(),
-                FlopType.ADD: self.ADDSD.geo_mean(),
-                FlopType.SUB: self.SUBSD.geo_mean(),
-                FlopType.MUL: self.MULSD.geo_mean(),
-                FlopType.DIV: self.DIVSD.geo_mean(),
-                FlopType.SQRT: self.SQRTSD.geo_mean(),
+                FlopType.ABS: self.ANDPD.consensus(),
+                FlopType.MINUS: self.XORPD.consensus(),
+                FlopType.COMP: self.UCOMISD.consensus(),
+                FlopType.RND: self.ROUNDSD.consensus(),
+                FlopType.F2I: self.CVTSD2SI.consensus(),
+                FlopType.I2F: self.CVTSI2SD.consensus(),
+                FlopType.ADD: self.ADDSD.consensus(),
+                FlopType.SUB: self.SUBSD.consensus(),
+                FlopType.MUL: self.MULSD.consensus(),
+                FlopType.DIV: self.DIVSD.consensus(),
+                FlopType.SQRT: self.SQRTSD.consensus(),
             }
         )
 
@@ -114,17 +103,17 @@ class InstructionLatencies_ARM(MyBaseModel):
     def flop_weights(self) -> FlopWeights:
         return FlopWeights.from_abs_flop_costs(
             {
-                FlopType.ABS: self.FABS.geo_mean(),
-                FlopType.MINUS: self.FNEG.geo_mean(),
-                FlopType.COMP: self.FCMP.geo_mean(),
-                FlopType.RND: self.FRINT.geo_mean(),
-                FlopType.F2I: self.FCVTZS.geo_mean(),
-                FlopType.I2F: self.SCVTF.geo_mean(),
-                FlopType.ADD: self.FADD.geo_mean(),
-                FlopType.SUB: self.FSUB.geo_mean(),
-                FlopType.MUL: self.FMUL.geo_mean(),
-                FlopType.DIV: self.FDIV.geo_mean(),
-                FlopType.SQRT: self.FSQRT.geo_mean(),
+                FlopType.ABS: self.FABS.consensus(),
+                FlopType.MINUS: self.FNEG.consensus(),
+                FlopType.COMP: self.FCMP.consensus(),
+                FlopType.RND: self.FRINT.consensus(),
+                FlopType.F2I: self.FCVTZS.consensus(),
+                FlopType.I2F: self.SCVTF.consensus(),
+                FlopType.ADD: self.FADD.consensus(),
+                FlopType.SUB: self.FSUB.consensus(),
+                FlopType.MUL: self.FMUL.consensus(),
+                FlopType.DIV: self.FDIV.consensus(),
+                FlopType.SQRT: self.FSQRT.consensus(),
             }
         )
 

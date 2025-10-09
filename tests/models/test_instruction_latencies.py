@@ -14,61 +14,30 @@ from counted_float._core.models._instruction_latencies import (
 #  Latency
 # =================================================================================================
 @pytest.mark.parametrize(
-    "min_cycles, max_cycles, expected_min_cycles, expected_max_cycles",
+    "min_cycles, max_cycles, expected_consensus",
     [
-        (1.0, 1.0, 1.0, 1.0),
-        (1.0, 2.0, 1.0, 2.0),
-        (1.0, 10.0, 1.0, 10.0),
-        (None, 10.0, 10.0, 10.0),
-        (1.0, None, 1.0, 1.0),
-        (None, None, None, None),
-        (0.0, 1.0, 1.0, 1.0),
-        (0.0, 0.0, 1.0, 1.0),
-    ],
-    ids=[
-        "normal_1",
-        "normal_2",
-        "normal_3",
-        "min_cycles_missing",
-        "max_cycles_missing",
-        "both_missing",
-        "min_cycles_0",
-        "both_0",
-    ],
-)
-def test_latency_missing_values(
-    min_cycles: float | None,
-    max_cycles: float | None,
-    expected_min_cycles: float | None,
-    expected_max_cycles: float | None,
-):
-    # --- act ---------------------------------------------
-    latency = Latency(min_cycles=min_cycles, max_cycles=max_cycles)
-
-    # --- assert ------------------------------------------
-    assert latency.min_cycles == expected_min_cycles
-    assert latency.max_cycles == expected_max_cycles
-
-
-@pytest.mark.parametrize(
-    "min_cycles, max_cycles, expected_geo_mean",
-    [
-        (1.0, 4.0, 2.0),
+        (1.0, 4.0, 4.0),
+        (0.0, 3.0, 3.0),
+        (0.0, 0.0, 1.0),
+        (None, 2.0, 2.0),
+        (1.0, None, 1.0),
+        (None, 0.0, 1.0),
+        (0.0, None, 1.0),
         (None, None, math.nan),
     ],
 )
-def test_latency_geomean(min_cycles: float | None, max_cycles: float | None, expected_geo_mean: float):
+def test_latency_geomean(min_cycles: float | None, max_cycles: float | None, expected_consensus: float):
     # --- arrange -----------------------------------------
     latency = Latency(min_cycles=min_cycles, max_cycles=max_cycles)
 
     # --- act ---------------------------------------------
-    geo_mean = latency.geo_mean()
+    geo_mean = latency.consensus()
 
     # --- assert ------------------------------------------
-    if math.isnan(expected_geo_mean):
+    if math.isnan(expected_consensus):
         assert math.isnan(geo_mean)
     else:
-        assert geo_mean == expected_geo_mean
+        assert geo_mean == expected_consensus
 
 
 # =================================================================================================

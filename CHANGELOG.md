@@ -22,6 +22,7 @@
   - Make implementation fail-safe for environments where info is not available. (e.g. some cloud environments)
   - Make implementation robust to different units (MHz vs GHz).  (e.g. Apple M3 vs M4)
   - Increase transparency for cases where data is missing or unreliable, by allowing None/null.
+- Improve conversion instruction latency -> flop weights in case of missing data, improving correlation with benchmark results.
 
 ### Bug Fixes
 /
