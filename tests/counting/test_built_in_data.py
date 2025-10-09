@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
-from counted_float._core.models import FlopsBenchmarkResults_V1, FlopsBenchmarkResults_V2, FlopWeights
+from counted_float._core.models import FlopsBenchmarkResults, FlopWeights
 
 
 # =================================================================================================
@@ -12,8 +12,8 @@ def test_builtin_data_benchmarks():
     result = BuiltInData.benchmarks()
 
     # --- assert ------------------------------------------
-    assert all(isinstance(v, FlopsBenchmarkResults_V1 | FlopsBenchmarkResults_V2) for v in result.values())
-    assert len(result) == 4  # update as we add data
+    assert all(isinstance(v, FlopsBenchmarkResults) for v in result.values())
+    assert len(result) == 19  # update as we add data
 
 
 # =================================================================================================
@@ -40,12 +40,12 @@ def test_builtin_data_get_flop_weights_invalid_key():
 @pytest.mark.parametrize(
     "key_filter, n_expected",
     [
-        (".", 32),
-        ("benchmark", 4),
+        (".", 47),
+        ("benchmark", 19),
         ("analysis", 12),
         ("specs", 16),
-        ("arm", 13),
-        ("x86", 19),
+        ("arm", 19),
+        ("x86", 28),
     ],
 )
 def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):

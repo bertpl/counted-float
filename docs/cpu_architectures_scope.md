@@ -46,8 +46,8 @@ In general, we focus on those micro-architectures that are _not_ mobile-only and
 | 2017     | [Zen 1](https://en.wikipedia.org/wiki/Zen_(first_generation)) <br> [Zen 1+](https://en.wikipedia.org/wiki/Zen%2B) | Ryzen 1000 <br> Ryzen 2000 | Epyc 7001           | V          |
 | 2019     | [Zen 2](https://en.wikipedia.org/wiki/Zen_2)                                                                      | Ryzen 3000 <br> Ryzen 4000 | Epyc 7002           |            |
 | 2020     | [Zen 3](https://en.wikipedia.org/wiki/Zen_3)                                                                      | Ryzen 5000 <br> Ryzen 6000 | Epyc 7003           | V          |
-| 2024     | [Zen 5](https://en.wikipedia.org/wiki/Zen_5)                                                                      | Ryzen 7000 <br> Ryzen 8000 | Epyc 4004/8004/9004 | V          |
-| 2022     | [Zen 4](https://en.wikipedia.org/wiki/Zen_4)                                                                      | Ryzen 9000                 | Epyc 4005/9005      | V          |
+| 2022     | [Zen 4](https://en.wikipedia.org/wiki/Zen_4)                                                                      | Ryzen 7000 <br> Ryzen 8000 | Epyc 4004/8004/9004 | V          |
+| 2024     | [Zen 5](https://en.wikipedia.org/wiki/Zen_5)                                                                     | Ryzen 9000                 | Epyc 4005/9005      | V          |
 
 ## 2.2. ARM
 
@@ -122,11 +122,11 @@ As indicated before, we'll make high-level split between the different ISA level
 Note, that ISA level by itself does not necessarily impose latency specifications for certain instructions, but it can be used
 as a proxy for the 'recency' & 'complexity' of a given chip. 
 
-| ARM ISA Level     | Data source               | Cores / Chips considered                          |
-|-------------------|---------------------------|---------------------------------------------------|
-| **V8.x** (>=v8.2) | → specs <br> → benchmarks | → A76, X1, N1, V1 <br> → Apple M3, AWS Graviton 3 |
-| **V9.0**          | → specs <br> → benchmarks | → X2, X3, N2, V2 <br> → AWS Graviton 4            |
-| **V9.2**          | → specs <br> → benchmarks | → X4, X925, V3 <br> → Apple M4                    |
+| ARM ISA Level     | Data source               | Cores / Chips considered                                          |
+|-------------------|---------------------------|-------------------------------------------------------------------|
+| **V8.x** (>=v8.2) | → specs <br> → benchmarks | → A76, X1, N1, V1 <br> → Apple M3, AWS Graviton 2, AWS Graviton 3 |
+| **V9.0**          | → specs <br> → benchmarks | → X2, X3, N2, V2 <br> → AWS Graviton 4                            |
+| **V9.2**          | → specs <br> → benchmarks | → X4, X925, V3 <br> → Apple M4                                    |
 
 
 

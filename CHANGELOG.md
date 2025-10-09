@@ -1,5 +1,37 @@
 # Change Log
 
+
+<!------------------------------------------------------------------------------------------------->
+> ## v0.9.6
+> *(2025-10-09)*
+> > Given the changes of previous versions, this release updates & extends benchmark data, resulting in a total of 19 benchmarks (8 x arm, 11 x x86).
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+- add updated benchmark data
+  - **arm**
+    - ***Apple***: M1, M3, M3 Max, M4 Pro
+    - ***Other***: Azure Cobalt 100 (Neoverse N2), AWS Graviton 2 (Neoverse N1), 3 (Neoverse V1), 4 (Neoverse V2)
+  - **x86**
+    - ***AMD***: Ryzen 1700x (zen1), Epyc zen3, zen4, zen5
+    - ***Intel***: i7-8850U (Kaby Lake), i7-8700B (Coffee Lake), Xeon scalable Gen3 (Ice Lake SP), Gen4 (Sapphire Rapids), Gen5 (Emerald Rapids), Xeon 6 (Granite Rapids)
+- remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
+- all filtering by `key` in `show-data` CLI command, using new `--key_filter` optional argument
+
+### Improvements
+- Improve robustness of CPU frequency detection on various environments
+  - Make implementation fail-safe for environments where info is not available. (e.g. some cloud environments)
+  - Make implementation robust to different units (MHz vs GHz).  (e.g. Apple M3 vs M4)
+  - Increase transparency for cases where data is missing or unreliable, by allowing None/null.
+- Improve conversion instruction latency -> flop weights in case of missing data, improving correlation with benchmark results.
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+
 <!------------------------------------------------------------------------------------------------->
 > ## v0.9.5
 > *(2025-10-05)*

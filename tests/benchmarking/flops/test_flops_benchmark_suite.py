@@ -1,5 +1,5 @@
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
-from counted_float._core.models import FlopsBenchmarkResults_V2, FlopsBenchmarkType
+from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType
 
 
 def test_flops_benchmarking_suite_get():
@@ -28,4 +28,4 @@ def test_flops_benchmarking_suite_run():
     )  # override defaults to keep test short
 
     # --- assert ------------------------------------------
-    assert isinstance(result, FlopsBenchmarkResults_V2)
+    assert isinstance(result, FlopsBenchmarkResults)

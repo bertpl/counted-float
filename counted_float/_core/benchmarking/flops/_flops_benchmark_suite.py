@@ -6,7 +6,7 @@ import numpy as np
 from counted_float._core.compatibility import is_numba_installed, numba
 from counted_float._core.models import (
     BenchmarkSettings,
-    FlopsBenchmarkResults_V2,
+    FlopsBenchmarkResults,
     FlopsBenchmarkType,
     FlopType,
     Quantiles,
@@ -29,7 +29,7 @@ class FlopsBenchmarkSuite:
         n_runs_total: int = 40,
         n_runs_warmup: int = 15,
         n_seconds_per_run_target: float = 0.1,
-    ) -> FlopsBenchmarkResults_V2:
+    ) -> FlopsBenchmarkResults:
         """
         Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults_V2 object.
         """
@@ -95,7 +95,7 @@ class FlopsBenchmarkSuite:
         }
 
         # put results in appropriate format
-        return FlopsBenchmarkResults_V2(
+        return FlopsBenchmarkResults(
             system=SystemInfo.from_system(),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
