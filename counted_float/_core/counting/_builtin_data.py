@@ -271,14 +271,19 @@ class FlopWeightsTreeView:
                     else:
                         line += f"{w:.2f}".rjust(col_width)
 
-                if not is_leaf:
-                    txt_clr = "bold white"
-                    h = hex(max(16, int(100 * (max_indent - indent) / max_indent)))[-2:]
-                    bg_clr = f"#{h}{h}{h}"
+                if is_leaf:
+                    # no special styling
+                    console.print(line, highlight=False)
                 else:
-                    txt_clr = "white"
-                    bg_clr = f"black"
-                console.print(line, style=f"{txt_clr} on {bg_clr}", highlight=False)
+                    # highlight as bold and with a colored background
+                    style_tag = [
+                        "[bold on #888888]",  # indent 0
+                        "[bold on #5555dd]",  # indent 1
+                        "[bold on #55dd55]",  # indent 2
+                        "[bold on #ee7777]",  # indent 3+
+                    ][min(indent, 3)]
+                    line = line[: 3 * indent] + style_tag + line[3 * indent :] + "[/]"
+                    console.print(line, highlight=False)
 
             print()
 
