@@ -18,10 +18,13 @@
 - remove legacy built-in benchmarks (V1 benchmarks) & remove support for related legacy data structures
 
 ### Improvements
-/
+- Improve robustness of CPU frequency detection on various environments
+  - Make implementation fail-safe for environments where info is not available. (e.g. some cloud environments)
+  - Make implementation robust to different units (MHz vs GHz).  (e.g. Apple M3 vs M4)
+  - Increase transparency for cases where data is missing or unreliable, by allowing None/null.
 
 ### Bug Fixes
-- make determining cpu frequency robust to environment that do not provide this info (e.g. some CI/CD runners) or in different units (MHz vs GHz)
+/
 
 ### Internal
 /
