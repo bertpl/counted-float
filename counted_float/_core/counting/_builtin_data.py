@@ -240,7 +240,7 @@ class FlopWeightsTreeView:
         sorted_flop_types = self.lst_flop_weights[0].get_sorted_flop_types()
         max_indent = max(self.lst_indent)
 
-        n_cols_per_block = int((console_width - tree_width) / col_width)
+        n_cols_per_block = max(1, int((console_width - tree_width) / col_width))
         flop_types_per_block = [
             sorted_flop_types[i_start : i_start + n_cols_per_block]
             for i_start in range(0, len(sorted_flop_types), n_cols_per_block)
