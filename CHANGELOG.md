@@ -11,6 +11,7 @@
 
 ### Improvements
 - Streamline naming of built-in data and create more consistent structure (given specs & benchmarks equal weight on x86 side)
+- Tweak color schema of `show-data` CLI command for improved readability
 
 ### Bug Fixes
 - update outdated Known Limitations section in readme
