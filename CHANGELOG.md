@@ -10,7 +10,7 @@
 /
 
 ### Improvements
-/
+- Streamline naming of built-in data and create more consistent structure (given specs & benchmarks equal weight on x86 side)
 
 ### Bug Fixes
 - update outdated Known Limitations section in readme
