@@ -53,8 +53,8 @@ runs:
       - name: Prepare splash screen
         shell: bash
         run: |
-            magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/splash/splash.webp" -gravity West -fill "black" -annotate +478+163 "v${PACKAGE_EFFECTIVE_VERSION}" "./images/temp.png"            
-            magick -pointsize 128 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.png" -gravity West -fill "#f6ffff" -annotate +475+160 "v${PACKAGE_EFFECTIVE_VERSION}" -quality 90 -define webp:lossless=false "./images/splash_with_version.webp"                                                
+            magick -pointsize 100 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/splash/splash.webp" -gravity West -fill "black" -annotate +478+153 "v${PACKAGE_EFFECTIVE_VERSION}" "./images/temp.png"            
+            magick -pointsize 100 -font "./images/splash/google_fonts_montserrat_bold.ttf" "./images/temp.png" -gravity West -fill "#f6ffff" -annotate +475+150 "v${PACKAGE_EFFECTIVE_VERSION}" -quality 90 -define webp:lossless=false "./images/splash_with_version.webp"                                                
             cp "./images/splash_with_version.webp" "./pages/version_artifacts/v${PACKAGE_EFFECTIVE_VERSION}/splash.webp"
 
       - name: Setup Pages
