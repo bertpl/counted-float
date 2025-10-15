@@ -37,6 +37,7 @@
 
 ### Internal
 - Upgrade ImageMagick 6 -> 7 in CI/CD pipeline
+- Split some GH Actions and unify gh-pages uploading for improved efficiency & reliability
 
 <!------------------------------------------------------------------------------------------------->
 > ## v1.0.1
