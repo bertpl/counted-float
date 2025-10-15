@@ -240,7 +240,7 @@ class FlopWeightsTreeView:
         sorted_flop_types = self.lst_flop_weights[0].get_sorted_flop_types()
         max_indent = max(self.lst_indent)
 
-        n_cols_per_block = int((console_width - tree_width) / col_width)
+        n_cols_per_block = max(1, int((console_width - tree_width) / col_width))
         flop_types_per_block = [
             sorted_flop_types[i_start : i_start + n_cols_per_block]
             for i_start in range(0, len(sorted_flop_types), n_cols_per_block)
@@ -252,7 +252,7 @@ class FlopWeightsTreeView:
             legend = " " * tree_width
             for flop_type in flop_types:
                 legend += flop_type.name.rjust(col_width)
-            console.print(legend, style="bold white on black")
+            console.print(legend, style="bold")
 
             # --- actual tree view ---
             for indent, is_leaf, tree_str, flop_weights in zip(
@@ -278,10 +278,11 @@ class FlopWeightsTreeView:
                     # highlight as bold and with a colored background
                     style_tag = [
                         "[bold on #888888]",  # indent 0
-                        "[bold on #5555dd]",  # indent 1
-                        "[bold on #55dd55]",  # indent 2
-                        "[bold on #ee7777]",  # indent 3+
-                    ][min(indent, 3)]
+                        "[bold on #7777dd]",  # indent 1
+                        "[bold on #77dd77]",  # indent 2
+                        "[bold on #ee7777]",  # indent 3
+                        "[bold italic]",  # indent 4+
+                    ][min(indent, 4)]
                     line = line[: 3 * indent] + style_tag + line[3 * indent :] + "[/]"
                     console.print(line, highlight=False)
 

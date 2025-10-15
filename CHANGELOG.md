@@ -1,8 +1,53 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v1.0.0
+> ## v1.0.3
 > *(under development)*
+> > TBD
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
+> ## v1.0.2
+> *(2025-10-15)*
+> > TBD
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+- Streamline naming of built-in data and create more consistent structure (given specs & benchmarks equal weight on x86 side)
+- Tweak color schema of `show-data` CLI command for improved readability
+
+### Bug Fixes
+- update outdated Known Limitations section in readme
+- avoid error when showing built-in data on very narrow terminals
+
+### Internal
+- Upgrade ImageMagick 6 -> 7 in CI/CD pipeline
+- Split some GH Actions and unify gh-pages uploading for improved efficiency & reliability
+
+<!------------------------------------------------------------------------------------------------->
+> ## v1.0.1
+<!------------------------------------------------------------------------------------------------->
+*(version deleted)*
+
+
+<!------------------------------------------------------------------------------------------------->
+> ## v1.0.0
+> *(2025-10-09)*
 > > Final details to justify bump to v1.0.0.
 <!------------------------------------------------------------------------------------------------->
 

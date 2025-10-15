@@ -24,11 +24,7 @@ jobs:
           include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
 
 
-  update-badges-and-splash:
-    needs: test
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  update-readme:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -36,7 +32,52 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: ./.github/actions/badges_and_splash
+      - uses: ./.github/actions/update_readme
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+
+  update-badges:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update_badges
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  update-splash:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/update_splash
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
+
+  upload-version-artefacts:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: [update-badges, update-splash]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/upload_version_artefacts
+        id: deployment
         with:
           uv_version: ${{ vars.UV_VERSION }}
           github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
