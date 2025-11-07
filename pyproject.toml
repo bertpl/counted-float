@@ -17,7 +17,7 @@ counted_float = "counted_float._core._cli:cli"
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
-ChangeLog = "https://github.com/bertpl/counted-float/blob/develop/CHANGELOG.md"
+ChangeLog = "https://github.com/bertpl/counted-float/blob/main/CHANGELOG.md"
 Issues = "https://github.com/bertpl/counted-float/issues"
 Roadmap = "https://github.com/bertpl/counted-float/milestones"
 
@@ -27,6 +27,14 @@ numba = [
 ]
 cli = [
     "click>=8.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "genbadge[all]>=1.1.2",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "pytest-xdist>=3.5.0",
 ]
 
 [build-system]
@@ -48,9 +56,14 @@ target-version = "py313"
 [tool.ruff.lint]
 select = ["I"]
 
-[dependency-groups]
-dev = [
-    "genbadge[all]>=1.1.2",
-    "pytest>=8.0",
-    "pytest-cov>=6.0",
+[tool.coverage.run]
+source = ["counted_float"]
+
+[tool.coverage.report]
+exclude_also = [
+    "@abstractmethod",
+    "@abc.abstractmethod",
 ]
+
+[tool.pytest.ini_options]
+addopts = "-n auto --dist worksteal"

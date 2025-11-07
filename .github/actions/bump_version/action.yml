@@ -1,5 +1,5 @@
 name: Update package version
-author: bertpluymers
+author: Bert Pluymers
 description: Update package version to a specific version
 
 inputs:
@@ -32,7 +32,7 @@ runs:
           ref: ${{ inputs.git_ref }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@v7
         with:
           version: ${{ inputs.uv_version }}
 
@@ -54,7 +54,7 @@ runs:
         run: |
             git config --local user.name "GitHub Actions"
             git config --local user.email ""          
-            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/bertpl/counted-float.git
+            git remote set-url origin https://x-access-token:${{ inputs.github_token }}@github.com/${{ github.repository }}.git
             git pull origin ${{ inputs.git_ref }}
           
             if [[ $VERSION_BUMP_NEEDED == "true" ]]; then
