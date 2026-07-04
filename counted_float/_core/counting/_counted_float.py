@@ -256,6 +256,19 @@ def math_cbrt(x: float) -> float | CountedFloat:
 
 
 def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
+    """
+    Patched math.log: stdlib contract (optional base), with flop classification for the base
+    following the same constant-detection heuristic as CountedFloat.__pow__ / __rpow__
+    (int operand = hardcoded constant in the source):
+      - base omitted      -> LOG
+      - base int 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
+      - base other int    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base) folded
+                             at compile time)
+      - base float        -> a port computes log(x)/log(base): LOG per CountedFloat operand + DIV
+    As everywhere in the counting model, only operations touching CountedFloat values are counted:
+    any runtime input to the counted algorithm should itself be a CountedFloat; whatever remains a
+    plain float is by definition not part of the core algorithm and/or precomputable.
+    """
     if base is _NO_BASE:
         if isinstance(x, CountedFloat):
             GLOBAL_COUNTER.incr_log()
@@ -263,12 +276,29 @@ def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
         else:
             return original_math_log(x)
     else:
-        # 2-arg form is outside the counting model (see README - Known Limitations): no flops are
-        # counted, but contagion is preserved so downstream operations keep being counted
-        if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-            return CountedFloat(original_math_log(x, base))
+        # computed first: raises per stdlib contract before anything is counted
+        result = original_math_log(x, base)
+        if isinstance(base, int) and base == 2:
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log2()
+        elif isinstance(base, int) and base == 10:
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log10()
+        elif isinstance(base, int):
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+                GLOBAL_COUNTER.incr_mul()
         else:
-            return original_math_log(x, base)
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+            if isinstance(base, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+            if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+                GLOBAL_COUNTER.incr_div()
+        if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+            return CountedFloat(result)
+        else:
+            return result
 
 
 def math_log2(x: float) -> float | CountedFloat:

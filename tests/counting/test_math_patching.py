@@ -79,23 +79,88 @@ def test_math_pow_returns_float_not_int():
 # =================================================================================================
 #  Patched math functions - CountedFloat behavior of the fixed code paths
 # =================================================================================================
-def test_math_log_two_arg_form_counts_nothing_but_preserves_contagion(global_counter):
+def test_math_log_int_base_2_counts_log2(global_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
 
     # --- act ---------------------------------------------
-    result_cf_x = math.log(cf, 2)
-    result_cf_base = math.log(16.0, CountedFloat(2.0))
-    result_plain = math.log(8.0, 2.0)
+    result = math.log(cf, 2)
 
     # --- assert ------------------------------------------
     # count checked first: comparing a CountedFloat below counts a COMP itself
+    assert global_counter.total_count() == 1
+    assert global_counter.LOG2 == 1
+    assert result == 3.0
+    assert isinstance(result, CountedFloat)
+
+
+def test_math_log_int_base_10_counts_log10(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(100.0)
+
+    # --- act ---------------------------------------------
+    result = math.log(cf, 10)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.LOG10 == 1
+    assert result == 2.0
+    assert isinstance(result, CountedFloat)
+
+
+def test_math_log_other_int_base_counts_log_mul(global_counter):
+    # a hardcoded int base folds to log(x) * (1/log(base)) in a compiled port
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(27.0)
+
+    # --- act ---------------------------------------------
+    result = math.log(cf, 3)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 2
+    assert global_counter.LOG == 1
+    assert global_counter.MUL == 1
+    assert result == pytest.approx(3.0)
+    assert isinstance(result, CountedFloat)
+
+
+def test_math_log_float_base_counts_per_counted_operand(global_counter):
+    # a runtime (float) base means a compiled port computes log(x)/log(base)
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(8.0)
+
+    # --- act & assert ------------------------------------
+    # counted x, plain base: LOG + DIV (log of the untracked base is precomputable)
+    result = math.log(cf, 2.0)
+    assert global_counter.total_count() == 2
+    assert global_counter.LOG == 1
+    assert global_counter.DIV == 1
+    assert isinstance(result, CountedFloat)
+
+    # plain x, counted base: LOG + DIV
+    global_counter.reset()
+    result = math.log(16.0, CountedFloat(2.0))
+    assert global_counter.total_count() == 2
+    assert global_counter.LOG == 1
+    assert global_counter.DIV == 1
+    assert isinstance(result, CountedFloat)
+
+    # both counted: 2 x LOG + DIV
+    global_counter.reset()
+    result = math.log(cf, CountedFloat(2.0))
+    assert global_counter.total_count() == 3
+    assert global_counter.LOG == 2
+    assert global_counter.DIV == 1
+    assert isinstance(result, CountedFloat)
+
+
+def test_math_log_two_arg_form_plain_floats_count_nothing(global_counter):
+    # --- act ---------------------------------------------
+    result = math.log(8.0, 2.0)
+
+    # --- assert ------------------------------------------
     assert global_counter.total_count() == 0
-    assert result_cf_x == 3.0
-    assert isinstance(result_cf_x, CountedFloat)
-    assert result_cf_base == 4.0
-    assert isinstance(result_cf_base, CountedFloat)
-    assert not isinstance(result_plain, CountedFloat)
+    assert not isinstance(result, CountedFloat)
 
 
 def test_math_log_one_arg_form_still_counts(global_counter):
@@ -109,6 +174,16 @@ def test_math_log_one_arg_form_still_counts(global_counter):
     assert isinstance(result, CountedFloat)
     assert global_counter.total_count() == 1
     assert global_counter.LOG == 1
+
+
+def test_math_log_domain_error_counts_nothing(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(-8.0)
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):
+        math.log(cf, 2)
+    assert global_counter.total_count() == 0
 
 
 def test_math_pow_domain_error_counts_nothing(global_counter):

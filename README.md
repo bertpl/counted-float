@@ -495,7 +495,6 @@ CountedFloat is 37.3x slower than float
 
 - currently any non-Python-built-in math operations are not counted (e.g. `numpy`)
 - not all Python built-in math operations are counted (e.g. hyperbolic functions)
-- the 2-argument form `math.log(x, base)` is not counted (there is no single obvious flop equivalent); the result remains a `CountedFloat` when any argument is one, so downstream operations keep being counted
 - flop weights should be taken with a grain of salt and should only provide relative ballpark estimates w.r.t computational complexity.  Production implementations in a compiled language could have vastly differing performance depending on cpu cache sizes, branch prediction misses, compiler optimizations using vector operations (AVX etc...), etc...
  
 # Appendix A - Flop counting / analysis details
@@ -616,21 +615,21 @@ This appendix provides detailed information about how each floating-point operat
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log(x)` for `CountedFloat`; `math.log(x, base)` for `CountedFloat` decomposes per the constant-detection heuristic (int base 2/10 -> LOG2/LOG10; other int base -> LOG+MUL; float base -> LOG per counted operand + DIV)
 - **Not counted:** `numpy.log`, log on non-CountedFloat
 
 ### FlopType.LOG2 (`log2(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log2(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log2(x)` for `CountedFloat`; `math.log(x, 2)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log2`, log2 on non-CountedFloat
 
 ### FlopType.LOG10 (`log10(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log10(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log10(x)` for `CountedFloat`; `math.log(x, 10)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log10`, log10 on non-CountedFloat
 
 ### FlopType.POW (`x^y`)

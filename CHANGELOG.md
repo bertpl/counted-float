@@ -13,7 +13,7 @@
 /
 
 ### Bug Fixes
-- patched `math.log` & `math.pow` no longer break their stdlib contracts for non-counted code (2-arg log form restored; pow raises domain errors instead of returning complex)
+- patched `math.log` & `math.pow` no longer break their stdlib contracts for non-counted code (2-arg log form restored & counted; pow raises domain errors instead of returning complex)
 
 ### Internal
 /
