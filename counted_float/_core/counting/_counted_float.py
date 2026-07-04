@@ -182,7 +182,15 @@ class CountedFloat(float):
         return CountedFloat(super().__rtruediv__(other))
 
     def __pow__(self, other) -> CountedFloat:
-        """x**other"""
+        """
+        x**other
+
+        Counting heuristic: an `int` operand is taken as evidence of a hardcoded constant in the
+        source (ints don't fall out of floating-point computations), so `x**2` counts as MUL —
+        the strength reduction (x*x) a compiled port would apply. A float operand may just as well
+        be a runtime variable that happens to hold that value, where a port would compile a
+        generic pow, so `x**2.0` counts as POW.
+        """
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
         else:
@@ -192,7 +200,14 @@ class CountedFloat(float):
         return CountedFloat(super().__pow__(other))
 
     def __rpow__(self, other) -> CountedFloat:
-        """other**x"""
+        """
+        other**x
+
+        Same constant-detection heuristic as __pow__, applied to the base: an `int` base 2 or 10
+        is taken as a hardcoded constant, counting as EXP2 / EXP10 (the strength reduction a
+        compiled port would apply); a float base may be a runtime variable, so it counts as
+        generic POW.
+        """
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_exp2()
         elif isinstance(other, int) and other == 10:
@@ -214,9 +229,14 @@ original_math_log2 = math.log2
 original_math_log10 = math.log10
 original_math_exp = math.exp
 original_math_exp2 = math.exp2
+original_math_pow = math.pow
 original_math_sin = math.sin
 original_math_cos = math.cos
 original_math_tan = math.tan
+
+# sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
+# where omitting base is not the same as passing any real value (and None is rejected)
+_NO_BASE = object()
 
 
 def math_sqrt(x: float) -> float | CountedFloat:
@@ -235,12 +255,50 @@ def math_cbrt(x: float) -> float | CountedFloat:
         return original_math_cbrt(x)
 
 
-def math_log(x: float) -> float | CountedFloat:
-    if isinstance(x, CountedFloat):
-        GLOBAL_COUNTER.incr_log()
-        return CountedFloat(original_math_log(x))
+def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
+    """
+    Patched math.log: stdlib contract (optional base), with flop classification for the base
+    following the same constant-detection heuristic as CountedFloat.__pow__ / __rpow__
+    (int operand = hardcoded constant in the source):
+      - base omitted      -> LOG
+      - base int 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
+      - base other int    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base) folded
+                             at compile time)
+      - base float        -> a port computes log(x)/log(base): LOG per CountedFloat operand + DIV
+    As everywhere in the counting model, only operations touching CountedFloat values are counted:
+    any runtime input to the counted algorithm should itself be a CountedFloat; whatever remains a
+    plain float is by definition not part of the core algorithm and/or precomputable.
+    """
+    if base is _NO_BASE:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log()
+            return CountedFloat(original_math_log(x))
+        else:
+            return original_math_log(x)
     else:
-        return original_math_log(x)
+        # computed first: raises per stdlib contract before anything is counted
+        result = original_math_log(x, base)
+        if isinstance(base, int) and base == 2:
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log2()
+        elif isinstance(base, int) and base == 10:
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log10()
+        elif isinstance(base, int):
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+                GLOBAL_COUNTER.incr_mul()
+        else:
+            if isinstance(x, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+            if isinstance(base, CountedFloat):
+                GLOBAL_COUNTER.incr_log()
+            if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+                GLOBAL_COUNTER.incr_div()
+        if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+            return CountedFloat(result)
+        else:
+            return result
 
 
 def math_log2(x: float) -> float | CountedFloat:
@@ -276,7 +334,34 @@ def math_exp2(x: float) -> float | CountedFloat:
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
-    return x**y
+    """
+    Patched math.pow: stdlib contract (always-float result, ValueError on domain errors), with
+    flop classification identical to the x**y form — including the constant-detection heuristic
+    documented on CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant).
+    """
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        # computed first: math.pow raises ValueError on domain errors (e.g. negative base with
+        # fractional exponent) and then nothing should be counted
+        result = original_math_pow(x, y)
+        if isinstance(x, CountedFloat):
+            if isinstance(y, int) and y == 2:
+                GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
+            else:
+                if isinstance(y, int):
+                    GLOBAL_COUNTER.incr_i2f()
+                GLOBAL_COUNTER.incr_pow()
+        else:
+            if isinstance(x, int) and x == 2:
+                GLOBAL_COUNTER.incr_exp2()
+            elif isinstance(x, int) and x == 10:
+                GLOBAL_COUNTER.incr_exp10()
+            else:
+                if isinstance(x, int):
+                    GLOBAL_COUNTER.incr_i2f()
+                GLOBAL_COUNTER.incr_pow()
+        return CountedFloat(result)
+    else:
+        return original_math_pow(x, y)
 
 
 def math_sin(x: float) -> float | CountedFloat:

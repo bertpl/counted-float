@@ -69,7 +69,33 @@ s = math.sqrt(cf1)  # s = CountedFloat(0.9)
 is_float = isinstance(s, float)  # True
 ```
 
-## 2.2. FLOP counting context managers
+### The counting model: what gets counted and why
+
+The counting model is a contract with two sides:
+
+- **Your side:** wrap every *runtime input* of the algorithm you want to measure in `CountedFloat`
+  at its boundary. Contagion does the rest — everything derived from those inputs stays counted
+  automatically.
+- **The library's side:** count every FLOP that a compiled (C/Rust/...) port of your algorithm
+  would execute *on data derived from those inputs*.
+
+From this contract follows a clean rule for everything else: **constants are free.** Any plain
+float encountered mid-computation is, by the contract, not an input — so it must be a constant of
+the algorithm (a literal, a coefficient, a tolerance), and operations purely among constants are
+work a compiled port would fold at compile time or precompute. This is why e.g. `math.sqrt(3)`
+counts nothing: the port ships `sqrt(3)` as a precomputed constant.
+
+The library detects constants through two mechanisms, applying the same rule:
+
+- **Unwrapped values** (plain floats): constants by the wrapping contract, as above.
+- **`int` operands**: evidence of a *hardcoded* constant — ints don't fall out of floating-point
+  computations, so an int operand almost certainly appears literally in your source. This enables
+  counting the strength reductions a compiled port would apply: `x**2` counts MUL (i.e. `x*x`),
+  `2**x` counts EXP2, `math.log(x, 10)` counts LOG10 — while `x**2.0`, with a float that *could*
+  be a runtime value, conservatively counts a generic POW.
+
+The flip side: an unwrapped runtime input is invisible to the counter — that is a wrapping error
+at your algorithm's boundary, not something the library can detect. When in doubt, wrap.
 
 Once we use the `CountedFloat` class, we can use the available context managers to count the number of
 flops performed by `CountedFloat` objects.
@@ -615,21 +641,21 @@ This appendix provides detailed information about how each floating-point operat
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log(x)` for `CountedFloat`; `math.log(x, base)` for `CountedFloat` decomposes per the constant-detection heuristic (int base 2/10 -> LOG2/LOG10; other int base -> LOG+MUL; float base -> LOG per counted operand + DIV)
 - **Not counted:** `numpy.log`, log on non-CountedFloat
 
 ### FlopType.LOG2 (`log2(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log2(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log2(x)` for `CountedFloat`; `math.log(x, 2)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log2`, log2 on non-CountedFloat
 
 ### FlopType.LOG10 (`log10(x)`)
 - Relevant CPU instructions
   - **ARM:** (software)
   - **x86:** (software)
-- **Counted Python operations:** `math.log10(x)` for `CountedFloat`
+- **Counted Python operations:** `math.log10(x)` for `CountedFloat`; `math.log(x, 10)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log10`, log10 on non-CountedFloat
 
 ### FlopType.POW (`x^y`)
