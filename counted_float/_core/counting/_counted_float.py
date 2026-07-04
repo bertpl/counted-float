@@ -182,7 +182,15 @@ class CountedFloat(float):
         return CountedFloat(super().__rtruediv__(other))
 
     def __pow__(self, other) -> CountedFloat:
-        """x**other"""
+        """
+        x**other
+
+        Counting heuristic: an `int` operand is taken as evidence of a hardcoded constant in the
+        source (ints don't fall out of floating-point computations), so `x**2` counts as MUL —
+        the strength reduction (x*x) a compiled port would apply. A float operand may just as well
+        be a runtime variable that happens to hold that value, where a port would compile a
+        generic pow, so `x**2.0` counts as POW.
+        """
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
         else:
@@ -192,7 +200,14 @@ class CountedFloat(float):
         return CountedFloat(super().__pow__(other))
 
     def __rpow__(self, other) -> CountedFloat:
-        """other**x"""
+        """
+        other**x
+
+        Same constant-detection heuristic as __pow__, applied to the base: an `int` base 2 or 10
+        is taken as a hardcoded constant, counting as EXP2 / EXP10 (the strength reduction a
+        compiled port would apply); a float base may be a runtime variable, so it counts as
+        generic POW.
+        """
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_exp2()
         elif isinstance(other, int) and other == 10:
@@ -289,11 +304,15 @@ def math_exp2(x: float) -> float | CountedFloat:
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
+    """
+    Patched math.pow: stdlib contract (always-float result, ValueError on domain errors), with
+    flop classification identical to the x**y form — including the constant-detection heuristic
+    documented on CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant).
+    """
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         # computed first: math.pow raises ValueError on domain errors (e.g. negative base with
         # fractional exponent) and then nothing should be counted
         result = original_math_pow(x, y)
-        # flop classification identical to the x**y form, mirroring __pow__ / __rpow__
         if isinstance(x, CountedFloat):
             if isinstance(y, int) and y == 2:
                 GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
