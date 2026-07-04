@@ -214,9 +214,14 @@ original_math_log2 = math.log2
 original_math_log10 = math.log10
 original_math_exp = math.exp
 original_math_exp2 = math.exp2
+original_math_pow = math.pow
 original_math_sin = math.sin
 original_math_cos = math.cos
 original_math_tan = math.tan
+
+# sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
+# where omitting base is not the same as passing any real value (and None is rejected)
+_NO_BASE = object()
 
 
 def math_sqrt(x: float) -> float | CountedFloat:
@@ -235,12 +240,20 @@ def math_cbrt(x: float) -> float | CountedFloat:
         return original_math_cbrt(x)
 
 
-def math_log(x: float) -> float | CountedFloat:
-    if isinstance(x, CountedFloat):
-        GLOBAL_COUNTER.incr_log()
-        return CountedFloat(original_math_log(x))
+def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
+    if base is _NO_BASE:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log()
+            return CountedFloat(original_math_log(x))
+        else:
+            return original_math_log(x)
     else:
-        return original_math_log(x)
+        # 2-arg form is outside the counting model (see README - Known Limitations): no flops are
+        # counted, but contagion is preserved so downstream operations keep being counted
+        if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+            return CountedFloat(original_math_log(x, base))
+        else:
+            return original_math_log(x, base)
 
 
 def math_log2(x: float) -> float | CountedFloat:
@@ -276,7 +289,15 @@ def math_exp2(x: float) -> float | CountedFloat:
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
-    return x**y
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        # enforce the stdlib contract first: math.pow raises ValueError on domain errors
+        # (e.g. negative base with fractional exponent) before anything is counted
+        original_math_pow(x, y)
+        # result & counting via the ** operator, so flop classification (MUL/EXP2/EXP10/POW/I2F)
+        # stays identical to the x**y form
+        return x**y
+    else:
+        return original_math_pow(x, y)
 
 
 def math_sin(x: float) -> float | CountedFloat:

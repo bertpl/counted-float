@@ -1,6 +1,24 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v1.0.4
+> *(2026-07-04)*
+> > Bug-fix release: restore stdlib contracts of patched `math` functions.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+- patched `math.log` & `math.pow` no longer break their stdlib contracts for non-counted code (2-arg log form restored; pow raises domain errors instead of returning complex)
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v1.0.3
 > *(2025-11-07)*
 > > CI & overall development workflow update.

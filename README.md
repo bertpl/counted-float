@@ -495,6 +495,7 @@ CountedFloat is 37.3x slower than float
 
 - currently any non-Python-built-in math operations are not counted (e.g. `numpy`)
 - not all Python built-in math operations are counted (e.g. hyperbolic functions)
+- the 2-argument form `math.log(x, base)` is not counted (there is no single obvious flop equivalent); the result remains a `CountedFloat` when any argument is one, so downstream operations keep being counted
 - flop weights should be taken with a grain of salt and should only provide relative ballpark estimates w.r.t computational complexity.  Production implementations in a compiled language could have vastly differing performance depending on cpu cache sizes, branch prediction misses, compiler optimizations using vector operations (AVX etc...), etc...
  
 # Appendix A - Flop counting / analysis details
