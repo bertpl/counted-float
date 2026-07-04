@@ -1,6 +1,24 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v1.0.5
+> *(2026-07-04)*
+> > CI fix release: repair badge & splash publishing.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+- replace CI-generated versioned splash image with a static one, dropping the (broken) ImageMagick dependency from CI
+
+<!------------------------------------------------------------------------------------------------->
 > ## v1.0.4
 > *(2026-07-04)*
 > > Bug-fix release: restore stdlib contracts of patched `math` functions.
