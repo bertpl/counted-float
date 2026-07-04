@@ -290,12 +290,27 @@ def math_exp2(x: float) -> float | CountedFloat:
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
-        # enforce the stdlib contract first: math.pow raises ValueError on domain errors
-        # (e.g. negative base with fractional exponent) before anything is counted
-        original_math_pow(x, y)
-        # result & counting via the ** operator, so flop classification (MUL/EXP2/EXP10/POW/I2F)
-        # stays identical to the x**y form
-        return x**y
+        # computed first: math.pow raises ValueError on domain errors (e.g. negative base with
+        # fractional exponent) and then nothing should be counted
+        result = original_math_pow(x, y)
+        # flop classification identical to the x**y form, mirroring __pow__ / __rpow__
+        if isinstance(x, CountedFloat):
+            if isinstance(y, int) and y == 2:
+                GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
+            else:
+                if isinstance(y, int):
+                    GLOBAL_COUNTER.incr_i2f()
+                GLOBAL_COUNTER.incr_pow()
+        else:
+            if isinstance(x, int) and x == 2:
+                GLOBAL_COUNTER.incr_exp2()
+            elif isinstance(x, int) and x == 10:
+                GLOBAL_COUNTER.incr_exp10()
+            else:
+                if isinstance(x, int):
+                    GLOBAL_COUNTER.incr_i2f()
+                GLOBAL_COUNTER.incr_pow()
+        return CountedFloat(result)
     else:
         return original_math_pow(x, y)
 
