@@ -2,10 +2,10 @@ from enum import StrEnum
 
 
 class FlopType(StrEnum):
-    """
-    Enum describing the different types of floating-point operations,
-    each of which are counted separately and can potentially have different weights.
-    --> See: /docs/analysis_methodology.md
+    """Enum describing the different types of floating-point operations.
+
+    Each of these are counted separately and can potentially have different weights.
+    --> See: /docs/analysis_methodology.md.
     """
 
     ABS = "abs(x)"

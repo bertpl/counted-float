@@ -30,10 +30,7 @@ class FlopsBenchmarkSuite:
         n_runs_warmup: int = 15,
         n_seconds_per_run_target: float = 0.1,
     ) -> FlopsBenchmarkResults:
-        """
-        Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults_V2 object.
-        """
-
+        """Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults_V2 object."""
         # warn if needed
         if not is_numba_installed():
             print("========= WARNING =========")
@@ -114,9 +111,7 @@ class FlopsBenchmarkSuite:
     # -------------------------------------------------------------------------
     @staticmethod
     def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:  # noqa: C901 -- flat registry of per-flop-type jit kernels
-        """
-        Returns a benchmark for each FlopsBenchmarkType, of requested array size.
-        """
+        """Returns a benchmark for each FlopsBenchmarkType, of requested array size."""
 
         # --- define all test functions -------------------
         @numba.njit(parallel=False)

@@ -37,11 +37,11 @@ __ALLOWED_10PERC_ROUNDING_VALUES = [
 
 
 def round_number(value: float, mode: None | Literal["nearest_int", "10%"]) -> float:
-    """
-    Round a floating point number according to the specified mode:
-        None            -> no rounding, value is returned as is
-        "nearest_int"   -> round to nearest integer
-        "10%"           -> round to nearest n*10^m with n in __ALLOWED_10PERC_ROUNDING_VALUES
+    """Round a floating point number according to the specified mode.
+
+    None            -> no rounding, value is returned as is
+    "nearest_int"   -> round to nearest integer
+    "10%"           -> round to nearest n*10^m with n in __ALLOWED_10PERC_ROUNDING_VALUES.
     """
     match mode:
         case "nearest_int":

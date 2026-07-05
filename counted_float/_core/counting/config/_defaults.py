@@ -6,8 +6,8 @@ from counted_float._core.models import FlopWeights
 
 
 def get_default_consensus_flop_weights(rounding_mode: None | Literal["nearest_int", "10%"] = "10%") -> FlopWeights:
-    """
-    Get the default CONSENSUS flop weights.
+    """Get the default CONSENSUS flop weights.
+
     Computed as the geo-mean of the unrounded empirical and theoretical weights, rounded to the nearest integer.
     Returns a fresh copy; mutating it does not affect later calls.
     """
@@ -18,8 +18,7 @@ def get_builtin_flop_weights(
     key_filter: str = "",
     rounding_mode: None | Literal["nearest_int", "10%"] = "10%",
 ) -> FlopWeights:
-    """
-    Get built-in flop weights estimated from built-in benchmark results and/or instruction latency analyses.
+    """Get built-in flop weights estimated from built-in benchmark results and/or instruction latency analyses.
 
     :param key_filter: (str, default="") If non-empty, only include entries whose keys contain this substring.
                        E.g. "benchmarks" to only include benchmark results, or "x86" to only include

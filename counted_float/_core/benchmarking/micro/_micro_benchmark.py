@@ -14,8 +14,8 @@ from counted_float._core.utils import (
 #  Base class for micro-benchmarks
 # =================================================================================================
 class MicroBenchmark(ABC):
-    """
-    Base class for micro-benchmarks, where a child class needs to implement the following methods:
+    """Base class for micro-benchmarks, where a child class needs to implement the abstract methods below.
+
       _prepare_benchmark --> prepares the benchmark_runs (e.g. sets up data); is called once before each _run_benchmark
                                 and time spent here is not counted.
       _run_benchmark     --> runs the benchmark_runs; is called multiple times and time spent here is counted.
@@ -36,9 +36,9 @@ class MicroBenchmark(ABC):
     def run_many(
         self, n_runs_total: int = 20, n_runs_warmup: int = 5, n_seconds_per_run_target: float = 0.5
     ) -> MicroBenchmarkResult:
-        """
-        Runs the MicroBenchmark multiple times (warmup_runs & actual test runs), with provided parameters and returns
-        (q25, q50, q75) quantiles of run times in nanoseconds.
+        """Run the MicroBenchmark multiple times and return (q25, q50, q75) quantiles of run times in nanoseconds.
+
+        Runs consist of warmup_runs & actual test runs, with the provided parameters.
         :param n_runs_total: (int, default=20) total number of benchmark_runs runs
         :param n_runs_warmup: (int, default=5) number of warmup_runs runs
                                              - the first n_runs_warmup of n_runs_total are not included in timing stats
@@ -48,7 +48,6 @@ class MicroBenchmark(ABC):
         :param n_seconds_per_run_target: (float, default=0.5) target time (sec) per benchmark_runs run (prepare + run).
                                              n_executions will be iteratively adjusted to achieve this target time.
         """
-
         print(f"{self.name.ljust(35)}: ", end="")
 
         # repeat benchmark_runs n_runs_total times
@@ -93,9 +92,10 @@ class MicroBenchmark(ABC):
         return benchmark_result
 
     def run_once(self, n_executions: int) -> SingleRunResult:
-        """Runs benchmark_runs once for a given # of executions and returns time in nanoseconds & cpu cycles
-        per execution."""
+        """Run benchmark_runs once for a given # of executions and return time per execution.
 
+        Time is returned in nanoseconds & cpu cycles.
+        """
         # prepare
         self._prepare_benchmark(n_executions)
 
@@ -112,11 +112,10 @@ class MicroBenchmark(ABC):
 
     @abstractmethod
     def _prepare_benchmark(self, n_executions: int):
-        """
-        Prepare benchmark_runs (e.g. set up data) based on requested number of executions.  This argument is
-        adjusted each
-          run by the MicroBenchmarkRunner class to ensure that the benchmark_runs runs for a reasonable amount of time
-            (e.g. 1 second per run).
+        """Prepare benchmark_runs (e.g. set up data) based on requested number of executions.
+
+        This argument is adjusted each run by the MicroBenchmarkRunner class to ensure that the benchmark_runs
+        runs for a reasonable amount of time (e.g. 1 second per run).
         """
         ...
 

@@ -22,11 +22,11 @@ class FlopWeights(MyBaseModel):
     #  Helpers
     # -------------------------------------------------------------------------
     def round(self, mode: Literal["nearest_int", "10%"] = "10%") -> FlopWeights:
-        """
-        Round all weights according to specified mode:
-           - "10%" (default)   : round to nearest round number with ~10% accuracy and max. 2 significant non-0 digits
-                                      (e.g. 1.234 -> 1.2, 12.34 -> 12, 123.4 -> 120)
-           - "nearest_int"     : round to nearest int with minimum of 1
+        """Round all weights according to specified mode.
+
+        - "10%" (default)   : round to nearest round number with ~10% accuracy and max. 2 significant non-0 digits
+                                   (e.g. 1.234 -> 1.2, 12.34 -> 12, 123.4 -> 120)
+        - "nearest_int"     : round to nearest int with minimum of 1.
         """
         if mode == "nearest_int":
             return FlopWeights(
@@ -80,7 +80,6 @@ class FlopWeights(MyBaseModel):
     @classmethod
     def as_geo_mean(cls, all_flop_weights: Iterable[FlopWeights], fill_missing_data: bool = True) -> FlopWeights:
         """Computes geo-mean of a collection of FlopWeights instances."""
-
         # --- prep ----------------------------------------
         all_flop_weights = list(all_flop_weights)
 
@@ -106,11 +105,10 @@ class FlopWeights(MyBaseModel):
 
     @classmethod
     def from_abs_flop_costs(cls, flop_costs: dict[FlopType, float]) -> FlopWeights:
-        """
-        Computes FlopWeights based on absolute costs (in clock cycles, nanoseconds, ...) of each flop type.
+        """Compute FlopWeights based on absolute costs (in clock cycles, nanoseconds, ...) of each flop type.
+
         As a reference duration, we take the cost of the ADD operation.
         """
-
         # step 1) compute reference duration based on 1 simple flop type
         #         (SUB, MUL and a few others are usually very close)
         ref_cost = flop_costs[FlopType.ADD]

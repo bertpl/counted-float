@@ -19,8 +19,9 @@ class Latency(MyBaseModel):
     max_cycles: float | None = None
 
     def consensus(self) -> float:
-        """
-        Calculate the consensus value of min/max cycles. max(min_cycles, max_cycles) correlates best with benchmarks.
+        """Calculate the consensus value of min/max cycles.
+
+        max(min_cycles, max_cycles) correlates best with benchmarks.
         This always either returns a value > 0 or math.nan (if both min_cycles and max_cycles are None).
         """
         match (self.min_cycles, self.max_cycles):

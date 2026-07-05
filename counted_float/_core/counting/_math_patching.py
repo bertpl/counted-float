@@ -1,5 +1,4 @@
-"""
-Counting replacements for `math` module functions, and the machinery to apply/remove them.
+"""Counting replacements for `math` module functions, and the machinery to apply/remove them.
 
 Nothing in this module runs at import time: the `math` module is only patched while at least one
 `FlopCountingContext` is active (see `apply_math_patches` / `remove_math_patches`), so merely
@@ -66,10 +65,10 @@ def math_cbrt(x: float) -> float | CountedFloat:
 
 
 def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:  # noqa: C901 -- branches mirror the per-log-variant counting rules
-    """
-    Patched math.log: stdlib contract (optional base), with flop classification for the base
-    following the same constant-detection heuristic as CountedFloat.__pow__ / __rpow__
-    (int operand = hardcoded constant in the source):
+    """Patch math.log: stdlib contract (optional base), with flop classification per log variant.
+
+    Flop classification for the base follows the same constant-detection heuristic as
+    CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant in the source):
       - base omitted      -> LOG
       - base int 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
       - base other int    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base) folded
@@ -137,9 +136,9 @@ def math_exp2(x: float) -> float | CountedFloat:
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
-    """
-    Patched math.pow: stdlib contract (always-float result, ValueError on domain errors), with
-    flop classification identical to the x**y form — including the constant-detection heuristic
+    """Patch math.pow: stdlib contract (always-float result, ValueError on domain errors).
+
+    Flop classification is identical to the x**y form — including the constant-detection heuristic
     documented on CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant).
     """
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
@@ -213,8 +212,11 @@ _active_context_count = 0
 
 
 def _capture_originals():
-    """Snapshot the current math functions, so the replacements delegate through (and unpatching
-    restores) whatever is current — possibly another package's patches, not the stdlib originals."""
+    """Snapshot the current math functions.
+
+    This way the replacements delegate through (and unpatching restores) whatever is current —
+    possibly another package's patches, not the stdlib originals.
+    """
     global original_math_sqrt, original_math_cbrt, original_math_log, original_math_log2
     global original_math_log10, original_math_exp, original_math_exp2, original_math_pow
     global original_math_sin, original_math_cos, original_math_tan

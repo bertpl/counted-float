@@ -1,3 +1,5 @@
+"""Top-level public API for flop counting: CountedFloat, FlopCountingContext, and related models."""
+
 import counted_float.benchmarking as benchmarking
 import counted_float.config as config
 
