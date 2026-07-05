@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import SupportsIndex
+
 from ._global_counter import GLOBAL_COUNTER
 
 
@@ -7,18 +9,18 @@ class CountedFloat(float):
     # -------------------------------------------------------------------------
     #  CONSTRUCTOR
     # -------------------------------------------------------------------------
-    def __new__(cls, value: float | int):
+    def __new__(cls, value: float | int) -> CountedFloat:
         if isinstance(value, int):
             GLOBAL_COUNTER.incr_i2f()
         return super().__new__(cls, float(value))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.__repr__()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"CountedFloat({super().__repr__()})"
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return super().__hash__()
 
     # -------------------------------------------------------------------------
@@ -34,49 +36,51 @@ class CountedFloat(float):
         GLOBAL_COUNTER.incr_minus()
         return CountedFloat(super().__neg__())
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         """x==other or other==x."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__eq__(other)
 
-    def __ne__(self, other) -> bool:
+    def __ne__(self, other: object) -> bool:
         """x!=other or other!=x."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__ne__(other)
 
-    def __lt__(self, other):
+    def __lt__(self, other: float) -> bool:
         """x<other."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__lt__(other)
 
-    def __le__(self, other):
+    def __le__(self, other: float) -> bool:
         """x<=other."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__le__(other)
 
-    def __gt__(self, other):
+    def __gt__(self, other: float) -> bool:
         """x>other."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__gt__(other)
 
-    def __ge__(self, other):
+    def __ge__(self, other: float) -> bool:
         """x>=other."""
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return super().__ge__(other)
 
-    def __round__(self, n=None) -> int:
+    def __round__(  # ty: ignore[invalid-method-override] -- float's stub narrows return per overload; this is the union
+        self, n: SupportsIndex | None = None
+    ) -> int | float:
         """Round to n decimal places, i.e. round(x, n).
 
         n = None -> round to nearest integer and return int
@@ -110,63 +114,63 @@ class CountedFloat(float):
         GLOBAL_COUNTER.incr_f2i()
         return super().__trunc__()
 
-    def __add__(self, other) -> CountedFloat:
+    def __add__(self, other: float) -> CountedFloat:
         """x+other."""
         GLOBAL_COUNTER.incr_add()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__add__(other))
 
-    def __radd__(self, other) -> CountedFloat:
+    def __radd__(self, other: float) -> CountedFloat:
         """other+x."""
         GLOBAL_COUNTER.incr_add()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__radd__(other))
 
-    def __sub__(self, other) -> CountedFloat:
+    def __sub__(self, other: float) -> CountedFloat:
         """x-other."""
         GLOBAL_COUNTER.incr_sub()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__sub__(other))
 
-    def __rsub__(self, other) -> CountedFloat:
+    def __rsub__(self, other: float) -> CountedFloat:
         """other-x."""
         GLOBAL_COUNTER.incr_sub()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rsub__(other))
 
-    def __mul__(self, other) -> CountedFloat:
+    def __mul__(self, other: float) -> CountedFloat:
         """x*other or other*x."""
         GLOBAL_COUNTER.incr_mul()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__mul__(other))
 
-    def __rmul__(self, other) -> CountedFloat:
+    def __rmul__(self, other: float) -> CountedFloat:
         """other*x."""
         GLOBAL_COUNTER.incr_mul()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rmul__(other))
 
-    def __truediv__(self, other) -> CountedFloat:
+    def __truediv__(self, other: float) -> CountedFloat:
         """x/other."""
         GLOBAL_COUNTER.incr_div()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__truediv__(other))
 
-    def __rtruediv__(self, other) -> CountedFloat:
+    def __rtruediv__(self, other: float) -> CountedFloat:
         """other/x."""
         GLOBAL_COUNTER.incr_div()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(super().__rtruediv__(other))
 
-    def __pow__(self, other) -> CountedFloat:
+    def __pow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__pow__'s mod is None-only and unused here
         """x**other.
 
         Counting heuristic: an `int` operand is taken as evidence of a hardcoded constant in the
@@ -183,7 +187,7 @@ class CountedFloat(float):
             GLOBAL_COUNTER.incr_pow()
         return CountedFloat(super().__pow__(other))
 
-    def __rpow__(self, other) -> CountedFloat:
+    def __rpow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__rpow__'s mod is None-only and unused here
         """other**x.
 
         Same constant-detection heuristic as __pow__, applied to the base: an `int` base 2 or 10

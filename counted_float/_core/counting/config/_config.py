@@ -20,7 +20,7 @@ class Config:
     #  Configuration Methods
     # -------------------------------------------------------------------------
     @classmethod
-    def set_flop_weights(cls, weights: FlopWeights):
+    def set_flop_weights(cls, weights: FlopWeights) -> None:
         """Set the weights for the flops used in the package.
 
         These weights will be used in any calculation of weighted flops, going forward.
@@ -40,7 +40,7 @@ class Config:
 # =================================================================================================
 #  Functional accessors
 # =================================================================================================
-def set_active_flop_weights(weights: FlopWeights):
+def set_active_flop_weights(weights: FlopWeights) -> None:
     """Set the weights for the flops used in the package.
 
     These weights will be used in any calculation of weighted flops, going forward.

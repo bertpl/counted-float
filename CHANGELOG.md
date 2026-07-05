@@ -3,14 +3,14 @@
 <!------------------------------------------------------------------------------------------------->
 > ## v1.1.1
 > *(unreleased)*
-> > Internal quality-tooling release: pre-commit hooks, expanded ruff rule set, ty type checker.
+> > Quality-tooling release: pre-commit hooks, expanded ruff rule set, ty type checker; package now ships type information.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
 /
 
 ### Improvements
-/
+- package now ships inline type information (fully annotated API + PEP 561 `py.typed` marker)
 
 ### Bug Fixes
 /
@@ -19,6 +19,7 @@
 - add pre-commit hooks (ruff, file hygiene, codespell, actionlint, conventional commit messages) + `make lint`
 - expand ruff rule set from isort-only to the full lint family set
 - enable pydocstyle (Google convention) and clean up all docstrings
+- add the ty type checker to pre-commit
 
 <!------------------------------------------------------------------------------------------------->
 > ## v1.1.0

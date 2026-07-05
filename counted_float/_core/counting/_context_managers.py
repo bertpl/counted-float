@@ -3,6 +3,9 @@
 Also provides .pause() and .resume() methods to control flop counting.
 """
 
+from types import TracebackType
+from typing import Self
+
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER
 from counted_float._core.counting._math_patching import apply_math_patches, remove_math_patches
 from counted_float._core.models import FlopCounts
@@ -24,7 +27,7 @@ class FlopCountingContext:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self) -> None:
         # Active/inactive flag  (toggled by __enter__ and __exit__ + by pause() and resume() methods)
         # When inactive:
         #   - current count == self.__cnt_subtotal
@@ -51,13 +54,13 @@ class FlopCountingContext:
     # -------------------------------------------------------------------------
     #  Pause/Resume
     # -------------------------------------------------------------------------
-    def pause(self):
+    def pause(self) -> None:
         if self.__active:
             self.__cnt_subtotal = self.flop_counts()
             self.__cnt_start_snapshot = FlopCounts()
             self.__active = False
 
-    def resume(self):
+    def resume(self) -> None:
         if not self.__active:
             self.__cnt_start_snapshot = GLOBAL_COUNTER.flop_counts() - self.__cnt_subtotal
             self.__cnt_subtotal = FlopCounts()
@@ -66,14 +69,19 @@ class FlopCountingContext:
     # -------------------------------------------------------------------------
     #  Context manager interface
     # -------------------------------------------------------------------------
-    def __enter__(self):
+    def __enter__(self) -> Self:
         # patching the math module is tied to the with-block lifetime (not to pause()/resume(),
         # which only control whether counts are registered)
         apply_math_patches()
         self.resume()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         self.pause()
         remove_math_patches()
 
@@ -87,9 +95,14 @@ class PauseFlopCounting:
     This acts globally, across all active FlopCountingContext instances.
     """
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         GLOBAL_COUNTER.pause()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
         GLOBAL_COUNTER.resume()

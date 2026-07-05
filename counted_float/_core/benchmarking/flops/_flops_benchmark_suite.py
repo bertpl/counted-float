@@ -115,14 +115,14 @@ class FlopsBenchmarkSuite:
 
         # --- define all test functions -------------------
         @numba.njit(parallel=False)
-        def f_baseline(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_baseline(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -130,7 +130,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_minus(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_minus(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -138,7 +138,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_abs(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_abs(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -146,7 +146,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -155,7 +155,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -164,7 +164,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_round(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_round(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -172,7 +172,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_sqrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_sqrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -180,7 +180,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -188,7 +188,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -196,7 +196,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log_exp(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log_exp(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -204,7 +204,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -212,7 +212,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log2_exp2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log2_exp2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -220,7 +220,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -228,7 +228,9 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_log10_exp10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_log10_exp10(
+            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
+        ) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -236,7 +238,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_sin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_sin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -244,7 +246,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_cos(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_cos(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -252,7 +254,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_add_tan(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_add_tan(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -260,7 +262,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -268,7 +270,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_pow_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_pow_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -276,7 +278,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -284,7 +286,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_sub_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_sub_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -293,7 +295,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -301,7 +303,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_mul_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_mul_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -310,7 +312,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -318,7 +320,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_div_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_div_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
@@ -327,7 +329,7 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
-        def f_lte_addsub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray):
+        def f_lte_addsub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):

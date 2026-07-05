@@ -8,23 +8,23 @@ from counted_float._core.benchmarking import run_counted_float_benchmark, run_fl
 #  Commands
 # -------------------------------------------------------------------------
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
 @cli.command(short_help="run flop benchmarks")
-def benchmark():
+def benchmark() -> None:
     result = run_flops_benchmark()
     result.show()
 
 
 @cli.command(short_help="show all built-in data")
 @click.option("--key_filter", default="", help="Optional key filter for built-in data")
-def show_data(key_filter: str):
+def show_data(key_filter: str) -> None:
     BuiltInData.show(key_filter=key_filter)
 
 
 @cli.command(short_help="run benchmark of float vs CountedFloat performance")
-def benchmark_counted_float():
+def benchmark_counted_float() -> None:
     result = run_counted_float_benchmark()
     result.show()

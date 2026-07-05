@@ -11,7 +11,7 @@ class CountedFloatBenchmarkResults(MyBaseModel):
     float_time_nsec: float
     counted_float_time_nsec: float
 
-    def show(self):
+    def show(self) -> None:
         print("CountedFloat Benchmark Results:")
         print(f"  Bisection using float        : {format_time_duration(self.float_time_nsec)} / execution")
         print(f"  Bisection using CountedFloat : {format_time_duration(self.counted_float_time_nsec)} / execution")
@@ -29,14 +29,14 @@ def _zero_function(x: float) -> float:
 
 
 class BenchmarkFloat(MicroBenchmark):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="float")
         self._n_executions = 1
 
-    def _prepare_benchmark(self, n_executions: int):
+    def _prepare_benchmark(self, n_executions: int) -> None:
         self._n_executions = n_executions
 
-    def _run_benchmark(self):
+    def _run_benchmark(self) -> None:
         for _ in range(self._n_executions):
             # Execute bisection to find root of _zero_function in interval [-1e50,1e50],
             # using standard float() arithmetic
@@ -58,14 +58,14 @@ class BenchmarkFloat(MicroBenchmark):
 
 
 class BenchmarkCountedFloat(MicroBenchmark):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(name="CountedFloat")
         self._n_executions = 1
 
-    def _prepare_benchmark(self, n_executions: int):
+    def _prepare_benchmark(self, n_executions: int) -> None:
         self._n_executions = n_executions
 
-    def _run_benchmark(self):
+    def _run_benchmark(self) -> None:
         for _ in range(self._n_executions):
             # Execute bisection to find root of _zero_function in interval [-1e50,1e50],
             # with identical implementation as BenchmarkFloat, except that we initialize a,b as CountedFloats,

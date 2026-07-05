@@ -72,7 +72,7 @@ class FlopCounts:
         return sum([getattr(self, flop_type.name) * weights.weights[flop_type] for flop_type in FlopType])
 
     # --- other -------------------------------------------
-    def reset(self):
+    def reset(self) -> None:
         """Reset all counts to 0."""
         for attr in self.field_names():
             setattr(self, attr, 0)

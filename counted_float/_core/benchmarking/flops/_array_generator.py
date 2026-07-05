@@ -34,7 +34,7 @@ class ArrayGenerator(ABC):
 #  Implementations
 # =================================================================================================
 class ArrayGeneratorLinear(ArrayGenerator):
-    def __init__(self, min_value: float, max_value: float):
+    def __init__(self, min_value: float, max_value: float) -> None:
         """Array generator, where values are in interval [min_value, max_value] with avg. equal to mid-point."""
         self.min_value = min_value
         self.max_value = max_value
@@ -45,7 +45,7 @@ class ArrayGeneratorLinear(ArrayGenerator):
 
 
 class ArrayGeneratorLog(ArrayGenerator):
-    def __init__(self, min_value: float, max_value: float):
+    def __init__(self, min_value: float, max_value: float) -> None:
         """Array generator, where values are in interval [min_value, max_value] with geomean equal to geo-mid."""
         self.min_value = min_value
         self.max_value = max_value
