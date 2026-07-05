@@ -1,6 +1,24 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v1.1.1
+> *(unreleased)*
+> > Internal quality-tooling release: pre-commit hooks, expanded ruff rule set, ty type checker.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+- add pre-commit hooks (ruff, file hygiene, codespell, actionlint, conventional commit messages) + `make lint`
+
+<!------------------------------------------------------------------------------------------------->
 > ## v1.1.0
 > *(2026-07-05)*
 > > Well-behaved importing: no more monkey-patching at load time.
