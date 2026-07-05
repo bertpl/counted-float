@@ -21,11 +21,11 @@ jobs:
           PACKAGE_VERSION=$(uv version --short)
           TAG_NAME="${{ github.ref_name }}"
           EXPECTED_TAG="v${PACKAGE_VERSION}"
-          
+
           echo "Package version: ${PACKAGE_VERSION}"
           echo "Current tag: ${TAG_NAME}"
           echo "Expected tag: ${EXPECTED_TAG}"
-          
+
           if [[ "${TAG_NAME}" != "${EXPECTED_TAG}" ]]; then
             echo "ERROR: Tag name does not match package version!"
             echo "  Tag: ${TAG_NAME}"
@@ -76,7 +76,7 @@ jobs:
       - name: Check current version
         run: |
             PACKAGE_VERSION=$( uv version --short )
-            echo "CURRENT_PACKAGE_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV                 
+            echo "CURRENT_PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
 
       - uses: ./.github/actions/bump_version
         with:

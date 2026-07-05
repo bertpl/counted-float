@@ -1,0 +1,77 @@
+# Hybrid pre-commit setup:
+#   - Project code-analysis tools (ruff) run as LOCAL `uv` hooks, so they use
+#     the exact versions pinned in the dev dependency group on uv's
+#     interpreter — identical to `make lint`, never a system Python or a
+#     second tool version.
+#   - Generic, standalone utilities run as MANAGED, `rev:`-pinned hooks.
+#
+# One `pre-commit install` wires up both the pre-commit and commit-msg stages.
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  # ----------------------------------------------------------------------------
+  #  Local: project code-analysis tools (uv-pinned via the dev dependency group)
+  # ----------------------------------------------------------------------------
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+        files: ^(counted_float|tests)/
+        pass_filenames: true
+      - id: ruff
+        name: ruff check
+        entry: uv run ruff check
+        language: system
+        types: [python]
+        files: ^(counted_float|tests)/
+        pass_filenames: true
+
+  # ----------------------------------------------------------------------------
+  #  Managed: file hygiene
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=512]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: debug-statements
+
+  # ----------------------------------------------------------------------------
+  #  Managed: utilities
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+      - id: codespell
+        additional_dependencies: [tomli]  # read [tool.codespell] from pyproject.toml
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: https://github.com/python-jsonschema/check-jsonschema
+    rev: 0.37.2
+    hooks:
+      - id: check-github-workflows
+
+  # ----------------------------------------------------------------------------
+  #  Commit-msg stage: enforce the <prefix>: subject convention
+  # ----------------------------------------------------------------------------
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        # `release` covers release-automation commits; the other six match
+        # the repo's branch/commit prefix convention.
+        args: [feat, fix, chore, docs, refactor, test, release]

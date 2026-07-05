@@ -32,9 +32,13 @@ cli = [
 [dependency-groups]
 dev = [
     "genbadge[all]>=1.1.2",
+    "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
+    # ruff is pinned exactly: uv.lock is untracked, so this pin is what keeps
+    # pre-commit, `make lint`, and CI on the same ruff version.
+    "ruff==0.15.11",
 ]
 
 [build-system]
@@ -64,6 +68,10 @@ exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",
 ]
+
+[tool.codespell]
+# `sme`: "SME" (ARM's Scalable Matrix Extension) appears in the analysis docs.
+ignore-words-list = "sme"
 
 [tool.pytest.ini_options]
 addopts = "-n auto --dist worksteal"

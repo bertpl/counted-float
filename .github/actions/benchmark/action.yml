@@ -26,7 +26,7 @@ runs:
                 echo "PYTHON_EFFECTIVE_VERSION=${{ inputs.python_version }}" >> $GITHUB_ENV
             else
                 PYTHON_VERSION=$(cat .python-version)
-                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV                
+                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
             fi
             echo "Using PYTHON ${{ env.PYTHON_EFFECTIVE_VERSION }}."
 
