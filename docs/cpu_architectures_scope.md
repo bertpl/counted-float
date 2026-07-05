@@ -18,13 +18,13 @@ various segments.
 - https://en.wikipedia.org/wiki/List_of_Intel_CPU_microarchitectures
 - https://en.wikipedia.org/wiki/List_of_Intel_Core_processors
 
-In general, we focus on those micro-architectures that are _not_ mobile-only and preferably are used in server processors.  
+In general, we focus on those micro-architectures that are _not_ mobile-only and preferably are used in server processors.
 
 | Released | Microarchitecture                                                                                                                                                            | Desktop / Mobile CPU                                                                                                                                                                     | Server CPU                                                                                      | Included? |
 |----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------|-----------|
 | 2017     | [Coffee Lake](https://en.wikipedia.org/wiki/Coffee_Lake)                                                                                                                     | Core i - 8th gen: [Coffee Lake](https://en.wikipedia.org/wiki/Coffee_Lake) <br> Core i - 9th gen: [Coffee Lake Refresh](https://en.wikipedia.org/wiki/Coffee_Lake)                       | /                                                                                               | V         |
 | 2018     | [Palm Cove](https://en.wikipedia.org/wiki/Cannon_Lake_(microprocessor)#Design_history_and_features)                                                                          | Core Mobile i - 9th gen: [Cannon Lake](https://en.wikipedia.org/wiki/Cannon_Lake_(microprocessor))                                                                                       | /                                                                                               |           |
-| 2019     | [Sunny Cove](https://en.wikipedia.org/wiki/Sunny_Cove_(microarchitecture)) <br> [Cypress Cove](https://en.wikipedia.org/wiki/Sunny_Cove_(microarchitecture)) (14nm backport) | Core Mobile i - 10th gen: [Ice Lake](https://en.wikipedia.org/wiki/Ice_Lake_(microprocessor)) <br> Core i - 11th gen: [Rocket Lake](https://en.wikipedia.org/wiki/Rocket_Lake)           | Xeon Scalable - 3rd gen: [Ice Lake-SP](https://en.wikipedia.org/wiki/Ice_Lake_(microprocessor)) | V         | 
+| 2019     | [Sunny Cove](https://en.wikipedia.org/wiki/Sunny_Cove_(microarchitecture)) <br> [Cypress Cove](https://en.wikipedia.org/wiki/Sunny_Cove_(microarchitecture)) (14nm backport) | Core Mobile i - 10th gen: [Ice Lake](https://en.wikipedia.org/wiki/Ice_Lake_(microprocessor)) <br> Core i - 11th gen: [Rocket Lake](https://en.wikipedia.org/wiki/Rocket_Lake)           | Xeon Scalable - 3rd gen: [Ice Lake-SP](https://en.wikipedia.org/wiki/Ice_Lake_(microprocessor)) | V         |
 | 2020     | [Willow Cove](https://en.wikipedia.org/wiki/Willow_Cove) <br> (mostly a Sunny Cove process update)                                                                           | Core Mobile i - 11th gen: [Tiger Lake](https://en.wikipedia.org/wiki/Tiger_Lake)                                                                                                         | /                                                                                               |           |
 | 2021     | [Golden Cove](https://en.wikipedia.org/wiki/Golden_Cove)                                                                                                                     | Core i - 12th gen: [Alder Lake](https://en.wikipedia.org/wiki/Alder_Lake) (P cores)                                                                                                      | Xeon Scalable - 4th gen: [Sapphire Rapids](https://en.wikipedia.org/wiki/Sapphire_Rapids)       | V         |
 | 2022     | [Raptor Cove](https://en.wikipedia.org/wiki/Golden_Cove) <br> (~Golden Cove refresh)                                                                                         | Core i - 13th gen: [Raptor Lake](https://en.wikipedia.org/wiki/Raptor_Lake) (P cores) <br> Core i - 13th gen: [Raptor Lake Refresh](https://en.wikipedia.org/wiki/Raptor_Lake) (P cores) | Xeon Scalable - 5th gen: [Emerald Rapids](https://en.wikipedia.org/wiki/Emerald_Rapids)         | V         |
@@ -33,7 +33,7 @@ In general, we focus on those micro-architectures that are _not_ mobile-only and
 
 **Notes:**
 - ***(1)*** but with improvements to FPU multiplication latencies
-- ***(2)*** no server variants announced at the time of writing. 
+- ***(2)*** no server variants announced at the time of writing.
 
 ## 2.1.2. AMD
 
@@ -53,14 +53,14 @@ In general, we focus on those micro-architectures that are _not_ mobile-only and
 
 ### 2.2.1. Approach
 
-The ARM eco-system is a bit different, with not just the ISA being shared, but also ARM being a licenser of core designs, 
+The ARM eco-system is a bit different, with not just the ISA being shared, but also ARM being a licenser of core designs,
 that licensee can reuse as is, tweak to their specific needs or change heavily if so desired.
 
 As such we will make an initial rough classification based on the version of the ARM ISA and potentially split up further
 depending on available information, testable instances, etc...
 
-Due to the aforementioned focus on 64-bit architectures, we will restrict this analysis to cores implementing the ARM v8 
-or higher and supporting a 64-bit mode (AARCH64 Execution State).Restricting ourselves further to architectures introduced 
+Due to the aforementioned focus on 64-bit architectures, we will restrict this analysis to cores implementing the ARM v8
+or higher and supporting a 64-bit mode (AARCH64 Execution State).Restricting ourselves further to architectures introduced
 in the last ±10 years, we will focus on **ARM v8.2-A or higher**, as this ISA was introduced in 2016.
 
 | Released  | ARMv8     | ARMv9               |
@@ -71,7 +71,7 @@ in the last ±10 years, we will focus on **ARM v8.2-A or higher**, as this ISA w
 | 2018-09   | ARMv8.5-A |                     |
 | 2019-06   | ARMv8.6-A |                     |
 | 2020-09   | ARMv8.7-A |                     |
-| 2021-03   |           | ARMv9-A             | 
+| 2021-03   |           | ARMv9-A             |
 | 2021-09   | ARMv8.8-A | ARMv9.3-A           |
 | 2022-09   | ARMv8.9-A | ARMv9.4-A ***(1)*** |
 | 2023-10   |           | ARMv9.5-A ***(1)*** |
@@ -120,13 +120,10 @@ More background:
 
 As indicated before, we'll make high-level split between the different ISA levels that are found in current & recent CPUs.
 Note, that ISA level by itself does not necessarily impose latency specifications for certain instructions, but it can be used
-as a proxy for the 'recency' & 'complexity' of a given chip. 
+as a proxy for the 'recency' & 'complexity' of a given chip.
 
 | ARM ISA Level     | Data source               | Cores / Chips considered                                          |
 |-------------------|---------------------------|-------------------------------------------------------------------|
 | **V8.x** (>=v8.2) | → specs <br> → benchmarks | → A76, X1, N1, V1 <br> → Apple M3, AWS Graviton 2, AWS Graviton 3 |
 | **V9.0**          | → specs <br> → benchmarks | → X2, X3, N2, V2 <br> → AWS Graviton 4                            |
 | **V9.2**          | → specs <br> → benchmarks | → X4, X925, V3 <br> → Apple M4                                    |
-
-
-

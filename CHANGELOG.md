@@ -1,8 +1,26 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v1.1.0
+> ## v1.1.1
 > *(unreleased)*
+> > Internal quality-tooling release: pre-commit hooks, expanded ruff rule set, ty type checker.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+/
+
+### Bug Fixes
+/
+
+### Internal
+- add pre-commit hooks (ruff, file hygiene, codespell, actionlint, conventional commit messages) + `make lint`
+
+<!------------------------------------------------------------------------------------------------->
+> ## v1.1.0
+> *(2026-07-05)*
 > > Well-behaved importing: no more monkey-patching at load time.
 <!------------------------------------------------------------------------------------------------->
 
@@ -218,13 +236,13 @@
 > *(2025-09-28)*
 > > This release heavily focuses on rectifying, documenting and streamlining
 > > How we use external flop latency data sources (analyses, spec sheets),
-> > to improve reliability and consistency of these data sources with the goal 
+> > to improve reliability and consistency of these data sources with the goal
 > > & scope of the package.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New
 - Add document with rationale behind analysis scope (CPU architectures, FPU instructions, metrics, ...) & with rigorous references behind obtained data.
-- Add various instruction latencies based on uops.info, Agner Fog & Intel/AMD/ARM spec sheets + reorganize data 
+- Add various instruction latencies based on uops.info, Agner Fog & Intel/AMD/ARM spec sheets + reorganize data
 - Add documentation on ecosystem of x86/arm ISAs, cores & cpus + provide rationale for selection of included data
 
 ### Improvements
@@ -255,7 +273,7 @@
 
 ### Improvements
 - Add CPU frequency to benchmark system_info.
-- Rename installed command `run_flops_benchmark` -> `counted_float` 
+- Rename installed command `run_flops_benchmark` -> `counted_float`
 
 ### Bug Fixes
 /
@@ -328,9 +346,9 @@
 /
 
 ### Improvements
-- Simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba'), 
-  all functionality is now usable with and without this optional dependency. 
-  However, running benchmarks without numba will result in a warning, since results are expect to be wildly inaccurate. 
+- Simplify numba optional dependency handling (renamed 'benchmarking' -> 'numba'),
+  all functionality is now usable with and without this optional dependency.
+  However, running benchmarks without numba will result in a warning, since results are expect to be wildly inaccurate.
 - Improve test coverage generation by running coverage analysis in various settings (Python 3.10 & 3.13; with and without numba)
 
 ### Bug Fixes
@@ -342,7 +360,7 @@
 <!------------------------------------------------------------------------------------------------->
 > ## v0.8.2
 > *(2025-09-05)*
-> > Add splash screen, mostly for visual appeal on pypi.org & github. 
+> > Add splash screen, mostly for visual appeal on pypi.org & github.
 <!------------------------------------------------------------------------------------------------->
 
 ### What's New

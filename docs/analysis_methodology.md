@@ -8,8 +8,8 @@ focus on when inspecting FPU spec sheets or interpreting external analyses.
 
 ## 1.1. ISA families
 
-We limit ourselves to x86 (notably x64/amd64) and arm (notably v8 or higher) processors.  Other types, such as 
-Intel Itanium, Transmeta, IBM Power... chips can be considered either obsolete or sufficiently niche. 
+We limit ourselves to x86 (notably x64/amd64) and arm (notably v8 or higher) processors.  Other types, such as
+Intel Itanium, Transmeta, IBM Power... chips can be considered either obsolete or sufficiently niche.
 
 ## 1.2. Scalar vs Vector instructions
 
@@ -17,7 +17,7 @@ Given the nature of algorithms we intend to analyze, the type of math code typic
 forming dependent chains of operations, that lead to choices (strategy, terminate, ...) made in each iteration.  This
 type of code does not lend itself to being easily vectorized, hence we ignore vector instructions:
 - **x86**: SSE2/3/4 vector instructions, AVX<n>, ...
-- **arm**: SVE, SME, NEON, ... 
+- **arm**: SVE, SME, NEON, ...
 
 ## 1.3. 64-bit instruction sets
 
@@ -47,24 +47,24 @@ to work with a maximum of 4K double precision values.
 # 2. Sources
 
 We will focus on 3 types of sources for FPU instruction 'cost':
-* **benchmarks**: these are the benchmarks implemented in this package; these can be run on each CPU architecture that is 
+* **benchmarks**: these are the benchmarks implemented in this package; these can be run on each CPU architecture that is
   supported by numba and can analyze each type of math operation, even those that have no hardware support in some or all cpu architectures.
 * **external - analyses**: CPU latency numbers obtained by 3rd parties by running tailored benchmarks / analyses; limited to what can be publicly found.
-* **external - spec sheets**: Official vendor spec sheets; limited to what can be publicly found (e.g. Apple does not disclose this info) and 
+* **external - spec sheets**: Official vendor spec sheets; limited to what can be publicly found (e.g. Apple does not disclose this info) and
   those instructions that have hardware support.
 
 Given the mentioned PROs & CONs, these 3 sources can be considered complementary, and we can expect them to provide a balanced holistic picture.
 
 # 3. Instruction Mappings
 
-The table below shows the mapping between math operations & FPU instructions for different architectures.  
-x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructions are considered. 
+The table below shows the mapping between math operations & FPU instructions for different architectures.
+x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructions are considered.
 
 | math                   | x87                           | SSE(2/3/4.1)  | ARM v8/9       |
 |------------------------|-------------------------------|---------------|----------------|
 | abs(x)                 | FABS                          | ANDPD (1)     | FABS           |
 | round (double->double) | ?                             | ROUNDSD       | FRINT(N/P/Z/A) |
-| double->int            | FRND                          | CVTSD2SI      | FCVTZS         | 
+| double->int            | FRND                          | CVTSD2SI      | FCVTZS         |
 | int->double            | ?                             | CVTSI2SD      | SCVTF          |
 | -x                     | FCHS                          | XORPD (1)     | FNEG           |
 | x > 0                  | FTST                          | (U)COMISD (2) | FCMP           |
@@ -73,8 +73,8 @@ x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructi
 | x > y                  | FCOM                          | (U)COMISD (2) | FCMP           |
 | x == y                 | FCOM                          | (U)COMISD (2) | FCMP           |
 | x < y                  | FCOM                          | (U)COMISD (2) | FCMP           |
-| max(x,y)               | ?                             | MAXSD         | FMAX           | 
-| min(x,y)               | ?                             | MINSD         | FMIN           | 
+| max(x,y)               | ?                             | MAXSD         | FMAX           |
+| min(x,y)               | ?                             | MINSD         | FMIN           |
 | x + y                  | FADD                          | ADDSD         | FADD           |
 | x - y                  | FSUB                          | SUBSD         | FSUB           |
 | x*y                    | FMUL                          | MULSD         | FMUL           |

@@ -64,7 +64,6 @@ jobs:
   upload-version-artefacts:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: [update-badges, update-splash]
     permissions:

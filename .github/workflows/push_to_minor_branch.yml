@@ -16,4 +16,3 @@ jobs:
       - uses: ./.github/actions/unit_test
         with:
           uv_version: ${{ vars.UV_VERSION }}
-

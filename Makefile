@@ -8,6 +8,7 @@ help:
 	@echo '  build		                    (Re)build package using uv.'
 	@echo ''
 	@echo '  test		                    Run pytest unit tests.'
+	@echo '  lint		                    Run all pre-commit hooks on all files.'
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
@@ -31,13 +32,16 @@ coverage:
 	# run tests with Python 3.13; with numba & append to report
 	uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html
 
+lint:
+	uv run pre-commit run --all-files
+
 format:
-	uvx ruff format .;
-	uvx ruff check --fix .;
+	uv run ruff format .;
+	uv run ruff check --fix .;
 
 format-single-file:
-	uvx ruff format ${file_path};
-	uvx ruff check --fix ${file_path};
+	uv run ruff format ${file_path};
+	uv run ruff check --fix ${file_path};
 
 splash:
 	./.github/scripts/create_splash.sh "$$(uv version --short)-dev";
