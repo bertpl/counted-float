@@ -1,62 +1,54 @@
 name: Unit Tests
 author: Bert Pluymers
-description: Run unit tests with specific python version, extras, dependency resolution
+description: Run unit tests at a specific Python version, extras, and dependency resolution.
 
 inputs:
     uv_version:
         required: true
-        description: "Version of UV to be used."
+        description: "Version of uv to be used."
     python_version:
         required: false
-        description: "Version of Python to be used.  If omitted will default to version in .python-version"
+        description: "Python version. Empty string uses .python-version."
         default: ""
     dependency_resolution:
         required: false
-        description: "Type of dependency resolution to use.  One of 'highest' (default), 'lowest-direct', 'lowest' (discouraged)."
+        description: "uv resolution strategy: 'highest' (default) or 'lowest-direct'."
         default: "highest"
     include_all_extra_deps:
         required: false
-        description: "Set to 'true' (default) to include all optional package dependencies. 'false' otherwise."
+        description: "'true' (default) installs all optional extras (numba, cli); 'false' installs none."
         default: "true"
 
 runs:
-    using: "composite"
+    using: composite
     steps:
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.3.0
         with:
           version: ${{ inputs.uv_version }}
+          # Distinct cache key per combo so parallel legs don't race to save one shared key.
+          cache-suffix: ${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
 
       - name: Determine Python version
         shell: bash
+        env:
+          REQUESTED: ${{ inputs.python_version }}
         run: |
-            if [ -n "${{ inputs.python_version }}" ]; then
-                echo "PYTHON_EFFECTIVE_VERSION=${{ inputs.python_version }}" >> $GITHUB_ENV
-            else
-                PYTHON_VERSION=$(cat .python-version)
-                echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
-            fi
-            echo "Using PYTHON ${{ env.PYTHON_EFFECTIVE_VERSION }}."
+          PY="${REQUESTED:-$(cat .python-version)}"
+          echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
+          echo "Using Python $PY."
 
-      - name: Set up venv, Python ${{ env.PYTHON_EFFECTIVE_VERSION }} & dependencies
+      - name: Drop the lockfile so --resolution takes effect
         shell: bash
-        run:  |
-            uv python install ${{ env.PYTHON_EFFECTIVE_VERSION }}
-            uv venv --python ${{ env.PYTHON_EFFECTIVE_VERSION }}
-            source .venv/bin/activate
-            if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv pip compile --resolution ${{ inputs.dependency_resolution }} --all-extras --group dev pyproject.toml
-                uv sync --all-extras --dev
-            else
-                uv pip compile --resolution ${{ inputs.dependency_resolution }} --group dev pyproject.toml
-                uv sync --dev
-            fi
+        run: rm -f uv.lock  # with the tracked lock present, uv reuses its pins and ignores --resolution
 
       - name: Run tests
         shell: bash
-        run:  |
-            if [ "${{ inputs.include_all_extra_deps }}" = "true" ]; then
-                uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
-            else
-                uv run --python ${{ env.PYTHON_EFFECTIVE_VERSION }} pytest ./tests
-            fi
+        env:
+          PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
+          RES: ${{ inputs.dependency_resolution }}
+          EXTRAS: ${{ inputs.include_all_extra_deps }}
+        run: |
+          EXTRA_FLAG=""
+          [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
+          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev pytest ./tests --durations=20

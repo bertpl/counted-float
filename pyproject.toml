@@ -5,9 +5,19 @@ description = "Count floating-point operations in Python code & benchmark relati
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "pydantic>=2.0.0",
-    "numpy>=1.20",
-    "psutil>=5.0",
+    # Per-Python floors: each compiled dep's floor is the earliest version shipping a
+    # wheel for that CPython, so `lowest-direct` installs (not source-builds) everywhere.
+    "numpy>=1.23.2; python_version < '3.12'",
+    "numpy>=1.26.0; python_version == '3.12'",
+    "numpy>=2.1.0; python_version == '3.13'",
+    "numpy>=2.3.2; python_version >= '3.14'",
+    # pydantic floor is a code requirement (auto model-rebuild of cross-module forward
+    # refs, from 2.6), raised further where a newer CPython needs a newer pydantic-core wheel.
+    "pydantic>=2.6; python_version < '3.13'",
+    "pydantic>=2.9; python_version == '3.13'",
+    "pydantic>=2.12; python_version >= '3.14'",
+    "psutil>=5.9.4; python_version < '3.13'",
+    "psutil>=7.1.2; python_version >= '3.13'",
     "rich>=13.0.0",
     "py-cpuinfo>=9.0.0",
 ]
@@ -23,7 +33,12 @@ Roadmap = "https://github.com/bertpl/counted-float/milestones"
 
 [project.optional-dependencies]
 numba = [
-    "numba>=0.50",
+    # per-Python floors: earliest numba with a wheel for that CPython (also fixes the
+    # indirect llvmlite build failure — old numba>=0.50 dragged in unbuildable llvmlite 0.33)
+    "numba>=0.57; python_version < '3.12'",
+    "numba>=0.59; python_version == '3.12'",
+    "numba>=0.61; python_version == '3.13'",
+    "numba>=0.63; python_version >= '3.14'",
 ]
 cli = [
     "click>=8.0.0",
@@ -36,10 +51,10 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
-    # ruff & ty are pinned exactly: uv.lock is untracked, so these pins are what
-    # keep pre-commit, `make lint`, and CI on the same tool versions.
-    "ruff==0.15.11",
-    "ty==0.0.56",
+    # exact tool versions are pinned by the tracked uv.lock (used by pre-commit,
+    # `make lint`, and CI); these ranges just set the floor.
+    "ruff>=0.15.11",
+    "ty>=0.0.56",
 ]
 
 [build-system]

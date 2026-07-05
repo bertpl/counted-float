@@ -3,26 +3,12 @@ on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: read
+
 jobs:
   test:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-          python_version: ["3.11", "3.12", "3.13"]
-          dependency_resolution: ["lowest-direct", "highest"]
-          include_all_extra_deps: ["false", "true"]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - uses: ./.github/actions/unit_test
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          python_version: ${{ matrix.python_version }}
-          dependency_resolution: ${{ matrix.dependency_resolution }}
-          include_all_extra_deps: ${{ matrix.include_all_extra_deps }}
-
+    uses: ./.github/workflows/_unit_tests.yml
 
   update-readme:
     runs-on: ubuntu-latest
@@ -30,13 +16,12 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/update_readme
         with:
           uv_version: ${{ vars.UV_VERSION }}
           github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-
 
   update-badges:
     runs-on: ubuntu-latest
@@ -44,7 +29,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/update_badges
         with:
@@ -57,7 +42,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/update_splash
 
@@ -70,7 +55,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - uses: ./.github/actions/upload_version_artefacts
         id: deployment
