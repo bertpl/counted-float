@@ -35,3 +35,41 @@ jobs:
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           include_all_extra_deps: ${{ matrix.all_extras }}
+          coverage: "true"  # each combo uploads its data; the coverage job unions + gates
+
+  coverage:
+    name: coverage
+    # Cumulative gate: combine every combo's data into one picture before
+    # checking the floor, so version-/dependency-divergent code paths (only hit
+    # on some combos) don't read as uncovered.
+    needs: [core]
+    # always() so a cancelled/failed combo makes this job FAIL explicitly rather
+    # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every matrix combo to have succeeded
+        if: needs.core.result != 'success'
+        run: |
+          echo "::error::test matrix did not fully succeed (core result: ${{ needs.core.result }})"
+          exit 1
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.3.0
+        with:
+          version: ${{ vars.UV_VERSION }}
+      - name: Download coverage data from all matrix combos
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-data-*
+          merge-multiple: true
+      - name: Combine and report (fails below the [tool.coverage.report] floor)
+        run: |
+          uv run --group dev coverage combine
+          uv run --group dev coverage report
+      - name: Compute release metrics (coverage % + test count)
+        run: uv run --group dev python .github/scripts/ci_compute_metrics.py metrics.json
+      - name: Upload release metrics
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-metrics
+          path: metrics.json
