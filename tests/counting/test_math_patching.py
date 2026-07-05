@@ -1,45 +1,78 @@
 import math
+import subprocess
+import sys
 
 import pytest
 
-from counted_float._core.counting._counted_float import (
-    CountedFloat,
-    original_math_cbrt,
-    original_math_cos,
-    original_math_exp,
-    original_math_exp2,
-    original_math_log,
-    original_math_log2,
-    original_math_log10,
-    original_math_pow,
-    original_math_sin,
-    original_math_sqrt,
-    original_math_tan,
-)
+from counted_float import FlopCountingContext
+from counted_float._core.counting import _math_patching
+from counted_float._core.counting._counted_float import CountedFloat
+
+PATCHED_FUNCTION_NAMES = sorted(_math_patching._PATCHES.keys())
+
+# captured at import of this test module, i.e. with no counting context active anywhere
+STDLIB_MATH_FUNCTIONS = {name: getattr(math, name) for name in PATCHED_FUNCTION_NAMES}
+
+
+# =================================================================================================
+#  Patch lifecycle - math module untouched outside contexts, patched inside
+# =================================================================================================
+def test_import_does_not_patch_math():
+    # run in a fresh interpreter, so this test is independent of any context activity in this one
+    code = (
+        "import math; before = math.sqrt; import counted_float; "
+        "assert math.sqrt is before, 'math.sqrt was patched at import time'"
+    )
+    subprocess.run([sys.executable, "-c", code], check=True)
+
+
+@pytest.mark.parametrize("fname", PATCHED_FUNCTION_NAMES)
+def test_math_module_patched_inside_context_only(fname):
+    original = STDLIB_MATH_FUNCTIONS[fname]
+    replacement = _math_patching._PATCHES[fname]
+
+    # --- before any context ------------------------------
+    assert getattr(math, fname) is original
+
+    # --- inside (nested) contexts ------------------------
+    with FlopCountingContext():
+        assert getattr(math, fname) is replacement
+        with FlopCountingContext():
+            assert getattr(math, fname) is replacement
+        # still patched after the inner context exits
+        assert getattr(math, fname) is replacement
+
+    # --- after all contexts have exited ------------------
+    assert getattr(math, fname) is original
 
 
 # =================================================================================================
 #  Patched math functions - stdlib contract for plain floats
 # =================================================================================================
 @pytest.mark.parametrize(
-    "patched, original, args",
+    "fname, args",
     [
-        (math.sqrt, original_math_sqrt, (2.0,)),
-        (math.cbrt, original_math_cbrt, (2.0,)),
-        (math.log, original_math_log, (2.0,)),
-        (math.log, original_math_log, (8.0, 2.0)),
-        (math.log2, original_math_log2, (2.0,)),
-        (math.log10, original_math_log10, (2.0,)),
-        (math.exp, original_math_exp, (2.0,)),
-        (math.exp2, original_math_exp2, (2.0,)),
-        (math.pow, original_math_pow, (2.0, 3.0)),
-        (math.pow, original_math_pow, (2, 3)),
-        (math.sin, original_math_sin, (2.0,)),
-        (math.cos, original_math_cos, (2.0,)),
-        (math.tan, original_math_tan, (2.0,)),
+        ("sqrt", (2.0,)),
+        ("cbrt", (2.0,)),
+        ("log", (2.0,)),
+        ("log", (8.0, 2.0)),
+        ("log2", (2.0,)),
+        ("log10", (2.0,)),
+        ("exp", (2.0,)),
+        ("exp2", (2.0,)),
+        ("pow", (2.0, 3.0)),
+        ("pow", (2, 3)),
+        ("sin", (2.0,)),
+        ("cos", (2.0,)),
+        ("tan", (2.0,)),
     ],
 )
-def test_patched_math_functions_match_stdlib_for_plain_floats(patched, original, args):
+def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
+    # --- arrange -----------------------------------------
+    patched = getattr(math, fname)  # fixture keeps a context active, so this is the replacement
+    original = STDLIB_MATH_FUNCTIONS[fname]
+    assert patched is not original
+
     # --- act ---------------------------------------------
     result = patched(*args)
     expected = original(*args)
@@ -50,7 +83,7 @@ def test_patched_math_functions_match_stdlib_for_plain_floats(patched, original,
     assert not isinstance(result, CountedFloat)
 
 
-def test_math_log_supports_two_arg_form():
+def test_math_log_supports_two_arg_form(global_counter):
     # regression test: patched math.log used to raise TypeError for the 2-arg form
     # --- act ---------------------------------------------
     result = math.log(8, 2)
@@ -60,14 +93,14 @@ def test_math_log_supports_two_arg_form():
     assert not isinstance(result, CountedFloat)
 
 
-def test_math_pow_raises_domain_error_for_negative_base():
+def test_math_pow_raises_domain_error_for_negative_base(global_counter):
     # regression test: patched math.pow used to return a complex number instead of raising
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):
         math.pow(-8.0, 1 / 3)
 
 
-def test_math_pow_returns_float_not_int():
+def test_math_pow_returns_float_not_int(global_counter):
     # --- act ---------------------------------------------
     result = math.pow(2, 3)
 
@@ -77,7 +110,7 @@ def test_math_pow_returns_float_not_int():
 
 
 # =================================================================================================
-#  Patched math functions - CountedFloat behavior of the fixed code paths
+#  Patched math functions - CountedFloat behavior of the log/pow code paths
 # =================================================================================================
 def test_math_log_int_base_2_counts_log2(global_counter):
     # --- arrange -----------------------------------------
@@ -154,15 +187,6 @@ def test_math_log_float_base_counts_per_counted_operand(global_counter):
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_two_arg_form_plain_floats_count_nothing(global_counter):
-    # --- act ---------------------------------------------
-    result = math.log(8.0, 2.0)
-
-    # --- assert ------------------------------------------
-    assert global_counter.total_count() == 0
-    assert not isinstance(result, CountedFloat)
-
-
 def test_math_log_one_arg_form_still_counts(global_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
@@ -174,6 +198,15 @@ def test_math_log_one_arg_form_still_counts(global_counter):
     assert isinstance(result, CountedFloat)
     assert global_counter.total_count() == 1
     assert global_counter.LOG == 1
+
+
+def test_math_log_two_arg_form_plain_floats_count_nothing(global_counter):
+    # --- act ---------------------------------------------
+    result = math.log(8.0, 2.0)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 0
+    assert not isinstance(result, CountedFloat)
 
 
 def test_math_log_domain_error_counts_nothing(global_counter):
@@ -194,3 +227,49 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     with pytest.raises(ValueError):
         math.pow(cf, 1 / 3)
     assert global_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Playing nice with third-party math patches
+# =================================================================================================
+def test_third_party_math_patches_are_delegated_through_and_restored():
+    # a third party patches math.sqrt AFTER counted_float was imported; our patching must
+    # delegate through that patch while active and restore it (not the stdlib) afterwards
+    # --- arrange -----------------------------------------
+    stdlib_sqrt = STDLIB_MATH_FUNCTIONS["sqrt"]
+    third_party_calls = []
+
+    def third_party_sqrt(x):
+        third_party_calls.append(float(x))
+        return stdlib_sqrt(x)
+
+    math.sqrt = third_party_sqrt
+    try:
+        # --- act & assert --------------------------------
+        with FlopCountingContext() as ctx:
+            result = math.sqrt(CountedFloat(4.0))
+
+        assert isinstance(result, CountedFloat)
+        assert result == 2.0
+        assert ctx.flop_counts().SQRT == 1
+        assert third_party_calls == [4.0]  # our replacement delegated through the 3rd-party patch
+        assert math.sqrt is third_party_sqrt  # ...and restored it, not the stdlib function
+    finally:
+        math.sqrt = stdlib_sqrt
+
+
+# =================================================================================================
+#  Behavior outside a counting context
+# =================================================================================================
+def test_math_functions_do_not_count_outside_context():
+    # no context active here: math.* functions are the stdlib originals, so a CountedFloat input
+    # produces a plain float and no counts (operator-based contagion is unaffected by this)
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(4.0)
+
+    # --- act ---------------------------------------------
+    result = math.sqrt(cf)
+
+    # --- assert ------------------------------------------
+    assert result == 2.0
+    assert not isinstance(result, CountedFloat)

@@ -40,10 +40,12 @@ The `CountedFloat` class is a subclass of `float` and is "contagious", meaning t
 ensure results of math operations where at least one operand is a `CountedFloat` will also be a `CountedFloat`.
 This way we ensure flop counting is a 'closed system'.
 
-On top of this, we monkey-patch the `math` module to ensure that all math operations
-that require counting (`sqrt`, `log2`, `pow`, ...) are also instrumented.
+On top of this, `math` module functions that require counting (`sqrt`, `log2`, `pow`, ...) are
+also instrumented: while a `FlopCountingContext` is active (see below), they are temporarily
+replaced by counting equivalents. Outside such a context — including at plain `import` time —
+the `math` module is left completely untouched.
 
-**Example 1**:
+**Example**:
 
 ```python
 from counted_float import CountedFloat
@@ -55,18 +57,6 @@ result = cf + f  # result = CountedFloat(4.1)
 
 is_float_1 = isinstance(cf, float)  # True
 is_float_2 = isinstance(result, float)  # True
-```
-
-**Example 2**:
-
-```python
-import math
-from counted_float import CountedFloat
-
-cf1 = CountedFloat(0.81)
-
-s = math.sqrt(cf1)  # s = CountedFloat(0.9)
-is_float = isinstance(s, float)  # True
 ```
 
 ### The counting model: what gets counted and why
@@ -97,6 +87,13 @@ The library detects constants through two mechanisms, applying the same rule:
 The flip side: an unwrapped runtime input is invisible to the counter — that is a wrapping error
 at your algorithm's boundary, not something the library can detect. When in doubt, wrap.
 
+One more consequence of the context-scoped `math` patching: `math.*` calls participate in
+counting (and in contagion) only while a `FlopCountingContext` is active. Operator-based
+contagion (`+`, `*`, `**`, ...) works everywhere, but counts are meant to be read through a
+context — so the practical rule is simply: run your measured algorithm inside one.
+
+## 2.2. FLOP counting context managers
+
 Once we use the `CountedFloat` class, we can use the available context managers to count the number of
 flops performed by `CountedFloat` objects.
 
@@ -115,7 +112,24 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.ADD: 1}
 counts.total_count()         # 2
 ```
 
-**Example 2**:  _pause counting 1_
+**Example 2**:  _math module functions_
+
+```python
+import math
+from counted_float import CountedFloat, FlopCountingContext
+
+cf1 = CountedFloat(0.81)
+
+with FlopCountingContext() as ctx:
+    s = math.sqrt(cf1)  # s = CountedFloat(0.9)
+
+counts = ctx.flop_counts()   # {FlopType.SQRT: 1}
+```
+
+Note that `math.*` functions are only instrumented *inside* the context: outside it,
+`math.sqrt(cf1)` returns a plain `float` and counts nothing.
+
+**Example 3**:  _pause counting 1_
 
 ```python
 from counted_float import CountedFloat, FlopCountingContext
@@ -134,7 +148,7 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
 counts.total_count()         # 2
 ```
 
-**Example 3**:  _pause counting 2_
+**Example 4**:  _pause counting 2_
 
 ```python
 from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting
@@ -525,7 +539,7 @@ CountedFloat is 37.3x slower than float
  
 # Appendix A - Flop counting / analysis details
 
-This appendix provides detailed information about how each floating-point operation (FLOP) type is counted and analyzed in the `counted-float` package. For each flop type, you will find:
+This appendix provides detailed information about how each floating-point operation (FLOP) type is counted and analyzed in the `counted-float` package. All `math.*` entries below assume an active `FlopCountingContext` (outside one, the `math` module is not instrumented). For each flop type, you will find:
 - Relevant scalar instructions for ARM (v8+) and x86 (SSE2+)
 - Python operations that are counted for this flop type
 - Python operations that are *not* counted for this flop type

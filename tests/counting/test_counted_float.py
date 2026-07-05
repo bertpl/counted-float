@@ -445,7 +445,7 @@ def test_counted_float_math_pow(f1: float, f2: float, cf_left: bool, cf_right: b
 
 
 @pytest.mark.parametrize("f", [0.0, 1.0, 2.0, math.e])
-def test_counted_float_math_sqrt(f: float):
+def test_counted_float_math_sqrt(global_counter, f: float):
     # --- arrange -----------------------------------------
     cf = CountedFloat(f)
 
@@ -459,7 +459,7 @@ def test_counted_float_math_sqrt(f: float):
 
 
 @pytest.mark.parametrize("f", [1.0, 2.0, math.e])
-def test_counted_float_math_log2(f: float):
+def test_counted_float_math_log2(global_counter, f: float):
     # --- arrange -----------------------------------------
     cf = CountedFloat(f)
 

@@ -4,6 +4,7 @@ as well as providing .pause() and .resume() methods to control flop counting.
 """
 
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER
+from counted_float._core.counting._math_patching import apply_math_patches, remove_math_patches
 from counted_float._core.models import FlopCounts
 
 
@@ -71,11 +72,15 @@ class FlopCountingContext:
     #  Context manager interface
     # -------------------------------------------------------------------------
     def __enter__(self):
+        # patching the math module is tied to the with-block lifetime (not to pause()/resume(),
+        # which only control whether counts are registered)
+        apply_math_patches()
         self.resume()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.pause()
+        remove_math_patches()
 
 
 # =================================================================================================
