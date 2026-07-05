@@ -1,9 +1,11 @@
-"""Compute release metrics from the combined CI coverage data.
+"""Compute release metrics from the combined CI coverage + node-id data.
 
-Run by the coverage-combine job after ``coverage combine``, with the combined
-``.coverage`` present in the working directory. Writes a metrics JSON (path from
-``argv[1]``) with the numbers the release stamps into the README badges:
-``coverage_pct`` (combined matrix total) and ``test_count`` (collected tests).
+Run by the coverage job after ``coverage combine``, with the combined
+``.coverage`` and every combo's ``test-ids-*.txt`` present in the working
+directory. Writes a metrics JSON (path from ``argv[1]``) with the numbers the
+release stamps into the README badges: ``coverage_pct`` (combined matrix total),
+``test_union`` (distinct test node-ids across all combos), and ``test_max`` (the
+largest single-combo count).
 """
 
 from __future__ import annotations
@@ -26,26 +28,28 @@ def _coverage_total() -> float:
     return float(out.strip())
 
 
-def _test_count() -> int:
-    """Return the number of collected tests (``pytest --collect-only`` node-ids).
+def _test_counts() -> tuple[int, int]:
+    """Return ``(union, max)`` test-node-id counts across every combo's dump.
 
-    Counts in a single environment (one Python, no extras), so the number is
-    accurate only while the suite collects uniformly across the matrix; a
-    conditionally-collected test would skew it.
+    Each combo dumps its own collected node-ids (``test-ids-*.txt``); the union
+    is the true distinct-test count across the matrix, robust to any combo that
+    collects a divergent set.
     """
-    out = subprocess.run(
-        [sys.executable, "-m", "pytest", "./tests", "--collect-only", "-q"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    return sum(1 for line in out.splitlines() if "::" in line)
+    id_files = sorted(Path().glob("test-ids-*.txt"))
+    if not id_files:
+        sys.exit("no test-ids-*.txt files found to union")
+    per_combo = {f.name: {ln.strip() for ln in f.read_text().splitlines() if "::" in ln} for f in id_files}
+    for name, ids in per_combo.items():
+        print(f"  {name}: {len(ids)}")
+    union: set[str] = set().union(*per_combo.values())
+    return len(union), max(len(ids) for ids in per_combo.values())
 
 
 def main() -> None:
     """Compute metrics and write them to the JSON path in ``argv[1]``."""
     out_path = Path(sys.argv[1])
-    metrics = {"coverage_pct": _coverage_total(), "test_count": _test_count()}
+    test_union, test_max = _test_counts()
+    metrics = {"coverage_pct": _coverage_total(), "test_union": test_union, "test_max": test_max}
     print(json.dumps(metrics, indent=2))
     out_path.write_text(json.dumps(metrics, indent=2) + "\n")
 
