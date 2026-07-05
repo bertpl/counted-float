@@ -33,12 +33,12 @@ def test_builtin_data_get_flop_weights_invalid_key():
     key_filter = "my_kitchen_sink"
 
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="No built-in flop weights found"):
         BuiltInData.get_flop_weights(key_filter=key_filter)
 
 
 @pytest.mark.parametrize(
-    "key_filter, n_expected",
+    ("key_filter", "n_expected"),
     [
         (".", 47),
         ("benchmark", 19),
@@ -57,7 +57,7 @@ def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):
 
     # --- assert ------------------------------------------
     assert len(results) == n_expected
-    assert all(key in full_dict.keys() for key in results.keys())
+    assert all(key in full_dict for key in results)
 
 
 # =================================================================================================

@@ -51,10 +51,10 @@ class BenchmarkFloat(MicroBenchmark):
                 fmid = _zero_function(mid)
                 if fmid < 0:
                     a = mid
-                    fa = fmid
+                    fa = fmid  # noqa: F841
                 else:
                     b = mid
-                    fb = fmid
+                    fb = fmid  # noqa: F841
 
 
 class BenchmarkCountedFloat(MicroBenchmark):
@@ -81,7 +81,7 @@ class BenchmarkCountedFloat(MicroBenchmark):
                 fmid = _zero_function(mid)
                 if fmid < 0:
                     a = mid
-                    fa = fmid
+                    fa = fmid  # noqa: F841
                 else:
                     b = mid
-                    fb = fmid
+                    fb = fmid  # noqa: F841

@@ -44,7 +44,9 @@ class FlopsBenchmarkSuite:
         print()
         print(f"Running FLOPS benchmarks using counted-float {version('counted-float')} ...")
         print(
-            f"(Expected duration: ~{(n_runs_total - n_runs_warmup / 2) * n_seconds_per_run_target * len(FlopsBenchmarkType):.1f} seconds)"
+            f"(Expected duration: "
+            f"~{(n_runs_total - n_runs_warmup / 2) * n_seconds_per_run_target * len(FlopsBenchmarkType):.1f}"
+            f" seconds)"
         )
         print()
 
@@ -111,7 +113,7 @@ class FlopsBenchmarkSuite:
     #  Static methods
     # -------------------------------------------------------------------------
     @staticmethod
-    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:
+    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:  # noqa: C901 -- flat registry of per-flop-type jit kernels
         """
         Returns a benchmark for each FlopsBenchmarkType, of requested array size.
         """
@@ -334,7 +336,7 @@ class FlopsBenchmarkSuite:
             for _ in range(n_executions):
                 tmp = math.e
                 for i in range(n):
-                    if tmp >= in_f[i]:
+                    if tmp >= in_f[i]:  # noqa: SIM108 -- timed kernel: keep the branchy shape being measured
                         tmp = tmp - in_f[i]
                     else:
                         tmp = tmp + in_f[i]

@@ -49,13 +49,12 @@ def round_number(value: float, mode: None | Literal["nearest_int", "10%"]) -> fl
         case "10%":
             if value == 0:
                 return 0
-            elif value < 0:
+            if value < 0:
                 return -round_number(-value, mode)
-            elif 1.0 <= value <= 10.0:
+            if 1.0 <= value <= 10.0:
                 return _round_to_log_nearest(value, __ALLOWED_10PERC_ROUNDING_VALUES)
-            else:
-                scale = 10 ** math.floor(math.log10(value))
-                return scale * round_number(value / scale, mode)
+            scale = 10 ** math.floor(math.log10(value))
+            return scale * round_number(value / scale, mode)
         case _:
             return value
 

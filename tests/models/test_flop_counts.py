@@ -54,7 +54,7 @@ def test_flop_counts_construction():
 
     # --- assert ------------------------------------------
     for k, values_lst in expected_values.items():
-        for i, (fc, value) in enumerate(zip([fc_0, fc_1, fc_2], values_lst)):
+        for i, (fc, value) in enumerate(zip([fc_0, fc_1, fc_2], values_lst, strict=False)):
             assert getattr(fc, k) == value, f"fc_{i}.{k} should be {value} but is {getattr(fc, k)}"
 
 
@@ -130,7 +130,7 @@ def test_flop_counts_copy():
     fc_copy = fc_orig.copy()
 
     # --- assert ------------------------------------------
-    assert not fc_copy is fc_orig, "Copy should not be the same object as the original."
+    assert fc_copy is not fc_orig, "Copy should not be the same object as the original."
     for attr in FlopCounts.field_names():
         assert getattr(fc_orig, attr) == getattr(fc_copy, attr), f"Attribute {attr} does not match in copy."
 

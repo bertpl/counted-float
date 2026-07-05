@@ -38,9 +38,8 @@ class BuiltInData:
         flat_flop_weights_dict = cls.get_flop_weights_dict(key_filter)
         if len(flat_flop_weights_dict) == 0:
             raise ValueError(f"No built-in flop weights found for key_filter='{key_filter}'")
-        else:
-            nested_flop_weights_dict = _flat_to_nested_dict(flat_flop_weights_dict)
-            return _compute_nested_average_flop_weights(nested_flop_weights_dict)
+        nested_flop_weights_dict = _flat_to_nested_dict(flat_flop_weights_dict)
+        return _compute_nested_average_flop_weights(nested_flop_weights_dict)
 
     @classmethod
     def get_flop_weights_dict(cls, key_filter: str = "") -> dict[str, FlopWeights]:
@@ -106,7 +105,7 @@ def _flat_to_nested_dict(flat_dict: dict) -> dict:
         keys = flat_key.split(".")
         d = nested_dict
         for key in keys[:-1]:
-            d = d.setdefault(key, dict())
+            d = d.setdefault(key, {})
         d[keys[-1]] = value
     return nested_dict
 
@@ -156,8 +155,7 @@ def _deserialize_as_any_pydantic_class(json_str: str, pydantic_classes: list[typ
     # try all supported classes
     for pydantic_cls in pydantic_classes:
         try:
-            obj = pydantic_cls.model_validate_json(json_str)
-            return obj
+            return pydantic_cls.model_validate_json(json_str)
         except ValidationError:
             continue
 

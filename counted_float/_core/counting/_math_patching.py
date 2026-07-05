@@ -55,19 +55,17 @@ def math_sqrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_sqrt()
         return CountedFloat(original_math_sqrt(x))
-    else:
-        return original_math_sqrt(x)
+    return original_math_sqrt(x)
 
 
 def math_cbrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_cbrt()
         return CountedFloat(original_math_cbrt(x))
-    else:
-        return original_math_cbrt(x)
+    return original_math_cbrt(x)
 
 
-def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
+def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:  # noqa: C901 -- branches mirror the per-log-variant counting rules
     """
     Patched math.log: stdlib contract (optional base), with flop classification for the base
     following the same constant-detection heuristic as CountedFloat.__pow__ / __rpow__
@@ -85,64 +83,57 @@ def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:
         if isinstance(x, CountedFloat):
             GLOBAL_COUNTER.incr_log()
             return CountedFloat(original_math_log(x))
-        else:
-            return original_math_log(x)
+        return original_math_log(x)
+    # computed first: raises per stdlib contract before anything is counted
+    result = original_math_log(x, base)
+    if isinstance(base, int) and base == 2:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log2()
+    elif isinstance(base, int) and base == 10:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log10()
+    elif isinstance(base, int):
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log()
+            GLOBAL_COUNTER.incr_mul()
     else:
-        # computed first: raises per stdlib contract before anything is counted
-        result = original_math_log(x, base)
-        if isinstance(base, int) and base == 2:
-            if isinstance(x, CountedFloat):
-                GLOBAL_COUNTER.incr_log2()
-        elif isinstance(base, int) and base == 10:
-            if isinstance(x, CountedFloat):
-                GLOBAL_COUNTER.incr_log10()
-        elif isinstance(base, int):
-            if isinstance(x, CountedFloat):
-                GLOBAL_COUNTER.incr_log()
-                GLOBAL_COUNTER.incr_mul()
-        else:
-            if isinstance(x, CountedFloat):
-                GLOBAL_COUNTER.incr_log()
-            if isinstance(base, CountedFloat):
-                GLOBAL_COUNTER.incr_log()
-            if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-                GLOBAL_COUNTER.incr_div()
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log()
+        if isinstance(base, CountedFloat):
+            GLOBAL_COUNTER.incr_log()
         if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-            return CountedFloat(result)
-        else:
-            return result
+            GLOBAL_COUNTER.incr_div()
+    if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
+        return CountedFloat(result)
+    return result
 
 
 def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_log2()
         return CountedFloat(original_math_log2(x))
-    else:
-        return original_math_log2(x)
+    return original_math_log2(x)
 
 
 def math_log10(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_log10()
         return CountedFloat(original_math_log10(x))
-    else:
-        return original_math_log10(x)
+    return original_math_log10(x)
 
 
 def math_exp(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_exp()
         return CountedFloat(original_math_exp(x))
-    else:
-        return original_math_exp(x)
+    return original_math_exp(x)
 
 
 def math_exp2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_exp2()
         return CountedFloat(original_math_exp2(x))
-    else:
-        return original_math_exp2(x)
+    return original_math_exp2(x)
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
@@ -172,32 +163,28 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
                     GLOBAL_COUNTER.incr_i2f()
                 GLOBAL_COUNTER.incr_pow()
         return CountedFloat(result)
-    else:
-        return original_math_pow(x, y)
+    return original_math_pow(x, y)
 
 
 def math_sin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_sin()
         return CountedFloat(original_math_sin(x))
-    else:
-        return original_math_sin(x)
+    return original_math_sin(x)
 
 
 def math_cos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_cos()
         return CountedFloat(original_math_cos(x))
-    else:
-        return original_math_cos(x)
+    return original_math_cos(x)
 
 
 def math_tan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_tan()
         return CountedFloat(original_math_tan(x))
-    else:
-        return original_math_tan(x)
+    return original_math_tan(x)
 
 
 # -------------------------------------------------------------------------

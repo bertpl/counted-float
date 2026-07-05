@@ -4,7 +4,7 @@ from counted_float._core.utils import convert_nsecs_to_cycles
 
 
 @pytest.mark.parametrize(
-    "nsec, cpu_freq_mhz, fallback_freq_mhz, expected_result",
+    ("nsec", "cpu_freq_mhz", "fallback_freq_mhz", "expected_result"),
     [
         (1.0, 1000, 1000, 1.0),
         (2.0, 1000, 1000, 2.0),

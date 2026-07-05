@@ -36,11 +36,10 @@ def _get_psutil_cpu_freq_attribute_mhz(att_name: str) -> float | None:
 
     if (value is None) or (value <= 0.0):
         return None
-    else:
-        valid_range_min_mhz = 2000 / math.sqrt(1000)  # ~ 63 MHz
-        valid_range_max_mhz = 2000 * math.sqrt(1000)  # ~ 63 GHz
-        while value < valid_range_min_mhz:
-            value *= 1000.0
-        while value > valid_range_max_mhz:
-            value /= 1000.0
-        return value
+    valid_range_min_mhz = 2000 / math.sqrt(1000)  # ~ 63 MHz
+    valid_range_max_mhz = 2000 * math.sqrt(1000)  # ~ 63 GHz
+    while value < valid_range_min_mhz:
+        value *= 1000.0
+    while value > valid_range_max_mhz:
+        value /= 1000.0
+    return value

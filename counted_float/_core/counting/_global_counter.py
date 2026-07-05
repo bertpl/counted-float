@@ -42,8 +42,7 @@ class GlobalFlopCounter:
         # provide shorthand access to the counts
         if item in FlopCounts.field_names():
             return getattr(self.__counts, item)
-        else:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
+        raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     # -------------------------------------------------------------------------
     #  Incrementing counts

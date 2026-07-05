@@ -6,7 +6,7 @@ from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.mark.parametrize(
-    "getter, setter",
+    ("getter", "setter"),
     [
         (get_active_flop_weights, set_active_flop_weights),
         (Config.get_flop_weights, Config.set_flop_weights),

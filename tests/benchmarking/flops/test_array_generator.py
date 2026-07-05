@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 import pytest
@@ -11,7 +11,7 @@ from counted_float._core.benchmarking.flops._array_generator import (
 
 
 @pytest.mark.parametrize(
-    "factory_method, expected_cls",
+    ("factory_method", "expected_cls"),
     [
         (ArrayGenerator.lin_range, ArrayGeneratorLinear),
         (ArrayGenerator.log_range, ArrayGeneratorLog),
@@ -29,7 +29,7 @@ def test_array_generator_factory_methods(factory_method: Callable, expected_cls)
 
 
 @pytest.mark.parametrize(
-    "min_value, max_value",
+    ("min_value", "max_value"),
     [
         (0.0, 1.0),
         (-2.0, 10.0),
@@ -44,7 +44,7 @@ def test_array_generator_linear(min_value: float, max_value: float):
     arr = generator.new_array(size=1000)
 
     # --- assert ------------------------------------------
-    assert all([min_value <= v <= max_value for v in arr])
+    assert all(min_value <= v <= max_value for v in arr)
     assert len(set(arr)) == 1000
     assert min_value < np.mean(arr) < max_value
     assert np.mean(arr) == pytest.approx(0.5 * (min_value + max_value))
@@ -52,7 +52,7 @@ def test_array_generator_linear(min_value: float, max_value: float):
 
 
 @pytest.mark.parametrize(
-    "min_value, max_value",
+    ("min_value", "max_value"),
     [
         (0.1, 1.0),
         (2.0, 10.0),
@@ -67,7 +67,7 @@ def test_array_generator_log(min_value: float, max_value: float):
     arr = generator.new_array(size=1000)
 
     # --- assert ------------------------------------------
-    assert all([min_value <= v <= max_value for v in arr])
+    assert all(min_value <= v <= max_value for v in arr)
     assert len(set(arr)) == 1000
     assert min_value < np.mean(arr) < max_value
     assert np.mean(np.log(arr)) == pytest.approx(0.5 * (np.log(min_value) + np.log(max_value)))

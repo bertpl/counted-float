@@ -34,7 +34,7 @@ class DummyMicroBenchmark(MicroBenchmark):
 
 
 @pytest.mark.parametrize(
-    "n_runs_total, n_runs_warmup, n_seconds_per_run_target",
+    ("n_runs_total", "n_runs_warmup", "n_seconds_per_run_target"),
     [
         (20, 10, 0.01),
         (20, 5, 0.01),

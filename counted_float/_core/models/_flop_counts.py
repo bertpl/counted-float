@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import dataclasses
+from typing import TYPE_CHECKING
 
 from ._flop_type import FlopType
-from ._flop_weights import FlopWeights
+
+if TYPE_CHECKING:
+    from ._flop_weights import FlopWeights
 
 
 @dataclasses.dataclass(slots=True)
