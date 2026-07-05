@@ -1,5 +1,5 @@
 import math
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
@@ -53,8 +53,8 @@ def test_counted_float_str_repr(f: float):
     cf_repr = repr(cf)
 
     # --- assert ------------------------------------------
-    assert cf_str == f"CountedFloat({str(f)})", "String representation of CountedFloat is incorrect."
-    assert cf_repr == f"CountedFloat({repr(f)})", "Repr representation of CountedFloat is incorrect."
+    assert cf_str == f"CountedFloat({f!s})", "String representation of CountedFloat is incorrect."
+    assert cf_repr == f"CountedFloat({f!r})", "Repr representation of CountedFloat is incorrect."
 
 
 # =================================================================================================
@@ -325,18 +325,12 @@ def test_counted_float_math_ceil(f: float):
 
 @pytest.mark.parametrize("f1", [-1.0, 0.0, -math.pi, math.e])
 @pytest.mark.parametrize("f2", [-1.0, 0.0, -math.pi, math.e])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_math_add(f1: float, f2: float, cf_left: bool, cf_right: bool):
     # --- arrange -----------------------------------------
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_sum = f1 + f2
@@ -349,18 +343,12 @@ def test_counted_float_math_add(f1: float, f2: float, cf_left: bool, cf_right: b
 
 @pytest.mark.parametrize("f1", [-1.0, 0.0, -math.pi, math.e])
 @pytest.mark.parametrize("f2", [-1.0, 0.0, -math.pi, math.e])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_math_sub(f1: float, f2: float, cf_left: bool, cf_right: bool):
     # --- arrange -----------------------------------------
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_diff = f1 - f2
@@ -373,18 +361,12 @@ def test_counted_float_math_sub(f1: float, f2: float, cf_left: bool, cf_right: b
 
 @pytest.mark.parametrize("f1", [-1.0, 0.0, -math.pi, math.e])
 @pytest.mark.parametrize("f2", [-1.0, 0.0, -math.pi, math.e])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_math_mul(f1: float, f2: float, cf_left: bool, cf_right: bool):
     # --- arrange -----------------------------------------
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_prod = f1 * f2
@@ -397,18 +379,12 @@ def test_counted_float_math_mul(f1: float, f2: float, cf_left: bool, cf_right: b
 
 @pytest.mark.parametrize("f1", [-1.0, 0.0, -math.pi, math.e])
 @pytest.mark.parametrize("f2", [-1.0, -math.pi, math.e])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_math_div(f1: float, f2: float, cf_left: bool, cf_right: bool):
     # --- arrange -----------------------------------------
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_ratio = f1 / f2
@@ -421,18 +397,12 @@ def test_counted_float_math_div(f1: float, f2: float, cf_left: bool, cf_right: b
 
 @pytest.mark.parametrize("f1", [0.0, 1.0, 2, math.e])
 @pytest.mark.parametrize("f2", [0.0, 1.0, 2, math.pi])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_math_pow(f1: float, f2: float, cf_left: bool, cf_right: bool):
     # --- arrange -----------------------------------------
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_pow = f1**f2
@@ -475,7 +445,7 @@ def test_counted_float_math_log2(global_counter, f: float):
 #  CountedFloat - Correct integration with GLOBAL_COUNTER
 # =================================================================================================
 @pytest.mark.parametrize(
-    "value, expected_n_i2f",
+    ("value", "expected_n_i2f"),
     [
         (0, 1),
         (1, 1),
@@ -488,11 +458,11 @@ def test_counted_float_math_log2(global_counter, f: float):
 )
 def test_counted_float_construction(value: float | int, expected_n_i2f: int, global_counter):
     # --- act ---------------------------------------------
-    cf = CountedFloat(value)
+    CountedFloat(value)
 
     # --- assert ------------------------------------------
     assert global_counter.total_count() == expected_n_i2f
-    assert global_counter.I2F == expected_n_i2f
+    assert expected_n_i2f == global_counter.I2F
 
 
 def test_counted_float_counts_abs(global_counter):
@@ -605,22 +575,19 @@ def test_counted_float_counts_gt(global_counter):
 
 
 @pytest.mark.parametrize("min_max_fun", [min, max])
-@pytest.mark.parametrize("f1, f2", [(1.2345, 0.1234), (0.345, 0.222), (2.468, 2.468), (2.468, 2), (3, 2.478), (2, 3)])
-@pytest.mark.parametrize("cf_left, cf_right", [(False, True), (True, False), (True, True)])
+@pytest.mark.parametrize(
+    ("f1", "f2"),
+    [(1.2345, 0.1234), (0.345, 0.222), (2.468, 2.468), (2.468, 2), (3, 2.478), (2, 3)],
+)
+@pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_counts_min_max(
     min_max_fun: Callable, f1: float, f2: float, cf_left: bool, cf_right: bool, global_counter
 ):
     # --- arrange -----------------------------------------
     n_integers = int(isinstance(f1, int)) + int(isinstance(f2, int))
-    if cf_left:
-        left = CountedFloat(f1)
-    else:
-        left = f1
+    left = CountedFloat(f1) if cf_left else f1
 
-    if cf_right:
-        right = CountedFloat(f2)
-    else:
-        right = f2
+    right = CountedFloat(f2) if cf_right else f2
 
     # --- act ---------------------------------------------
     f_min_max = min_max_fun(f1, f2)
@@ -628,7 +595,7 @@ def test_counted_float_counts_min_max(
 
     # --- assert ------------------------------------------
     assert global_counter.COMP == 1
-    assert global_counter.I2F == n_integers
+    assert n_integers == global_counter.I2F
     assert f_min_max == cf_min_max
 
 
@@ -650,7 +617,7 @@ def test_counted_float_counts_ge(global_counter):
 
 
 @pytest.mark.parametrize(
-    "ndigits, expected_n_rnd, expected_n_f2i",
+    ("ndigits", "expected_n_rnd", "expected_n_f2i"),
     [
         (None, 0, 1),  # round to int -> F2I
         (0, 1, 0),  # round to float -> RND
@@ -666,8 +633,8 @@ def test_counted_float_counts_round(global_counter, ndigits, expected_n_rnd: int
 
     # --- assert ------------------------------------------
     assert global_counter.total_count() == 1
-    assert global_counter.RND == expected_n_rnd
-    assert global_counter.F2I == expected_n_f2i
+    assert expected_n_rnd == global_counter.RND
+    assert expected_n_f2i == global_counter.F2I
 
 
 def test_counted_float_counts_floor(global_counter):

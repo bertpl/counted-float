@@ -22,10 +22,7 @@ def test_flop_weights_construction(
     sample_flop_weights_dict_by_enum, sample_flop_weights_dict_by_str, use_dict_by_str: bool
 ) -> None:
     # --- arrange -----------------------------------------
-    if use_dict_by_str:
-        weights_dict = sample_flop_weights_dict_by_str
-    else:
-        weights_dict = sample_flop_weights_dict_by_enum
+    weights_dict = sample_flop_weights_dict_by_str if use_dict_by_str else sample_flop_weights_dict_by_enum
 
     # --- act ---------------------------------------------
     flop_weights = FlopWeights(weights=weights_dict)
@@ -33,7 +30,7 @@ def test_flop_weights_construction(
     # --- assert ------------------------------------------
 
     # check if result is correct
-    assert all([isinstance(k, FlopType) for k in flop_weights.weights.keys()])
+    assert all(isinstance(k, FlopType) for k in flop_weights.weights)
     assert set(FlopType) == set(flop_weights.weights.keys())
 
 
@@ -61,8 +58,8 @@ def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
     result = flop_weights.model_dump()
 
     # --- assert ------------------------------------------
-    assert result == dict(weights=sample_flop_weights_dict_by_str)
-    assert not any([isinstance(k, FlopType) for k in result["weights"].keys()]), "keys should be pure strings"
+    assert result == {"weights": sample_flop_weights_dict_by_str}
+    assert not any(isinstance(k, FlopType) for k in result["weights"]), "keys should be pure strings"
 
 
 @pytest.mark.parametrize("use_dict_by_str", [True, False])
@@ -70,10 +67,7 @@ def test_flop_weights_missing_flop_types(
     sample_flop_weights_dict_by_enum, sample_flop_weights_dict_by_str, use_dict_by_str: bool
 ) -> None:
     # --- arrange -----------------------------------------
-    if use_dict_by_str:
-        weights_dict = sample_flop_weights_dict_by_str
-    else:
-        weights_dict = sample_flop_weights_dict_by_enum
+    weights_dict = sample_flop_weights_dict_by_str if use_dict_by_str else sample_flop_weights_dict_by_enum
 
     # remove 1 key to trigger ValueError
     del weights_dict[FlopType.ABS]
@@ -83,7 +77,7 @@ def test_flop_weights_missing_flop_types(
     assert math.isnan(flop_weights.weights[FlopType.ABS])
 
 
-def test_flop_weights_show(sample_flop_weights_dict_by_str):
+def test_flop_weights_show_smoke(sample_flop_weights_dict_by_str):
     """Very minimal test to check if MyBaseModel.print() at least does not raise exceptions."""
     # --- arrange -----------------------------------------
     flop_weights = FlopWeights(weights=sample_flop_weights_dict_by_str)

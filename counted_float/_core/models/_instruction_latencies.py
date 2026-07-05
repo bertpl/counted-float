@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import math
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
@@ -37,7 +37,7 @@ class Latency(MyBaseModel):
 # =================================================================================================
 #  InstructionLatencies - SSE2
 # =================================================================================================
-class InstructionLatencies_SSE2(MyBaseModel):
+class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established public API name
     # SEE: https://github.com/bertpl/counted-float/tree/develop/counted_float/data/fpu_data_sources.md
 
     # --- primary fields ----------------------------------
@@ -79,7 +79,7 @@ class InstructionLatencies_SSE2(MyBaseModel):
 # =================================================================================================
 #  InstructionLatencies - ARM
 # =================================================================================================
-class InstructionLatencies_ARM(MyBaseModel):
+class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public API name
     # SEE: https://github.com/bertpl/counted-float/tree/develop/counted_float/data/fpu_data_sources.md
 
     # --- primary fields ----------------------------------
@@ -122,12 +122,9 @@ class InstructionLatencies_ARM(MyBaseModel):
 #  Union Class
 # =================================================================================================
 class InstructionLatencies(MyBaseModel):
-    notes: list[str] | None = [""]
+    notes: list[str] | None = [""]  # noqa: RUF012 -- pydantic deep-copies field defaults per instance
     latencies: Annotated[
-        Union[
-            InstructionLatencies_SSE2,
-            InstructionLatencies_ARM,
-        ],
+        InstructionLatencies_SSE2 | InstructionLatencies_ARM,
         Field(discriminator="architecture"),
     ]
 

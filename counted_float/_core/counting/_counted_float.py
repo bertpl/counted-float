@@ -10,8 +10,7 @@ class CountedFloat(float):
     def __new__(cls, value: float | int):
         if isinstance(value, int):
             GLOBAL_COUNTER.incr_i2f()
-        self = super().__new__(cls, float(value))
-        return self
+        return super().__new__(cls, float(value))
 
     def __str__(self):
         return self.__repr__()

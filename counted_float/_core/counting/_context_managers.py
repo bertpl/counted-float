@@ -46,8 +46,7 @@ class FlopCountingContext:
         """Returns current total flop count for this context manager.  See constructor comments for details."""
         if self.__active:
             return GLOBAL_COUNTER.flop_counts() - self.__cnt_start_snapshot
-        else:
-            return self.__cnt_subtotal.copy()
+        return self.__cnt_subtotal.copy()
 
     # -------------------------------------------------------------------------
     #  Pause/Resume

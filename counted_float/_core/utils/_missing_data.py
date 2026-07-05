@@ -23,7 +23,7 @@ def impute_missing_data(data: np.ndarray) -> np.ndarray:
 
     e_step = 0.75  # exponent to apply to correction coefficients  (keep <1.0 for stability)
 
-    for i in range(100):
+    for _i in range(100):
         # compute correction factors for c_rows
         c_row_correct = np.zeros(n_rows)
         for i_row in range(n_rows):

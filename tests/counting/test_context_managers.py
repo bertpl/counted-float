@@ -1,5 +1,3 @@
-import pytest
-
 from counted_float._core.counting._context_managers import FlopCountingContext, PauseFlopCounting
 from counted_float._core.counting._counted_float import CountedFloat
 
@@ -8,7 +6,7 @@ from counted_float._core.counting._counted_float import CountedFloat
 #  FlopCountingContext
 # =================================================================================================
 def test_flop_counting_context_construction():
-    fcc = FlopCountingContext()
+    FlopCountingContext()
 
 
 def test_flop_counting_context_is_active():
@@ -121,17 +119,16 @@ def test_flop_counting_context_pause_resume_nested():
     cf2 = CountedFloat(2.0)
 
     # --- act ---------------------------------------------
-    with FlopCountingContext() as fcc1:
-        with FlopCountingContext() as fcc2:
-            _ = cf1 + cf2  # should be counted in fcc1 & fcc2
-            fcc2.pause()
-            _ = cf1 * cf2  # should be counted in fcc1, not in fcc2
-            fcc2.resume()
-            _ = cf1**cf2  # should be counted in fcc1 & fcc2
-            fcc1.pause()
-            _ = cf1 - cf2  # should be counted in fcc2, not in fcc1
-            fcc2.pause()
-            _ = cf1 / cf2  # should not be counted in either fcc1 or fcc2
+    with FlopCountingContext() as fcc1, FlopCountingContext() as fcc2:
+        _ = cf1 + cf2  # should be counted in fcc1 & fcc2
+        fcc2.pause()
+        _ = cf1 * cf2  # should be counted in fcc1, not in fcc2
+        fcc2.resume()
+        _ = cf1**cf2  # should be counted in fcc1 & fcc2
+        fcc1.pause()
+        _ = cf1 - cf2  # should be counted in fcc2, not in fcc1
+        fcc2.pause()
+        _ = cf1 / cf2  # should not be counted in either fcc1 or fcc2
 
     flop_counts_1 = fcc1.flop_counts()
     flop_counts_2 = fcc2.flop_counts()
@@ -177,13 +174,12 @@ def test_pause_flop_counting():
     cf2 = CountedFloat(2.0)
 
     # --- act ---------------------------------------------
-    with FlopCountingContext() as fcc1:
-        with FlopCountingContext() as fcc2:
-            _ = cf1 + cf2  # should be counted in fcc1 & fcc2
-            with PauseFlopCounting():
-                _ = cf1 / cf2  # should be counted anywhere
-                with FlopCountingContext() as fcc3:
-                    _ = cf1 * cf2  # should be counted anywhere
+    with FlopCountingContext() as fcc1, FlopCountingContext() as fcc2:
+        _ = cf1 + cf2  # should be counted in fcc1 & fcc2
+        with PauseFlopCounting():
+            _ = cf1 / cf2  # should be counted anywhere
+            with FlopCountingContext() as fcc3:
+                _ = cf1 * cf2  # should be counted anywhere
 
     flop_counts_1 = fcc1.flop_counts()
     flop_counts_2 = fcc2.flop_counts()

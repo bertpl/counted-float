@@ -11,12 +11,12 @@ except ImportError:
         if len(args) == 1 and isinstance(args[0], Callable):
             # decorator used without arguments
             return args[0]
-        else:
-            # decorator used with arguments
-            def decorator(func):
-                return func
 
-            return decorator
+        # decorator used with arguments
+        def decorator(func):
+            return func
+
+        return decorator
 
     # create a dummy numba object with numba.jit and numba.njit dummy decorators
     class Numba:

@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 import numpy as np
 
@@ -24,7 +24,8 @@ class FlopsMicroBenchmark(MicroBenchmark):
          - the function should be implemented such that it does not use vectorized operations, we want to avoid
              using vectorized CPU instructions (AVX, etc...): we want to measure the speed of the regular, scalar
              operations
-         - the function should be implemented such that the floating point operations form dependent chains of operations,
+         - the function should be implemented such that the floating point operations form dependent chains
+           of operations,
             to avoid the out-of-order superscalar nature of most modern CPUs to manage to run certain operations
             (partially or fully) in parallel.
          - we numba.jit the function, to make sure it is compiled to machine code, to avoid Python overhead to dominate

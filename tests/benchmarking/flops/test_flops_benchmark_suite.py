@@ -10,9 +10,9 @@ def test_flops_benchmarking_suite_get():
     benchmarks = suite.get_flops_benchmarking_suite(size=12345)
 
     # --- assert ------------------------------------------
-    assert all([fbt in benchmarks.keys() for fbt in FlopsBenchmarkType])
-    assert all([isinstance(v, FlopsMicroBenchmark) for v in benchmarks.values()])
-    assert all([v.size == 12345 for v in benchmarks.values()])
+    assert all(fbt in benchmarks for fbt in FlopsBenchmarkType)
+    assert all(isinstance(v, FlopsMicroBenchmark) for v in benchmarks.values())
+    assert all(v.size == 12345 for v in benchmarks.values())
 
 
 def test_flops_benchmarking_suite_run():

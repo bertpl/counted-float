@@ -42,7 +42,8 @@ class MicroBenchmark(ABC):
         :param n_runs_total: (int, default=20) total number of benchmark_runs runs
         :param n_runs_warmup: (int, default=5) number of warmup_runs runs
                                              - the first n_runs_warmup of n_runs_total are not included in timing stats
-                                             - warmup_runs runs serve to initialize n_executions & get processor, cache, ...
+                                             - warmup_runs runs serve to initialize n_executions & get processor,
+                                               cache, ...
                                                  in a stable, representative state
         :param n_seconds_per_run_target: (float, default=0.5) target time (sec) per benchmark_runs run (prepare + run).
                                              n_executions will be iteratively adjusted to achieve this target time.
@@ -92,7 +93,8 @@ class MicroBenchmark(ABC):
         return benchmark_result
 
     def run_once(self, n_executions: int) -> SingleRunResult:
-        """Runs benchmark_runs once for a given # of executions and returns time in nanoseconds & cpu cycles per execution"""
+        """Runs benchmark_runs once for a given # of executions and returns time in nanoseconds & cpu cycles
+        per execution."""
 
         # prepare
         self._prepare_benchmark(n_executions)
@@ -111,7 +113,8 @@ class MicroBenchmark(ABC):
     @abstractmethod
     def _prepare_benchmark(self, n_executions: int):
         """
-        Prepare benchmark_runs (e.g. set up data) based on requested number of executions.  This argument is adjusted each
+        Prepare benchmark_runs (e.g. set up data) based on requested number of executions.  This argument is
+        adjusted each
           run by the MicroBenchmarkRunner class to ensure that the benchmark_runs runs for a reasonable amount of time
             (e.g. 1 second per run).
         """

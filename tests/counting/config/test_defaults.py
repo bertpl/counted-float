@@ -13,8 +13,8 @@ def test_default_flop_weights(rounding_mode: None | str):
 
     # --- assert ------------------------------------------
     assert isinstance(flop_weights, FlopWeights)
-    assert all([isinstance(v, int | float) for v in flop_weights.weights.values()])
-    assert not any([math.isnan(v) for v in flop_weights.weights.values()])
+    assert all(isinstance(v, int | float) for v in flop_weights.weights.values())
+    assert not any(math.isnan(v) for v in flop_weights.weights.values())
 
 
 @pytest.mark.parametrize("rounding_mode", ["nearest_int", "10%"])

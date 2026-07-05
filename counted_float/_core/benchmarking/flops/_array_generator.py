@@ -66,10 +66,10 @@ def _random_balanced_values(size: int) -> np.ndarray:
     """
     cumsum = 0.0
     lst = []
-    for i in range(size - 1):
+    for _i in range(size - 1):
         next_min_value = max(-1.0, -1.0 - cumsum)
         next_max_value = min(1.0, 1.0 - cumsum)
-        next_value = random.uniform(next_min_value, next_max_value)
+        next_value = random.uniform(next_min_value, next_max_value)  # noqa: S311 -- benchmark data, not crypto
         lst.append(next_value)
         cumsum += next_value
     lst.append(-cumsum)

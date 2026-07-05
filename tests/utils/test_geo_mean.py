@@ -4,7 +4,7 @@ from counted_float._core.utils import geo_mean
 
 
 @pytest.mark.parametrize(
-    "values, expected_result",
+    ("values", "expected_result"),
     [
         ([0, 1, 1], 0.0),
         ([1, 1, 1], 1.0),

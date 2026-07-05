@@ -6,7 +6,7 @@ from counted_float._core.utils import round_number
 
 
 @pytest.mark.parametrize(
-    "value,mode,expected_value",
+    ("value", "mode", "expected_value"),
     [
         (1.123, None, 1.123),
         (0.9, "nearest_int", 1.0),

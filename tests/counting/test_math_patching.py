@@ -23,7 +23,7 @@ def test_import_does_not_patch_math():
         "import math; before = math.sqrt; import counted_float; "
         "assert math.sqrt is before, 'math.sqrt was patched at import time'"
     )
-    subprocess.run([sys.executable, "-c", code], check=True)
+    subprocess.run([sys.executable, "-c", code], check=True)  # noqa: S603 -- fixed interpreter, literal code
 
 
 @pytest.mark.parametrize("fname", PATCHED_FUNCTION_NAMES)
@@ -50,7 +50,7 @@ def test_math_module_patched_inside_context_only(fname):
 #  Patched math functions - stdlib contract for plain floats
 # =================================================================================================
 @pytest.mark.parametrize(
-    "fname, args",
+    ("fname", "args"),
     [
         ("sqrt", (2.0,)),
         ("cbrt", (2.0,)),
@@ -96,7 +96,7 @@ def test_math_log_supports_two_arg_form(global_counter):
 def test_math_pow_raises_domain_error_for_negative_base(global_counter):
     # regression test: patched math.pow used to return a complex number instead of raising
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="math domain error"):
         math.pow(-8.0, 1 / 3)
 
 
@@ -214,7 +214,7 @@ def test_math_log_domain_error_counts_nothing(global_counter):
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="math domain error"):
         math.log(cf, 2)
     assert global_counter.total_count() == 0
 
@@ -224,7 +224,7 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="math domain error"):
         math.pow(cf, 1 / 3)
     assert global_counter.total_count() == 0
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Iterable, Literal
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from pydantic import field_serializer, field_validator
@@ -10,6 +10,9 @@ from counted_float._core.utils import geo_mean, impute_missing_data, round_numbe
 
 from ._base import MyBaseModel
 from ._flop_type import FlopType
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class FlopWeights(MyBaseModel):
@@ -29,12 +32,9 @@ class FlopWeights(MyBaseModel):
             return FlopWeights(
                 weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
             )
-        else:
-            return FlopWeights(
-                weights={
-                    k: math.nan if math.isnan(v) else round_number(v, mode="10%") for k, v in self.weights.items()
-                },
-            )
+        return FlopWeights(
+            weights={k: math.nan if math.isnan(v) else round_number(v, mode="10%") for k, v in self.weights.items()},
+        )
 
     def has_missing_data(self) -> bool:
         """Check if any flop type has missing data (i.e. weight is NaN)."""
@@ -91,11 +91,7 @@ class FlopWeights(MyBaseModel):
                 w[i_row, i_col] = fw.weights[flop_type]
 
         # --- fill missing data ---------------------------
-        if (
-            fill_missing_data
-            and (len(all_flop_weights) > 1)
-            and any([fw.has_missing_data() for fw in all_flop_weights])
-        ):
+        if fill_missing_data and (len(all_flop_weights) > 1) and any(fw.has_missing_data() for fw in all_flop_weights):
             w = impute_missing_data(w)
 
         # --- compute geo_mean ----------------------------
@@ -115,7 +111,8 @@ class FlopWeights(MyBaseModel):
         As a reference duration, we take the cost of the ADD operation.
         """
 
-        # step 1) compute reference duration based on 1 simple flop type (SUB, MUL and a few others are usually very close)
+        # step 1) compute reference duration based on 1 simple flop type
+        #         (SUB, MUL and a few others are usually very close)
         ref_cost = flop_costs[FlopType.ADD]
 
         # step 2) normalize and construct FlopWeights object

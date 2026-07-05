@@ -1,5 +1,3 @@
-import pytest
-
 from counted_float._core.benchmarking.flops import ArrayGenerator, FlopsMicroBenchmark
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 

@@ -14,7 +14,7 @@ from counted_float._core.utils._formatting import (
 #  Time durations
 # =================================================================================================
 @pytest.mark.parametrize(
-    "nsec, expected_result",
+    ("nsec", "expected_result"),
     [
         (6.55003, "   6.55 ns"),
         (12.33002, "  12.33 ns"),
@@ -27,7 +27,7 @@ def test_format_nsec_as_ns(nsec: float, expected_result: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "nsec, expected_result",
+    ("nsec", "expected_result"),
     [
         (1e3 * 6.55003, "   6.55 µs"),
         (1e3 * 12.33002, "  12.33 µs"),
@@ -40,7 +40,7 @@ def test_format_nsec_as_us(nsec: float, expected_result: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "nsec, expected_result",
+    ("nsec", "expected_result"),
     [
         (1e6 * 6.55003, "   6.55 ms"),
         (1e6 * 12.33002, "  12.33 ms"),
@@ -53,7 +53,7 @@ def test_format_nsec_as_ms(nsec: float, expected_result: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "nsec, expected_result",
+    ("nsec", "expected_result"),
     [
         (1e9 * 6.55003, "   6.55 s"),
         (1e9 * 12.33002, "  12.33 s"),
@@ -66,7 +66,7 @@ def test_format_nsec_as_s(nsec: float, expected_result: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "nsec, expected_result",
+    ("nsec", "expected_result"),
     [
         (0.0010000000000, "   0.00 ns"),
         (0.0100000000000, "   0.01 ns"),
@@ -93,7 +93,7 @@ def test_format_time_duration(nsec: float, expected_result: str) -> None:
 #  Format latencies
 # =================================================================================================
 @pytest.mark.parametrize(
-    "n_cycles, expected_result",
+    ("n_cycles", "expected_result"),
     [
         (0.0012300000000, " 0.00 cpu cycles"),
         (0.0123000000000, " 0.01 cpu cycles"),

@@ -14,7 +14,7 @@ from counted_float._core.models._instruction_latencies import (
 #  Latency
 # =================================================================================================
 @pytest.mark.parametrize(
-    "min_cycles, max_cycles, expected_consensus",
+    ("min_cycles", "max_cycles", "expected_consensus"),
     [
         (1.0, 4.0, 4.0),
         (0.0, 3.0, 3.0),
