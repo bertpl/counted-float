@@ -4,7 +4,6 @@ from typing import Callable
 import pytest
 
 from counted_float._core.counting._counted_float import CountedFloat
-from counted_float._core.models import FlopCounts
 
 
 # =================================================================================================
@@ -475,21 +474,6 @@ def test_counted_float_math_log2(global_counter, f: float):
 # =================================================================================================
 #  CountedFloat - Correct integration with GLOBAL_COUNTER
 # =================================================================================================
-def test_counted_float_get_global_flop_counts(global_counter):
-    # --- arrange -----------------------------------------
-    global_counter.incr_add()
-    global_counter.incr_add()
-
-    # --- act ---------------------------------------------
-    global_flop_counts = CountedFloat.get_global_flop_counts()
-    global_counter.incr_add()  # to double-check we get a copy
-
-    # --- assert ------------------------------------------
-    assert isinstance(global_flop_counts, FlopCounts)
-    assert global_flop_counts.total_count() == 2
-    assert global_flop_counts.ADD == 2
-
-
 @pytest.mark.parametrize(
     "value, expected_n_i2f",
     [

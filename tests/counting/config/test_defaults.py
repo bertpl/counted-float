@@ -2,8 +2,8 @@ import math
 
 import pytest
 
-from counted_float._core.counting.config._defaults import get_default_consensus_flop_weights
-from counted_float._core.models import FlopWeights
+from counted_float._core.counting.config._defaults import get_builtin_flop_weights, get_default_consensus_flop_weights
+from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.mark.parametrize("rounding_mode", [None, "nearest_int", "10%"])
@@ -25,3 +25,13 @@ def test_default_flop_weights_rounding(rounding_mode: str):
 
     # --- assert ------------------------------------------
     assert rounded.weights == unrounded.round(rounding_mode).weights
+
+
+@pytest.mark.parametrize("getter", [get_builtin_flop_weights, get_default_consensus_flop_weights])
+def test_builtin_flop_weight_getters_return_defensive_copies(getter):
+    # --- act ---------------------------------------------
+    flop_weights = getter()
+    flop_weights.weights[FlopType.ADD] = -12345.0  # mutate the returned object
+
+    # --- assert ------------------------------------------
+    assert getter().weights[FlopType.ADD] != -12345.0

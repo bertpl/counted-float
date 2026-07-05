@@ -40,7 +40,7 @@ class BuiltInData:
             raise ValueError(f"No built-in flop weights found for key_filter='{key_filter}'")
         else:
             nested_flop_weights_dict = _flat_to_nested_dict(flat_flop_weights_dict)
-            return _computed_nested_average_flop_weights(nested_flop_weights_dict)
+            return _compute_nested_average_flop_weights(nested_flop_weights_dict)
 
     @classmethod
     def get_flop_weights_dict(cls, key_filter: str = "") -> dict[str, FlopWeights]:
@@ -86,11 +86,11 @@ class BuiltInData:
 # =================================================================================================
 #  Utilities
 # =================================================================================================
-def _computed_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dict | FlopWeights]) -> FlopWeights:
+def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dict | FlopWeights]) -> FlopWeights:
     # make sure all values of the dict are FlopWeights instances
     for key, value in nested_flop_weights_dict.items():
         if isinstance(value, dict):
-            nested_flop_weights_dict[key] = _computed_nested_average_flop_weights(value)
+            nested_flop_weights_dict[key] = _compute_nested_average_flop_weights(value)
 
     # now we can average all FlopWeights instances
     return FlopWeights.as_geo_mean(list(nested_flop_weights_dict.values()))
@@ -120,10 +120,6 @@ def _load_json_files_as_dict(resource_root) -> dict[str, str]:
     Example keys: 'benchmarks.arm.apple_m4_pro'
                   'specs.x86.intel_core_i9_13900k'
     """
-
-    # allow both plain & recursive calls
-    # if resource_root is None:
-    #     resource_root = files("counted_float._core.data")
 
     # crawl entire folder structure
     result = {}
@@ -211,6 +207,7 @@ class FlopWeightsTreeView:
                         child.lst_is_leaf,
                         child.lst_tree_str,
                         child.lst_flop_weights,
+                        strict=True,
                     )
                 ):
                     self.lst_indent.append(1 + indent)
@@ -238,7 +235,6 @@ class FlopWeightsTreeView:
         tree_width = 5 + max([len(line) for line in self.lst_tree_str])
         col_width = 10
         sorted_flop_types = self.lst_flop_weights[0].get_sorted_flop_types()
-        max_indent = max(self.lst_indent)
 
         n_cols_per_block = max(1, int((console_width - tree_width) / col_width))
         flop_types_per_block = [
@@ -260,6 +256,7 @@ class FlopWeightsTreeView:
                 self.lst_is_leaf,
                 self.lst_tree_str,
                 self.lst_flop_weights,
+                strict=True,
             ):
                 line = tree_str.ljust(tree_width)
                 for flop_type in flop_types:

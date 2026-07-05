@@ -13,10 +13,10 @@
 - importing `counted_float` no longer monkey-patches the `math` module; patches now apply only while a `FlopCountingContext` is active
 
 ### Bug Fixes
-/
+- flop-weight getters (built-in & configured) return deep defensive copies, so mutating a returned object can no longer corrupt shared state
 
 ### Internal
-/
+- remove undocumented `CountedFloat.get_global_flop_counts()` (read counts through a `FlopCountingContext` instead)
 
 <!------------------------------------------------------------------------------------------------->
 > ## v1.0.5

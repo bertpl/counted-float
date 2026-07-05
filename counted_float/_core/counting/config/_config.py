@@ -32,8 +32,9 @@ class Config:
     def get_flop_weights(cls) -> FlopWeights:
         """
         Get the currently configured flop weights.
+        Returns a fresh deep copy; mutating it does not affect the configured weights.
         """
-        return cls.__weights.model_copy()
+        return cls.__weights.model_copy(deep=True)
 
 
 # =================================================================================================
