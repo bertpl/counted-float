@@ -4,8 +4,6 @@ on:
   push:
     branches-ignore:
       - main
-      - develop
-      - 'release/**'  # release/* is handled by push_to_release_branch.yml
 
 permissions:
   contents: read

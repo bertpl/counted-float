@@ -12,7 +12,7 @@ help:
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
-	@echo '  splash       			        Build splash screen using current version of package.'
+	@echo '  release       		            Release a version: make release VERSION=X.Y.Z (validates, bumps, tags, pushes).'
 	@echo ''
 	@echo 'Options:'
 	@echo ''
@@ -36,5 +36,7 @@ format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
 
-splash:
-	./.github/scripts/create_splash.sh "$$(uv version --short)-dev";
+release:
+	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)
+	$(MAKE) test
+	uv run python scripts/release.py $(VERSION)

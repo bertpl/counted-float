@@ -1,6 +1,6 @@
 [project]
 name = "counted-float"
-version = "1.1.3"
+version = "1.1.2"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -20,6 +20,19 @@ dependencies = [
     "psutil>=7.1.2; python_version >= '3.13'",
     "rich>=13.0.0",
     "py-cpuinfo>=9.0.0",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    # Python versions kept in sync with .python-versions (release.py enforces this)
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
 ]
 
 [project.scripts]
@@ -122,6 +135,9 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.mod
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 # module-level mutable patching state (original-function snapshots + context refcount) is the design
 "counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
+# maintainer tooling, not the shipped library: not a package (INP001), subprocess is fine (S)
+"scripts/**" = ["INP001", "S"]
+".github/scripts/**" = ["INP001", "S"]
 
 [tool.ty.src]
 include = ["counted_float"]

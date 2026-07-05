@@ -59,29 +59,5 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://upload.pypi.org/legacy/
-
-
-  bump-version:
-    needs: publish-to-prod
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          version: ${{ vars.UV_VERSION }}
-
-      - name: Check current version
-        run: |
-            PACKAGE_VERSION=$( uv version --short )
-            echo "CURRENT_PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
-
-      - uses: ./.github/actions/bump_version
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
-          github_token: ${{ secrets.GIT_ADMIN_TOKEN }}
-          git_ref: 'main'
-          bump_type: 'patch'
-          only_if_equal_to_version: ${{ env.CURRENT_PACKAGE_VERSION }}
+  # No bump-version job: release.py owns versioning (it bumps pyproject and opens
+  # the next Unreleased section as part of the local release, before the tag push).
