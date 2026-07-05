@@ -2,9 +2,10 @@ from counted_float._core.models import FlopCounts
 
 
 class GlobalFlopCounter:
-    """
-    Global counter for FLOP operations.  Essentially this class wraps around a FlopCounts object,
-    limiting access to its fields (only allowing incrementing them) and providing a way to access copies of the counts.
+    """Global counter for FLOP operations.
+
+    Essentially this class wraps around a FlopCounts object, limiting access to its fields (only allowing
+    incrementing them) and providing a way to access copies of the counts.
     On top of this, the class allows pausing and resuming counting globally.
     """
 
@@ -35,7 +36,7 @@ class GlobalFlopCounter:
         return self.__counts.copy()
 
     def total_count(self) -> int:
-        """Shorthand for self.flop_counts().total_count()"""
+        """Shorthand for self.flop_counts().total_count()."""
         return self.__counts.total_count()
 
     def __getattr__(self, item):

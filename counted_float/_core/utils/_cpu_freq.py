@@ -25,9 +25,9 @@ def get_cpu_frequency_mhz_current() -> float | None:
 #  Internal helper
 # =================================================================================================
 def _get_psutil_cpu_freq_attribute_mhz(att_name: str) -> float | None:
-    """
-    Helper to get an attribute from psutil.cpu_freq(), returning None for missing or 0 data
-    & heuristics to distinguish Mhz & GHz
+    """Get an attribute from psutil.cpu_freq(), returning None for missing or 0 data.
+
+    Applies heuristics to distinguish Mhz & GHz.
     """
     try:
         value = getattr(psutil.cpu_freq(), att_name)

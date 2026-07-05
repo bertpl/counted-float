@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 
 @dataclasses.dataclass(slots=True)
 class FlopCounts:
-    """
-    Class to keep track of flop counts per flop type.  The implementation is different from
-    the FlopWeights class, for two reasons:
+    """Class to keep track of flop counts per flop type.
+
+    The implementation is different from the FlopWeights class, for two reasons:
         - there's no need for (de)serialization, hence no usage of Pydantic
-        - we want to minimize overhead of flop counting, hence use no dict in favor of explicit fields per flop type
+        - we want to minimize overhead of flop counting, hence use no dict in favor of explicit fields per flop type.
     """
 
     # --- Counting fields ---------------------------------
@@ -59,9 +59,9 @@ class FlopCounts:
         return sum(getattr(self, attr) for attr in self.field_names())
 
     def total_weighted_cost(self, weights: FlopWeights | None = None) -> float:
-        """
-        Returns a weighted total count of all flops (counterpart of the unweighted total_count() method),
-        using the provided weights in the computations.
+        """Return a weighted total count of all flops (counterpart of the unweighted total_count() method).
+
+        Uses the provided weights in the computations.
         When omitted, the currently configured weights (see Config class) will be used.
         """
         if not weights:
@@ -73,7 +73,7 @@ class FlopCounts:
 
     # --- other -------------------------------------------
     def reset(self):
-        """Reset all counts to 0"""
+        """Reset all counts to 0."""
         for attr in self.field_names():
             setattr(self, attr, 0)
 

@@ -1,6 +1,6 @@
-"""
-Context manager that conveniently allows collection of flop counts for the enclosed code block,
-as well as providing .pause() and .resume() methods to control flop counting.
+"""Context manager that conveniently allows collection of flop counts for the enclosed code block.
+
+Also provides .pause() and .resume() methods to control flop counting.
 """
 
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER
@@ -12,9 +12,9 @@ from counted_float._core.models import FlopCounts
 #  FlopCountingContext
 # =================================================================================================
 class FlopCountingContext:
-    """
-    Context manager that can be used to count FLOP operations in a block of code.  Only floating-point
-    operations of CountedFloat objects are counted.  So make sure all math uses this type.
+    """Context manager that can be used to count FLOP operations in a block of code.
+
+    Only floating-point operations of CountedFloat objects are counted.  So make sure all math uses this type.
 
     LIMITATIONS:
         - this context manager is not thread-safe
@@ -82,9 +82,9 @@ class FlopCountingContext:
 #  PauseFlopCounting
 # =================================================================================================
 class PauseFlopCounting:
-    """
-    Context manager that pauses flop counting for the enclosed code block.  This acts globally, across all
-    active FlopCountingContext instances.
+    """Context manager that pauses flop counting for the enclosed code block.
+
+    This acts globally, across all active FlopCountingContext instances.
     """
 
     def __enter__(self):

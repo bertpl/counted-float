@@ -18,6 +18,7 @@
 ### Internal
 - add pre-commit hooks (ruff, file hygiene, codespell, actionlint, conventional commit messages) + `make lint`
 - expand ruff rule set from isort-only to the full lint family set
+- enable pydocstyle (Google convention) and clean up all docstrings
 
 <!------------------------------------------------------------------------------------------------->
 > ## v1.1.0

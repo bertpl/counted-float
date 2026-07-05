@@ -2,9 +2,7 @@ import time
 
 
 class Timer:
-    """
-    Class acting as a context manager to measure time elapsed.  Elapsed time can be retrieved using t_elapsed().
-    """
+    """Class acting as a context manager to measure time elapsed.  Elapsed time can be retrieved using t_elapsed()."""
 
     # --- constructor -------------------------------------
     def __init__(self):

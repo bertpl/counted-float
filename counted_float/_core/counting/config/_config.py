@@ -21,17 +21,17 @@ class Config:
     # -------------------------------------------------------------------------
     @classmethod
     def set_flop_weights(cls, weights: FlopWeights):
-        """
-        Set the weights for the flops used in the package.  These weights will be used in any calculation of
-        weighted flops, going forward.
+        """Set the weights for the flops used in the package.
+
+        These weights will be used in any calculation of weighted flops, going forward.
         :param weights: FlopWeights instance containing the weights.
         """
         cls.__weights = weights
 
     @classmethod
     def get_flop_weights(cls) -> FlopWeights:
-        """
-        Get the currently configured flop weights.
+        """Get the currently configured flop weights.
+
         Returns a fresh deep copy; mutating it does not affect the configured weights.
         """
         return cls.__weights.model_copy(deep=True)
@@ -41,16 +41,14 @@ class Config:
 #  Functional accessors
 # =================================================================================================
 def set_active_flop_weights(weights: FlopWeights):
-    """
-    Set the weights for the flops used in the package.  These weights will be used in any calculation of
-    weighted flops, going forward.
+    """Set the weights for the flops used in the package.
+
+    These weights will be used in any calculation of weighted flops, going forward.
     :param weights: FlopWeights instance containing the weights.
     """
     Config.set_flop_weights(weights)
 
 
 def get_active_flop_weights() -> FlopWeights:
-    """
-    Get the currently configured flop weights.
-    """
+    """Get the currently configured flop weights."""
     return Config.get_flop_weights()

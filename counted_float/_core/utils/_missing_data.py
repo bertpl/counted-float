@@ -4,10 +4,11 @@ from ._geo_mean import geo_mean
 
 
 def impute_missing_data(data: np.ndarray) -> np.ndarray:
-    """
-    Impute missing values in NON-NEGATIVE matrix by...
+    """Impute missing values in a NON-NEGATIVE matrix using a rank-1 approximation.
+
+    This works by...
       - creating a rank-1 approximation of the matrix (ignore missing values)
-      - using the approximation to fill in the missing values
+      - using the approximation to fill in the missing values.
 
     NOTE: this will only be able to impute missing values present where both the column and row
           have at least 1 non-missing value.
@@ -15,7 +16,6 @@ def impute_missing_data(data: np.ndarray) -> np.ndarray:
     :param data:  (mxn ndarray) input data with missing values as np.nan
     :return: (mxn ndarray) data with missing values imputed, where possible
     """
-
     # --- rank-1 approx -----------------------------------
     # we try to approximate data = c_rows.T @ c_cols  with  c_rows > 0 and c_cols > 0
     n_rows, n_cols = data.shape[0], data.shape[1]

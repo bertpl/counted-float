@@ -19,17 +19,14 @@ DATA_PACKAGE = "counted_float.data"
 #  Main accessor class
 # =================================================================================================
 class BuiltInData:
-    """
-    A class that provides access to built-in data for the counted_float package.
-    """
+    """A class that provides access to built-in data for the counted_float package."""
 
     # -------------------------------------------------------------------------
     #  FlopWeights
     # -------------------------------------------------------------------------
     @classmethod
     def get_flop_weights(cls, key_filter: str = "") -> FlopWeights:
-        """
-        Return averaged FlopWeights over all FlopWeights found using get_flop_weights_dict for the provided key_filter.
+        """Return averaged FlopWeights over all FlopWeights from get_flop_weights_dict for the provided key_filter.
 
         Averaging happens one key-level at a time, which implicitly defines a recursive weighting scheme. At every level
         of aggregation, an attempt is made to impute missing data (if any) to avoid biasing the average towards entries
@@ -43,8 +40,7 @@ class BuiltInData:
 
     @classmethod
     def get_flop_weights_dict(cls, key_filter: str = "") -> dict[str, FlopWeights]:
-        """
-        Get the built-in flop weights data as a dict mapping key -> FlopWeights.
+        """Get the built-in flop weights data as a dict mapping key -> FlopWeights.
 
         Keys be .-separated values indicating the path + filename of the source data file, e.g.:
             'benchmarks.arm.apple_m4_pro'
@@ -96,9 +92,9 @@ def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dic
 
 
 def _flat_to_nested_dict(flat_dict: dict) -> dict:
-    """
-    Convert a flat dict with .-separated keys to a nested dict.
-    E.g. {'a.b.c': 1, 'a.b.d': 2, 'a.e': 3} -> {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}}
+    """Convert a flat dict with .-separated keys to a nested dict.
+
+    E.g. {'a.b.c': 1, 'a.b.d': 2, 'a.e': 3} -> {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}}.
     """
     nested_dict = {}
     for flat_key, value in flat_dict.items():
@@ -111,15 +107,13 @@ def _flat_to_nested_dict(flat_dict: dict) -> dict:
 
 
 def _load_json_files_as_dict(resource_root) -> dict[str, str]:
-    """
-    Read all .json files recursively from the given resource root (or the default one) and return
-    a dict mapping key -> json_str, where keys are .-separated values indicating the path
-        + filename of the source data file.
+    """Read all .json files recursively from the given resource root and return a dict mapping key -> json_str.
+
+    Keys are .-separated values indicating the path + filename of the source data file.
 
     Example keys: 'benchmarks.arm.apple_m4_pro'
                   'specs.x86.intel_core_i9_13900k'
     """
-
     # crawl entire folder structure
     result = {}
     for entry in resource_root.iterdir():
@@ -133,14 +127,14 @@ def _load_json_files_as_dict(resource_root) -> dict[str, str]:
 
 
 def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
-    """
-    Construct a FlopWeights instance from a JSON string, where the JSON string can represent either...
+    """Construct a FlopWeights instance from a JSON string.
+
+    The JSON string can represent either...
       - FlopsBenchmarkResults
       - InstructionLatencies_<x>
     :param json_str: (str) JSON string representing either of the aforementioned data structures.
     :return: FlopWeights instance extracted from the input data.
     """
-
     # try all supported classes, all of which have a .flop_weights property
     return _deserialize_as_any_pydantic_class(
         json_str,

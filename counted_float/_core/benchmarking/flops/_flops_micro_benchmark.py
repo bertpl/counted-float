@@ -8,10 +8,10 @@ from ._array_generator import ArrayGenerator
 
 
 class FlopsMicroBenchmark(MicroBenchmark):
-    """
-    Base class for benchmark that estimates execution time (in cpu cycles) of certain combinations of floating-point
-      operations.  These can then be combined to estimate execution time (in cpu cycles) of individual floating-point
-      operations
+    """Base class for benchmarks estimating execution time (in cpu cycles) of combinations of floating-point operations.
+
+    These can then be combined to estimate execution time (in cpu cycles) of individual floating-point
+    operations.
 
     This is set up as follows:
       - we configure the benchmark with a 'size' and a function 'f'

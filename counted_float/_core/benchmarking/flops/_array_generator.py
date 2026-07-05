@@ -15,7 +15,7 @@ class ArrayGenerator(ABC):
     # -------------------------------------------------------------------------
     @abstractmethod
     def new_array(self, size: int) -> np.ndarray:
-        """Generates random 1D numpy array of requested size"""
+        """Generates random 1D numpy array of requested size."""
         raise NotImplementedError
 
     # -------------------------------------------------------------------------
@@ -46,7 +46,7 @@ class ArrayGeneratorLinear(ArrayGenerator):
 
 class ArrayGeneratorLog(ArrayGenerator):
     def __init__(self, min_value: float, max_value: float):
-        """Array generator, where values are in interval [min_value, max_value] with geomean of values eq. to geo-mid"""
+        """Array generator, where values are in interval [min_value, max_value] with geomean equal to geo-mid."""
         self.min_value = min_value
         self.max_value = max_value
 
@@ -59,10 +59,10 @@ class ArrayGeneratorLog(ArrayGenerator):
 #  Helpers
 # =================================================================================================
 def _random_balanced_values(size: int) -> np.ndarray:
-    """
-    Returns random values in [-1,1], such that...
-      - mean value == 0.0
-      - cumulative sum of any arbitrary first n values also lies within [-1,1]
+    """Return random values in [-1,1] with zero mean and bounded partial sums.
+
+    - mean value == 0.0
+    - cumulative sum of any arbitrary first n values also lies within [-1,1].
     """
     cumsum = 0.0
     lst = []
