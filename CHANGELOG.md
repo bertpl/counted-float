@@ -1,6 +1,24 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
+> ## v1.1.0
+> *(unreleased)*
+> > Well-behaved importing: no more monkey-patching at load time.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+- importing `counted_float` no longer monkey-patches the `math` module; patches now apply only while a `FlopCountingContext` is active
+
+### Bug Fixes
+/
+
+### Internal
+/
+
+<!------------------------------------------------------------------------------------------------->
 > ## v1.0.5
 > *(2026-07-04)*
 > > CI fix release: repair badge & splash publishing.
