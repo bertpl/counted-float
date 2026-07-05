@@ -18,6 +18,10 @@ inputs:
         required: false
         description: "'true' (default) installs all optional extras (numba, cli); 'false' installs none."
         default: "true"
+    coverage:
+        required: false
+        description: "'true' runs under coverage and uploads the per-combo data file for a cross-matrix combine; 'false' (default) runs plain pytest."
+        default: "false"
 
 runs:
     using: composite
@@ -48,7 +52,22 @@ runs:
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
           EXTRAS: ${{ inputs.include_all_extra_deps }}
+          COV: ${{ inputs.coverage }}
+          # distinct per-combo data file so the coverage job combines rather than overwrites
+          COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-${{ inputs.include_all_extra_deps }}
         run: |
           EXTRA_FLAG=""
           [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
-          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev pytest ./tests --durations=20
+          COV_FLAG=""
+          # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
+          [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
+          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev pytest ./tests $COV_FLAG --durations=20
+
+      - name: Upload coverage data
+        if: inputs.coverage == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
+          path: .coverage.*
+          include-hidden-files: true  # .coverage.* are dotfiles, excluded by default
+          if-no-files-found: error

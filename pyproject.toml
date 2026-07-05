@@ -134,8 +134,13 @@ unused-ignore-comment = "ignore"
 
 [tool.coverage.run]
 source = ["counted_float"]
+relative_files = true  # so per-combo matrix data files combine without a [paths] map
+# no `parallel`: pytest-cov combines its own xdist workers into one file per run;
+# each run/combo is named via COVERAGE_FILE, then combined across combos.
 
 [tool.coverage.report]
+precision = 2
+fail_under = 95        # cumulative gate, enforced on the combined matrix data
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",

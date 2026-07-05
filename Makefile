@@ -25,13 +25,6 @@ test:
 	# run all tests - with numba & just 1 python version
 	uv run --all-extras --python 3.13 pytest ./tests
 
-coverage:
-	# run tests with Python 3.11; without numba & create new report
-	uv sync	# should remove numba
-	uv run --python 3.11 pytest ./tests --cov --cov-report=html
-	# run tests with Python 3.13; with numba & append to report
-	uv run --all-extras --python 3.13 pytest ./tests --cov --cov-append --cov-report=html
-
 lint:
 	uv run pre-commit run --all-files
 
