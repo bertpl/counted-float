@@ -50,7 +50,7 @@ def update_readme(readme_file: Path, python_versions: list[str], package_version
         readme_lines[i] = re.sub(pattern, relative_version_path, line)
 
     # --- save update lines -------------------------------
-    readme_file.write_text("\n".join(readme_lines))
+    readme_file.write_text("\n".join(readme_lines) + "\n")
 
 
 # -------------------------------------------------------------------------

@@ -20,6 +20,7 @@
 - expand ruff rule set from isort-only to the full lint family set
 - enable pydocstyle (Google convention) and clean up all docstrings
 - add the ty type checker to pre-commit
+- fix the README image-URL rewrite in CI dropping the file's trailing newline
 
 <!------------------------------------------------------------------------------------------------->
 > ## v1.1.0
