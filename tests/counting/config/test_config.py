@@ -31,3 +31,13 @@ def test_flop_weight_config(getter, setter):
     assert flop_weights_b != flop_weights_c
     assert flop_weights_b == dummy_flop_weights_1
     assert flop_weights_c == dummy_flop_weights_2
+
+
+@pytest.mark.parametrize("getter", [get_active_flop_weights, Config.get_flop_weights])
+def test_flop_weight_getters_return_defensive_copies(getter):
+    # --- act ---------------------------------------------
+    flop_weights = getter()
+    flop_weights.weights[FlopType.ADD] = -12345.0  # mutate the returned object
+
+    # --- assert ------------------------------------------
+    assert getter().weights[FlopType.ADD] != -12345.0
