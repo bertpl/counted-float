@@ -96,7 +96,7 @@ def test_math_log_supports_two_arg_form(global_counter):
 def test_math_pow_raises_domain_error_for_negative_base(global_counter):
     # regression test: patched math.pow used to return a complex number instead of raising
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match="math domain error"):
+    with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.pow(-8.0, 1 / 3)
 
 
@@ -214,7 +214,7 @@ def test_math_log_domain_error_counts_nothing(global_counter):
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match="math domain error"):
+    with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.log(cf, 2)
     assert global_counter.total_count() == 0
 
@@ -224,7 +224,7 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match="math domain error"):
+    with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.pow(cf, 1 / 3)
     assert global_counter.total_count() == 0
 

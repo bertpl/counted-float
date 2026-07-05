@@ -1,0 +1,37 @@
+name: Unit tests (full matrix)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / numba-${{ matrix.all_extras }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # ubuntu-only: OS-dependent paths (CPU-freq detection, numba JIT) are
+        # exercised by the manual benchmark workflows on real hardware; core
+        # flop-counting is pure Python. Strategic combos cover every axis
+        # (all four Pythons, both resolution ends, numba on/off at the extremes)
+        # rather than their full product.
+        include:
+          - { python: "3.11", resolution: highest,       all_extras: "true"  }
+          - { python: "3.12", resolution: highest,       all_extras: "true"  }
+          - { python: "3.13", resolution: highest,       all_extras: "true"  }
+          - { python: "3.14", resolution: highest,       all_extras: "true"  }
+          - { python: "3.11", resolution: lowest-direct, all_extras: "true"  }
+          - { python: "3.14", resolution: lowest-direct, all_extras: "true"  }
+          - { python: "3.11", resolution: highest,       all_extras: "false" }  # numba-absent shim
+          - { python: "3.14", resolution: highest,       all_extras: "false" }  # numba-absent shim
+    steps:
+      - uses: actions/checkout@v6
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: ${{ matrix.python }}
+          dependency_resolution: ${{ matrix.resolution }}
+          include_all_extra_deps: ${{ matrix.all_extras }}

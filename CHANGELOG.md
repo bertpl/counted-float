@@ -1,8 +1,26 @@
 # Change Log
 
 <!------------------------------------------------------------------------------------------------->
-> ## v1.1.1
+> ## v1.1.2
 > *(unreleased)*
+> > CI & test-infrastructure restructure.
+<!------------------------------------------------------------------------------------------------->
+
+### What's New
+/
+
+### Improvements
+- raise minimum dependency versions to those with wheels across Python 3.11–3.14 (per-version floors); the previous floors (e.g. `numpy>=1.20`) never actually installed on supported Pythons
+
+### Bug Fixes
+/
+
+### Internal
+- restructure CI & test infrastructure (reusable test workflow, single `ci-gate` check, coverage gate + metrics)
+
+<!------------------------------------------------------------------------------------------------->
+> ## v1.1.1
+> *(2026-07-05)*
 > > Quality-tooling release: pre-commit hooks, expanded ruff rule set, ty type checker; package now ships type information.
 <!------------------------------------------------------------------------------------------------->
 
