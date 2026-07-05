@@ -8,6 +8,15 @@ importing `counted_float` leaves the process's `math` module untouched.
 The `original_math_*` references are (re)captured at patch time, not at import time: another
 package may have applied its own `math` patches after we were imported, and we want to delegate
 through — and later restore — whatever is current, rather than silently wiping those patches.
+
+The patching contract (mirroring unittest.mock.patch / pytest monkeypatch conventions):
+  - at first context entry, we snapshot the current math functions (whatever they are, including
+    other packages' patches) and delegate through them while counting;
+  - at last context exit, we restore that snapshot, unconditionally — so math.* ends up exactly
+    as it was when the first context entered;
+  - well-nested (LIFO) third-party patching composes correctly; mis-nested patching (e.g. a patch
+    applied inside our context but not removed before we exit) is unsupported: we simply restore
+    our snapshot, which discards such patches.
 """
 
 from __future__ import annotations
@@ -255,8 +264,7 @@ def remove_math_patches():
     global _active_context_count
     _active_context_count = max(0, _active_context_count - 1)
     if _active_context_count == 0:
+        # restore the snapshot unconditionally, assuming LIFO patching discipline of any other
+        # patching packages (see module docstring for the exact contract)
         for name, saved in _saved_originals.items():
-            # only restore functions that are still ours: if another package patched on top
-            # while we were active, wiping its patch would be worse than leaving it in place
-            if getattr(math, name) is _PATCHES[name]:
-                setattr(math, name, saved)
+            setattr(math, name, saved)
