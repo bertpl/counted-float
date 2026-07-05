@@ -10,6 +10,9 @@ from counted_float._core.counting._counted_float import CountedFloat
 
 PATCHED_FUNCTION_NAMES = sorted(_math_patching._PATCHES.keys())
 
+# captured at import of this test module, i.e. with no counting context active anywhere
+STDLIB_MATH_FUNCTIONS = {name: getattr(math, name) for name in PATCHED_FUNCTION_NAMES}
+
 
 # =================================================================================================
 #  Patch lifecycle - math module untouched outside contexts, patched inside
@@ -25,7 +28,7 @@ def test_import_does_not_patch_math():
 
 @pytest.mark.parametrize("fname", PATCHED_FUNCTION_NAMES)
 def test_math_module_patched_inside_context_only(fname):
-    original = _math_patching._ORIGINALS[fname]
+    original = STDLIB_MATH_FUNCTIONS[fname]
     replacement = _math_patching._PATCHES[fname]
 
     # --- before any context ------------------------------
@@ -67,7 +70,7 @@ def test_math_module_patched_inside_context_only(fname):
 def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
     # --- arrange -----------------------------------------
     patched = getattr(math, fname)  # fixture keeps a context active, so this is the replacement
-    original = _math_patching._ORIGINALS[fname]
+    original = STDLIB_MATH_FUNCTIONS[fname]
     assert patched is not original
 
     # --- act ---------------------------------------------
@@ -224,6 +227,35 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     with pytest.raises(ValueError):
         math.pow(cf, 1 / 3)
     assert global_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Playing nice with third-party math patches
+# =================================================================================================
+def test_third_party_math_patches_are_delegated_through_and_restored():
+    # a third party patches math.sqrt AFTER counted_float was imported; our patching must
+    # delegate through that patch while active and restore it (not the stdlib) afterwards
+    # --- arrange -----------------------------------------
+    stdlib_sqrt = STDLIB_MATH_FUNCTIONS["sqrt"]
+    third_party_calls = []
+
+    def third_party_sqrt(x):
+        third_party_calls.append(float(x))
+        return stdlib_sqrt(x)
+
+    math.sqrt = third_party_sqrt
+    try:
+        # --- act & assert --------------------------------
+        with FlopCountingContext() as ctx:
+            result = math.sqrt(CountedFloat(4.0))
+
+        assert isinstance(result, CountedFloat)
+        assert result == 2.0
+        assert ctx.flop_counts().SQRT == 1
+        assert third_party_calls == [4.0]  # our replacement delegated through the 3rd-party patch
+        assert math.sqrt is third_party_sqrt  # ...and restored it, not the stdlib function
+    finally:
+        math.sqrt = stdlib_sqrt
 
 
 # =================================================================================================

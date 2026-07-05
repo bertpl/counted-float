@@ -4,6 +4,10 @@ Counting replacements for `math` module functions, and the machinery to apply/re
 Nothing in this module runs at import time: the `math` module is only patched while at least one
 `FlopCountingContext` is active (see `apply_math_patches` / `remove_math_patches`), so merely
 importing `counted_float` leaves the process's `math` module untouched.
+
+The `original_math_*` references are (re)captured at patch time, not at import time: another
+package may have applied its own `math` patches after we were imported, and we want to delegate
+through — and later restore — whatever is current, rather than silently wiping those patches.
 """
 
 from __future__ import annotations
@@ -15,6 +19,8 @@ from ._global_counter import GLOBAL_COUNTER
 
 # -------------------------------------------------------------------------
 #  original math module functions
+#  (import-time values are only a default; re-captured on every 0->1 patch
+#   application by _capture_originals, see module docstring)
 # -------------------------------------------------------------------------
 original_math_sqrt = math.sqrt
 original_math_cbrt = math.cbrt
@@ -201,19 +207,8 @@ _PATCHES: dict[str, object] = {
     "cos": math_cos,
     "tan": math_tan,
 }
-_ORIGINALS: dict[str, object] = {
-    "sqrt": original_math_sqrt,
-    "cbrt": original_math_cbrt,
-    "log": original_math_log,
-    "log2": original_math_log2,
-    "log10": original_math_log10,
-    "exp": original_math_exp,
-    "exp2": original_math_exp2,
-    "pow": original_math_pow,
-    "sin": original_math_sin,
-    "cos": original_math_cos,
-    "tan": original_math_tan,
-}
+# the math functions saved at patch time, to be restored at unpatch time
+_saved_originals: dict[str, object] = {}
 
 # number of currently active FlopCountingContext instances; patches are applied on the 0->1
 # transition and removed on the 1->0 transition, so nested contexts behave correctly
@@ -221,11 +216,36 @@ _ORIGINALS: dict[str, object] = {
 _active_context_count = 0
 
 
+def _capture_originals():
+    """Snapshot the current math functions, so the replacements delegate through (and unpatching
+    restores) whatever is current — possibly another package's patches, not the stdlib originals."""
+    global original_math_sqrt, original_math_cbrt, original_math_log, original_math_log2
+    global original_math_log10, original_math_exp, original_math_exp2, original_math_pow
+    global original_math_sin, original_math_cos, original_math_tan
+
+    original_math_sqrt = math.sqrt
+    original_math_cbrt = math.cbrt
+    original_math_log = math.log
+    original_math_log2 = math.log2
+    original_math_log10 = math.log10
+    original_math_exp = math.exp
+    original_math_exp2 = math.exp2
+    original_math_pow = math.pow
+    original_math_sin = math.sin
+    original_math_cos = math.cos
+    original_math_tan = math.tan
+
+    _saved_originals.clear()
+    for name in _PATCHES:
+        _saved_originals[name] = getattr(math, name)
+
+
 def apply_math_patches():
     """Apply the counting replacements to the math module (refcounted; see module docstring)."""
     global _active_context_count
     _active_context_count += 1
     if _active_context_count == 1:
+        _capture_originals()
         for name, replacement in _PATCHES.items():
             setattr(math, name, replacement)
 
@@ -235,5 +255,8 @@ def remove_math_patches():
     global _active_context_count
     _active_context_count = max(0, _active_context_count - 1)
     if _active_context_count == 0:
-        for name, original in _ORIGINALS.items():
-            setattr(math, name, original)
+        for name, saved in _saved_originals.items():
+            # only restore functions that are still ours: if another package patched on top
+            # while we were active, wiping its patch would be worse than leaving it in place
+            if getattr(math, name) is _PATCHES[name]:
+                setattr(math, name, saved)
