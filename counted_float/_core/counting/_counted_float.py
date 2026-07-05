@@ -1,21 +1,9 @@
 from __future__ import annotations
 
-from counted_float._core.models import FlopCounts
-
 from ._global_counter import GLOBAL_COUNTER
 
 
 class CountedFloat(float):
-    # -------------------------------------------------------------------------
-    #  FLOP COUNTING
-    # -------------------------------------------------------------------------
-    @classmethod
-    def get_global_flop_counts(cls) -> FlopCounts:
-        """
-        Returns the global FLOP counts for all CountedFloat instances.
-        """
-        return GLOBAL_COUNTER.flop_counts()
-
     # -------------------------------------------------------------------------
     #  CONSTRUCTOR
     # -------------------------------------------------------------------------

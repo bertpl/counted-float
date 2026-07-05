@@ -42,7 +42,7 @@ class FlopWeights(MyBaseModel):
 
     def get_sorted_flop_types(self) -> list[FlopType]:
         """Return flop types sorted in ascending order of corresponding weights."""
-        sorted_flop_weights_and_types = sorted(zip(self.weights.values(), self.weights.keys()))
+        sorted_flop_weights_and_types = sorted(zip(self.weights.values(), self.weights.keys(), strict=True))
         return [flop_type for _, flop_type in sorted_flop_weights_and_types]
 
     # -------------------------------------------------------------------------
@@ -112,7 +112,7 @@ class FlopWeights(MyBaseModel):
     def from_abs_flop_costs(cls, flop_costs: dict[FlopType, float]) -> FlopWeights:
         """
         Computes FlopWeights based on absolute costs (in clock cycles, nanoseconds, ...) of each flop type.
-        As a reference duration, we take the geometric mean of the costs for EQUALS, ADD, SUB, and MUL operations.
+        As a reference duration, we take the cost of the ADD operation.
         """
 
         # step 1) compute reference duration based on 1 simple flop type (SUB, MUL and a few others are usually very close)

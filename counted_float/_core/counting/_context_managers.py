@@ -16,10 +16,6 @@ class FlopCountingContext:
     Context manager that can be used to count FLOP operations in a block of code.  Only floating-point
     operations of CountedFloat objects are counted.  So make sure all math uses this type.
 
-    Flops need to be registered by either of the following:
-      - calls to register_flops(...)
-      - using CountedFloat() objects in the computations
-
     LIMITATIONS:
         - this context manager is not thread-safe
         - not _all_ floating-point operations are counted, see the docs for more details.
