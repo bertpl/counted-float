@@ -1,19 +1,19 @@
 from collections.abc import Callable
 
 try:
-    import numba
+    import numba  # ty: ignore[unresolved-import] -- numba is an optional dependency; shimmed below if absent
 
 
 except ImportError:
     # dummy decorator that will replace numba.jit and numba.njit
-    def dummy_decorator(*args, **kwargs):
+    def dummy_decorator(*args: object, **kwargs: object) -> Callable:
         # dummy decorator that does nothing and can be used with or without arguments
         if len(args) == 1 and isinstance(args[0], Callable):
             # decorator used without arguments
             return args[0]
 
         # decorator used with arguments
-        def decorator(func):
+        def decorator(func: Callable) -> Callable:
             return func
 
         return decorator
@@ -24,7 +24,7 @@ except ImportError:
         jit = dummy_decorator
         njit = dummy_decorator
 
-    numba = Numba
+    numba = Numba  # ty: ignore[invalid-assignment] -- module-shaped stand-in for the absent optional module
 
 
 def is_numba_installed() -> bool:

@@ -43,7 +43,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
     operations, so we can make representative estimates of the number of FLOPS executed by instrumented algorithms.
     """
 
-    def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable):
+    def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable) -> None:
         super().__init__(name=name, single_execution=f"{size} iterations")
         self.size = size
         self.array_init = array_init
@@ -55,7 +55,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.out_f: np.ndarray = np.zeros(size, dtype=float)
         self.out_i: np.ndarray = np.zeros(size, dtype=int)
 
-    def _prepare_benchmark(self, n_executions: int):
+    def _prepare_benchmark(self, n_executions: int) -> None:
         self.n_executions = n_executions
         # input array
         self.in_f = self.array_init.new_array(self.size)
@@ -63,6 +63,6 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.out_f: np.ndarray = np.full(self.size, 0.0, dtype=float)
         self.out_i: np.ndarray = np.full(self.size, 0, dtype=int)
 
-    def _run_benchmark(self):
+    def _run_benchmark(self) -> None:
         # call 'f' with appropriate n_executions & size parameters
         self.f(self.n_executions, self.size, self.in_f, self.out_f, self.out_i)

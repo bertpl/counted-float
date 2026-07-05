@@ -28,11 +28,11 @@ class Latency(MyBaseModel):
             case (None, None):
                 return math.nan
             case (None, _):
-                return max(1.0, self.max_cycles)
+                return max(1.0, self.max_cycles)  # ty: ignore[invalid-argument-type] -- non-None here
             case (_, None):
-                return max(1.0, self.min_cycles)
+                return max(1.0, self.min_cycles)  # ty: ignore[invalid-argument-type] -- non-None per pattern
             case (_, _):
-                return max(1.0, self.min_cycles, self.max_cycles)
+                return max(1.0, self.min_cycles, self.max_cycles)  # ty: ignore[invalid-argument-type] -- non-None
 
 
 # =================================================================================================

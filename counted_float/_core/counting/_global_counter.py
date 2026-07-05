@@ -12,20 +12,20 @@ class GlobalFlopCounter:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self) -> None:
         self.__counts = FlopCounts()
         self.__incr = 1  # 1 if enabled, 0 if paused
 
     # -------------------------------------------------------------------------
     #  Pause / Resume / Status API
     # -------------------------------------------------------------------------
-    def pause(self):
+    def pause(self) -> None:
         self.__incr = 0
 
-    def resume(self):
+    def resume(self) -> None:
         self.__incr = 1
 
-    def reset(self):
+    def reset(self) -> None:
         self.__counts.reset()
         self.resume()
 
@@ -39,7 +39,7 @@ class GlobalFlopCounter:
         """Shorthand for self.flop_counts().total_count()."""
         return self.__counts.total_count()
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> int:
         # provide shorthand access to the counts
         if item in FlopCounts.field_names():
             return getattr(self.__counts, item)
@@ -48,70 +48,70 @@ class GlobalFlopCounter:
     # -------------------------------------------------------------------------
     #  Incrementing counts
     # -------------------------------------------------------------------------
-    def incr_abs(self):
+    def incr_abs(self) -> None:
         self.__counts.ABS += self.__incr
 
-    def incr_minus(self):
+    def incr_minus(self) -> None:
         self.__counts.MINUS += self.__incr
 
-    def incr_comp(self):
+    def incr_comp(self) -> None:
         self.__counts.COMP += self.__incr
 
-    def incr_rnd(self):
+    def incr_rnd(self) -> None:
         self.__counts.RND += self.__incr
 
-    def incr_f2i(self):
+    def incr_f2i(self) -> None:
         self.__counts.F2I += self.__incr
 
-    def incr_i2f(self):
+    def incr_i2f(self) -> None:
         self.__counts.I2F += self.__incr
 
-    def incr_add(self):
+    def incr_add(self) -> None:
         self.__counts.ADD += self.__incr
 
-    def incr_sub(self):
+    def incr_sub(self) -> None:
         self.__counts.SUB += self.__incr
 
-    def incr_mul(self):
+    def incr_mul(self) -> None:
         self.__counts.MUL += self.__incr
 
-    def incr_div(self):
+    def incr_div(self) -> None:
         self.__counts.DIV += self.__incr
 
-    def incr_sqrt(self):
+    def incr_sqrt(self) -> None:
         self.__counts.SQRT += self.__incr
 
-    def incr_cbrt(self):
+    def incr_cbrt(self) -> None:
         self.__counts.CBRT += self.__incr
 
-    def incr_exp(self):
+    def incr_exp(self) -> None:
         self.__counts.EXP += self.__incr
 
-    def incr_exp2(self):
+    def incr_exp2(self) -> None:
         self.__counts.EXP2 += self.__incr
 
-    def incr_exp10(self):
+    def incr_exp10(self) -> None:
         self.__counts.EXP10 += self.__incr
 
-    def incr_log(self):
+    def incr_log(self) -> None:
         self.__counts.LOG += self.__incr
 
-    def incr_log2(self):
+    def incr_log2(self) -> None:
         self.__counts.LOG2 += self.__incr
 
-    def incr_log10(self):
+    def incr_log10(self) -> None:
         self.__counts.LOG10 += self.__incr
 
-    def incr_pow(self):
+    def incr_pow(self) -> None:
         self.__counts.POW += self.__incr
 
-    def incr_sin(self):
+    def incr_sin(self) -> None:
         self.__counts.SIN += self.__incr
 
-    def incr_cos(self):
+    def incr_cos(self) -> None:
         self.__counts.COS += self.__incr
 
-    def incr_tan(self):
+    def incr_tan(self) -> None:
         self.__counts.TAN += self.__incr
 
 

@@ -36,9 +36,10 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
-    # ruff is pinned exactly: uv.lock is untracked, so this pin is what keeps
-    # pre-commit, `make lint`, and CI on the same ruff version.
+    # ruff & ty are pinned exactly: uv.lock is untracked, so these pins are what
+    # keep pre-commit, `make lint`, and CI on the same tool versions.
     "ruff==0.15.11",
+    "ty==0.0.56",
 ]
 
 [build-system]
@@ -55,7 +56,7 @@ packages = ["counted_float"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py311"  # matches requires-python floor, so ruff fixes never introduce newer syntax
 
 [tool.ruff.lint]
 select = [
@@ -72,6 +73,7 @@ select = [
     "PTH",     # flake8-use-pathlib
     "PT",      # flake8-pytest-style
     "TC",      # flake8-type-checking
+    "ANN",     # flake8-annotations
     "D",       # pydocstyle (Google convention; D401 enforced)
     "RUF",     # ruff-native
     "C901",    # mccabe complexity gate (threshold below)
@@ -101,10 +103,19 @@ convention = "google"
 runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.models._base.MyBaseModel"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["SLF001", "S101", "S311", "D"]  # AAA tests: asserts, private access, random data, no docstring duty
+"tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 # module-level mutable patching state (original-function snapshots + context refcount) is the design
 "counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
+
+[tool.ty.src]
+include = ["counted_float"]
+
+[tool.ty.rules]
+# The numba shim needs `ty: ignore`s that are used only when the optional numba
+# extra is absent from the env; flagging them as unused in the other env would
+# make `ty check` results depend on which extras happen to be installed.
+unused-ignore-comment = "ignore"
 
 [tool.coverage.run]
 source = ["counted_float"]

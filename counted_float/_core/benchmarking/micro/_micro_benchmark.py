@@ -29,7 +29,7 @@ class MicroBenchmark(ABC):
 
     MAX_N_EXECUTIONS_FACTOR = 10  # never adjust n_executions by more than this factor (up or down)
 
-    def __init__(self, name: str, single_execution: str = "execution"):
+    def __init__(self, name: str, single_execution: str = "execution") -> None:
         self.name = name
         self.single_execution = single_execution
 
@@ -111,7 +111,7 @@ class MicroBenchmark(ABC):
         )
 
     @abstractmethod
-    def _prepare_benchmark(self, n_executions: int):
+    def _prepare_benchmark(self, n_executions: int) -> None:
         """Prepare benchmark_runs (e.g. set up data) based on requested number of executions.
 
         This argument is adjusted each run by the MicroBenchmarkRunner class to ensure that the benchmark_runs
@@ -120,6 +120,6 @@ class MicroBenchmark(ABC):
         ...
 
     @abstractmethod
-    def _run_benchmark(self):
+    def _run_benchmark(self) -> None:
         """Run benchmark_runs.  This method is called multiple times and the time spent here is measured."""
         ...

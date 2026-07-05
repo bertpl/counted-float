@@ -64,7 +64,10 @@ def math_cbrt(x: float) -> float | CountedFloat:
     return original_math_cbrt(x)
 
 
-def math_log(x: float, base=_NO_BASE) -> float | CountedFloat:  # noqa: C901 -- branches mirror the per-log-variant counting rules
+def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rules
+    x: float,
+    base: float = _NO_BASE,  # ty: ignore[invalid-parameter-default] -- sentinel mirrors math.log's omittable base
+) -> float | CountedFloat:
     """Patch math.log: stdlib contract (optional base), with flop classification per log variant.
 
     Flop classification for the base follows the same constant-detection heuristic as
@@ -211,7 +214,7 @@ _saved_originals: dict[str, object] = {}
 _active_context_count = 0
 
 
-def _capture_originals():
+def _capture_originals() -> None:
     """Snapshot the current math functions.
 
     This way the replacements delegate through (and unpatching restores) whatever is current —
@@ -238,7 +241,7 @@ def _capture_originals():
         _saved_originals[name] = getattr(math, name)
 
 
-def apply_math_patches():
+def apply_math_patches() -> None:
     """Apply the counting replacements to the math module (refcounted; see module docstring)."""
     global _active_context_count
     _active_context_count += 1
@@ -248,7 +251,7 @@ def apply_math_patches():
             setattr(math, name, replacement)
 
 
-def remove_math_patches():
+def remove_math_patches() -> None:
     """Undo apply_math_patches; the math module is restored once the last context exits."""
     global _active_context_count
     _active_context_count = max(0, _active_context_count - 1)

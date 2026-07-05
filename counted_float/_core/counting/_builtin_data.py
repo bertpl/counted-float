@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 from importlib.resources import files
+from typing import TYPE_CHECKING, TypeVar
 
 from pydantic import BaseModel, ValidationError
 from rich.console import Console
@@ -11,6 +12,12 @@ from counted_float._core.models import (
     FlopWeights,
     InstructionLatencies,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from importlib.resources.abc import Traversable
+
+PydanticModelT = TypeVar("PydanticModelT", bound=BaseModel)
 
 DATA_PACKAGE = "counted_float.data"
 
@@ -71,7 +78,7 @@ class BuiltInData:
     #  Visualization
     # -------------------------------------------------------------------------
     @classmethod
-    def show(cls, key_filter: str = ""):
+    def show(cls, key_filter: str = "") -> None:
         """Show flow weights of all built-in data, optionally satisfying key_filter."""
         fw_nested_dict = _flat_to_nested_dict(cls.get_flop_weights_dict(key_filter))
         tree_view = FlopWeightsTreeView.from_nested_dict(name="ALL", nested_dict=fw_nested_dict)
@@ -88,7 +95,8 @@ def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dic
             nested_flop_weights_dict[key] = _compute_nested_average_flop_weights(value)
 
     # now we can average all FlopWeights instances
-    return FlopWeights.as_geo_mean(list(nested_flop_weights_dict.values()))
+    # the loop above collapsed every dict value to FlopWeights; ty cannot track the mutation
+    return FlopWeights.as_geo_mean(list(nested_flop_weights_dict.values()))  # ty: ignore[invalid-argument-type]
 
 
 def _flat_to_nested_dict(flat_dict: dict) -> dict:
@@ -106,7 +114,7 @@ def _flat_to_nested_dict(flat_dict: dict) -> dict:
     return nested_dict
 
 
-def _load_json_files_as_dict(resource_root) -> dict[str, str]:
+def _load_json_files_as_dict(resource_root: Traversable) -> dict[str, str]:
     """Read all .json files recursively from the given resource root and return a dict mapping key -> json_str.
 
     Keys are .-separated values indicating the path + filename of the source data file.
@@ -122,7 +130,7 @@ def _load_json_files_as_dict(resource_root) -> dict[str, str]:
             for key, value in sub_dir_json_dict.items():
                 result[f"{entry.name}.{key}"] = value
         elif entry.is_file() and entry.name.endswith(".json"):
-            result[entry.stem] = entry.read_text(encoding="utf-8")
+            result[entry.stem] = entry.read_text(encoding="utf-8")  # ty: ignore[unresolved-attribute] -- Path-like
     return result
 
 
@@ -145,7 +153,10 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
     ).flop_weights()
 
 
-def _deserialize_as_any_pydantic_class(json_str: str, pydantic_classes: list[type[BaseModel]]):
+def _deserialize_as_any_pydantic_class(
+    json_str: str,
+    pydantic_classes: Sequence[type[PydanticModelT]],
+) -> PydanticModelT:
     # try all supported classes
     for pydantic_cls in pydantic_classes:
         try:
@@ -161,7 +172,7 @@ class FlopWeightsTreeView:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self, name: str, children: FlopWeights | list[FlopWeightsTreeView]):
+    def __init__(self, name: str, children: FlopWeights | list[FlopWeightsTreeView]) -> None:
         # --- init ----------------------------------------
         self.lst_indent: list[int] = []
         self.lst_is_leaf: list[bool] = []
@@ -220,7 +231,7 @@ class FlopWeightsTreeView:
     # -------------------------------------------------------------------------
     #  Visualization
     # -------------------------------------------------------------------------
-    def show(self):
+    def show(self) -> None:
         # --- prep ----------------------------------------
         console = Console()
         console_width = console.width
