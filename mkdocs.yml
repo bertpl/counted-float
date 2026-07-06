@@ -1,0 +1,51 @@
+site_name: counted-float
+site_description: Count floating-point operations of numerical algorithms in plain Python, weighted by their relative cost.
+site_url: https://counted-float.readthedocs.io/
+repo_url: https://github.com/bertpl/counted-float
+repo_name: bertpl/counted-float
+edit_uri: ""
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.top
+    - content.code.copy
+    - toc.integrate
+
+nav:
+  - Home: index.md
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - tables
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bertpl/counted-float
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/counted-float/
