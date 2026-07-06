@@ -182,7 +182,8 @@ exclude_also = [
 
 [tool.codespell]
 # `sme`: "SME" (ARM's Scalable Matrix Extension) appears in the analysis docs.
-ignore-words-list = "sme"
+# `intoto`: the in-toto attestation format (`provenance.intoto.jsonl`).
+ignore-words-list = "sme,intoto"
 
 [tool.pytest.ini_options]
 addopts = "-n auto --dist worksteal"
