@@ -71,6 +71,11 @@ dev = [
     "ruff>=0.15.11",
     "ty>=0.0.56",
 ]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocs-gen-files>=0.5",
+]
 
 [build-system]
 requires = ["hatchling", "hatch-fancy-pypi-readme"]
