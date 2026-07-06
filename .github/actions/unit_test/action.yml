@@ -27,7 +27,7 @@ runs:
     using: composite
     steps:
       - name: Set up uv
-        uses: astral-sh/setup-uv@v8.3.0
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
         with:
           version: ${{ inputs.uv_version }}
           # Distinct cache key per combo so parallel legs don't race to save one shared key.
@@ -37,7 +37,7 @@ runs:
         shell: bash
         env:
           REQUESTED: ${{ inputs.python_version }}
-        run: |
+        run: |  # zizmor: ignore[github-env] value is a workflow-controlled Python version, not user input
           PY="${REQUESTED:-$(cat .python-version)}"
           echo "PYTHON_EFFECTIVE_VERSION=$PY" >> "$GITHUB_ENV"
           echo "Using Python $PY."
@@ -81,7 +81,7 @@ runs:
 
       - name: Upload coverage + node-id data
         if: inputs.coverage == 'true'
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
           path: |

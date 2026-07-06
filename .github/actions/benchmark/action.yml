@@ -15,29 +15,31 @@ runs:
     using: "composite"
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
         with:
           version: ${{ inputs.uv_version }}
 
       - name: Determine Python version
         shell: bash
-        run: |
-            if [ -n "${{ inputs.python_version }}" ]; then
-                echo "PYTHON_EFFECTIVE_VERSION=${{ inputs.python_version }}" >> $GITHUB_ENV
+        run: |  # zizmor: ignore[github-env] value is a workflow-controlled Python version, not user input
+            if [ -n "${INPUTS_PYTHON_VERSION}" ]; then
+                echo "PYTHON_EFFECTIVE_VERSION=${INPUTS_PYTHON_VERSION}" >> $GITHUB_ENV
             else
                 PYTHON_VERSION=$(cat .python-version)
                 echo "PYTHON_EFFECTIVE_VERSION=$PYTHON_VERSION" >> $GITHUB_ENV
             fi
-            echo "Using PYTHON ${{ env.PYTHON_EFFECTIVE_VERSION }}."
+            echo "Using PYTHON ${PYTHON_EFFECTIVE_VERSION}."
+        env:
+          INPUTS_PYTHON_VERSION: ${{ inputs.python_version }}
 
       - name: Set up venv, Python ${{ env.PYTHON_EFFECTIVE_VERSION }} & dependencies
         shell: bash
         run:  |
-            uv python install ${{ env.PYTHON_EFFECTIVE_VERSION }}
-            uv venv --python ${{ env.PYTHON_EFFECTIVE_VERSION }}
+            uv python install ${PYTHON_EFFECTIVE_VERSION}
+            uv venv --python ${PYTHON_EFFECTIVE_VERSION}
             uv sync --all-extras --dev
 
       - name: Run benchmarks
         shell: bash
         run:  |
-            uv run --all-extras --python ${{ env.PYTHON_EFFECTIVE_VERSION }} counted_float benchmark
+            uv run --all-extras --python ${PYTHON_EFFECTIVE_VERSION} counted_float benchmark
