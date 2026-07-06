@@ -74,7 +74,6 @@ dev = [
 docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
-    "mkdocs-gen-files>=0.5",
 ]
 
 [build-system]

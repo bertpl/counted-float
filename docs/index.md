@@ -22,3 +22,18 @@ pip install counted-float[numba]    # install with numba optional dependency
 Numba is optional due to its relatively large size (40-50MB, including
 llvmlite), but without it, benchmarks will not be reliable (they will still
 run, but not in jit-compiled form).
+
+## Where to go next
+
+- [Counting FLOPs](counting_flops.md) — the `CountedFloat` class, the counting
+  model, and counting contexts.
+- [Math patching semantics](math_patching.md) — how (and when) `math.*`
+  functions are instrumented.
+- [FLOP weights](flop_weights.md) — the built-in consensus weights and how to
+  configure your own.
+- [Benchmarking](benchmarking.md) — estimating flop weights on your own
+  hardware.
+- [CLI reference](cli.md) — using `counted_float` as a stand-alone
+  command-line tool.
+- [Known limitations](known_limitations.md) — what falls outside the counting
+  model.

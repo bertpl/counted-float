@@ -30,9 +30,25 @@ theme:
 
 nav:
   - Home: index.md
+  - Counting FLOPs: counting_flops.md
+  - Math patching semantics: math_patching.md
+  - FLOP weights: flop_weights.md
+  - Benchmarking: benchmarking.md
+  - CLI reference: cli.md
+  - Known limitations: known_limitations.md
+  - Reference:
+      - FLOP types: flop_types.md
+      - Methodology: analysis_methodology.md
+      - CPU architecture scope: cpu_architectures_scope.md
+  - Changelog: changelog.md
 
 plugins:
   - search
+
+# Copies CHANGELOG.md into the site at build time, so the changelog page
+# always mirrors the repo-root file without a tracked duplicate.
+hooks:
+  - scripts/docs_changelog_hook.py
 
 markdown_extensions:
   - admonition
