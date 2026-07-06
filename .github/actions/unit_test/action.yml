@@ -63,11 +63,29 @@ runs:
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
           uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev pytest ./tests $COV_FLAG --durations=20
 
-      - name: Upload coverage data
+      - name: Dump collected node-ids (for the cross-combo test-count union)
+        if: inputs.coverage == 'true'
+        shell: bash
+        env:
+          PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
+          RES: ${{ inputs.dependency_resolution }}
+          EXTRAS: ${{ inputs.include_all_extra_deps }}
+        run: |
+          EXTRA_FLAG=""
+          [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
+          # -o addopts="" clears `-n auto`, so collection runs single-process (xdist off);
+          # each combo records its own collected set so the coverage job can union them.
+          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev \
+            pytest ./tests --collect-only -q -o addopts="" \
+            | grep '::' > "test-ids-${PY}-${RES}-${EXTRAS}.txt"
+
+      - name: Upload coverage + node-id data
         if: inputs.coverage == 'true'
         uses: actions/upload-artifact@v7
         with:
           name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
-          path: .coverage.*
+          path: |
+            .coverage.*
+            test-ids-*.txt
           include-hidden-files: true  # .coverage.* are dotfiles, excluded by default
           if-no-files-found: error

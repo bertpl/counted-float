@@ -1,7 +1,12 @@
-![shields.io-python-versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue)
-![genbadge-test-count](https://bertpl.github.io/counted-float/version_artifacts/develop/v1.1.3/badge-test-count.svg)
-![genbadge-test-coverage](https://bertpl.github.io/counted-float/version_artifacts/develop/v1.1.3/badge-coverage.svg)
-![counted_float logo](https://bertpl.github.io/counted-float/version_artifacts/develop/v1.1.3/splash.webp)
+[![CI](https://img.shields.io/github/actions/workflow/status/bertpl/counted-float/push_to_main.yml?branch=main&label=CI)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
+[![Coverage](https://img.shields.io/badge/coverage-99.30%25-brightgreen)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
+[![Tests](https://img.shields.io/badge/tests-708-blue)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
+[![PyPI](https://img.shields.io/pypi/v/counted-float.svg)](https://pypi.org/project/counted-float/)
+[![Python](https://img.shields.io/pypi/pyversions/counted-float.svg)](https://pypi.org/project/counted-float/)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/bertpl/counted-float/blob/main/LICENSE)
+[![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
+
+![counted_float logo](https://raw.githubusercontent.com/bertpl/counted-float/main/images/splash/splash.webp)
 
 # counted-float
 
