@@ -16,6 +16,7 @@ Intel Itanium, Transmeta, IBM Power... chips can be considered either obsolete o
 Given the nature of algorithms we intend to analyze, the type of math code typically consists of a mix of instructions,
 forming dependent chains of operations, that lead to choices (strategy, terminate, ...) made in each iteration.  This
 type of code does not lend itself to being easily vectorized, hence we ignore vector instructions:
+
 - **x86**: SSE2/3/4 vector instructions, AVX<n>, ...
 - **arm**: SVE, SME, NEON, ...
 
@@ -30,6 +31,7 @@ For ARM processors, we should focus on arm v8-A or higher (AARCH64/ARM64).
 ## 1.4. Latency types
 
 For most processors, two instruction latency figures can typically be obtained (*naming varies*):
+
 - **execution latency**: time needed for end-to-end execution until a new instruction can start using the end result
 - **(reciprocal) throughput**: time needed per instruction with maximal throughput for independent similar operations
 
@@ -47,6 +49,7 @@ to work with a maximum of 4K double precision values.
 # 2. Sources
 
 We will focus on 3 types of sources for FPU instruction 'cost':
+
 * **benchmarks**: these are the benchmarks implemented in this package; these can be run on each CPU architecture that is
   supported by numba and can analyze each type of math operation, even those that have no hardware support in some or all cpu architectures.
 * **external - analyses**: CPU latency numbers obtained by 3rd parties by running tailored benchmarks / analyses; limited to what can be publicly found.
@@ -87,6 +90,7 @@ x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructi
 | cos(x)                 | FCOS + ?                      | /             | /              |
 
 **NOTES**
+
 - ***(1)*** These instructions don't have Scalar versions (only Packed versions)
 - ***(2)*** Different comparison instructions in SSE2
      - CMPSD   : executes a specific comparison based on a 'predicate' (=instruction which comparison to perform) and outputs to a register all 0s or all 1s

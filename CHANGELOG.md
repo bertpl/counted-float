@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- bullet lists in the methodology pages of the documentation site now render correctly
+
 ### Security
 
 ## 1.2.0 (2026-07-06)
