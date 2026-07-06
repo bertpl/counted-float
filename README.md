@@ -5,6 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/counted-float.svg)](https://pypi.org/project/counted-float/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/bertpl/counted-float/blob/main/LICENSE)
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/bertpl/counted-float/badge)](https://scorecard.dev/viewer/?uri=github.com/bertpl/counted-float)
 
 ![counted_float logo](images/splash/splash.webp)
 
