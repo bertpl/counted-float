@@ -1,6 +1,7 @@
 # 1. Introduction
 
 As mentioned [here](./analysis_methodology.md), we will focus on the following classes of CPUs:
+
 - x86 & arm  (dominant architectures in laptops, desktops & cloud computing)
 - 64-bit architectures only
 - CPUs released in the last 5-10yr, with higher emphasis on more recent models
@@ -32,6 +33,7 @@ In general, we focus on those micro-architectures that are _not_ mobile-only and
 | 2024     | [Lion Cove](https://en.wikipedia.org/wiki/Lion_Cove)                                                                                                                         | Core 2 Ultra: [Arrow Lake](https://en.wikipedia.org/wiki/Arrow_Lake_(microprocessor)) & [Lunar Lake](https://en.wikipedia.org/wiki/Lunar_Lake) (P cores)                                 | / ***(2)***                                                                                    |           |
 
 **Notes:**
+
 - ***(1)*** but with improvements to FPU multiplication latencies
 - ***(2)*** no server variants announced at the time of writing.
 
@@ -78,6 +80,7 @@ in the last ±10 years, we will focus on **ARM v8.2-A or higher**, as this ISA w
 | 2024-10   |           | ARMv9.6-A ***(1)*** |
 
 Notes:
+
 - ***(1)*** at the time of writing no chips have been released with support for these ISA levels.
 
 Finally, since the ARM microarchitecture is used over a wide range of devices from low-power embedded chips to high-performance
@@ -85,6 +88,7 @@ HPC servers, we will restrict ourselves to ARM cores that are classified as eith
 consider **'efficiency' and similar** cores as **out-of-scope**.
 
 More background:
+
 - https://en.wikipedia.org/wiki/Comparison_of_ARM_processors
 - https://en.wikipedia.org/wiki/AArch64
 
