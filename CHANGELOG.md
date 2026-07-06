@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- release artifacts now ship with SLSA build provenance and a GitHub Release; provenance is verifiable with `gh attestation verify`
+
 ## 1.1.3 (2026-07-06)
 
 ### Changed
