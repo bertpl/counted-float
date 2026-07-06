@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/bertpl/counted-float/blob/main/LICENSE)
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
 
-![counted_float logo](https://raw.githubusercontent.com/bertpl/counted-float/main/images/splash/splash.webp)
+![counted_float logo](images/splash/splash.webp)
 
 # counted-float
 
@@ -176,7 +176,7 @@ counts.total_count()         # 2
 The `counted_float` package contains a set of default, built-in FLOP weights, based on both empirical measurements
 and theoretical estimates of the relative cost of different floating point operations.
 
-See [fpu_data_sources.md](https://github.com/bertpl/counted-float/tree/develop/docs/analysis_methodology.md) for
+See [analysis_methodology.md](docs/analysis_methodology.md) for
 rationale behind choice of data sources and methodology.
 
 ```
