@@ -2,7 +2,9 @@
 name = "counted-float"
 version = "1.1.2"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
-readme = "README.md"
+# readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from
+# README.md, rewriting relative links to tag-pinned absolute URLs (config below).
+dynamic = ["readme"]
 requires-python = ">=3.11"
 dependencies = [
     # Per-Python floors: each compiled dep's floor is the earliest version shipping a
@@ -71,8 +73,24 @@ dev = [
 ]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-fancy-pypi-readme"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata.hooks.fancy-pypi-readme]
+content-type = "text/markdown"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.fragments]]
+path = "README.md"
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# image embeds (splash, ...): relative -> tag-pinned raw URL for PyPI
+pattern = '\]\((images/[^)]+)\)'
+replacement = '](https://raw.githubusercontent.com/bertpl/counted-float/v$HFPR_VERSION/\1)'
+
+[[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
+# docs/*.md references: relative -> tag-pinned blob URL for PyPI
+pattern = '\]\((docs/[^)]+)\)'
+replacement = '](https://github.com/bertpl/counted-float/blob/v$HFPR_VERSION/\1)'
 
 [tool.hatch.build.targets.sdist]
 # configs below also make sure the .whl file contains the data files, because wheels are built from the sdist
