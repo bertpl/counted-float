@@ -1,3 +1,5 @@
+# CPU architecture scope
+
 # 1. Introduction
 
 As mentioned [here](./analysis_methodology.md), we will focus on the following classes of CPUs:
@@ -106,7 +108,7 @@ More background:
 | [ARM Cortex X925](https://en.wikipedia.org/wiki/ARM_Cortex-X925)                    | v9.2-A        |                                                              |
 | [ARM Cortex C1-Ultra](https://www.arm.com/products/silicon-ip-cpu/c1-ultra)         | v9.3-A        |                                                              |
 | [ARM Neoverse N1](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-n1) | v8.2-A        | [AWS Graviton 2](https://en.wikipedia.org/wiki/AWS_Graviton) |
-| [ARM Neoverse N2](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-n2) | v9.0-A        |                                                              |
+| [ARM Neoverse N2](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-n2) | v9.0-A        | Azure Cobalt 100                                             |
 | [ARM Neoverse V1](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-v1) | v8.4-A        | [AWS Graviton 3](https://en.wikipedia.org/wiki/AWS_Graviton) |
 | [ARM Neoverse V2](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-v2) | v9.0-A        | [AWS Graviton 4](https://en.wikipedia.org/wiki/AWS_Graviton) |
 | [ARM Neoverse V3](https://www.arm.com/products/silicon-ip-cpu/neoverse/neoverse-v3) | v9.2-A        |                                                              |
@@ -128,6 +130,6 @@ as a proxy for the 'recency' & 'complexity' of a given chip.
 
 | ARM ISA Level     | Data source               | Cores / Chips considered                                          |
 |-------------------|---------------------------|-------------------------------------------------------------------|
-| **V8.x** (>=v8.2) | → specs <br> → benchmarks | → A76, X1, N1, V1 <br> → Apple M3, AWS Graviton 2, AWS Graviton 3 |
-| **V9.0**          | → specs <br> → benchmarks | → X2, X3, N2, V2 <br> → AWS Graviton 4                            |
+| **V8.x** (>=v8.2) | → specs <br> → benchmarks | → A76, X1, N1, V1 <br> → Apple M1, Apple M3, AWS Graviton 2, AWS Graviton 3 |
+| **V9.0**          | → specs <br> → benchmarks | → X2, X3, N2, V2 <br> → AWS Graviton 4, Azure Cobalt 100          |
 | **V9.2**          | → specs <br> → benchmarks | → X4, X925, V3 <br> → Apple M4                                    |

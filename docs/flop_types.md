@@ -41,10 +41,10 @@ find:
 - Relevant CPU instructions
     - **ARM:** `FRINT`
     - **x86:** `ROUNDSD`
-- **Counted Python operations:** `round(x, 0)` for `CountedFloat` (returns
+- **Counted Python operations:** `round(x, n)` with explicit `n` — including
+  rounding to decimals, e.g. `round(x, 2)` — for `CountedFloat` (returns
   float)
-- **Not counted:** `numpy.round`, rounding with decimals, rounding on
-  non-CountedFloat
+- **Not counted:** `numpy.round`, rounding on non-CountedFloat
 
 ## FlopType.F2I (`float->int`)
 

@@ -9,64 +9,70 @@ the ability to micro-benchmark floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-Running FLOPS benchmarks using counted-float 0.9.5 ...
+Running FLOPS benchmarks using counted-float 1.2.1 ...
 (Expected duration: ~87.8 seconds)
 
-baseline                           : wwwwwwwwwwwwwww.........................   [  74.43 ns ±  2.6% |   302 cpu cycles ±  2.6% ]  /  1000 iterations
-add                                : wwwwwwwwwwwwwww.........................   [ 662.35 ns ±  0.2% | 2.69K cpu cycles ±  0.2% ]  /  1000 iterations
-add_minus                          : wwwwwwwwwwwwwww.........................   [   1.23 µs ±  0.2% | 4.98K cpu cycles ±  0.2% ]  /  1000 iterations
-add_abs                            : wwwwwwwwwwwwwww.........................   [   1.23 µs ±  0.4% | 4.99K cpu cycles ±  0.4% ]  /  1000 iterations
-add_add                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.23K cpu cycles ±  0.2% ]  /  1000 iterations
-add_sub                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.23K cpu cycles ±  0.2% ]  /  1000 iterations
-add_round                          : wwwwwwwwwwwwwww.........................   [   1.44 µs ±  0.1% | 5.84K cpu cycles ±  0.1% ]  /  1000 iterations
-add_sqrt                           : wwwwwwwwwwwwwww.........................   [   3.96 µs ±  0.2% | 16.1K cpu cycles ±  0.2% ]  /  1000 iterations
-add_cbrt                           : wwwwwwwwwwwwwww.........................   [  25.42 µs ±  0.2% |  103K cpu cycles ±  0.2% ]  /  1000 iterations
-add_log                            : wwwwwwwwwwwwwww.........................   [  11.69 µs ±  0.3% | 47.4K cpu cycles ±  0.3% ]  /  1000 iterations
-add_log_exp                        : wwwwwwwwwwwwwww.........................   [  22.57 µs ±  0.1% | 91.5K cpu cycles ±  0.1% ]  /  1000 iterations
-add_log2                           : wwwwwwwwwwwwwww.........................   [  12.00 µs ±  0.2% | 48.7K cpu cycles ±  0.2% ]  /  1000 iterations
-add_log2_exp2                      : wwwwwwwwwwwwwww.........................   [  22.48 µs ±  0.2% | 91.2K cpu cycles ±  0.2% ]  /  1000 iterations
-add_log10                          : wwwwwwwwwwwwwww.........................   [  11.50 µs ±  0.2% | 46.6K cpu cycles ±  0.2% ]  /  1000 iterations
-add_log10_exp10                    : wwwwwwwwwwwwwww.........................   [  24.68 µs ±  0.2% |  100K cpu cycles ±  0.2% ]  /  1000 iterations
-add_sin                            : wwwwwwwwwwwwwww.........................   [  18.64 µs ±  0.3% | 75.6K cpu cycles ±  0.3% ]  /  1000 iterations
-add_cos                            : wwwwwwwwwwwwwww.........................   [  18.92 µs ±  0.3% | 76.7K cpu cycles ±  0.3% ]  /  1000 iterations
-add_tan                            : wwwwwwwwwwwwwww.........................   [  20.91 µs ±  0.2% | 84.8K cpu cycles ±  0.2% ]  /  1000 iterations
-pow                                : wwwwwwwwwwwwwww.........................   [  24.12 µs ±  0.3% | 97.8K cpu cycles ±  0.3% ]  /  1000 iterations
-pow_pow                            : wwwwwwwwwwwwwww.........................   [  48.15 µs ±  0.2% |  195K cpu cycles ±  0.2% ]  /  1000 iterations
-sub                                : wwwwwwwwwwwwwww.........................   [ 661.55 ns ±  0.2% | 2.68K cpu cycles ±  0.2% ]  /  1000 iterations
-sub_sub                            : wwwwwwwwwwwwwww.........................   [   1.29 µs ±  0.2% | 5.24K cpu cycles ±  0.2% ]  /  1000 iterations
-mul                                : wwwwwwwwwwwwwww.........................   [ 961.78 ns ±  0.2% | 3.90K cpu cycles ±  0.2% ]  /  1000 iterations
-mul_mul                            : wwwwwwwwwwwwwww.........................   [   1.92 µs ±  0.2% | 7.78K cpu cycles ±  0.2% ]  /  1000 iterations
-div                                : wwwwwwwwwwwwwww.........................   [   2.45 µs ±  0.2% | 9.92K cpu cycles ±  0.2% ]  /  1000 iterations
-div_div                            : wwwwwwwwwwwwwww.........................   [   5.00 µs ±  0.2% | 20.3K cpu cycles ±  0.2% ]  /  1000 iterations
-lte_addsub                         : wwwwwwwwwwwwwww.........................   [   1.71 µs ±  0.2% | 6.94K cpu cycles ±  0.2% ]  /  1000 iterations
+baseline                           : wwwwwwwwwwwwwww.........................   [   0.00 ns ±  3.6% |  0.00 cpu cycles ±  3.6% ]  /  1000 iterations
+add                                : wwwwwwwwwwwwwww.........................   [ 641.59 ns ±  0.1% | 2.60K cpu cycles ±  0.1% ]  /  1000 iterations
+add_minus                          : wwwwwwwwwwwwwww.........................   [   1.21 µs ±  0.1% | 4.91K cpu cycles ±  0.1% ]  /  1000 iterations
+add_abs                            : wwwwwwwwwwwwwww.........................   [   1.21 µs ±  0.1% | 4.92K cpu cycles ±  0.1% ]  /  1000 iterations
+add_add                            : wwwwwwwwwwwwwww.........................   [   1.27 µs ±  0.1% | 5.17K cpu cycles ±  0.1% ]  /  1000 iterations
+add_sub                            : wwwwwwwwwwwwwww.........................   [   1.27 µs ±  0.1% | 5.17K cpu cycles ±  0.1% ]  /  1000 iterations
+add_round                          : wwwwwwwwwwwwwww.........................   [   1.42 µs ±  0.1% | 5.77K cpu cycles ±  0.1% ]  /  1000 iterations
+add_sqrt                           : wwwwwwwwwwwwwww.........................   [   3.86 µs ±  0.1% | 15.7K cpu cycles ±  0.1% ]  /  1000 iterations
+add_cbrt                           : wwwwwwwwwwwwwww.........................   [  13.77 µs ±  0.1% | 55.9K cpu cycles ±  0.1% ]  /  1000 iterations
+add_log                            : wwwwwwwwwwwwwww.........................   [  11.57 µs ±  0.1% | 46.9K cpu cycles ±  0.1% ]  /  1000 iterations
+add_log_exp                        : wwwwwwwwwwwwwww.........................   [  22.43 µs ±  0.9% | 91.0K cpu cycles ±  0.9% ]  /  1000 iterations
+add_log2                           : wwwwwwwwwwwwwww.........................   [  11.98 µs ±  1.9% | 48.6K cpu cycles ±  1.9% ]  /  1000 iterations
+add_log2_exp2                      : wwwwwwwwwwwwwww.........................   [  23.62 µs ±  2.3% | 95.8K cpu cycles ±  2.3% ]  /  1000 iterations
+add_log10                          : wwwwwwwwwwwwwww.........................   [  11.58 µs ±  1.1% | 47.0K cpu cycles ±  1.1% ]  /  1000 iterations
+add_log10_exp10                    : wwwwwwwwwwwwwww.........................   [  24.12 µs ±  1.0% | 97.8K cpu cycles ±  1.0% ]  /  1000 iterations
+add_sin                            : wwwwwwwwwwwwwww.........................   [  18.13 µs ±  0.2% | 73.5K cpu cycles ±  0.2% ]  /  1000 iterations
+add_cos                            : wwwwwwwwwwwwwww.........................   [  18.35 µs ±  0.3% | 74.4K cpu cycles ±  0.3% ]  /  1000 iterations
+add_tan                            : wwwwwwwwwwwwwww.........................   [  20.68 µs ±  0.7% | 83.9K cpu cycles ±  0.7% ]  /  1000 iterations
+pow                                : wwwwwwwwwwwwwww.........................   [  23.83 µs ±  0.2% | 96.7K cpu cycles ±  0.2% ]  /  1000 iterations
+pow_pow                            : wwwwwwwwwwwwwww.........................   [  48.59 µs ±  1.2% |  197K cpu cycles ±  1.2% ]  /  1000 iterations
+sub                                : wwwwwwwwwwwwwww.........................   [ 646.33 ns ±  0.2% | 2.62K cpu cycles ±  0.2% ]  /  1000 iterations
+sub_sub                            : wwwwwwwwwwwwwww.........................   [   1.28 µs ±  0.1% | 5.20K cpu cycles ±  0.1% ]  /  1000 iterations
+mul                                : wwwwwwwwwwwwwww.........................   [ 956.45 ns ±  0.1% | 3.88K cpu cycles ±  0.1% ]  /  1000 iterations
+mul_mul                            : wwwwwwwwwwwwwww.........................   [   1.91 µs ±  0.4% | 7.77K cpu cycles ±  0.4% ]  /  1000 iterations
+div                                : wwwwwwwwwwwwwww.........................   [   2.44 µs ±  0.2% | 9.88K cpu cycles ±  0.2% ]  /  1000 iterations
+div_div                            : wwwwwwwwwwwwwww.........................   [   4.96 µs ±  0.1% | 20.1K cpu cycles ±  0.1% ]  /  1000 iterations
+lte_addsub                         : wwwwwwwwwwwwwww.........................   [   1.70 µs ±  0.1% | 6.91K cpu cycles ±  0.1% ]  /  1000 iterations
+
 
 >>> results.flop_weights().show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.89904
-    FlopType.MINUS      [-x]            :   0.90935
-    FlopType.SUB        [x-y]           :   0.99676
+    FlopType.MINUS      [-x]            :   0.90134
+    FlopType.ABS        [abs(x)]        :   0.90213
+    FlopType.SUB        [x-y]           :   0.99990
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.RND        [round]         :   1.24397
-    FlopType.MUL        [x*y]           :   1.55516
-    FlopType.COMP       [x<=y]          :   1.69018
-    FlopType.DIV        [x/y]           :   4.12333
-    FlopType.SQRT       [sqrt(x)]       :   5.42419
-    FlopType.EXP2       [2^x]           :  16.95266
-    FlopType.LOG10      [log10(x)]      :  17.60079
-    FlopType.EXP        [e^x]           :  17.76250
-    FlopType.LOG        [log(x)]        :  17.86149
-    FlopType.LOG2       [log2(x)]       :  18.42380
-    FlopType.EXP10      [10^x]          :  21.50729
-    FlopType.SIN        [sin(x)]        :  29.31571
-    FlopType.COS        [cos(x)]        :  29.56218
-    FlopType.TAN        [tan(x)]        :  32.88570
-    FlopType.POW        [x^y]           :  39.35018
-    FlopType.CBRT       [cbrt(x)]       :  40.16857
+    FlopType.RND        [round]         :   1.23559
+    FlopType.MUL        [x*y]           :   1.51489
+    FlopType.COMP       [x<=y]          :   1.67456
+    FlopType.DIV        [x/y]           :   3.99607
+    FlopType.SQRT       [sqrt(x)]       :   5.08751
+    FlopType.EXP        [e^x]           :  17.17063
+    FlopType.LOG        [log(x)]        :  17.28115
+    FlopType.LOG10      [log10(x)]      :  17.29637
+    FlopType.LOG2       [log2(x)]       :  17.92821
+    FlopType.EXP2       [2^x]           :  18.40429
+    FlopType.EXP10      [10^x]          :  19.82471
+    FlopType.CBRT       [cbrt(x)]       :  20.75967
+    FlopType.SIN        [sin(x)]        :  27.64850
+    FlopType.COS        [cos(x)]        :  28.00054
+    FlopType.TAN        [tan(x)]        :  31.67590
+    FlopType.POW        [x^y]           :  39.14209
     FlopType.F2I        [float->int]    :       nan
     FlopType.I2F        [int->float]    :       nan
 }
 ```
+
+Note: the `baseline` benchmark may show ~0 ns on recent numba versions, whose
+compiler can eliminate the baseline kernel's repetition loop entirely. This is
+harmless: baseline timings are informational only — all estimated FLOP
+latencies are differences between pairs of the other benchmarks.
 
 The resulting weights can then be configured as the active flop weights — see
 [Configuring FLOP weights](flop_weights.md#configuring-flop-weights).
