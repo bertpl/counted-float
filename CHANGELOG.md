@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `run_flops_benchmark()` no longer crashes with `OverflowError` on modern numba versions
+
 ### Security
 
 ## 1.2.1 (2026-07-06)

@@ -28,6 +28,8 @@ class MicroBenchmark(ABC):
     """
 
     MAX_N_EXECUTIONS_FACTOR = 10  # never adjust n_executions by more than this factor (up or down)
+    MAX_N_EXECUTIONS = 10**12  # absolute cap; unbounded growth (e.g. when a jit-compiled kernel is
+    #                            dead-code-eliminated and runtime stays flat) would overflow int64
 
     def __init__(self, name: str, single_execution: str = "execution") -> None:
         self.name = name
@@ -72,7 +74,7 @@ class MicroBenchmark(ABC):
 
             # --- adjust n_ops ---
             n_ops_min = max(1, int(n_executions / self.MAX_N_EXECUTIONS_FACTOR))
-            n_ops_max = int(n_executions * self.MAX_N_EXECUTIONS_FACTOR)
+            n_ops_max = min(int(n_executions * self.MAX_N_EXECUTIONS_FACTOR), self.MAX_N_EXECUTIONS)
             n_executions = max(n_ops_min, min(n_ops_max, int(n_executions * n_seconds_per_run_target / t_tot_seconds)))
 
         # final results
