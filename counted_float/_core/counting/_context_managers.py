@@ -92,10 +92,16 @@ class FlopCountingContext:
 class PauseFlopCounting:
     """Context manager that pauses flop counting for the enclosed code block.
 
-    This acts globally, across all active FlopCountingContext instances.
+    This acts globally, across all active FlopCountingContext instances.  On exit the counter's
+    prior state is restored (rather than counting being resumed unconditionally), so these blocks
+    can be nested and can sit inside code that already paused counting.
     """
 
+    def __init__(self) -> None:
+        self.__was_active: bool = False
+
     def __enter__(self) -> Self:
+        self.__was_active = GLOBAL_COUNTER.is_active()
         GLOBAL_COUNTER.pause()
         return self
 
@@ -105,4 +111,5 @@ class PauseFlopCounting:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        GLOBAL_COUNTER.resume()
+        if self.__was_active:
+            GLOBAL_COUNTER.resume()

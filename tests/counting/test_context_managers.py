@@ -1,5 +1,6 @@
 from counted_float._core.counting._context_managers import FlopCountingContext, PauseFlopCounting
 from counted_float._core.counting._counted_float import CountedFloat
+from counted_float._core.counting._global_counter import GLOBAL_COUNTER
 
 
 # =================================================================================================
@@ -189,3 +190,43 @@ def test_pause_flop_counting():
     assert flop_counts_1.total_count() == 1
     assert flop_counts_2.total_count() == 1
     assert flop_counts_3.total_count() == 0
+
+
+def test_pause_flop_counting_nested():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext() as fcc:
+        with PauseFlopCounting():
+            with PauseFlopCounting():
+                _ = cf1 + cf2  # should not be counted (doubly paused)
+            _ = cf1 * cf2  # should not be counted (still inside outer pause)
+        _ = cf1 / cf2  # should be counted (both pauses exited)
+
+    # --- assert ------------------------------------------
+    flop_counts = fcc.flop_counts()
+    assert flop_counts.ADD == 0
+    assert flop_counts.MUL == 0
+    assert flop_counts.DIV == 1
+
+
+def test_pause_flop_counting_restores_paused_state():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext() as fcc:
+        GLOBAL_COUNTER.pause()
+        with PauseFlopCounting():
+            pass
+        _ = cf1 + cf2  # should not be counted: counter was already paused before the with-block
+        GLOBAL_COUNTER.resume()
+        _ = cf1 * cf2  # should be counted
+
+    # --- assert ------------------------------------------
+    flop_counts = fcc.flop_counts()
+    assert flop_counts.ADD == 0
+    assert flop_counts.MUL == 1
