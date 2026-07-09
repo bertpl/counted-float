@@ -5,15 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 1.2.2 (2026-07-09)
 
 ### Fixed
 
@@ -21,9 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - corrected documentation errors (FLOP-type counting rules, configuration function names, default rounding mode, CPU coverage tables)
 - nested or pre-paused `PauseFlopCounting` no longer resumes counting too early
 - `CountedFloat` arithmetic and comparisons now delegate to the other operand like `float` does (e.g. `Fraction` interop no longer raises), and failed operations no longer pollute counts
-
-### Security
-
 ## 1.2.1 (2026-07-06)
 
 ### Fixed

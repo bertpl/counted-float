@@ -1,6 +1,6 @@
 [project]
 name = "counted-float"
-version = "1.2.1"
+version = "1.2.2"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 # readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from
 # README.md, rewriting relative links to tag-pinned absolute URLs (config below).
