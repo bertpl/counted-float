@@ -65,16 +65,17 @@ flop_counts = ctx.flop_counts()
 total_cost = flop_counts.total_weighted_cost()  # 1 + 40 + 22 = 63
 ```
 
-Note that the `total_weighted_cost` method will use the default flop weights
-as returned by `get_flop_weights()`. This can be overridden by either
+Note that the `total_weighted_cost` method will use the active flop weights
+as returned by `get_active_flop_weights()`. This can be overridden by either
 configuring different flop weights (see next section) or by setting the
 `weights` argument of the `total_weighted_cost()` method.
 
 ## Configuring FLOP weights
 
-We showed earlier that the `get_flop_weights()` function returns the default
-FLOP weights. We can change this by using the `set_flop_weights()` function,
-which takes a `FlopWeights` object as an argument. This way we can configure
+We showed earlier that the `get_active_flop_weights()` function returns the
+active FLOP weights. We can change these by using the
+`set_active_flop_weights()` function, which takes a `FlopWeights` object as
+an argument. This way we can configure
 flop weights that might be obtained using benchmarks run on the target
 hardware (see [Benchmarking](benchmarking.md)).
 
@@ -129,7 +130,7 @@ There are 3 rounding modes:
 - `"10%"` -> round to nearest semi-round number within ~10% (default)
 
 The default weights that are configured out-of-the-box in the package are the
-integer-rounded `consensus` weights.
+`consensus` weights with the default `"10%"` rounding.
 
 ### Custom-aggregated flop weights
 

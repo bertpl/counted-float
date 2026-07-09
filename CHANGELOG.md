@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `run_flops_benchmark()` no longer crashes with `OverflowError` on modern numba versions
+- corrected documentation errors (FLOP-type counting rules, configuration function names, default rounding mode, CPU coverage tables)
 
 ### Security
 

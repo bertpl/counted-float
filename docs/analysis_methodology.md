@@ -1,3 +1,5 @@
+# Analysis methodology
+
 # 1. Introduction
 
 The scope of this package are prototype iterative numerical algorithms, such as ODE solvers, root finding algorithms,
