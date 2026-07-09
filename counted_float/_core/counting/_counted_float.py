@@ -38,45 +38,63 @@ class CountedFloat(float):
 
     def __eq__(self, other: object) -> bool:
         """x==other or other==x."""
+        result = super().__eq__(other)
+        if result is NotImplemented:
+            return NotImplemented  # let Python try the reflected operation; nothing was computed, so nothing counts
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__eq__(other)
+        return result
 
     def __ne__(self, other: object) -> bool:
         """x!=other or other!=x."""
+        result = super().__ne__(other)
+        if result is NotImplemented:
+            return NotImplemented
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__ne__(other)
+        return result
 
     def __lt__(self, other: float) -> bool:
         """x<other."""
+        result = super().__lt__(other)
+        if result is NotImplemented:
+            return NotImplemented
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__lt__(other)
+        return result
 
     def __le__(self, other: float) -> bool:
         """x<=other."""
+        result = super().__le__(other)
+        if result is NotImplemented:
+            return NotImplemented
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__le__(other)
+        return result
 
     def __gt__(self, other: float) -> bool:
         """x>other."""
+        result = super().__gt__(other)
+        if result is NotImplemented:
+            return NotImplemented
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__gt__(other)
+        return result
 
     def __ge__(self, other: float) -> bool:
         """x>=other."""
+        result = super().__ge__(other)
+        if result is NotImplemented:
+            return NotImplemented
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
-        return super().__ge__(other)
+        return result
 
     def __round__(  # ty: ignore[invalid-method-override] -- float's stub narrows return per overload; this is the union
         self, n: SupportsIndex | None = None
@@ -116,59 +134,83 @@ class CountedFloat(float):
 
     def __add__(self, other: float) -> CountedFloat:
         """x+other."""
+        result = super().__add__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_add()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__add__(other))
+        return CountedFloat(result)
 
     def __radd__(self, other: float) -> CountedFloat:
         """other+x."""
+        result = super().__radd__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_add()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__radd__(other))
+        return CountedFloat(result)
 
     def __sub__(self, other: float) -> CountedFloat:
         """x-other."""
+        result = super().__sub__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_sub()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__sub__(other))
+        return CountedFloat(result)
 
     def __rsub__(self, other: float) -> CountedFloat:
         """other-x."""
+        result = super().__rsub__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_sub()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__rsub__(other))
+        return CountedFloat(result)
 
     def __mul__(self, other: float) -> CountedFloat:
         """x*other or other*x."""
+        result = super().__mul__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_mul()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__mul__(other))
+        return CountedFloat(result)
 
     def __rmul__(self, other: float) -> CountedFloat:
         """other*x."""
+        result = super().__rmul__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_mul()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__rmul__(other))
+        return CountedFloat(result)
 
     def __truediv__(self, other: float) -> CountedFloat:
         """x/other."""
+        result = super().__truediv__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_div()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__truediv__(other))
+        return CountedFloat(result)
 
     def __rtruediv__(self, other: float) -> CountedFloat:
         """other/x."""
+        result = super().__rtruediv__(other)
+        if result is NotImplemented:
+            return NotImplemented
         GLOBAL_COUNTER.incr_div()
         if isinstance(other, int):
             GLOBAL_COUNTER.incr_i2f()
-        return CountedFloat(super().__rtruediv__(other))
+        return CountedFloat(result)
 
     def __pow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__pow__'s mod is None-only and unused here
         """x**other.
@@ -178,14 +220,23 @@ class CountedFloat(float):
         the strength reduction (x*x) a compiled port would apply. A float operand may just as well
         be a runtime variable that happens to hold that value, where a port would compile a
         generic pow, so `x**2.0` counts as POW.
+
+        A negative base with a fractional exponent yields a complex result (as for plain float);
+        complex values fall outside the counting model, so nothing is counted and the result is
+        returned unwrapped.
         """
+        result = super().__pow__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        if not isinstance(result, float):
+            return result
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
         else:
             if isinstance(other, int):
                 GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
-        return CountedFloat(super().__pow__(other))
+        return CountedFloat(result)
 
     def __rpow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__rpow__'s mod is None-only and unused here
         """other**x.
@@ -194,7 +245,16 @@ class CountedFloat(float):
         is taken as a hardcoded constant, counting as EXP2 / EXP10 (the strength reduction a
         compiled port would apply); a float base may be a runtime variable, so it counts as
         generic POW.
+
+        A negative base with a fractional exponent yields a complex result (as for plain float);
+        complex values fall outside the counting model, so nothing is counted and the result is
+        returned unwrapped.
         """
+        result = super().__rpow__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        if not isinstance(result, float):
+            return result
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_exp2()
         elif isinstance(other, int) and other == 10:
@@ -203,4 +263,4 @@ class CountedFloat(float):
             if isinstance(other, int):
                 GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
-        return CountedFloat(super().__rpow__(other))
+        return CountedFloat(result)

@@ -4,6 +4,12 @@
   `numpy`)
 - not all Python built-in math operations are counted (e.g. hyperbolic
   functions)
+- mixed operations with non-float numeric types are outside the counting
+  model: `CountedFloat` delegates to the other operand exactly like `float`
+  does, so e.g. a `fractions.Fraction` operand generally yields a correct but
+  plain — and uncounted — `float` result (downstream counting stops), while a
+  `decimal.Decimal` operand raises `TypeError` just as with plain `float`.
+  Numerical algorithms should use `float`/`CountedFloat` values throughout.
 - flop weights should be taken with a grain of salt and should only provide
   relative ballpark estimates w.r.t. computational complexity. Production
   implementations in a compiled language could have vastly differing
