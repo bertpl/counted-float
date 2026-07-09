@@ -112,9 +112,7 @@ def test_reflected_operators_of_foreign_type_win(global_counter: GlobalFlopCount
 # =================================================================================================
 @pytest.mark.parametrize("op", ARITHMETIC_OPERATORS)
 @pytest.mark.parametrize("other", ["abc", Decimal("0.5"), None])
-def test_arithmetic_with_unsupported_operand_raises(
-    op: Callable, other: object, global_counter: GlobalFlopCounter
-):
+def test_arithmetic_with_unsupported_operand_raises(op: Callable, other: object, global_counter: GlobalFlopCounter):
     # --- act & assert ------------------------------------
     # error parity with plain float (the exact message varies: str.__rmul__ raises its own
     # "can't multiply sequence" TypeError, exactly as for plain float)
