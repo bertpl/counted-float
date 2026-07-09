@@ -75,3 +75,31 @@ def test_micro_benchmark(n_runs_total: int, n_runs_warmup: int, n_seconds_per_ru
     assert results.summary_stats_nsecs_per_exec().q75 > 0.9 * nsec_per_exec, (
         "estimated time range should approx. enclose actual time"
     )
+
+
+class FlatRuntimeMicroBenchmark(MicroBenchmark):
+    """Benchmark whose runtime does not scale with n_executions, mimicking a dead-code-eliminated kernel."""
+
+    def __init__(self):
+        super().__init__(name="flat")
+        self.max_n_executions_seen = 0
+
+    def _prepare_benchmark(self, n_executions: int):
+        self.max_n_executions_seen = max(self.max_n_executions_seen, n_executions)
+
+    def _run_benchmark(self):
+        pass
+
+
+def test_micro_benchmark_flat_runtime_respects_cap():
+    # --- arrange -----------------------------------------
+    benchmark = FlatRuntimeMicroBenchmark()
+
+    # --- act ---------------------------------------------
+    # default-like parameters; a flat runtime makes the adaptive sizing grow n_executions
+    # by MAX_N_EXECUTIONS_FACTOR every run, which must stop at MAX_N_EXECUTIONS
+    results = benchmark.run_many(n_runs_total=40, n_runs_warmup=15, n_seconds_per_run_target=0.1)
+
+    # --- assert ------------------------------------------
+    assert isinstance(results, MicroBenchmarkResult)
+    assert benchmark.max_n_executions_seen == MicroBenchmark.MAX_N_EXECUTIONS
