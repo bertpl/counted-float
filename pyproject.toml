@@ -97,12 +97,12 @@ pattern = '\]\((docs/[^)]+)\)'
 replacement = '](https://github.com/bertpl/counted-float/blob/v$HFPR_VERSION/\1)'
 
 [tool.hatch.build.targets.sdist]
-# configs below also make sure the .whl file contains the data files, because wheels are built from the sdist
-packages = ["counted_float"]
-force-include = { "counted_float/data" = "counted_float/data" }
+# only-include preserves the src/ prefix verbatim (unlike `packages`, which rewrites
+# paths and would leave the wheel build unable to locate the package in the sdist)
+only-include = ["src/counted_float"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["counted_float"]
+packages = ["src/counted_float"]
 
 [tool.ruff]
 line-length = 120
@@ -156,13 +156,13 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.mod
 "tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 # module-level mutable patching state (original-function snapshots + context refcount) is the design
-"counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
+"src/counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
 # maintainer tooling, not the shipped library: not a package (INP001), subprocess is fine (S)
 "scripts/**" = ["INP001", "S"]
 ".github/scripts/**" = ["INP001", "S"]
 
 [tool.ty.src]
-include = ["counted_float"]
+include = ["src/counted_float"]
 
 [tool.ty.rules]
 # The numba shim needs `ty: ignore`s that are used only when the optional numba

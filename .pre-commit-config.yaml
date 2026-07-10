@@ -19,14 +19,14 @@ repos:
         entry: uv run ruff format
         language: system
         types: [python]
-        files: ^(counted_float|tests|scripts)/|^\.github/scripts/
+        files: ^(src|tests|scripts)/|^\.github/scripts/
         pass_filenames: true
       - id: ruff
         name: ruff check
         entry: uv run ruff check
         language: system
         types: [python]
-        files: ^(counted_float|tests|scripts)/|^\.github/scripts/
+        files: ^(src|tests|scripts)/|^\.github/scripts/
         pass_filenames: true
       - id: ty
         name: ty check
