@@ -61,6 +61,7 @@ cli = [
 
 [dependency-groups]
 dev = [
+    "check-wheel-contents>=0.6.2",
     "genbadge[all]>=1.1.2",
     "pre-commit>=4.0",
     "pytest>=8.0",
