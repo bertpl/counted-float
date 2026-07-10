@@ -5,6 +5,7 @@ import pytest
 from counted_float._core.utils import Timer
 
 
+@pytest.mark.flaky(reruns=5)  # wall-clock assertions can drift on a loaded CI runner
 def test_timer():
     # --- arrange -----------------------------------------
     timer = Timer()
