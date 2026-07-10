@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 
 from counted_float import BuiltInData
@@ -13,9 +15,18 @@ def cli() -> None:
 
 
 @cli.command(short_help="run flop benchmarks")
-def benchmark() -> None:
+@click.option(
+    "--output",
+    type=click.Path(dir_okay=False, writable=True, path_type=Path),
+    default=None,
+    help="Optional file path to write results to as JSON, in the same schema as the built-in data files.",
+)
+def benchmark(output: Path | None) -> None:
     result = run_flops_benchmark()
     result.show()
+    if output is not None:
+        output.write_text(result.model_dump_json(indent=4) + "\n", encoding="utf-8")
+        click.echo(f"Results written to '{output}'.")
 
 
 @cli.command(short_help="show all built-in data")
