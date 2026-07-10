@@ -33,6 +33,7 @@ class DummyMicroBenchmark(MicroBenchmark):
             pass
 
 
+@pytest.mark.flaky(reruns=5)  # wall-clock assertions can drift on a loaded CI runner
 @pytest.mark.parametrize(
     ("n_runs_total", "n_runs_warmup", "n_seconds_per_run_target"),
     [

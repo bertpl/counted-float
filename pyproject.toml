@@ -66,6 +66,7 @@ dev = [
     "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
+    "pytest-rerunfailures>=15.0",
     "pytest-xdist>=3.5.0",
     # exact tool versions are pinned by the tracked uv.lock (used by pre-commit,
     # `make lint`, and CI); these ranges just set the floor.
