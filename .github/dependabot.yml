@@ -10,21 +10,32 @@ updates:
       - "/.github/actions/benchmark"
     schedule:
       interval: "weekly"
+    # `chore` prefix makes the PR title (and thus the squash commit on main)
+    # follow the repo's `<type>: <summary>` convention, so the preflight
+    # title check needs no Dependabot exemption.
+    commit-message:
+      prefix: "chore"
     groups:
       actions:  # one batched PR for all action bumps
         patterns: ["*"]
     # Let releases age before PRs open: auto-merged patch/minor bumps then sit
     # long enough for upstream compromises to surface before they can land.
+    # (semver-specific cooldowns are not supported for github-actions.)
     cooldown:
       default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
-      semver-major-days: 14
 
   - package-ecosystem: "uv"
-    # Bumps uv.lock (and pyproject pins) for the runtime + dev/lint/type tooling
-    # the lockfile deliberately pins — those rot without automated updates.
+    # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
+    # deliberately pins — those rot without automated updates.
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "chore"
+    # Lockfile only: pyproject's dependency floors are deliberate lower bounds
+    # (the lowest-direct CI leg resolves to them) and must never be auto-bumped;
+    # the lockfile is the thing that's pinned for reproducible dev/CI.
+    versioning-strategy: lockfile-only
     groups:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]

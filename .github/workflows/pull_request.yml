@@ -20,7 +20,14 @@ jobs:
   preflight:
     runs-on: ubuntu-latest
     steps:
+      # Dependabot's `dependabot/...` branch prefix is not configurable, so it
+      # gets an actor-based exemption — branch names are ephemeral (deleted on
+      # squash-merge, never reaching main), unlike PR titles, which become the
+      # commit subject and so are enforced below. `pull_request.user.login` (the
+      # PR author), not `github.actor`, so a human re-running checks on a
+      # Dependabot PR can't un-exempt it.
       - name: Check branch name
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         env:
           BRANCH: ${{ github.head_ref }}
         run: |
