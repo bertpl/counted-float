@@ -88,6 +88,9 @@ set_active_flop_weights(weights=FlopWeights(...))  # insert own weights here
 
 ## Inspecting built-in data
 
+See [Built-in data](builtin_data.md) for what data ships with the package
+and how the keys used for filtering below are structured.
+
 ### Default, pre-aggregated flop weights
 
 Built-in flop weights can be inspected using the following functions:
@@ -135,7 +138,10 @@ The default weights that are configured out-of-the-box in the package are the
 ### Custom-aggregated flop weights
 
 We can retrieve built-in flop weights in a more fine-grained manner, by custom
-filtering and then aggregating them with the geometric mean.
+filtering and then aggregating them — by the same procedure used for the
+default weights (see [How the final weights are
+computed](#how-the-final-weights-are-computed) below), applied to the
+filtered subset.
 
 ```python
 from counted_float.config import get_builtin_flop_weights
@@ -167,3 +173,51 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.TAN        [tan(x)]        :  45.00000
 }
 ```
+
+## How the final weights are computed
+
+The default weights and any filtered subset are produced by the very same
+procedure — the default *is* the filtered subset with an empty filter, i.e.
+`get_default_consensus_flop_weights()` is exactly
+`get_builtin_flop_weights(key_filter="")`. So there is a single aggregation
+mechanism behind every set of weights the package reports.
+
+### Hierarchical aggregation
+
+The matching data sources are not simply pooled into one flat average. They
+are combined with the geometric mean **one level of the key hierarchy at a
+time**, from the leaves up: individual sources are averaged within their
+source type (`benchmarks`, `specs`, `other`), source types within their
+µarch family, families within their ISA, and finally the two ISAs together.
+The [built-in data reference](builtin_data.md) describes the hierarchy these
+levels correspond to.
+
+Aggregating level-by-level implicitly weights the *branches* of the tree
+rather than the individual files, so a µarch family with many measured CPUs
+does not drown out one with few, and the abundant benchmark results do not
+overwhelm the sparser spec-sheet data. The geometric mean (rather than the
+arithmetic mean) is used throughout because the weights are cost *ratios*:
+it treats "twice as expensive" and "half as expensive" symmetrically.
+
+### Imputation of missing weights
+
+Not every data source covers every FLOP type: spec sheets and third-party
+latency analyses only cover operations with hardware instructions, so their
+entries have no weights for the transcendental functions (`sin`, `exp`,
+`pow`, ...). Averaging such incomplete entries together with complete
+benchmark results naively would bias the aggregate: whichever entries happen
+to be complete would fully determine the expensive operations while also
+pulling on the cheap ones.
+
+Therefore, **at every level, missing values are imputed before that level's
+geometric mean is taken.** The weights being combined form a matrix (FLOP
+types x sources) which is approximated by a positive rank-1 factorization —
+effectively "cost of the operation" x "speed of the source" — fitted to the
+known values only; the missing cells are then filled from that
+approximation. Intuitively: if a spec-sheet entry's known weights run ~20%
+cheaper than its siblings', its missing transcendental weights are estimated
+~20% cheaper than theirs too.
+
+A value can only be imputed if its row and column each have at least one
+known value; anything still missing afterwards stays missing in the
+aggregate (shown as `/` in the `counted_float show-data` tree).

@@ -38,6 +38,7 @@ nav:
   - Known limitations: known_limitations.md
   - Reference:
       - FLOP types: flop_types.md
+      - Built-in data: builtin_data.md
       - Methodology: analysis_methodology.md
       - CPU architecture scope: cpu_architectures_scope.md
   - Changelog: changelog.md
