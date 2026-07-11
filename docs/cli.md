@@ -20,7 +20,21 @@ installing the package as a tool this way.
 counted_float benchmark
 ```
 
-after which the results will be shown as .json.
+This runs the FLOPS benchmark suite on the current machine and prints the
+full results as JSON: system information (processor, OS, Python, package
+versions), benchmark settings, per-operation cycle counts, and the estimated
+per-FLOP-type latencies. See [Benchmarking](benchmarking.md) for how the
+suite works.
+
+To also persist the results, pass `--output`:
+
+```
+counted_float benchmark --output results.json
+```
+
+This writes the same results to the given path, in the same JSON schema as
+the package's [built-in data files](builtin_data.md) — so results collected
+this way can be inspected, shared, or compared against the built-in entries.
 
 ## Show built-in data
 
