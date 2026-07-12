@@ -2,7 +2,6 @@ from enum import StrEnum
 
 
 class FlopsBenchmarkType(StrEnum):
-    # TODO: extend when we actually implement these benchmarks
     BASELINE = "baseline"
     ADD = "add"
     ADD_MINUS = "add_minus"
@@ -21,6 +20,14 @@ class FlopsBenchmarkType(StrEnum):
     ADD_SIN = "add_sin"
     ADD_COS = "add_cos"
     ADD_TAN = "add_tan"
+    ADD_SIN_ASIN = "add_sin_asin"
+    ADD_SIN_ACOS = "add_sin_acos"
+    ADD_ATAN = "add_atan"
+    ADD_ATAN2 = "add_atan2"
+    ADD_HYPOT = "add_hypot"
+    ADD_LOG1P = "add_log1p"
+    ADD_LOG1P_EXPM1 = "add_log1p_expm1"
+    ADD_FMOD = "add_fmod"
     POW = "pow"
     POW_POW = "pow_pow"
     SUB = "sub"

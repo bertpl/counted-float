@@ -91,6 +91,14 @@ class FlopsBenchmarkSuite:
             FlopType.SIN: n_cycles_per_op[FBT.ADD_SIN].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.COS: n_cycles_per_op[FBT.ADD_COS].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.TAN: n_cycles_per_op[FBT.ADD_TAN].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.ASIN: n_cycles_per_op[FBT.ADD_SIN_ASIN].q50 - n_cycles_per_op[FBT.ADD_SIN].q50,
+            FlopType.ACOS: n_cycles_per_op[FBT.ADD_SIN_ACOS].q50 - n_cycles_per_op[FBT.ADD_SIN].q50,
+            FlopType.ATAN: n_cycles_per_op[FBT.ADD_ATAN].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.ATAN2: n_cycles_per_op[FBT.ADD_ATAN2].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.HYPOT: n_cycles_per_op[FBT.ADD_HYPOT].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.LOG1P: n_cycles_per_op[FBT.ADD_LOG1P].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.EXPM1: n_cycles_per_op[FBT.ADD_LOG1P_EXPM1].q50 - n_cycles_per_op[FBT.ADD_LOG1P].q50,
+            FlopType.FMOD: n_cycles_per_op[FBT.ADD_FMOD].q50 - n_cycles_per_op[FBT.ADD].q50,
         }
 
         # put results in appropriate format
@@ -262,6 +270,78 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
+        def f_add_sin_asin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # sin bounds the argument to [-1, 1] so asin stays in-domain in the dependent chain;
+            # subtract add_sin to isolate the asin cost
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.asin(math.sin(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_sin_acos(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # sin bounds the argument to [-1, 1] for acos; subtract add_sin to isolate the acos cost
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.acos(math.sin(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_atan(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.atan(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_atan2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.atan2(tmp + in_f[i], in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_hypot(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.hypot(tmp + in_f[i], in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_log1p(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.log1p(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_log1p_expm1(
+            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
+        ) -> None:
+            # log1p is the inverse of expm1, keeping the chain bounded (mirrors add_log_exp for exp);
+            # subtract add_log1p to isolate the expm1 cost
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.expm1(math.log1p(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_fmod(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # np.fmod: numba lacks math.fmod; the positive divisor range avoids the fmod(x, 0) domain error
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = np.fmod(tmp + in_f[i], in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
         def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
@@ -361,6 +441,14 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_SIN, f_add_sin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_COS, f_add_cos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_TAN, f_add_tan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_SIN_ASIN, f_add_sin_asin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_SIN_ACOS, f_add_sin_acos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_ATAN, f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_ATAN2, f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_HYPOT, f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_LOG1P, f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG1P_EXPM1, f_add_log1p_expm1, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_FMOD, f_add_fmod, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
                 (FBT.POW, f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.POW_POW, f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.SUB, f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
