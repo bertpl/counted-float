@@ -11,6 +11,59 @@ find:
 - Python operations that are counted for this flop type
 - Python operations that are *not* counted for this flop type
 
+## Coverage at a glance
+
+| Python operation | Counts as | Mechanism | Weight source | Stays `CountedFloat`? |
+|---|---|---|---|---|
+| `x + y`, `x - y`, `x * y`, `x / y` | `ADD`, `SUB`, `MUL`, `DIV` | operator | ISA | yes |
+| `x // y` | `DIV + RND` | operator (decomposed) | ISA | yes |
+| `x % y` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes |
+| `divmod(x, y)` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes (both) |
+| `-x` | `MINUS` | operator | ISA | yes |
+| `+x` | *(nothing)* | operator | — | yes |
+| `abs(x)`, `math.fabs(x)` | `ABS` | operator / patch | ISA | yes |
+| `x == y`, `x < y`, …, `min`, `max` | `COMP` | operator | ISA | returns `bool` |
+| `round(x, n)` | `RND` | operator | ISA | yes (float) |
+| `round(x)`, `int(x)`, `math.floor`/`ceil`/`trunc` | `F2I` | operator | ISA | returns `int` |
+| `CountedFloat(int)` | `I2F` | constructor | ISA | yes |
+| `x ** y`, `math.pow(x, y)` | `POW` (or `MUL`/`EXP2`/`EXP10` via strength reduction) | operator / patch | benchmarked | yes |
+| `math.sqrt(x)` | `SQRT` | patch | ISA | yes |
+| `math.cbrt(x)` | `CBRT` | patch | benchmarked | yes |
+| `math.exp(x)`, `math.exp2(x)`, `2 ** x` | `EXP`, `EXP2` | patch / operator | benchmarked | yes |
+| `math.log(x[, base])` | `LOG` (or `LOG2`/`LOG10`; decomposes for other bases) | patch | benchmarked | yes |
+| `math.sin`/`cos`/`tan(x)` | `SIN`, `COS`, `TAN` | patch | benchmarked | yes |
+| `math.asin`/`acos`/`atan(x)` | `ASIN`, `ACOS`, `ATAN` | patch | benchmarked | yes |
+| `math.atan2(y, x)` | `ATAN2` | patch | benchmarked | yes |
+| `math.hypot(x, y)` | `HYPOT` | patch | benchmarked | yes |
+| `math.expm1(x)`, `math.log1p(x)` | `EXPM1`, `LOG1P` | patch | benchmarked | yes |
+| `math.fmod(x, y)` | `FMOD` | patch | benchmarked | yes |
+| `math.copysign`, `sinh`/`cosh`/`tanh` and inverses | *(uncounted)* | — | — | no (plain float) |
+| `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
+
+- **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.
+  *patch*: a `math.*` function, counted only inside a `FlopCountingContext`
+  (see [Math patching semantics](math_patching.md)). *decomposed*: no
+  dedicated `FlopType` — counts as a composition of existing types.
+- **Weight source** — *ISA*: backed by a real hardware instruction (spec-sheet
+  latency + benchmarks). *benchmarked*: a libm-level op with no corresponding
+  instruction, so its weight comes from benchmarks alone.
+
+### Decomposed operations
+
+`//`, `%`, and `divmod()` have no dedicated `FlopType`: a compiled port emits
+each as a sequence of primitive operations, and that sequence is what gets
+counted. Python's `//`/`%` use **floored** semantics, so `⌊·⌋` below is a
+float→float round (`RND`), not an `F2I`:
+
+- `x // y` → `DIV + RND` — divide, then floor the quotient.
+- `x % y` → `DIV + RND + MUL + SUB` — the floored remainder `r = x − y·⌊x/y⌋`.
+- `divmod(x, y)` → `DIV + RND + MUL + SUB` — quotient and remainder share the
+  `DIV + RND`, so it costs the same as a lone `%`.
+
+Note the `%` operator (floored) is distinct from `math.fmod` (the truncated C
+remainder, which has its own `FlopType.FMOD`). `math.log(x, base)` also
+decomposes for bases other than 2/10 — see `FlopType.LOG` below.
+
 ## FlopType.ABS (`abs(x)`)
 
 - Relevant CPU instructions

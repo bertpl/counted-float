@@ -1,4 +1,5 @@
 import math
+import operator
 from collections.abc import Callable
 
 import pytest
@@ -942,3 +943,93 @@ def test_counted_float_counts_sin_cos_tan(global_counter):
     assert global_counter.SIN == 1
     assert global_counter.COS == 2
     assert global_counter.TAN == 3
+
+
+# =================================================================================================
+#  CountedFloat - %, //, divmod, unary + (contagion completion)
+# =================================================================================================
+def test_counted_float_counts_floordiv(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(7.5)
+
+    # --- act ---------------------------------------------
+    forward = cf // 2.0
+    reflected = 17.0 // cf
+
+    # --- assert ------------------------------------------
+    # values compared via float() so the comparison itself does not count a COMP
+    assert isinstance(forward, CountedFloat)
+    assert isinstance(reflected, CountedFloat)
+    assert (float(forward), float(reflected)) == (3.0, 2.0)
+    assert global_counter.DIV == 2  # each // counts DIV + RND
+    assert global_counter.RND == 2
+    assert global_counter.total_count() == 4
+
+
+def test_counted_float_counts_mod(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(7.5)
+
+    # --- act ---------------------------------------------
+    forward = cf % 2.0
+    reflected = 17.0 % cf
+
+    # --- assert ------------------------------------------
+    assert isinstance(forward, CountedFloat)
+    assert isinstance(reflected, CountedFloat)
+    assert (float(forward), float(reflected)) == (1.5, 2.0)
+    # each % counts the floored-remainder decomposition DIV + RND + MUL + SUB
+    assert global_counter.DIV == 2
+    assert global_counter.RND == 2
+    assert global_counter.MUL == 2
+    assert global_counter.SUB == 2
+    assert global_counter.total_count() == 8
+
+
+def test_counted_float_counts_divmod(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(7.5)
+
+    # --- act ---------------------------------------------
+    q, r = divmod(cf, 2.0)
+    rq, rr = divmod(17.0, cf)
+
+    # --- assert ------------------------------------------
+    assert isinstance(q, CountedFloat)
+    assert isinstance(r, CountedFloat)
+    assert isinstance(rq, CountedFloat)
+    assert isinstance(rr, CountedFloat)
+    assert (float(q), float(r)) == (3.0, 1.5)
+    # each divmod shares the quotient's DIV + RND with the remainder: DIV + RND + MUL + SUB per call
+    assert global_counter.DIV == 2
+    assert global_counter.RND == 2
+    assert global_counter.MUL == 2
+    assert global_counter.SUB == 2
+    assert global_counter.total_count() == 8
+
+
+def test_counted_float_unary_plus_preserves_type_and_counts_nothing(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    result = +cf
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert float(result) == 1.23456
+    assert global_counter.total_count() == 0
+
+
+@pytest.mark.parametrize("op", [operator.floordiv, operator.mod, divmod])
+def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(global_counter, op: Callable):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(7.5)
+    cf_zero = CountedFloat(0.0)  # construction from a float counts nothing
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ZeroDivisionError):
+        op(cf, 0.0)  # forward path: cf // 0.0
+    with pytest.raises(ZeroDivisionError):
+        op(17.0, cf_zero)  # reflected path: 17.0 // cf_zero
+    assert global_counter.total_count() == 0

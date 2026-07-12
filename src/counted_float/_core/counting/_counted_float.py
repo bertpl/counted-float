@@ -36,6 +36,14 @@ class CountedFloat(float):
         GLOBAL_COUNTER.incr_minus()
         return CountedFloat(super().__neg__())
 
+    def __pos__(self) -> CountedFloat:
+        """+x.
+
+        Unary plus is the identity; a compiled port emits no instruction, so nothing is counted.
+        The type is preserved (returns a CountedFloat) so downstream counting survives.
+        """
+        return CountedFloat(super().__pos__())
+
     def __eq__(self, other: object) -> bool:
         """x==other or other==x."""
         result = super().__eq__(other)
@@ -183,6 +191,82 @@ class CountedFloat(float):
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
         return CountedFloat(result)
+
+    def __floordiv__(self, other: float) -> CountedFloat:
+        """x//y.
+
+        Floored division decomposes into DIV + RND: a compiled port computes x/y and rounds the
+        quotient toward -inf, a float->float round (RND / FRINTM / ROUNDSD class), not an F2I.
+        """
+        result = super().__floordiv__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        return CountedFloat(result)
+
+    def __rfloordiv__(self, other: float) -> CountedFloat:
+        """other//x. See __floordiv__ for the DIV + RND decomposition."""
+        result = super().__rfloordiv__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        return CountedFloat(result)
+
+    def __mod__(self, other: float) -> CountedFloat:
+        """x%y.
+
+        Python's % is the floored remainder r = x - y*floor(x/y), which a compiled port emits as
+        DIV + RND (the floor) + MUL + SUB. Distinct from math.fmod, the truncated C remainder.
+        """
+        result = super().__mod__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_mul()
+        GLOBAL_COUNTER.incr_sub()
+        return CountedFloat(result)
+
+    def __rmod__(self, other: float) -> CountedFloat:
+        """other%x. See __mod__ for the DIV + RND + MUL + SUB decomposition."""
+        result = super().__rmod__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_mul()
+        GLOBAL_COUNTER.incr_sub()
+        return CountedFloat(result)
+
+    def __divmod__(self, other: float) -> tuple[CountedFloat, CountedFloat]:
+        """divmod(x, y) = (x//y, x%y).
+
+        Quotient and remainder share the DIV + RND (the floor); the remainder adds MUL + SUB, so
+        divmod counts DIV + RND + MUL + SUB — the same as a lone %, since the // part is shared.
+        """
+        result = super().__divmod__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_mul()
+        GLOBAL_COUNTER.incr_sub()
+        quotient, remainder = result
+        return CountedFloat(quotient), CountedFloat(remainder)
+
+    def __rdivmod__(self, other: float) -> tuple[CountedFloat, CountedFloat]:
+        """divmod(other, x). See __divmod__ for the DIV + RND + MUL + SUB decomposition."""
+        result = super().__rdivmod__(other)
+        if result is NotImplemented:
+            return NotImplemented
+        GLOBAL_COUNTER.incr_div()
+        GLOBAL_COUNTER.incr_rnd()
+        GLOBAL_COUNTER.incr_mul()
+        GLOBAL_COUNTER.incr_sub()
+        quotient, remainder = result
+        return CountedFloat(quotient), CountedFloat(remainder)
 
     def __pow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__pow__'s mod is None-only and unused here
         """x**other.
