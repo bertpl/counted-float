@@ -501,9 +501,9 @@ def test_counted_float_counts_eq(global_counter):
     _ = cf == 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_ne(global_counter):
@@ -518,9 +518,9 @@ def test_counted_float_counts_ne(global_counter):
     _ = cf != 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_lt(global_counter):
@@ -535,9 +535,9 @@ def test_counted_float_counts_lt(global_counter):
     _ = cf < 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_le(global_counter):
@@ -552,9 +552,9 @@ def test_counted_float_counts_le(global_counter):
     _ = cf <= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_gt(global_counter):
@@ -569,9 +569,9 @@ def test_counted_float_counts_gt(global_counter):
     _ = cf > 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 @pytest.mark.parametrize("min_max_fun", [min, max])
@@ -584,7 +584,7 @@ def test_counted_float_counts_min_max(
     min_max_fun: Callable, f1: float, f2: float, cf_left: bool, cf_right: bool, global_counter
 ):
     # --- arrange -----------------------------------------
-    n_integers = int(isinstance(f1, int)) + int(isinstance(f2, int))
+    expected_i2f = int(cf_left and isinstance(f1, int)) + int(cf_right and isinstance(f2, int))
     left = CountedFloat(f1) if cf_left else f1
 
     right = CountedFloat(f2) if cf_right else f2
@@ -595,7 +595,7 @@ def test_counted_float_counts_min_max(
 
     # --- assert ------------------------------------------
     assert global_counter.COMP == 1
-    assert n_integers == global_counter.I2F
+    assert expected_i2f == global_counter.I2F
     assert f_min_max == cf_min_max
 
 
@@ -611,9 +611,9 @@ def test_counted_float_counts_ge(global_counter):
     _ = cf >= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 7
+    assert global_counter.total_count() == 5
     assert global_counter.COMP == 5
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 @pytest.mark.parametrize(
@@ -713,9 +713,9 @@ def test_counted_float_counts_add_int(global_counter):
     _ = (cf + i) + i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 9
+    assert global_counter.total_count() == 5
     assert global_counter.ADD == 5
-    assert global_counter.I2F == 4
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_sub(global_counter):
@@ -746,9 +746,9 @@ def test_counted_float_counts_sub_int(global_counter):
     _ = (cf - i) - i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 9
+    assert global_counter.total_count() == 5
     assert global_counter.SUB == 5
-    assert global_counter.I2F == 4
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_mul(global_counter):
@@ -779,9 +779,9 @@ def test_counted_float_counts_mul_int(global_counter):
     _ = (cf * i) * i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 9
+    assert global_counter.total_count() == 5
     assert global_counter.MUL == 5
-    assert global_counter.I2F == 4
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_div(global_counter):
@@ -812,9 +812,9 @@ def test_counted_float_counts_div_int(global_counter):
     _ = (cf / i) / i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 9
+    assert global_counter.total_count() == 5
     assert global_counter.DIV == 5
-    assert global_counter.I2F == 4
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_pow_1(global_counter):
@@ -834,17 +834,17 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = math.exp2(cf)  # EXP2
     _ = 10**cf  # EXP10
     _ = cf**2  # MUL
-    _ = i**cf  # POW + I2F
-    _ = cf**i  # POW + I2F
+    _ = i**cf  # POW
+    _ = cf**i  # POW
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 16
+    assert global_counter.total_count() == 14
     assert global_counter.POW == 9
     assert global_counter.EXP == 1
     assert global_counter.EXP2 == 2
     assert global_counter.EXP10 == 1
     assert global_counter.MUL == 1
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_pow_2(global_counter):
@@ -862,16 +862,16 @@ def test_counted_float_counts_pow_2(global_counter):
     _ = math.pow(2, cf)  # EXP2
     _ = math.pow(10, cf)  # EXP10
     _ = math.pow(cf, 2)  # MUL
-    _ = math.pow(i, cf)  # POW + I2F
-    _ = math.pow(cf, i)  # POW + I2F
+    _ = math.pow(i, cf)  # POW
+    _ = math.pow(cf, i)  # POW
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 14
+    assert global_counter.total_count() == 12
     assert global_counter.POW == 9
     assert global_counter.EXP2 == 1
     assert global_counter.EXP10 == 1
     assert global_counter.MUL == 1
-    assert global_counter.I2F == 2
+    assert global_counter.I2F == 0
 
 
 def test_counted_float_counts_sqrt(global_counter):

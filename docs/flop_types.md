@@ -60,11 +60,13 @@ find:
 - Relevant CPU instructions
     - **ARM:** `SCVTF`
     - **x86:** `CVTSI2SD`
-- **Counted Python operations:** Construction of `CountedFloat` from int, any
-  binary operation where one operand is an int and the other a `CountedFloat`
-  (e.g., `x + 3`, `3 * x`, etc.)
-- **Not counted:** `float(n)`, unitary operations (e.g. `math.sqrt` on
-  integers -> convert to `CountedFloat` first)
+- **Counted Python operations:** Construction of `CountedFloat` from an int,
+  e.g. `CountedFloat(3)` — the way to opt a genuine runtime integer into the
+  counting model
+- **Not counted:** `float(n)`; an `int` operand in arithmetic, comparisons, or
+  `**` (e.g. `x + 3`, `3 * x`, `x < 2`, `x**3`) — an `int` operand is a
+  compile-time constant, folded to a float literal by a compiled port, so it
+  adds no conversion (see [Counting FLOPs](counting_flops.md))
 
 ## FlopType.ADD (`x+y`)
 

@@ -41,8 +41,6 @@ class CountedFloat(float):
         result = super().__eq__(other)
         if result is NotImplemented:
             return NotImplemented  # let Python try the reflected operation; nothing was computed, so nothing counts
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -51,8 +49,6 @@ class CountedFloat(float):
         result = super().__ne__(other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -61,8 +57,6 @@ class CountedFloat(float):
         result = super().__lt__(other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -71,8 +65,6 @@ class CountedFloat(float):
         result = super().__le__(other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -81,8 +73,6 @@ class CountedFloat(float):
         result = super().__gt__(other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -91,8 +81,6 @@ class CountedFloat(float):
         result = super().__ge__(other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         GLOBAL_COUNTER.incr_comp()
         return result
 
@@ -138,8 +126,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_add()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __radd__(self, other: float) -> CountedFloat:
@@ -148,8 +134,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_add()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __sub__(self, other: float) -> CountedFloat:
@@ -158,8 +142,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_sub()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __rsub__(self, other: float) -> CountedFloat:
@@ -168,8 +150,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_sub()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __mul__(self, other: float) -> CountedFloat:
@@ -178,8 +158,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_mul()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __rmul__(self, other: float) -> CountedFloat:
@@ -188,8 +166,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_mul()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __truediv__(self, other: float) -> CountedFloat:
@@ -198,8 +174,6 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __rtruediv__(self, other: float) -> CountedFloat:
@@ -208,18 +182,15 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
-        if isinstance(other, int):
-            GLOBAL_COUNTER.incr_i2f()
         return CountedFloat(result)
 
     def __pow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__pow__'s mod is None-only and unused here
         """x**other.
 
-        Counting heuristic: an `int` operand is taken as evidence of a hardcoded constant in the
-        source (ints don't fall out of floating-point computations), so `x**2` counts as MUL —
-        the strength reduction (x*x) a compiled port would apply. A float operand may just as well
-        be a runtime variable that happens to hold that value, where a port would compile a
-        generic pow, so `x**2.0` counts as POW.
+        A hardcoded (`int`) exponent enables the strength reduction a compiled port would apply:
+        `x**2` counts as MUL (i.e. `x*x`). A float exponent such as `x**2.0` may be a runtime
+        variable, where a port compiles a generic pow, so it counts as POW. Per the counting
+        model, `int` operands are compile-time constants and never add an I2F conversion.
 
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
@@ -233,18 +204,16 @@ class CountedFloat(float):
         if isinstance(other, int) and other == 2:
             GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
         else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
         return CountedFloat(result)
 
     def __rpow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__rpow__'s mod is None-only and unused here
         """other**x.
 
-        Same constant-detection heuristic as __pow__, applied to the base: an `int` base 2 or 10
-        is taken as a hardcoded constant, counting as EXP2 / EXP10 (the strength reduction a
-        compiled port would apply); a float base may be a runtime variable, so it counts as
-        generic POW.
+        Strength reduction on the base, as in __pow__: a hardcoded (`int`) base 2 or 10 counts
+        as EXP2 / EXP10 (what a compiled port would emit); any other base counts a generic POW,
+        and a float base may be a runtime variable, so it counts POW too. Per the counting model,
+        `int` operands are compile-time constants and never add an I2F conversion.
 
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
@@ -260,7 +229,5 @@ class CountedFloat(float):
         elif isinstance(other, int) and other == 10:
             GLOBAL_COUNTER.incr_exp10()
         else:
-            if isinstance(other, int):
-                GLOBAL_COUNTER.incr_i2f()
             GLOBAL_COUNTER.incr_pow()
         return CountedFloat(result)

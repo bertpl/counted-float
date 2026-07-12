@@ -55,10 +55,17 @@ The library detects constants through two mechanisms, applying the same rule:
   above.
 - **`int` operands**: evidence of a *hardcoded* constant — ints don't fall out
   of floating-point computations, so an int operand almost certainly appears
-  literally in your source. This enables counting the strength reductions a
-  compiled port would apply: `x**2` counts MUL (i.e. `x*x`), `2**x` counts
-  EXP2, `math.log(x, 10)` counts LOG10 — while `x**2.0`, with a float that
-  *could* be a runtime value, conservatively counts a generic POW.
+  literally in your source. As a constant it is folded to a float literal by a
+  compiled port, so an `int` operand adds **no `I2F` conversion**; it merely
+  enables the strength reductions such a port would apply: `x**2` counts MUL
+  (i.e. `x*x`), `2**x` counts EXP2, `math.log(x, 10)` counts LOG10 — while
+  `x**2.0`, with a float that *could* be a runtime value, conservatively counts
+  a generic POW.
+
+The one place an `I2F` conversion *is* counted is explicit construction from an
+int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer
+(a loop index, a computed count) into the counting model: wrap it, and its
+int→float conversion counts like any other FLOP.
 
 The flip side: an unwrapped runtime input is invisible to the counter — that
 is a wrapping error at your algorithm's boundary, not something the library
