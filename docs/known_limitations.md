@@ -2,8 +2,10 @@
 
 - currently any non-Python-built-in math operations are not counted (e.g.
   `numpy`)
-- not all Python built-in math operations are counted (e.g. hyperbolic
-  functions)
+- not all Python built-in math operations are counted — the remaining gaps are
+  the hyperbolic functions (`sinh`/`cosh`/`tanh` and their inverses) and
+  `math.copysign`; see the [FLOP types reference](flop_types.md) for the full
+  list of what is and isn't counted
 - mixed operations with non-float numeric types are outside the counting
   model: `CountedFloat` delegates to the other operand exactly like `float`
   does, so e.g. a `fractions.Fraction` operand generally yields a correct but

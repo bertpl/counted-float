@@ -16,8 +16,9 @@ find:
 - Relevant CPU instructions
     - **ARM:** `FABS`
     - **x86:** `ANDPD`
-- **Counted Python operations:** `abs(x)` where `x` is a `CountedFloat`
-- **Not counted:** `numpy.abs`, complex abs, abs on non-CountedFloat
+- **Counted Python operations:** `abs(x)` and `math.fabs(x)` where `x` is a
+  `CountedFloat` (both map to the same `FABS`/`ANDPD` instruction)
+- **Not counted:** `numpy.abs`, `numpy.fabs`, complex abs, abs on non-CountedFloat
 
 ## FlopType.MINUS (`-x`)
 
@@ -202,3 +203,71 @@ find:
     - **x86:** (software)
 - **Counted Python operations:** `math.tan(x)` for `CountedFloat`
 - **Not counted:** `tan` on non-CountedFloat, `numpy.tan`
+
+## FlopType.ASIN (`asin(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.asin(x)` for `CountedFloat`
+- **Not counted:** `asin` on non-CountedFloat, `numpy.arcsin`
+
+## FlopType.ACOS (`acos(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.acos(x)` for `CountedFloat`
+- **Not counted:** `acos` on non-CountedFloat, `numpy.arccos`
+
+## FlopType.ATAN (`atan(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.atan(x)` for `CountedFloat`
+- **Not counted:** `atan` on non-CountedFloat, `numpy.arctan`
+
+## FlopType.ATAN2 (`atan2(y, x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.atan2(y, x)` for `CountedFloat` —
+  counted when *either* operand is a `CountedFloat`
+- **Not counted:** `atan2` on plain floats only, `numpy.arctan2`
+
+## FlopType.HYPOT (`hypot(x, y)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.hypot(x, y, ...)` for `CountedFloat` —
+  counted once when *any* coordinate is a `CountedFloat`
+- **Not counted:** `hypot` on plain floats only, `numpy.hypot`
+
+## FlopType.EXPM1 (`expm1(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.expm1(x)` for `CountedFloat`
+- **Not counted:** `expm1` on non-CountedFloat, `numpy.expm1`, `math.exp(x) - 1`
+
+## FlopType.LOG1P (`log1p(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.log1p(x)` for `CountedFloat`
+- **Not counted:** `log1p` on non-CountedFloat, `numpy.log1p`, `math.log(1 + x)`
+
+## FlopType.FMOD (`fmod(x, y)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.fmod(x, y)` for `CountedFloat` —
+  counted when *either* operand is a `CountedFloat` (the C-library truncated
+  remainder; distinct from the `%` operator's floored remainder)
+- **Not counted:** `fmod` on plain floats only, `numpy.fmod`

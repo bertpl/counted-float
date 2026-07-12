@@ -43,13 +43,12 @@ the library simply restores its snapshot.
 The counting replacements only count operations touching `CountedFloat`
 values; on plain floats they delegate straight through with no counting (see
 [the counting model](counting_flops.md#the-counting-model-what-gets-counted-and-why)).
-Two functions carry extra classification logic, applying the same
-constant-detection heuristic as the `**` operator (int operand = hardcoded
-constant in the source):
+Two functions carry extra classification logic. As everywhere in the counting
+model, an `int` operand is treated as a compile-time constant — it enables
+strength reduction and never adds an I2F conversion:
 
 - `math.pow(x, y)` classifies like `x ** y`: `x**2` counts MUL, `2**x` counts
-  EXP2, `10**x` counts EXP10, other cases count POW (plus I2F for an int
-  operand).
+  EXP2, `10**x` counts EXP10, other cases count POW.
 - `math.log(x, base)` classifies per log variant: base omitted → LOG; int
   base 2 / 10 → LOG2 / LOG10 (a compiled port calls `log2`/`log10` directly);
   other int base → LOG + MUL (a port computes `log(x) * C` with
