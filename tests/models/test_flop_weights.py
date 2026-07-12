@@ -50,6 +50,24 @@ def test_flop_weights_has_missing_data(sample_flop_weights_dict_by_enum, has_mis
     assert flag == has_missing_data
 
 
+def test_get_sorted_flop_types_orders_by_weight_with_nan_last():
+    # --- arrange -----------------------------------------
+    weights = FlopWeights(
+        weights={FlopType.MUL: 3.0, FlopType.ADD: 1.0, FlopType.DIV: 5.0}
+    )  # every other type defaults to NaN via the validator
+
+    # --- act ---------------------------------------------
+    ordered = weights.get_sorted_flop_types()
+
+    # --- assert ------------------------------------------
+    finite = [ft for ft in ordered if not math.isnan(weights.weights[ft])]
+    missing = [ft for ft in ordered if math.isnan(weights.weights[ft])]
+
+    assert finite == [FlopType.ADD, FlopType.MUL, FlopType.DIV]  # finite weights first, ascending
+    assert ordered[: len(finite)] == finite  # ...and all before the NaN block
+    assert missing == sorted(missing, key=lambda ft: ft.value)  # NaN block is deterministically ordered
+
+
 def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
     # --- arrange -----------------------------------------
     flop_weights = FlopWeights(weights=sample_flop_weights_dict_by_str)

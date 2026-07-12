@@ -65,6 +65,15 @@ def test_math_module_patched_inside_context_only(fname):
         ("sin", (2.0,)),
         ("cos", (2.0,)),
         ("tan", (2.0,)),
+        ("asin", (0.5,)),
+        ("acos", (0.5,)),
+        ("atan", (0.5,)),
+        ("atan2", (1.0, 2.0)),
+        ("hypot", (3.0, 4.0)),
+        ("expm1", (0.5,)),
+        ("log1p", (0.5,)),
+        ("fmod", (5.0, 3.0)),
+        ("fabs", (-2.0,)),
     ],
 )
 def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
@@ -226,6 +235,66 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.pow(cf, 1 / 3)
+    assert global_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Patched math functions - new higher-order ops (asin/acos/atan/atan2/hypot/expm1/log1p/fmod/fabs)
+# =================================================================================================
+@pytest.mark.parametrize(
+    ("fname", "n_args", "flop_type_name"),
+    [
+        ("asin", 1, "ASIN"),
+        ("acos", 1, "ACOS"),
+        ("atan", 1, "ATAN"),
+        ("atan2", 2, "ATAN2"),
+        ("hypot", 2, "HYPOT"),
+        ("expm1", 1, "EXPM1"),
+        ("log1p", 1, "LOG1P"),
+        ("fmod", 2, "FMOD"),
+        ("fabs", 1, "ABS"),  # fabs reuses the existing ABS type, not a new one
+    ],
+)
+def test_new_math_ops_count_and_are_contagious(global_counter, fname, n_args, flop_type_name):
+    # --- arrange -----------------------------------------
+    args = tuple(CountedFloat(0.5) for _ in range(n_args))
+
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(*args)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert getattr(global_counter, flop_type_name) == 1
+    assert global_counter.total_count() == 1
+
+
+@pytest.mark.parametrize("fname", ["atan2", "hypot", "fmod"])
+def test_new_binary_math_ops_count_with_either_operand_counted(global_counter, fname):
+    # counted (and contagious) when EITHER operand is a CountedFloat, like the existing binary ops
+    # --- act ---------------------------------------------
+    r_left = getattr(math, fname)(CountedFloat(3.0), 2.0)
+    r_right = getattr(math, fname)(3.0, CountedFloat(2.0))
+
+    # --- assert ------------------------------------------
+    assert isinstance(r_left, CountedFloat)
+    assert isinstance(r_right, CountedFloat)
+    assert global_counter.total_count() == 2
+
+
+@pytest.mark.parametrize(
+    ("fname", "args"),
+    [
+        ("asin", (CountedFloat(2.0),)),  # domain: |x| <= 1
+        ("acos", (CountedFloat(2.0),)),
+        ("log1p", (CountedFloat(-2.0),)),  # domain: x > -1
+        ("fmod", (CountedFloat(5.0), CountedFloat(0.0))),  # fmod by zero
+    ],
+)
+def test_new_math_ops_domain_error_counts_nothing(global_counter, fname, args):
+    # compute-first contract: a raised domain error leaves nothing counted
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
+        getattr(math, fname)(*args)
     assert global_counter.total_count() == 0
 
 

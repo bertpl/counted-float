@@ -41,6 +41,15 @@ original_math_pow = math.pow
 original_math_sin = math.sin
 original_math_cos = math.cos
 original_math_tan = math.tan
+original_math_asin = math.asin
+original_math_acos = math.acos
+original_math_atan = math.atan
+original_math_atan2 = math.atan2
+original_math_hypot = math.hypot
+original_math_expm1 = math.expm1
+original_math_log1p = math.log1p
+original_math_fmod = math.fmod
+original_math_fabs = math.fabs
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -186,6 +195,73 @@ def math_tan(x: float) -> float | CountedFloat:
     return original_math_tan(x)
 
 
+def math_asin(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_asin(x)  # compute first: domain errors raise before anything is counted
+        GLOBAL_COUNTER.incr_asin()
+        return CountedFloat(result)
+    return original_math_asin(x)
+
+
+def math_acos(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_acos(x)  # compute first: domain errors raise before anything is counted
+        GLOBAL_COUNTER.incr_acos()
+        return CountedFloat(result)
+    return original_math_acos(x)
+
+
+def math_atan(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_atan()
+        return CountedFloat(original_math_atan(x))
+    return original_math_atan(x)
+
+
+def math_atan2(y: float, x: float) -> float | CountedFloat:
+    if isinstance(y, CountedFloat) or isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_atan2()
+        return CountedFloat(original_math_atan2(y, x))
+    return original_math_atan2(y, x)
+
+
+def math_hypot(*coordinates: float) -> float | CountedFloat:
+    if any(isinstance(c, CountedFloat) for c in coordinates):
+        GLOBAL_COUNTER.incr_hypot()
+        return CountedFloat(original_math_hypot(*coordinates))
+    return original_math_hypot(*coordinates)
+
+
+def math_expm1(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_expm1()
+        return CountedFloat(original_math_expm1(x))
+    return original_math_expm1(x)
+
+
+def math_log1p(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_log1p(x)  # compute first: domain error (x <= -1) raises before counting
+        GLOBAL_COUNTER.incr_log1p()
+        return CountedFloat(result)
+    return original_math_log1p(x)
+
+
+def math_fmod(x: float, y: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        result = original_math_fmod(x, y)  # compute first: fmod(x, 0) raises before anything is counted
+        GLOBAL_COUNTER.incr_fmod()
+        return CountedFloat(result)
+    return original_math_fmod(x, y)
+
+
+def math_fabs(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_abs()  # same FABS/ANDPD instruction as abs(); reuses FlopType.ABS
+        return CountedFloat(original_math_fabs(x))
+    return original_math_fabs(x)
+
+
 # -------------------------------------------------------------------------
 #  applying / removing the patches
 # -------------------------------------------------------------------------
@@ -201,6 +277,15 @@ _PATCHES: dict[str, object] = {
     "sin": math_sin,
     "cos": math_cos,
     "tan": math_tan,
+    "asin": math_asin,
+    "acos": math_acos,
+    "atan": math_atan,
+    "atan2": math_atan2,
+    "hypot": math_hypot,
+    "expm1": math_expm1,
+    "log1p": math_log1p,
+    "fmod": math_fmod,
+    "fabs": math_fabs,
 }
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
@@ -220,6 +305,8 @@ def _capture_originals() -> None:
     global original_math_sqrt, original_math_cbrt, original_math_log, original_math_log2
     global original_math_log10, original_math_exp, original_math_exp2, original_math_pow
     global original_math_sin, original_math_cos, original_math_tan
+    global original_math_asin, original_math_acos, original_math_atan, original_math_atan2
+    global original_math_hypot, original_math_expm1, original_math_log1p, original_math_fmod, original_math_fabs
 
     original_math_sqrt = math.sqrt
     original_math_cbrt = math.cbrt
@@ -232,6 +319,15 @@ def _capture_originals() -> None:
     original_math_sin = math.sin
     original_math_cos = math.cos
     original_math_tan = math.tan
+    original_math_asin = math.asin
+    original_math_acos = math.acos
+    original_math_atan = math.atan
+    original_math_atan2 = math.atan2
+    original_math_hypot = math.hypot
+    original_math_expm1 = math.expm1
+    original_math_log1p = math.log1p
+    original_math_fmod = math.fmod
+    original_math_fabs = math.fabs
 
     _saved_originals.clear()
     for name in _PATCHES:
