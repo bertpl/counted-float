@@ -30,6 +30,12 @@ _PLACEHOLDER_WEIGHTS: dict[FlopType, float] = {
     FlopType.EXPM1: 18.0,  # ~ EXP
     FlopType.LOG1P: 18.0,  # ~ LOG
     FlopType.FMOD: 8.0,  # ~ DIV plus a few ops
+    FlopType.SINH: 20.0,  # ~ EXP
+    FlopType.COSH: 20.0,  # ~ EXP
+    FlopType.TANH: 22.0,  # exp-based transcendental, in family with sinh/cosh
+    FlopType.ASINH: 25.0,  # ~ ASIN / LOG
+    FlopType.ACOSH: 25.0,  # ~ ACOS / LOG
+    FlopType.ATANH: 25.0,  # ~ ATAN / LOG
 }
 
 

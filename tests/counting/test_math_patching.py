@@ -74,6 +74,12 @@ def test_math_module_patched_inside_context_only(fname):
         ("log1p", (0.5,)),
         ("fmod", (5.0, 3.0)),
         ("fabs", (-2.0,)),
+        ("sinh", (0.5,)),
+        ("cosh", (0.5,)),
+        ("tanh", (0.5,)),
+        ("asinh", (0.5,)),
+        ("acosh", (2.0,)),
+        ("atanh", (0.5,)),
     ],
 )
 def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
@@ -295,6 +301,47 @@ def test_new_math_ops_domain_error_counts_nothing(global_counter, fname, args):
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         getattr(math, fname)(*args)
+    assert global_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Patched math functions - hyperbolic ops (sinh/cosh/tanh/asinh/acosh/atanh)
+# =================================================================================================
+@pytest.mark.parametrize(
+    ("fname", "arg", "flop_type_name"),
+    [
+        ("sinh", 0.5, "SINH"),
+        ("cosh", 0.5, "COSH"),
+        ("tanh", 0.5, "TANH"),
+        ("asinh", 0.5, "ASINH"),
+        ("acosh", 2.0, "ACOSH"),  # acosh domain: x >= 1
+        ("atanh", 0.5, "ATANH"),  # atanh domain: |x| < 1
+    ],
+)
+def test_hyperbolic_math_ops_count_and_are_contagious(global_counter, fname, arg, flop_type_name):
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(CountedFloat(arg))
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert getattr(global_counter, flop_type_name) == 1
+    assert global_counter.total_count() == 1
+
+
+@pytest.mark.parametrize(
+    ("fname", "arg"),
+    [
+        ("acosh", CountedFloat(0.5)),  # domain: x >= 1
+        ("atanh", CountedFloat(2.0)),  # domain: |x| < 1
+        ("sinh", CountedFloat(1e6)),  # overflow
+        ("cosh", CountedFloat(1e6)),  # overflow
+    ],
+)
+def test_hyperbolic_math_ops_error_counts_nothing(global_counter, fname, arg):
+    # compute-first contract: a domain/overflow error leaves nothing counted
+    # --- act & assert ------------------------------------
+    with pytest.raises((ValueError, OverflowError)):
+        getattr(math, fname)(arg)
     assert global_counter.total_count() == 0
 
 

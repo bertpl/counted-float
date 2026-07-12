@@ -49,6 +49,12 @@ class FlopCounts:
     EXPM1: int = 0
     LOG1P: int = 0
     FMOD: int = 0
+    SINH: int = 0
+    COSH: int = 0
+    TANH: int = 0
+    ASINH: int = 0
+    ACOSH: int = 0
+    ATANH: int = 0
 
     # --- math --------------------------------------------
     def __add__(self, other: FlopCounts) -> FlopCounts:

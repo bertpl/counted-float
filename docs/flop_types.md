@@ -37,7 +37,8 @@ find:
 | `math.hypot(x, y)` | `HYPOT` | patch | benchmarked | yes |
 | `math.expm1(x)`, `math.log1p(x)` | `EXPM1`, `LOG1P` | patch | benchmarked | yes |
 | `math.fmod(x, y)` | `FMOD` | patch | benchmarked | yes |
-| `math.copysign`, `sinh`/`cosh`/`tanh` and inverses | *(uncounted)* | — | — | no (plain float) |
+| `math.sinh`/`cosh`/`tanh(x)`, `asinh`/`acosh`/`atanh(x)` | `SINH`, `COSH`, `TANH`, `ASINH`, `ACOSH`, `ATANH` | patch | benchmarked | yes |
+| `math.copysign` | *(uncounted)* | — | — | no (plain float) |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
 
 - **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.
@@ -324,3 +325,51 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   counted when *either* operand is a `CountedFloat` (the C-library truncated
   remainder; distinct from the `%` operator's floored remainder)
 - **Not counted:** `fmod` on plain floats only, `numpy.fmod`
+
+## FlopType.SINH (`sinh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.sinh(x)` for `CountedFloat`
+- **Not counted:** `sinh` on non-CountedFloat, `numpy.sinh`
+
+## FlopType.COSH (`cosh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.cosh(x)` for `CountedFloat`
+- **Not counted:** `cosh` on non-CountedFloat, `numpy.cosh`
+
+## FlopType.TANH (`tanh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.tanh(x)` for `CountedFloat`
+- **Not counted:** `tanh` on non-CountedFloat, `numpy.tanh`
+
+## FlopType.ASINH (`asinh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.asinh(x)` for `CountedFloat`
+- **Not counted:** `asinh` on non-CountedFloat, `numpy.arcsinh`
+
+## FlopType.ACOSH (`acosh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.acosh(x)` for `CountedFloat`
+- **Not counted:** `acosh` on non-CountedFloat, `numpy.arccosh`
+
+## FlopType.ATANH (`atanh(x)`)
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.atanh(x)` for `CountedFloat`
+- **Not counted:** `atanh` on non-CountedFloat, `numpy.arctanh`

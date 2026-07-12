@@ -138,6 +138,24 @@ class GlobalFlopCounter:
     def incr_fmod(self) -> None:
         self.__counts.FMOD += self.__incr
 
+    def incr_sinh(self) -> None:
+        self.__counts.SINH += self.__incr
+
+    def incr_cosh(self) -> None:
+        self.__counts.COSH += self.__incr
+
+    def incr_tanh(self) -> None:
+        self.__counts.TANH += self.__incr
+
+    def incr_asinh(self) -> None:
+        self.__counts.ASINH += self.__incr
+
+    def incr_acosh(self) -> None:
+        self.__counts.ACOSH += self.__incr
+
+    def incr_atanh(self) -> None:
+        self.__counts.ATANH += self.__incr
+
 
 # --- global variable through which we access the global counter ---
 GLOBAL_COUNTER = GlobalFlopCounter()
