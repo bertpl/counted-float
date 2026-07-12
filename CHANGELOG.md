@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- counting support for `math.atan2`, `hypot`, `asin`/`acos`/`atan`, `expm1`/`log1p`, `fmod`, and `fabs`
+
 ### Changed
 
 - `int`/`bool` operands are now more systematically treated as compile-time constants: arithmetic, comparisons, and `**` with an integer operand no longer add an `I2F` conversion count (wrap a runtime integer in `CountedFloat(...)` to count it)
@@ -18,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+
+- `FlopWeights.get_sorted_flop_types()` now orders types deterministically when some weights are missing (NaN)
 
 ### Security
 

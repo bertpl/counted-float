@@ -41,9 +41,20 @@ class FlopWeights(MyBaseModel):
         return any(math.isnan(v) for v in self.weights.values())
 
     def get_sorted_flop_types(self) -> list[FlopType]:
-        """Return flop types sorted in ascending order of corresponding weights."""
-        sorted_flop_weights_and_types = sorted(zip(self.weights.values(), self.weights.keys(), strict=True))
-        return [flop_type for _, flop_type in sorted_flop_weights_and_types]
+        """Return flop types sorted in ascending order of corresponding weights.
+
+        NaN weights (missing data) sort last, deterministically: entries are ordered by
+        (is-NaN, weight, flop-type value), so ties and missing values keep a stable order
+        instead of the arbitrary placement NaN comparisons would otherwise produce.
+        """
+        return sorted(
+            self.weights.keys(),
+            key=lambda ft: (
+                math.isnan(self.weights[ft]),
+                0.0 if math.isnan(self.weights[ft]) else self.weights[ft],
+                ft.value,
+            ),
+        )
 
     # -------------------------------------------------------------------------
     #  Validation

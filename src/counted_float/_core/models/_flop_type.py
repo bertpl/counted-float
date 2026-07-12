@@ -30,6 +30,14 @@ class FlopType(StrEnum):
     SIN = "sin(x)"
     COS = "cos(x)"
     TAN = "tan(x)"
+    ASIN = "asin(x)"
+    ACOS = "acos(x)"
+    ATAN = "atan(x)"
+    ATAN2 = "atan2(y,x)"
+    HYPOT = "hypot(x,y)"
+    EXPM1 = "expm1(x)"
+    LOG1P = "log1p(x)"
+    FMOD = "fmod(x,y)"
 
     def long_name(self) -> str:
         return f"FlopType.{self.name:<9}  [{self.value}]"
