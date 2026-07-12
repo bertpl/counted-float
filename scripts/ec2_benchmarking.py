@@ -98,13 +98,30 @@ class TargetInstance:
     expected: dict[str, str]  # identity fields the probe must return (x86: vendor/family/model; arm: part)
 
 
-# Sized to two physical cores each (single-core benchmark + one spare for
-# background work): 2 vCPU where 1 core == 1 vCPU (Graviton), 4 vCPU where
-# 1 core == 2 vCPU (SMT x86). Expected identities per the feasibility analysis.
+# Each target is sized to two physical cores: the benchmark is single-core, so
+# the second core absorbs OS / SSM-agent / JIT background work without
+# preempting the measured thread, and a uniform core count keeps runs
+# comparable. Two vCPU sizes map to that, by threading model:
+#   .large  (2 vCPU) -- Graviton (1 thread/core) and zen4/zen5 (SMT-off here)
+#   .xlarge (4 vCPU) -- SMT-2 cores (Intel server + zen1/zen3), 2 vCPU/core
+# Every launch is gated on the identity below, asserted against the probed
+# CPUID/MIDR before benchmarking, so a re-backed family can't mislabel data.
 TARGETS: dict[str, TargetInstance] = {
+    # Graviton, 1 thread/core -> .large = 2 physical cores
+    "m6g.large": TargetInstance("m6g.large", "arm64", {"part": "0xd0c"}),  # Graviton 2 / Neoverse N1
     "m7g.large": TargetInstance("m7g.large", "arm64", {"part": "0xd40"}),  # Graviton 3 / Neoverse V1
+    "m8g.large": TargetInstance("m8g.large", "arm64", {"part": "0xd4f"}),  # Graviton 4 / Neoverse V2
+    # AMD Genoa/Turin, SMT-off -> .large = 2 physical cores (Turin: family alone pins zen5)
+    "m7a.large": TargetInstance("m7a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "25", "model": "17"}),
+    "m8a.large": TargetInstance("m8a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "26"}),
+    # Intel server, SMT-2 -> .xlarge = 2 physical cores (Ice Lake-SP/Sapphire/Emerald/Granite Rapids)
+    "m6i.xlarge": TargetInstance("m6i.xlarge", "x86_64", {"vendor": "GenuineIntel", "family": "6", "model": "106"}),
     "m7i.xlarge": TargetInstance("m7i.xlarge", "x86_64", {"vendor": "GenuineIntel", "family": "6", "model": "143"}),
+    "i7i.xlarge": TargetInstance("i7i.xlarge", "x86_64", {"vendor": "GenuineIntel", "family": "6", "model": "207"}),
+    "m8i.xlarge": TargetInstance("m8i.xlarge", "x86_64", {"vendor": "GenuineIntel", "family": "6", "model": "173"}),
+    # AMD Milan/Naples, SMT-2 -> .xlarge = 2 physical cores
     "m6a.xlarge": TargetInstance("m6a.xlarge", "x86_64", {"vendor": "AuthenticAMD", "family": "25", "model": "1"}),
+    "m5a.xlarge": TargetInstance("m5a.xlarge", "x86_64", {"vendor": "AuthenticAMD", "family": "23", "model": "1"}),
 }
 
 
