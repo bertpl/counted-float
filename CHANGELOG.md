@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - counting support for `math.atan2`, `hypot`, `asin`/`acos`/`atan`, `expm1`/`log1p`, `fmod`, and `fabs`
+- the FLOPs benchmark suite now measures the new higher-order operations
 
 ### Changed
 
