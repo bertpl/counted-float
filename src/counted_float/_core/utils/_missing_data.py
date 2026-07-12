@@ -22,8 +22,10 @@ def impute_missing_data(data: np.ndarray) -> np.ndarray:
     c_rows, c_cols = np.ones(n_rows), np.ones(n_cols)
 
     e_step = 0.75  # exponent to apply to correction coefficients  (keep <1.0 for stability)
+    max_iter = 100  # hard cap; the alternating correction contracts, so it converges well before this
+    tol = 1e-12  # converged once the corrections stop moving the factors (see the break below)
 
-    for _i in range(100):
+    for _i in range(max_iter):
         # compute correction factors for c_rows
         c_row_correct = np.zeros(n_rows)
         for i_row in range(n_rows):
@@ -53,6 +55,15 @@ def impute_missing_data(data: np.ndarray) -> np.ndarray:
         # apply corrections
         c_rows *= c_row_correct
         c_cols *= c_col_correct
+
+        # converged once the multiplicative corrections stop moving the factors: at the rank-1
+        # fixed point every correction is 1.0. Rows/cols with no data carry a NaN correction by
+        # construction and are excluded from the test; an all-NaN pass (degenerate matrix) just
+        # runs to max_iter.
+        corrections = np.concatenate([c_row_correct, c_col_correct])
+        finite = corrections[~np.isnan(corrections)]
+        if finite.size and float(np.max(np.abs(finite - 1.0))) < tol:
+            break
 
     # --- fill missing data -------------------------------
     result = data.copy()

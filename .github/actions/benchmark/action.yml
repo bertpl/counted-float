@@ -39,7 +39,16 @@ runs:
             uv venv --python ${PYTHON_EFFECTIVE_VERSION}
             uv sync --all-extras --dev
 
+      # Write the full-precision result to a file (the console table is rounded)
+      # and upload it so a dispatched run's measurements can be collected.
       - name: Run benchmarks
         shell: bash
         run:  |
-            uv run --all-extras --python ${PYTHON_EFFECTIVE_VERSION} counted_float benchmark
+            uv run --all-extras --python ${PYTHON_EFFECTIVE_VERSION} counted_float benchmark --output result.json
+
+      - name: Upload benchmark result JSON
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: benchmark-${{ runner.os }}-${{ runner.arch }}
+          path: result.json
+          if-no-files-found: error

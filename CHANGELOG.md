@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `int`/`bool` operands are now more systematically treated as compile-time constants: arithmetic, comparisons, and `**` with an integer operand no longer add an `I2F` conversion count (wrap a runtime integer in `CountedFloat(...)` to count it)
+- refreshed the built-in flop-weight dataset: re-measured all benchmarked CPUs on a current toolchain, giving the newly added higher-order FLOP types measured weights and shifting existing weighted costs slightly (zen1 coverage now from an EPYC server part)
 
 ### Deprecated
 
