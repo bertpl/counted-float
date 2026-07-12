@@ -99,6 +99,12 @@ class FlopsBenchmarkSuite:
             FlopType.LOG1P: n_cycles_per_op[FBT.ADD_LOG1P].q50 - n_cycles_per_op[FBT.ADD].q50,
             FlopType.EXPM1: n_cycles_per_op[FBT.ADD_LOG1P_EXPM1].q50 - n_cycles_per_op[FBT.ADD_LOG1P].q50,
             FlopType.FMOD: n_cycles_per_op[FBT.ADD_FMOD].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.TANH: n_cycles_per_op[FBT.ADD_TANH].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.ASINH: n_cycles_per_op[FBT.ADD_ASINH].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.SINH: n_cycles_per_op[FBT.ADD_ASINH_SINH].q50 - n_cycles_per_op[FBT.ADD_ASINH].q50,
+            FlopType.ACOSH: n_cycles_per_op[FBT.ADD_ACOSH].q50 - n_cycles_per_op[FBT.ADD].q50,
+            FlopType.COSH: n_cycles_per_op[FBT.ADD_ACOSH_COSH].q50 - n_cycles_per_op[FBT.ADD_ACOSH].q50,
+            FlopType.ATANH: n_cycles_per_op[FBT.ADD_HALFSIN_ATANH].q50 - n_cycles_per_op[FBT.ADD_HALFSIN].q50,
         }
 
         # put results in appropriate format
@@ -342,6 +348,70 @@ class FlopsBenchmarkSuite:
                     out_f[i] = tmp
 
         @numba.njit(parallel=False)
+        def f_add_tanh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.tanh(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_asinh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.asinh(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_asinh_sinh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # asinh is the inverse of sinh, keeping the chain bounded (mirrors add_log_exp for exp);
+            # subtract add_asinh to isolate the sinh cost
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.sinh(math.asinh(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_acosh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # the large positive range keeps the argument >= 1 (acosh's domain)
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.acosh(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_acosh_cosh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # acosh is the inverse of cosh (for x >= 1), keeping the chain bounded; subtract add_acosh
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.cosh(math.acosh(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_halfsin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            # baseline for atanh: 0.5*sin keeps the argument in [-0.5, 0.5], safely inside atanh's (-1, 1) domain
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = 0.5 * math.sin(tmp + in_f[i])
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
+        def f_add_halfsin_atanh(
+            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
+        ) -> None:
+            # 0.5*sin bounds the argument well inside (-1, 1); subtract add_halfsin to isolate the atanh cost
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = math.atanh(0.5 * math.sin(tmp + in_f[i]))
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False)
         def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
                 tmp = math.e
@@ -449,6 +519,15 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_LOG1P, f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG1P_EXPM1, f_add_log1p_expm1, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_FMOD, f_add_fmod, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                # tanh saturates to +/-1 via a cheap early-return for |arg| > ~20, so (unlike the
+                # periodic sin/cos/tan) keep inputs small to measure its real, exp-based cost
+                (FBT.ADD_TANH, f_add_tanh, ArrayGenerator.lin_range(min_value=-5.0, max_value=5.0)),
+                (FBT.ADD_ASINH, f_add_asinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_ASINH_SINH, f_add_asinh_sinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_ACOSH, f_add_acosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_ACOSH_COSH, f_add_acosh_cosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_HALFSIN, f_add_halfsin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_HALFSIN_ATANH, f_add_halfsin_atanh, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.POW, f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.POW_POW, f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.SUB, f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),

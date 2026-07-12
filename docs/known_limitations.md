@@ -2,8 +2,7 @@
 
 - currently any non-Python-built-in math operations are not counted (e.g.
   `numpy`)
-- not all Python built-in math operations are counted — the remaining gaps are
-  the hyperbolic functions (`sinh`/`cosh`/`tanh` and their inverses) and
+- a few Python built-in math operations remain uncounted — notably
   `math.copysign`; see the [FLOP types reference](flop_types.md) for the full
   list of what is and isn't counted
 - mixed operations with non-float numeric types are outside the counting

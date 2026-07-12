@@ -38,6 +38,12 @@ class FlopType(StrEnum):
     EXPM1 = "expm1(x)"
     LOG1P = "log1p(x)"
     FMOD = "fmod(x,y)"
+    SINH = "sinh(x)"
+    COSH = "cosh(x)"
+    TANH = "tanh(x)"
+    ASINH = "asinh(x)"
+    ACOSH = "acosh(x)"
+    ATANH = "atanh(x)"
 
     def long_name(self) -> str:
         return f"FlopType.{self.name:<9}  [{self.value}]"

@@ -50,6 +50,12 @@ original_math_expm1 = math.expm1
 original_math_log1p = math.log1p
 original_math_fmod = math.fmod
 original_math_fabs = math.fabs
+original_math_sinh = math.sinh
+original_math_cosh = math.cosh
+original_math_tanh = math.tanh
+original_math_asinh = math.asinh
+original_math_acosh = math.acosh
+original_math_atanh = math.atanh
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -262,6 +268,52 @@ def math_fabs(x: float) -> float | CountedFloat:
     return original_math_fabs(x)
 
 
+def math_sinh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_sinh(x)  # compute first: sinh overflows (OverflowError) before counting
+        GLOBAL_COUNTER.incr_sinh()
+        return CountedFloat(result)
+    return original_math_sinh(x)
+
+
+def math_cosh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_cosh(x)  # compute first: cosh overflows (OverflowError) before counting
+        GLOBAL_COUNTER.incr_cosh()
+        return CountedFloat(result)
+    return original_math_cosh(x)
+
+
+def math_tanh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_tanh()
+        return CountedFloat(original_math_tanh(x))
+    return original_math_tanh(x)
+
+
+def math_asinh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_asinh()
+        return CountedFloat(original_math_asinh(x))
+    return original_math_asinh(x)
+
+
+def math_acosh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_acosh(x)  # compute first: domain error (x < 1) raises before counting
+        GLOBAL_COUNTER.incr_acosh()
+        return CountedFloat(result)
+    return original_math_acosh(x)
+
+
+def math_atanh(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_atanh(x)  # compute first: domain error (|x| >= 1) raises before counting
+        GLOBAL_COUNTER.incr_atanh()
+        return CountedFloat(result)
+    return original_math_atanh(x)
+
+
 # -------------------------------------------------------------------------
 #  applying / removing the patches
 # -------------------------------------------------------------------------
@@ -286,6 +338,12 @@ _PATCHES: dict[str, object] = {
     "log1p": math_log1p,
     "fmod": math_fmod,
     "fabs": math_fabs,
+    "sinh": math_sinh,
+    "cosh": math_cosh,
+    "tanh": math_tanh,
+    "asinh": math_asinh,
+    "acosh": math_acosh,
+    "atanh": math_atanh,
 }
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
@@ -307,6 +365,8 @@ def _capture_originals() -> None:
     global original_math_sin, original_math_cos, original_math_tan
     global original_math_asin, original_math_acos, original_math_atan, original_math_atan2
     global original_math_hypot, original_math_expm1, original_math_log1p, original_math_fmod, original_math_fabs
+    global original_math_sinh, original_math_cosh, original_math_tanh
+    global original_math_asinh, original_math_acosh, original_math_atanh
 
     original_math_sqrt = math.sqrt
     original_math_cbrt = math.cbrt
@@ -328,6 +388,12 @@ def _capture_originals() -> None:
     original_math_log1p = math.log1p
     original_math_fmod = math.fmod
     original_math_fabs = math.fabs
+    original_math_sinh = math.sinh
+    original_math_cosh = math.cosh
+    original_math_tanh = math.tanh
+    original_math_asinh = math.asinh
+    original_math_acosh = math.acosh
+    original_math_atanh = math.atanh
 
     _saved_originals.clear()
     for name in _PATCHES:
