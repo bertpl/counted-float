@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.4.0 (2026-07-12)
 
 ### Added
 
@@ -18,17 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `int`/`bool` operands are now more systematically treated as compile-time constants: arithmetic, comparisons, and `**` with an integer operand no longer add an `I2F` conversion count (wrap a runtime integer in `CountedFloat(...)` to count it)
 - refreshed the built-in flop-weight dataset: re-measured all benchmarked CPUs on a current toolchain, giving the newly added higher-order FLOP types measured weights and shifting existing weighted costs slightly (zen1 coverage now from an EPYC server part)
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - `%`, `//`, `divmod()`, and unary `+` on a `CountedFloat` now count and stay `CountedFloat` (they previously returned a plain, uncounted `float`, silently breaking downstream counting)
 - `FlopWeights.get_sorted_flop_types()` now orders types deterministically when some weights are missing (NaN)
-
-### Security
-
 ## 1.3.0 (2026-07-12)
 
 ### Added
