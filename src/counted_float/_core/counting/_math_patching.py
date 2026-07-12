@@ -70,8 +70,8 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
 ) -> float | CountedFloat:
     """Patch math.log: stdlib contract (optional base), with flop classification per log variant.
 
-    Flop classification for the base follows the same constant-detection heuristic as
-    CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant in the source):
+    Flop classification for the base treats a hardcoded (`int`) base as a compile-time constant
+    (as everywhere in the counting model), mirroring CountedFloat.__pow__ / __rpow__:
       - base omitted      -> LOG
       - base int 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
       - base other int    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base) folded
@@ -141,8 +141,9 @@ def math_exp2(x: float) -> float | CountedFloat:
 def math_pow(x: float, y: float) -> float | CountedFloat:
     """Patch math.pow: stdlib contract (always-float result, ValueError on domain errors).
 
-    Flop classification is identical to the x**y form — including the constant-detection heuristic
-    documented on CountedFloat.__pow__ / __rpow__ (int operand = hardcoded constant).
+    Flop classification is identical to the x**y form (strength reduction for hardcoded int
+    exponents/bases; int operands are compile-time constants and add no I2F) — see
+    CountedFloat.__pow__ / __rpow__.
     """
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         # computed first: math.pow raises ValueError on domain errors (e.g. negative base with
@@ -152,8 +153,6 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
             if isinstance(y, int) and y == 2:
                 GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
             else:
-                if isinstance(y, int):
-                    GLOBAL_COUNTER.incr_i2f()
                 GLOBAL_COUNTER.incr_pow()
         else:
             if isinstance(x, int) and x == 2:
@@ -161,8 +160,6 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
             elif isinstance(x, int) and x == 10:
                 GLOBAL_COUNTER.incr_exp10()
             else:
-                if isinstance(x, int):
-                    GLOBAL_COUNTER.incr_i2f()
                 GLOBAL_COUNTER.incr_pow()
         return CountedFloat(result)
     return original_math_pow(x, y)
