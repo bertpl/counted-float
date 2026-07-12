@@ -63,6 +63,9 @@ cli = [
 dev = [
     "check-wheel-contents>=0.6.2",
     "genbadge[all]>=1.1.2",
+    # floor raised off 6.0: older 6.x calls entry_points().get(), which importlib.metadata
+    # removed in Python 3.14 (breaks the lowest-direct resolution there).
+    "hypothesis>=6.156",
     "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
