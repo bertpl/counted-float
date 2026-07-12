@@ -16,7 +16,15 @@ import pytest
 from counted_float._core.counting._counted_float import CountedFloat
 from counted_float._core.counting._global_counter import GlobalFlopCounter
 
-ARITHMETIC_OPERATORS = [operator.add, operator.sub, operator.mul, operator.truediv, operator.pow]
+ARITHMETIC_OPERATORS = [
+    operator.add,
+    operator.sub,
+    operator.mul,
+    operator.truediv,
+    operator.floordiv,
+    operator.mod,
+    operator.pow,
+]
 COMPARISON_OPERATORS = [operator.eq, operator.ne, operator.lt, operator.le, operator.gt, operator.ge]
 
 
@@ -38,6 +46,15 @@ class ReflectedOps:
     def __rpow__(self, other: float) -> str:
         return "rpow"
 
+    def __rmod__(self, other: float) -> str:
+        return "rmod"
+
+    def __rfloordiv__(self, other: float) -> str:
+        return "rfloordiv"
+
+    def __rdivmod__(self, other: float) -> tuple:
+        return ("rdivmod",)
+
     def __gt__(self, other: float) -> str:
         return "gt"  # reflected counterpart of CountedFloat.__lt__
 
@@ -45,7 +62,9 @@ class ReflectedOps:
 # =================================================================================================
 #  Delegation to the other operand
 # =================================================================================================
-@pytest.mark.parametrize("op", [operator.add, operator.sub, operator.mul, operator.truediv])
+@pytest.mark.parametrize(
+    "op", [operator.add, operator.sub, operator.mul, operator.truediv, operator.floordiv, operator.mod]
+)
 def test_arithmetic_with_fraction_matches_float(op: Callable, global_counter: GlobalFlopCounter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.5)
@@ -103,6 +122,9 @@ def test_reflected_operators_of_foreign_type_win(global_counter: GlobalFlopCount
     assert cf * foreign == "rmul"
     assert cf / foreign == "rtruediv"
     assert cf**foreign == "rpow"
+    assert cf % foreign == "rmod"
+    assert cf // foreign == "rfloordiv"
+    assert divmod(cf, foreign) == ("rdivmod",)
     assert (cf < foreign) == "gt"
     assert global_counter.total_count() == 0
 

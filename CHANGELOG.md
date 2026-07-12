@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `%`, `//`, `divmod()`, and unary `+` on a `CountedFloat` now count and stay `CountedFloat` (they previously returned a plain, uncounted `float`, silently breaking downstream counting)
 - `FlopWeights.get_sorted_flop_types()` now orders types deterministically when some weights are missing (NaN)
 
 ### Security
