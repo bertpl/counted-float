@@ -111,6 +111,10 @@ TARGETS: dict[str, TargetInstance] = {
     "m6g.large": TargetInstance("m6g.large", "arm64", {"part": "0xd0c"}),  # Graviton 2 / Neoverse N1
     "m7g.large": TargetInstance("m7g.large", "arm64", {"part": "0xd40"}),  # Graviton 3 / Neoverse V1
     "m8g.large": TargetInstance("m8g.large", "arm64", {"part": "0xd4f"}),  # Graviton 4 / Neoverse V2
+    # Graviton 5 / Neoverse V3 (Armv9.2). Part 0xd84 is the expected MIDR; the identity
+    # gate confirms it against the probed CPU on first launch (a mismatch fails safely,
+    # logging the actual part, rather than mislabelling the data point).
+    "m9g.large": TargetInstance("m9g.large", "arm64", {"part": "0xd84"}),
     # AMD Genoa/Turin, SMT-off -> .large = 2 physical cores (Turin: family alone pins zen5)
     "m7a.large": TargetInstance("m7a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "25", "model": "17"}),
     "m8a.large": TargetInstance("m8a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "26"}),
