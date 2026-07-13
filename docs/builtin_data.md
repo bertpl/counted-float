@@ -65,7 +65,7 @@ same collection in tabular form:
 |---|---|---|
 | arm | `v8_x` | benchmarks: `apple_m1_github_actions`, `apple_m3_max_mbp16`, `apple_m3_mba15`, `aws_graviton_2_neoverse_n1_ec2_m6g_large`, `aws_graviton_3_neoverse_v1_ec2_m7g_large` — specs: `arm_cortex_a76`, `arm_cortex_x1`, `arm_neoverse_n1`, `arm_neoverse_v1` |
 | arm | `v9_0` | benchmarks: `aws_graviton_4_neoverse_v2_ec2_m8g_large`, `azure_cobalt_100_neoverse_n2_github_actions` — specs: `arm_cortex_x2`, `arm_cortex_x3`, `arm_neoverse_n2`, `arm_neoverse_v2` |
-| arm | `v9_2` | benchmarks: `apple_m4_pro_mbp16` — specs: `arm_cortex_x4`, `arm_cortex_x925`, `arm_neoverse_v3` |
+| arm | `v9_2` | benchmarks: `apple_m4_pro_mbp16`, `aws_graviton_5_neoverse_v3_ec2_m9g_large` — specs: `arm_cortex_x4`, `arm_cortex_x925`, `arm_neoverse_v3` |
 | x86 | `amd.2017_zen1` | benchmarks: `amd_epyc_7571_ec2_m5a_xlarge` — other: `analysis_uops_info_zen1+` |
 | x86 | `amd.2020_zen3` | benchmarks: `amd_epyc_7r13_ec2_m6a_xlarge` — other: `analysis_agner_fog_r7_5800x`, `analysis_uops_info_zen3` |
 | x86 | `amd.2022_zen4` | benchmarks: `amd_epyc_9r14_ec2_m7a_large` — other: `analysis_agner_fog_r9_7900x`, `analysis_uops_info_zen4`, `specs_amd` |

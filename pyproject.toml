@@ -63,6 +63,16 @@ cli = [
     "click>=8.0.0",
 ]
 
+[tool.uv]
+# llvmlite dropped macOS x86_64 wheels from 0.46 (arm64-only since), so numba >= 0.63 is
+# source-build-only on Intel Macs; cap it there so the numba extra resolves to the last
+# version with wheels (0.62.x / llvmlite 0.45.x) instead of failing the install.  Scoped
+# to < 3.14: Python 3.14 needs numba >= 0.63 (see the extra's floors), so Intel-Mac 3.14
+# stays what it already is — a source build.
+constraint-dependencies = [
+    "llvmlite<0.46; sys_platform == 'darwin' and platform_machine == 'x86_64' and python_full_version < '3.14'",
+]
+
 [dependency-groups]
 dev = [
     "check-wheel-contents>=0.6.2",
