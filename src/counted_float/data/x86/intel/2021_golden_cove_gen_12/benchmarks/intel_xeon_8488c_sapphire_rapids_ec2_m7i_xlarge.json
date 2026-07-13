@@ -30,9 +30,6 @@
     },
     "benchmark_settings": {
         "array_size": 1000,
-        "n_runs_total": null,
-        "n_runs_warmup": null,
-        "n_seconds_per_run_target": null,
         "t_slice_target_ms": 20.0,
         "n_rounds_measure": 200,
         "n_rounds_warmup": 3,

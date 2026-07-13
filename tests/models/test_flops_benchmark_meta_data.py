@@ -64,9 +64,10 @@ def test_package_info():
 # =================================================================================================
 #  BenchmarkSettings
 # =================================================================================================
-def test_benchmark_settings_parses_legacy_contiguous_scheme():
+def test_benchmark_settings_still_parses_retired_legacy_fields():
+    # a settings block from the retired contiguous scheme must still parse: the retired
+    # keys are unknown now and silently ignored (model default extra="ignore")
     # --- arrange -----------------------------------------
-    # settings block as embedded in data files collected with the contiguous scheme
     legacy = {"array_size": 1000, "n_runs_total": 40, "n_runs_warmup": 15, "n_seconds_per_run_target": 0.1}
 
     # --- act ---------------------------------------------
@@ -74,9 +75,8 @@ def test_benchmark_settings_parses_legacy_contiguous_scheme():
 
     # --- assert ------------------------------------------
     assert settings.array_size == 1000
-    assert settings.n_runs_total == 40
+    assert not hasattr(settings, "n_runs_total")  # retired field is dropped, not stored
     assert settings.t_slice_target_ms is None
-    assert settings.order_shuffled is None
 
 
 def test_benchmark_settings_round_trips_interleaved_scheme():
@@ -95,4 +95,5 @@ def test_benchmark_settings_round_trips_interleaved_scheme():
 
     # --- assert ------------------------------------------
     assert parsed == settings
-    assert parsed.n_runs_total is None
+    # the serialized form no longer carries the retired legacy keys
+    assert "n_runs_total" not in settings.model_dump_json()
