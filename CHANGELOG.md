@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `**` with a constant exponent now strength-reduces beyond the square: `x**0.5` counts SQRT, `x**-1` counts DIV, small int exponents count their multiply chain (e.g. `x**3` -> 2 MUL) instead of a full POW
 - built-in consensus flop weights are now loaded lazily on first use, cutting `import counted_float` time roughly 3x
 
 ### Deprecated
@@ -19,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `math.log(x, base)` with a plain-float base now counts LOG+MUL like an int base (the base is a precomputable constant), instead of charging a runtime DIV
+- `counted_float.__version__` is now available, as Python packaging convention expects
 - the `counted_float` CLI now exits with a clear "install counted-float[cli]" message instead of a raw traceback when the optional `cli` extra is missing
 - the FLOPs benchmark now interleaves kernel execution and uses a low-quantile estimator, making measured weights robust to transient CPU contention and thermal drift (built-in M3 Max data re-measured accordingly)
 - benchmark-derived flop weights are now floored to a small positive value, so a noisy run can no longer produce negative or invalid weights

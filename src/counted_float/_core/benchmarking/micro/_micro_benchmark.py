@@ -61,7 +61,8 @@ class MicroBenchmark(ABC):
             # --- run benchmark_runs ---
             with Timer() as t:
                 single_run_result = self.run_once(n_executions)
-            t_tot_seconds = t.t_elapsed_sec()  # total time (sec) of prepare + run
+            # floored: an immeasurably fast run must not divide the rescale below by zero
+            t_tot_seconds = max(t.t_elapsed_sec(), 1e-9)  # total time (sec) of prepare + run
 
             # --- capture result ---
             if i < n_runs_warmup:

@@ -49,18 +49,40 @@ compiled port would fold at compile time or precompute. This is why e.g.
 `math.sqrt(3)` counts nothing: the port ships `sqrt(3)` as a precomputed
 constant.
 
-The library detects constants through two mechanisms, applying the same rule:
+This gives the counting model one unified principle:
 
-- **Unwrapped values** (plain floats): constants by the wrapping contract, as
-  above.
-- **`int` operands**: evidence of a *hardcoded* constant — ints don't fall out
-  of floating-point computations, so an int operand almost certainly appears
-  literally in your source. As a constant it is folded to a float literal by a
-  compiled port, so an `int` operand adds **no `I2F` conversion**; it merely
-  enables the strength reductions such a port would apply: `x**2` counts MUL
-  (i.e. `x*x`), `2**x` counts EXP2, `math.log(x, 10)` counts LOG10 — while
-  `x**2.0`, with a float that *could* be a runtime value, conservatively counts
-  a generic POW.
+> **Only `CountedFloat` values are runtime data. Any non-`CountedFloat`
+> numeric operand — int, bool, or plain float — is an algorithm constant that
+> a compiled port would fold at compile time.**
+
+Two consequences follow, both applied consistently across operators and
+patched `math` functions:
+
+1. **Constants never add cost of their own.** No `I2F` conversion for an int
+   operand, no runtime preparation for a float one — the operation *on the
+   runtime value* still counts (`cf + 2.0` counts one ADD), but the constant
+   contributes nothing extra.
+2. **Known constant *values* enable strength reduction.** Constants fold by
+   value (an int and an equal-valued plain float compile identically), and
+   where the folded value lets a compiled port emit something cheaper than the
+   generic operation, the cheaper form is counted:
+
+   | Expression (constant `c`) | Counts |
+   |---|---|
+   | `x ** 2` (or `2.0`) | MUL |
+   | `x ** n`, integer 2 ≤ \|n\| ≤ 16 | square-and-multiply MULs (`x**3` → 2 MUL, `x**8` → 3 MUL); negative `n` adds one DIV |
+   | `x ** -1` | DIV (reciprocal) |
+   | `x ** 0.5` / `x ** -0.5` | SQRT / SQRT + DIV |
+   | `x ** 0`, `x ** 1` | nothing (folds away; result stays `CountedFloat`) |
+   | `x ** c`, other values | POW |
+   | `2 ** x` / `10 ** x` | EXP2 / EXP10 (POW for other constant bases) |
+   | `math.log(x, 2)` / `math.log(x, 10)` | LOG2 / LOG10 |
+   | `math.log(x, c)`, other values | LOG + MUL (`1/log(c)` folds to a constant multiplier) |
+
+   Beyond \|n\| = 16 real compilers' powi expansion varies, so a generic POW
+   is a fair stand-in. When the exponent, base, or log base is itself a
+   `CountedFloat`, it is genuinely runtime: no folding applies (`x ** y`
+   counts POW; `math.log(x, y)` counts LOG per counted operand + DIV).
 
 The one place an `I2F` conversion *is* counted is explicit construction from an
 int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer

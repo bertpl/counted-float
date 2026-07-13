@@ -172,21 +172,40 @@ def test_math_log_other_int_base_counts_log_mul(global_counter):
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_float_base_counts_per_counted_operand(global_counter):
-    # a runtime (float) base means a compiled port computes log(x)/log(base)
+def test_math_log_constant_float_base_folds_like_int(global_counter):
+    # constants fold by value: a plain-float base is as precomputable as an int one, so a
+    # compiled port emits log(x) * (1/log(base)) — LOG + MUL, not a runtime DIV
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
 
     # --- act & assert ------------------------------------
-    # counted x, plain base: LOG + DIV (log of the untracked base is precomputable)
-    result = math.log(cf, 2.0)
+    result = math.log(cf, 3.0)
     assert global_counter.total_count() == 2
     assert global_counter.LOG == 1
-    assert global_counter.DIV == 1
+    assert global_counter.MUL == 1
     assert isinstance(result, CountedFloat)
 
-    # plain x, counted base: LOG + DIV
+    # special constant values fold all the way to the dedicated instruction
     global_counter.reset()
+    result = math.log(cf, 2.0)
+    assert global_counter.total_count() == 1
+    assert global_counter.LOG2 == 1
+    assert isinstance(result, CountedFloat)
+
+    global_counter.reset()
+    result = math.log(cf, 10.0)
+    assert global_counter.total_count() == 1
+    assert global_counter.LOG10 == 1
+    assert isinstance(result, CountedFloat)
+
+
+def test_math_log_counted_base_counts_runtime_division(global_counter):
+    # a CountedFloat base is genuinely runtime: a port computes log(x)/log(base)
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(8.0)
+
+    # --- act & assert ------------------------------------
+    # plain x, counted base: LOG (of the base) + DIV
     result = math.log(16.0, CountedFloat(2.0))
     assert global_counter.total_count() == 2
     assert global_counter.LOG == 1
