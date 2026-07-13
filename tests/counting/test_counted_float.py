@@ -836,15 +836,15 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = 10**cf  # EXP10
     _ = cf**2  # MUL
     _ = i**cf  # POW
-    _ = cf**i  # POW
+    _ = cf**i  # 4 x MUL (i == 9: square-and-multiply)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 14
-    assert global_counter.POW == 9
+    assert global_counter.total_count() == 17
+    assert global_counter.POW == 8
     assert global_counter.EXP == 1
     assert global_counter.EXP2 == 2
     assert global_counter.EXP10 == 1
-    assert global_counter.MUL == 1
+    assert global_counter.MUL == 5
     assert global_counter.I2F == 0
 
 
@@ -864,14 +864,14 @@ def test_counted_float_counts_pow_2(global_counter):
     _ = math.pow(10, cf)  # EXP10
     _ = math.pow(cf, 2)  # MUL
     _ = math.pow(i, cf)  # POW
-    _ = math.pow(cf, i)  # POW
+    _ = math.pow(cf, i)  # 4 x MUL (i == 9: square-and-multiply)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 12
-    assert global_counter.POW == 9
+    assert global_counter.total_count() == 15
+    assert global_counter.POW == 8
     assert global_counter.EXP2 == 1
     assert global_counter.EXP10 == 1
-    assert global_counter.MUL == 1
+    assert global_counter.MUL == 5
     assert global_counter.I2F == 0
 
 
@@ -1033,3 +1033,88 @@ def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(global_c
     with pytest.raises(ZeroDivisionError):
         op(17.0, cf_zero)  # reflected path: 17.0 // cf_zero
     assert global_counter.total_count() == 0
+
+
+@pytest.mark.parametrize(
+    ("exponent", "expected_counts"),
+    [
+        (0, {}),  # folds away entirely
+        (1, {}),
+        (2, {"MUL": 1}),
+        (2.0, {"MUL": 1}),  # constants fold by value: 2.0 compiles like 2
+        (3, {"MUL": 2}),  # x*x, *x
+        (4, {"MUL": 2}),  # square twice
+        (8, {"MUL": 3}),
+        (9, {"MUL": 4}),
+        (16, {"MUL": 4}),
+        (-1, {"DIV": 1}),  # reciprocal
+        (-3, {"MUL": 2, "DIV": 1}),
+        (0.5, {"SQRT": 1}),
+        (-0.5, {"SQRT": 1, "DIV": 1}),
+        (17, {"POW": 1}),  # beyond the powi cutoff
+        (-17, {"POW": 1}),
+        (2.5, {"POW": 1}),  # non-integral, non-special value
+        (math.nan, {"POW": 1}),
+    ],
+)
+def test_counted_float_pow_constant_exponent_strength_reduction(global_counter, exponent, expected_counts):
+    """A constant exponent counts what a compiled port would emit, folded by value."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    result = cf**exponent
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert global_counter.total_count() == sum(expected_counts.values())
+    for flop_name, count in expected_counts.items():
+        assert getattr(global_counter, flop_name) == count
+
+
+def test_counted_float_pow_strength_reduction_mirrored_in_math_pow(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = math.pow(cf, 0.5)  # SQRT
+    _ = math.pow(cf, -1)  # DIV
+    _ = math.pow(cf, 3)  # 2 x MUL
+    _ = math.pow(2.0, cf)  # EXP2 (constant base folds by value)
+    _ = math.pow(10.0, cf)  # EXP10
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 6
+    assert global_counter.SQRT == 1
+    assert global_counter.DIV == 1
+    assert global_counter.MUL == 2
+    assert global_counter.EXP2 == 1
+    assert global_counter.EXP10 == 1
+
+
+def test_counted_float_rpow_constant_float_base_folds_by_value(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = 2.0**cf  # EXP2
+    _ = 10.0**cf  # EXP10
+    _ = 3.0**cf  # POW
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 3
+    assert global_counter.EXP2 == 1
+    assert global_counter.EXP10 == 1
+    assert global_counter.POW == 1
+
+
+def test_counted_float_pow_runtime_counted_exponent_counts_pow(global_counter):
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = cf ** CountedFloat(2.0)  # a CountedFloat exponent is genuinely runtime: no folding
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.POW == 1

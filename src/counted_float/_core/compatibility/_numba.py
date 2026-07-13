@@ -3,8 +3,10 @@ from collections.abc import Callable
 try:
     import numba  # ty: ignore[unresolved-import] -- numba is an optional dependency; shimmed below if absent
 
-
+    NUMBA_AVAILABLE = True
 except ImportError:
+    NUMBA_AVAILABLE = False
+
     # dummy decorator that will replace numba.jit and numba.njit
     def dummy_decorator(*args: object, **kwargs: object) -> Callable:
         # dummy decorator that does nothing and can be used with or without arguments
@@ -28,4 +30,4 @@ except ImportError:
 
 
 def is_numba_installed() -> bool:
-    return numba.__version__ != "0.0.0"
+    return NUMBA_AVAILABLE

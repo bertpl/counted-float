@@ -26,7 +26,7 @@ find:
 | `round(x, n)` | `RND` | operator | ISA | yes (float) |
 | `round(x)`, `int(x)`, `math.floor`/`ceil`/`trunc` | `F2I` | operator | ISA | returns `int` |
 | `CountedFloat(int)` | `I2F` | constructor | ISA | yes |
-| `x ** y`, `math.pow(x, y)` | `POW` (or `MUL`/`EXP2`/`EXP10` via strength reduction) | operator / patch | benchmarked | yes |
+| `x ** y`, `math.pow(x, y)` | `POW` (or cheaper via constant strength reduction — MULs, SQRT, DIV, EXP2, EXP10) | operator / patch | benchmarked | yes |
 | `math.sqrt(x)` | `SQRT` | patch | ISA | yes |
 | `math.cbrt(x)` | `CBRT` | patch | benchmarked | yes |
 | `math.exp(x)`, `math.exp2(x)`, `2 ** x` | `EXP`, `EXP2` | patch / operator | benchmarked | yes |
@@ -203,9 +203,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **ARM:** (software)
     - **x86:** (software)
 - **Counted Python operations:** `math.log(x)` for `CountedFloat`;
-  `math.log(x, base)` for `CountedFloat` decomposes per the constant-detection
-  heuristic (int base 2/10 -> LOG2/LOG10; other int base -> LOG+MUL; float
-  base -> LOG per counted operand + DIV)
+  `math.log(x, base)` for `CountedFloat` decomposes per the constant-folding
+  convention (constant base 2/10 -> LOG2/LOG10; other constant base ->
+  LOG+MUL; CountedFloat base -> LOG per counted operand + DIV)
 - **Not counted:** `numpy.log`, log on non-CountedFloat
 
 ## FlopType.LOG2 (`log2(x)`)
@@ -231,7 +231,10 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - Relevant CPU instructions
     - **ARM:** (software)
     - **x86:** (software)
-- **Counted Python operations:** `x ** y`, `pow(x, y)` for `CountedFloat`
+- **Counted Python operations:** `x ** y`, `pow(x, y)` for `CountedFloat`; constant
+  exponents/bases strength-reduce per the constant-folding convention (see the
+  counting-model page): `x**0.5` -> SQRT, `x**-1` -> DIV, integer exponents
+  2 <= |n| <= 16 -> their multiply chain, base 2/10 -> EXP2/EXP10
 - **Not counted:** `pow` on non-CountedFloat, `numpy.pow`
 
 ## FlopType.SIN (`sin(x)`)

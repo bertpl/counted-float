@@ -5,6 +5,57 @@ from typing import SupportsIndex
 from ._global_counter import GLOBAL_COUNTER
 
 
+def count_pow_with_constant_exponent(exponent: float) -> None:
+    """Register the flops a compiled port would execute for ``x ** exponent`` with a constant exponent.
+
+    Constants are folded by value (an int and an equal-valued plain float compile identically):
+      - 0, 1                     -> nothing (the expression folds away entirely)
+      - 0.5 / -0.5               -> SQRT / SQRT + DIV
+      - -1                       -> DIV (reciprocal)
+      - integer 2 <= |n| <= 16   -> square-and-multiply MULs (x**3 -> 2 MUL, x**8 -> 3 MUL, ...),
+                                    plus one DIV when negative; the |n| <= 16 cutoff keeps the
+                                    model honest — beyond it real compilers' powi expansion
+                                    varies and a generic POW is a fair stand-in
+      - anything else            -> POW
+    """
+    value = float(exponent)
+    if value in (0.0, 1.0):
+        return
+    if value == 0.5:
+        GLOBAL_COUNTER.incr_sqrt()
+        return
+    if value == -0.5:
+        GLOBAL_COUNTER.incr_sqrt()
+        GLOBAL_COUNTER.incr_div()
+        return
+    if value == -1.0:
+        GLOBAL_COUNTER.incr_div()
+        return
+    if value.is_integer() and 2 <= abs(value) <= 16:
+        n = abs(int(value))
+        n_muls = (n.bit_length() - 1) + bin(n).count("1") - 1  # square-and-multiply cost
+        for _ in range(n_muls):
+            GLOBAL_COUNTER.incr_mul()
+        if value < 0:
+            GLOBAL_COUNTER.incr_div()
+        return
+    GLOBAL_COUNTER.incr_pow()
+
+
+def count_pow_with_constant_base(base: float) -> None:
+    """Register the flops a compiled port would execute for ``base ** x`` with a constant base.
+
+    Constants are folded by value: base 2 -> EXP2, base 10 -> EXP10, anything else -> POW.
+    """
+    value = float(base)
+    if value == 2.0:
+        GLOBAL_COUNTER.incr_exp2()
+    elif value == 10.0:
+        GLOBAL_COUNTER.incr_exp10()
+    else:
+        GLOBAL_COUNTER.incr_pow()
+
+
 class CountedFloat(float):
     # -------------------------------------------------------------------------
     #  CONSTRUCTOR
@@ -271,10 +322,10 @@ class CountedFloat(float):
     def __pow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__pow__'s mod is None-only and unused here
         """x**other.
 
-        A hardcoded (`int`) exponent enables the strength reduction a compiled port would apply:
-        `x**2` counts as MUL (i.e. `x*x`). A float exponent such as `x**2.0` may be a runtime
-        variable, where a port compiles a generic pow, so it counts as POW. Per the counting
-        model, `int` operands are compile-time constants and never add an I2F conversion.
+        A constant (non-CountedFloat) exponent enables the strength reduction a compiled port
+        would apply — see count_pow_with_constant_exponent for the value-based rules (`x**2` ->
+        MUL, `x**0.5` -> SQRT, `x**-1` -> DIV, small int exponents -> their multiply chain).
+        Per the counting model, constant operands never add an I2F conversion.
 
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
@@ -285,19 +336,19 @@ class CountedFloat(float):
             return NotImplemented
         if not isinstance(result, float):
             return result
-        if isinstance(other, int) and other == 2:
-            GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
+        if isinstance(other, CountedFloat):
+            GLOBAL_COUNTER.incr_pow()  # genuinely runtime exponent
         else:
-            GLOBAL_COUNTER.incr_pow()
+            count_pow_with_constant_exponent(other)
         return CountedFloat(result)
 
     def __rpow__(self, other: float) -> CountedFloat:  # ty: ignore[invalid-method-override] -- no `mod` param; float.__rpow__'s mod is None-only and unused here
         """other**x.
 
-        Strength reduction on the base, as in __pow__: a hardcoded (`int`) base 2 or 10 counts
-        as EXP2 / EXP10 (what a compiled port would emit); any other base counts a generic POW,
-        and a float base may be a runtime variable, so it counts POW too. Per the counting model,
-        `int` operands are compile-time constants and never add an I2F conversion.
+        Strength reduction on the base, as in __pow__: a constant (non-CountedFloat) base 2 or
+        10 counts as EXP2 / EXP10 (what a compiled port would emit, folding constants by value);
+        any other base counts a generic POW. Per the counting model, constant operands never add
+        an I2F conversion.
 
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
@@ -308,10 +359,8 @@ class CountedFloat(float):
             return NotImplemented
         if not isinstance(result, float):
             return result
-        if isinstance(other, int) and other == 2:
-            GLOBAL_COUNTER.incr_exp2()
-        elif isinstance(other, int) and other == 10:
-            GLOBAL_COUNTER.incr_exp10()
+        if isinstance(other, CountedFloat):
+            GLOBAL_COUNTER.incr_pow()  # genuinely runtime base
         else:
-            GLOBAL_COUNTER.incr_pow()
+            count_pow_with_constant_base(other)
         return CountedFloat(result)

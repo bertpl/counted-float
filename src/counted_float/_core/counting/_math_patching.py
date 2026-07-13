@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import math
 
-from ._counted_float import CountedFloat
+from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
 from ._global_counter import GLOBAL_COUNTER
 
 # -------------------------------------------------------------------------
@@ -85,13 +85,15 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
 ) -> float | CountedFloat:
     """Patch math.log: stdlib contract (optional base), with flop classification per log variant.
 
-    Flop classification for the base treats a hardcoded (`int`) base as a compile-time constant
-    (as everywhere in the counting model), mirroring CountedFloat.__pow__ / __rpow__:
-      - base omitted      -> LOG
-      - base int 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
-      - base other int    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base) folded
-                             at compile time)
-      - base float        -> a port computes log(x)/log(base): LOG per CountedFloat operand + DIV
+    Flop classification for the base treats any constant (non-CountedFloat) base as a
+    compile-time constant, folded by value (as everywhere in the counting model), mirroring
+    CountedFloat.__pow__ / __rpow__:
+      - base omitted           -> LOG
+      - constant base 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
+      - other constant base    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base)
+                                  folded at compile time)
+      - CountedFloat base      -> genuinely runtime: a port computes log(x)/log(base), so
+                                  LOG per CountedFloat operand + DIV
     As everywhere in the counting model, only operations touching CountedFloat values are counted:
     any runtime input to the counted algorithm should itself be a CountedFloat; whatever remains a
     plain float is by definition not part of the core algorithm and/or precomputable.
@@ -103,23 +105,21 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
         return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
-    if isinstance(base, int) and base == 2:
-        if isinstance(x, CountedFloat):
-            GLOBAL_COUNTER.incr_log2()
-    elif isinstance(base, int) and base == 10:
-        if isinstance(x, CountedFloat):
-            GLOBAL_COUNTER.incr_log10()
-    elif isinstance(base, int):
+    if isinstance(base, CountedFloat):
         if isinstance(x, CountedFloat):
             GLOBAL_COUNTER.incr_log()
-            GLOBAL_COUNTER.incr_mul()
+        GLOBAL_COUNTER.incr_log()
+        GLOBAL_COUNTER.incr_div()
+    elif float(base) == 2.0:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log2()
+    elif float(base) == 10.0:
+        if isinstance(x, CountedFloat):
+            GLOBAL_COUNTER.incr_log10()
     else:
         if isinstance(x, CountedFloat):
             GLOBAL_COUNTER.incr_log()
-        if isinstance(base, CountedFloat):
-            GLOBAL_COUNTER.incr_log()
-        if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-            GLOBAL_COUNTER.incr_div()
+            GLOBAL_COUNTER.incr_mul()
     if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
         return CountedFloat(result)
     return result
@@ -164,18 +164,12 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
         # computed first: math.pow raises ValueError on domain errors (e.g. negative base with
         # fractional exponent) and then nothing should be counted
         result = original_math_pow(x, y)
-        if isinstance(x, CountedFloat):
-            if isinstance(y, int) and y == 2:
-                GLOBAL_COUNTER.incr_mul()  # x^2 = x*x
-            else:
-                GLOBAL_COUNTER.incr_pow()
+        if isinstance(x, CountedFloat) and isinstance(y, CountedFloat):
+            GLOBAL_COUNTER.incr_pow()  # genuinely runtime base and exponent
+        elif isinstance(x, CountedFloat):
+            count_pow_with_constant_exponent(y)
         else:
-            if isinstance(x, int) and x == 2:
-                GLOBAL_COUNTER.incr_exp2()
-            elif isinstance(x, int) and x == 10:
-                GLOBAL_COUNTER.incr_exp10()
-            else:
-                GLOBAL_COUNTER.incr_pow()
+            count_pow_with_constant_base(x)
         return CountedFloat(result)
     return original_math_pow(x, y)
 

@@ -91,10 +91,10 @@ def test_pow_with_fraction_stays_counted(global_counter: GlobalFlopCounter):
     # --- assert ------------------------------------------
     # unlike the other operators, Fraction.__rpow__ computes base ** float(exponent) without
     # stripping the subclass, so the operation lands back in CountedFloat.__pow__: the result
-    # stays contagious and is counted
+    # stays contagious and is counted (the 0.5 exponent strength-reduces to SQRT)
     assert result == 1.5 ** Fraction(1, 2)
     assert isinstance(result, CountedFloat)
-    assert global_counter.POW == 1
+    assert global_counter.SQRT == 1
 
 
 @pytest.mark.parametrize("op", COMPARISON_OPERATORS)
