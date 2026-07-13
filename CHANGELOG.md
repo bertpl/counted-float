@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- benchmark-derived flop weights are now floored to a small positive value, so a noisy run can no longer produce negative or invalid weights
+
 ### Security
 
 ## 1.4.1 (2026-07-13)

@@ -1,4 +1,5 @@
 import math
+import sys
 from importlib.metadata import version
 
 import numpy as np
@@ -20,6 +21,13 @@ FBT = FlopsBenchmarkType
 
 
 class FlopsBenchmarkSuite:
+    # differencing noisy per-kernel statistics can yield estimates <= 0 for cheap ops
+    # (ABS, MINUS, COMP) on a loaded machine; latencies are floored to this fraction of
+    # the measured ADD cost — well below any plausible genuine latency (the cheapest
+    # measured ops sit around 0.3-1x ADD), so it only ever binds on noise artifacts.
+    # The spec-sheet path applies its own floor via Latency.consensus().
+    MIN_LATENCY_ADD_FRACTION = 0.1
+
     # -------------------------------------------------------------------------
     #  Main API
     # -------------------------------------------------------------------------
@@ -106,6 +114,7 @@ class FlopsBenchmarkSuite:
             FlopType.COSH: n_cycles_per_op[FBT.ADD_ACOSH_COSH].q50 - n_cycles_per_op[FBT.ADD_ACOSH].q50,
             FlopType.ATANH: n_cycles_per_op[FBT.ADD_HALFSIN_ATANH].q50 - n_cycles_per_op[FBT.ADD_HALFSIN].q50,
         }
+        estimated_flop_latencies = self.floor_latencies(estimated_flop_latencies)
 
         # put results in appropriate format
         return FlopsBenchmarkResults(
@@ -123,6 +132,19 @@ class FlopsBenchmarkSuite:
     # -------------------------------------------------------------------------
     #  Static methods
     # -------------------------------------------------------------------------
+    @classmethod
+    def floor_latencies(cls, latencies: dict[FlopType, float]) -> dict[FlopType, float]:
+        """Clamp estimated per-flop latencies to a small positive floor.
+
+        The floor is MIN_LATENCY_ADD_FRACTION times the estimated ADD latency, so a noisy
+        run can never produce zero, negative, or otherwise invalid weights downstream
+        (a negative weight reaching a geometric mean would go complex).  If even the ADD
+        estimate is non-positive, the run is garbage anyway; the floor then degrades to
+        the smallest positive float so results remain representable.
+        """
+        floor = cls.MIN_LATENCY_ADD_FRACTION * max(latencies[FlopType.ADD], sys.float_info.min)
+        return {flop_type: max(latency, floor) for flop_type, latency in latencies.items()}
+
     @staticmethod
     def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:  # noqa: C901 -- flat registry of per-flop-type jit kernels
         """Returns a benchmark for each FlopsBenchmarkType, of requested array size."""
