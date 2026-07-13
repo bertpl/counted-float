@@ -40,7 +40,9 @@ classifiers = [
 ]
 
 [project.scripts]
-counted_float = "counted_float._core._cli:cli"
+# the guard module (not the click CLI directly): base installs without the `cli` extra
+# get an actionable message instead of a raw ModuleNotFoundError for `click`
+counted_float = "counted_float._core._cli_main:main"
 
 [project.urls]
 Source = "https://github.com/bertpl/counted-float"
