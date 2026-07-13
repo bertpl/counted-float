@@ -13,8 +13,11 @@ class Config:
     #  Internal State
     # -------------------------------------------------------------------------
 
-    # these are the weights that are used to calculate weighted flop counts; update with set_flop_weights(...)
-    __weights: FlopWeights = get_default_consensus_flop_weights()
+    # these are the weights that are used to calculate weighted flop counts; update with
+    # set_flop_weights(...).  None means "not initialized yet": the default consensus weights
+    # are computed lazily on first access, since deriving them parses every built-in data file
+    # (~0.8 s) — far too expensive to pay at import time for a feature many importers never use.
+    __weights: FlopWeights | None = None
 
     # -------------------------------------------------------------------------
     #  Configuration Methods
@@ -34,6 +37,8 @@ class Config:
 
         Returns a fresh deep copy; mutating it does not affect the configured weights.
         """
+        if cls.__weights is None:
+            cls.__weights = get_default_consensus_flop_weights()
         return cls.__weights.model_copy(deep=True)
 
 

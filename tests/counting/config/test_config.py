@@ -1,3 +1,7 @@
+import subprocess
+import sys
+import textwrap
+
 import pytest
 
 from counted_float._core.counting.config import get_active_flop_weights, set_active_flop_weights
@@ -41,3 +45,22 @@ def test_flop_weight_getters_return_defensive_copies(getter):
 
     # --- assert ------------------------------------------
     assert getter().weights[FlopType.ADD] != -12345.0
+
+
+def test_bare_import_does_not_parse_builtin_data():
+    # default consensus weights derive from every built-in data file (~0.8 s); that work
+    # must happen lazily on first weights access, not at import time
+    code = textwrap.dedent(
+        """
+        import sys
+        opened = []
+        def hook(event, args):
+            if event == "open" and "counted_float/data" in str(args[0]).replace(chr(92), "/"):
+                opened.append(str(args[0]))
+        sys.addaudithook(hook)
+        import counted_float
+        sys.exit(1 if opened else 0)
+        """
+    )
+    result = subprocess.run([sys.executable, "-c", code], check=False)  # noqa: S603 -- fixed args, no user input
+    assert result.returncode == 0, "importing counted_float opened built-in data files"
