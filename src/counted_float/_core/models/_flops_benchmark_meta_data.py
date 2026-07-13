@@ -15,24 +15,16 @@ from ._base import MyBaseModel
 #  Benchmark Settings
 # =================================================================================================
 class BenchmarkSettings(MyBaseModel):
-    """Settings the benchmark data was collected with.
+    """Settings the round-robin interleaved benchmark run was collected with.
 
-    Two collection schemes coexist in stored data, and a settings block self-documents
-    which one produced it:
-      - contiguous per-benchmark blocks (legacy): n_runs_total / n_runs_warmup /
-        n_seconds_per_run_target
-      - round-robin interleaved rounds: t_slice_target_ms / n_rounds_measure /
-        n_rounds_warmup / input_pool_size / order_shuffled
-    All scheme fields are optional so results from either scheme (including data
-    collected before this distinction existed) parse unchanged.
+    The fields describing the run shape are optional so a partial or future-scheme
+    settings block still parses. Data collected under the earlier contiguous-block
+    scheme carried `n_runs_total` / `n_runs_warmup` / `n_seconds_per_run_target`
+    instead; those fields have been retired, and since the model ignores unknown keys,
+    such older or externally-saved results still parse (the retired keys are dropped).
     """
 
     array_size: int
-    # legacy contiguous scheme
-    n_runs_total: int | None = None
-    n_runs_warmup: int | None = None
-    n_seconds_per_run_target: float | None = None
-    # interleaved scheme
     t_slice_target_ms: float | None = None
     n_rounds_measure: int | None = None
     n_rounds_warmup: int | None = None
