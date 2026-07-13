@@ -26,9 +26,10 @@ def test_flops_benchmarking_suite_run():
     # --- act ---------------------------------------------
     result = suite.run(
         array_size=10,
-        n_runs_total=10,
-        n_runs_warmup=5,
-        n_seconds_per_run_target=0.001,
+        t_slice_target_ms=0.1,
+        n_rounds_measure=5,
+        n_rounds_warmup=1,
+        seed=42,
     )  # override defaults to keep test short
 
     # --- assert ------------------------------------------

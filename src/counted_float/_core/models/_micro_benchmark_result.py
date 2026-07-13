@@ -20,8 +20,13 @@ class SingleRunResult(MyBaseModel):
 
 
 class Quantiles(MyBaseModel):
-    """Class to represent a fixed set of quantiles of an (empirical) distribution."""
+    """Class to represent a fixed set of quantiles of an (empirical) distribution.
 
+    q10 is optional for backward compatibility: results collected before interleaved
+    execution (which uses q10 as its latency estimator) only carry q25/q50/q75.
+    """
+
+    q10: float | None = None
     q25: float
     q50: float
     q75: float
@@ -48,6 +53,7 @@ class MicroBenchmarkResult(MyBaseModel):
     def summary_stats_nsecs_per_exec(self) -> Quantiles:
         # summary statistics of nsecs_per_exec
         return Quantiles(
+            q10=self.get_nsecs_per_exec_quantile(q=0.10),
             q25=self.get_nsecs_per_exec_quantile(q=0.25),
             q50=self.get_nsecs_per_exec_quantile(q=0.50),
             q75=self.get_nsecs_per_exec_quantile(q=0.75),
@@ -56,6 +62,7 @@ class MicroBenchmarkResult(MyBaseModel):
     def summary_stats_cycles_per_exec(self) -> Quantiles:
         # summary statistics of cycles_per_exec
         return Quantiles(
+            q10=self.get_cycles_per_exec_quantile(q=0.10),
             q25=self.get_cycles_per_exec_quantile(q=0.25),
             q50=self.get_cycles_per_exec_quantile(q=0.50),
             q75=self.get_cycles_per_exec_quantile(q=0.75),

@@ -2,9 +2,22 @@ from .counted_float import BenchmarkCountedFloat, BenchmarkFloat, CountedFloatBe
 from .flops import FlopsBenchmarkResults, FlopsBenchmarkSuite
 
 
-def run_flops_benchmark(n_seconds_per_run_target: float = 0.1) -> FlopsBenchmarkResults:
-    """Run the flops benchmark suite with default settings returns a FlopsBenchmarkResults object."""
-    benchmark_results = FlopsBenchmarkSuite().run(n_seconds_per_run_target=n_seconds_per_run_target)
+def run_flops_benchmark(
+    t_slice_target_ms: float = 20.0,
+    n_rounds_measure: int = 200,
+    n_rounds_warmup: int = 3,
+    seed: int | None = None,
+) -> FlopsBenchmarkResults:
+    """Run the flops benchmark suite (round-robin interleaved) and return a FlopsBenchmarkResults object.
+
+    An optional seed makes input pools and per-round shuffles reproducible.
+    """
+    benchmark_results = FlopsBenchmarkSuite().run(
+        t_slice_target_ms=t_slice_target_ms,
+        n_rounds_measure=n_rounds_measure,
+        n_rounds_warmup=n_rounds_warmup,
+        seed=seed,
+    )
 
     print()
 
