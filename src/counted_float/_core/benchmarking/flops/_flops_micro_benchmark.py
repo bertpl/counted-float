@@ -1,3 +1,4 @@
+import random
 from collections.abc import Callable
 
 import numpy as np
@@ -43,6 +44,10 @@ class FlopsMicroBenchmark(MicroBenchmark):
     operations, so we can make representative estimates of the number of FLOPS executed by instrumented algorithms.
     """
 
+    # input variety across interleaved slices without per-slice generation cost: slice r
+    # of a benchmark uses pool slot r mod INPUT_POOL_SIZE (see prepare_suite/prepare_slice)
+    INPUT_POOL_SIZE = 4
+
     def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable) -> None:
         super().__init__(name=name, single_execution=f"{size} iterations")
         self.size = size
@@ -51,9 +56,27 @@ class FlopsMicroBenchmark(MicroBenchmark):
         self.n_executions = 0
         # input arrays
         self.in_f: np.ndarray = np.zeros(size, dtype=float)
+        self.input_pool: list[np.ndarray] = []
         # output arrays
         self.out_f: np.ndarray = np.zeros(size, dtype=float)
         self.out_i: np.ndarray = np.zeros(size, dtype=int)
+
+    def prepare_suite(self, rng: random.Random) -> None:
+        """Allocate buffers once and pre-generate the input pool.
+
+        Interleaved slices must not regenerate inputs or re-allocate outputs (Python
+        object churn right before every timed region would sweep the allocator and
+        caches); instead all arrays persist for the whole suite and slices only switch
+        pool slots.
+        """
+        self.input_pool = [self.array_init.new_array(self.size, rng=rng) for _ in range(self.INPUT_POOL_SIZE)]
+        self.out_f = np.zeros(self.size, dtype=float)
+        self.out_i = np.zeros(self.size, dtype=int)
+
+    def prepare_slice(self, n_executions: int, round_index: int) -> None:
+        """Cheap per-slice preparation: record the workload and pick this round's pool slot."""
+        self.n_executions = n_executions
+        self.in_f = self.input_pool[round_index % len(self.input_pool)]
 
     def _prepare_benchmark(self, n_executions: int) -> None:
         self.n_executions = n_executions

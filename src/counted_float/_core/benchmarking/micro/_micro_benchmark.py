@@ -1,3 +1,4 @@
+import random
 from abc import ABC, abstractmethod
 
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
@@ -92,6 +93,37 @@ class MicroBenchmark(ABC):
 
         # return final result
         return benchmark_result
+
+    def prepare_suite(self, rng: random.Random) -> None:  # noqa: B027 -- optional hook, deliberately non-abstract
+        """One-time setup before interleaved execution (buffer allocation, input pools).
+
+        Default: no-op — subclasses that pre-generate data override this; ``rng`` makes
+        that generation reproducible when the caller passes a seeded instance.
+        """
+
+    def prepare_slice(self, n_executions: int, round_index: int) -> None:
+        """Cheap per-slice preparation for interleaved execution.
+
+        Default: falls back to the full per-run preparation.  Subclasses that allocate
+        persistently in ``prepare_suite`` override this with a cheap variant (e.g. input
+        pool slot selection) so the gap between timed regions stays negligible.
+        """
+        self._prepare_benchmark(n_executions)
+
+    def run_slice(self, n_executions: int, round_index: int, cpu_freq_mhz: float | None) -> SingleRunResult:
+        """Run one interleaved slice: cheap preparation + one timed call.
+
+        Unlike ``run_once``, the CPU frequency is passed in by the caller (sampled once
+        per round) instead of being read per call.
+        """
+        self.prepare_slice(n_executions, round_index)
+        with Timer() as t:
+            self._run_benchmark()
+        return SingleRunResult(
+            n_executions=n_executions,
+            t_nsecs=t.t_elapsed_nsec(),
+            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=cpu_freq_mhz),
+        )
 
     def run_once(self, n_executions: int) -> SingleRunResult:
         """Run benchmark_runs once for a given # of executions and return time per execution.

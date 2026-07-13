@@ -4,6 +4,7 @@ from importlib.metadata import version
 
 import numpy as np
 
+from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner
 from counted_float._core.compatibility import is_numba_installed, numba
 from counted_float._core.models import (
     BenchmarkSettings,
@@ -34,11 +35,22 @@ class FlopsBenchmarkSuite:
     def run(
         self,
         array_size: int = 1000,
-        n_runs_total: int = 40,
-        n_runs_warmup: int = 15,
-        n_seconds_per_run_target: float = 0.1,
+        t_slice_target_ms: float = 20.0,
+        n_rounds_measure: int = 200,
+        n_rounds_warmup: int = 3,
+        seed: int | None = None,
     ) -> FlopsBenchmarkResults:
-        """Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults_V2 object."""
+        """Run entire flops benchmarking suite and return the results as a FlopsBenchmarkResults object.
+
+        All benchmarks run round-robin interleaved (see InterleavedBenchmarkRunner): each
+        measurement round runs every benchmark for one ~t_slice_target_ms slice, in an
+        order re-shuffled per round, so machine-wide disturbances cancel in the pairwise
+        differences below.  Per-benchmark latency is estimated from the q10 of its
+        recorded slices: contention is strictly additive noise, so a low quantile
+        approaches the uncontended latency (q10 rather than the minimum, so a single
+        too-low CPU-frequency sample cannot select the worst conversion outlier).
+        An optional seed makes input pools and round shuffles reproducible.
+        """
         # warn if needed
         if not is_numba_installed():
             print("========= WARNING =========")
@@ -50,69 +62,74 @@ class FlopsBenchmarkSuite:
         print(f"Running FLOPS benchmarks using counted-float {version('counted-float')} ...")
         print(
             f"(Expected duration: "
-            f"~{(n_runs_total - n_runs_warmup / 2) * n_seconds_per_run_target * len(FlopsBenchmarkType):.1f}"
-            f" seconds)"
+            f"~{(n_rounds_measure + n_rounds_warmup) * len(FlopsBenchmarkType) * t_slice_target_ms / 1000:.0f}"
+            f" seconds, plus jit compilation & calibration)"
         )
         print()
 
-        # run actual benchmarks
+        # run actual benchmarks (round-robin interleaved)
         benchmarks = self.get_flops_benchmarking_suite(size=array_size)
-        results_dict: dict[FlopsBenchmarkType, Quantiles] = {
-            benchmark_type: benchmark.run_many(
-                n_runs_total=n_runs_total,
-                n_runs_warmup=n_runs_warmup,
-                n_seconds_per_run_target=n_seconds_per_run_target,
-            ).summary_stats_cycles_per_exec()
-            for benchmark_type, benchmark in benchmarks.items()
-        }
+        runner = InterleavedBenchmarkRunner(
+            benchmarks=benchmarks,
+            t_slice_target_ms=t_slice_target_ms,
+            n_rounds_measure=n_rounds_measure,
+            n_rounds_warmup=n_rounds_warmup,
+            seed=seed,
+        )
+        raw_results = runner.run()
 
         # compute latencies per benchmark 'op' (=combination of flops)
         n_cycles_per_op = {
             benchmark_type: Quantiles(
-                q25=q.q25 / array_size,
-                q50=q.q50 / array_size,
-                q75=q.q75 / array_size,
+                q10=result.get_cycles_per_exec_quantile(q=0.10) / array_size,
+                q25=result.get_cycles_per_exec_quantile(q=0.25) / array_size,
+                q50=result.get_cycles_per_exec_quantile(q=0.50) / array_size,
+                q75=result.get_cycles_per_exec_quantile(q=0.75) / array_size,
             )
-            for benchmark_type, q in results_dict.items()
+            for benchmark_type, result in raw_results.items()
         }
 
-        # compute estimated FLOP latencies
-        addsub_avg = 0.5 * (n_cycles_per_op[FBT.ADD].q50 + n_cycles_per_op[FBT.SUB].q50)
+        # compute estimated FLOP latencies (from the q10 of each benchmark's slices)
+        q10s: dict[FlopsBenchmarkType, float] = {
+            benchmark_type: result.get_cycles_per_exec_quantile(q=0.10) / array_size
+            for benchmark_type, result in raw_results.items()
+        }
+        addsub_avg = 0.5 * (q10s[FBT.ADD] + q10s[FBT.SUB])
         estimated_flop_latencies = {
-            FlopType.ABS: n_cycles_per_op[FBT.ADD_ABS].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.MINUS: n_cycles_per_op[FBT.ADD_MINUS].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.COMP: n_cycles_per_op[FBT.LTE_ADDSUB].q50 - addsub_avg,
-            FlopType.RND: n_cycles_per_op[FBT.ADD_ROUND].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.ADD: n_cycles_per_op[FBT.ADD_ADD].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.SUB: n_cycles_per_op[FBT.ADD_SUB].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.MUL: n_cycles_per_op[FBT.MUL_MUL].q50 - n_cycles_per_op[FBT.MUL].q50,
-            FlopType.DIV: n_cycles_per_op[FBT.DIV_DIV].q50 - n_cycles_per_op[FBT.DIV].q50,
-            FlopType.SQRT: n_cycles_per_op[FBT.ADD_SQRT].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.CBRT: n_cycles_per_op[FBT.ADD_CBRT].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.EXP: n_cycles_per_op[FBT.ADD_LOG_EXP].q50 - n_cycles_per_op[FBT.ADD_LOG].q50,
-            FlopType.EXP2: n_cycles_per_op[FBT.ADD_LOG2_EXP2].q50 - n_cycles_per_op[FBT.ADD_LOG2].q50,
-            FlopType.EXP10: n_cycles_per_op[FBT.ADD_LOG10_EXP10].q50 - n_cycles_per_op[FBT.ADD_LOG10].q50,
-            FlopType.LOG: n_cycles_per_op[FBT.ADD_LOG].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.LOG2: n_cycles_per_op[FBT.ADD_LOG2].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.LOG10: n_cycles_per_op[FBT.ADD_LOG10].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.POW: n_cycles_per_op[FBT.POW_POW].q50 - n_cycles_per_op[FBT.POW].q50,
-            FlopType.SIN: n_cycles_per_op[FBT.ADD_SIN].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.COS: n_cycles_per_op[FBT.ADD_COS].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.TAN: n_cycles_per_op[FBT.ADD_TAN].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.ASIN: n_cycles_per_op[FBT.ADD_SIN_ASIN].q50 - n_cycles_per_op[FBT.ADD_SIN].q50,
-            FlopType.ACOS: n_cycles_per_op[FBT.ADD_SIN_ACOS].q50 - n_cycles_per_op[FBT.ADD_SIN].q50,
-            FlopType.ATAN: n_cycles_per_op[FBT.ADD_ATAN].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.ATAN2: n_cycles_per_op[FBT.ADD_ATAN2].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.HYPOT: n_cycles_per_op[FBT.ADD_HYPOT].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.LOG1P: n_cycles_per_op[FBT.ADD_LOG1P].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.EXPM1: n_cycles_per_op[FBT.ADD_LOG1P_EXPM1].q50 - n_cycles_per_op[FBT.ADD_LOG1P].q50,
-            FlopType.FMOD: n_cycles_per_op[FBT.ADD_FMOD].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.TANH: n_cycles_per_op[FBT.ADD_TANH].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.ASINH: n_cycles_per_op[FBT.ADD_ASINH].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.SINH: n_cycles_per_op[FBT.ADD_ASINH_SINH].q50 - n_cycles_per_op[FBT.ADD_ASINH].q50,
-            FlopType.ACOSH: n_cycles_per_op[FBT.ADD_ACOSH].q50 - n_cycles_per_op[FBT.ADD].q50,
-            FlopType.COSH: n_cycles_per_op[FBT.ADD_ACOSH_COSH].q50 - n_cycles_per_op[FBT.ADD_ACOSH].q50,
-            FlopType.ATANH: n_cycles_per_op[FBT.ADD_HALFSIN_ATANH].q50 - n_cycles_per_op[FBT.ADD_HALFSIN].q50,
+            FlopType.ABS: q10s[FBT.ADD_ABS] - q10s[FBT.ADD],
+            FlopType.MINUS: q10s[FBT.ADD_MINUS] - q10s[FBT.ADD],
+            FlopType.COMP: q10s[FBT.LTE_ADDSUB] - addsub_avg,
+            FlopType.RND: q10s[FBT.ADD_ROUND] - q10s[FBT.ADD],
+            FlopType.ADD: q10s[FBT.ADD_ADD] - q10s[FBT.ADD],
+            FlopType.SUB: q10s[FBT.ADD_SUB] - q10s[FBT.ADD],
+            FlopType.MUL: q10s[FBT.MUL_MUL] - q10s[FBT.MUL],
+            FlopType.DIV: q10s[FBT.DIV_DIV] - q10s[FBT.DIV],
+            FlopType.SQRT: q10s[FBT.ADD_SQRT] - q10s[FBT.ADD],
+            FlopType.CBRT: q10s[FBT.ADD_CBRT] - q10s[FBT.ADD],
+            FlopType.EXP: q10s[FBT.ADD_LOG_EXP] - q10s[FBT.ADD_LOG],
+            FlopType.EXP2: q10s[FBT.ADD_LOG2_EXP2] - q10s[FBT.ADD_LOG2],
+            FlopType.EXP10: q10s[FBT.ADD_LOG10_EXP10] - q10s[FBT.ADD_LOG10],
+            FlopType.LOG: q10s[FBT.ADD_LOG] - q10s[FBT.ADD],
+            FlopType.LOG2: q10s[FBT.ADD_LOG2] - q10s[FBT.ADD],
+            FlopType.LOG10: q10s[FBT.ADD_LOG10] - q10s[FBT.ADD],
+            FlopType.POW: q10s[FBT.POW_POW] - q10s[FBT.POW],
+            FlopType.SIN: q10s[FBT.ADD_SIN] - q10s[FBT.ADD],
+            FlopType.COS: q10s[FBT.ADD_COS] - q10s[FBT.ADD],
+            FlopType.TAN: q10s[FBT.ADD_TAN] - q10s[FBT.ADD],
+            FlopType.ASIN: q10s[FBT.ADD_SIN_ASIN] - q10s[FBT.ADD_SIN],
+            FlopType.ACOS: q10s[FBT.ADD_SIN_ACOS] - q10s[FBT.ADD_SIN],
+            FlopType.ATAN: q10s[FBT.ADD_ATAN] - q10s[FBT.ADD],
+            FlopType.ATAN2: q10s[FBT.ADD_ATAN2] - q10s[FBT.ADD],
+            FlopType.HYPOT: q10s[FBT.ADD_HYPOT] - q10s[FBT.ADD],
+            FlopType.LOG1P: q10s[FBT.ADD_LOG1P] - q10s[FBT.ADD],
+            FlopType.EXPM1: q10s[FBT.ADD_LOG1P_EXPM1] - q10s[FBT.ADD_LOG1P],
+            FlopType.FMOD: q10s[FBT.ADD_FMOD] - q10s[FBT.ADD],
+            FlopType.TANH: q10s[FBT.ADD_TANH] - q10s[FBT.ADD],
+            FlopType.ASINH: q10s[FBT.ADD_ASINH] - q10s[FBT.ADD],
+            FlopType.SINH: q10s[FBT.ADD_ASINH_SINH] - q10s[FBT.ADD_ASINH],
+            FlopType.ACOSH: q10s[FBT.ADD_ACOSH] - q10s[FBT.ADD],
+            FlopType.COSH: q10s[FBT.ADD_ACOSH_COSH] - q10s[FBT.ADD_ACOSH],
+            FlopType.ATANH: q10s[FBT.ADD_HALFSIN_ATANH] - q10s[FBT.ADD_HALFSIN],
         }
         estimated_flop_latencies = self.floor_latencies(estimated_flop_latencies)
 
@@ -121,9 +138,11 @@ class FlopsBenchmarkSuite:
             system=SystemInfo.from_system(),
             benchmark_settings=BenchmarkSettings(
                 array_size=array_size,
-                n_runs_total=n_runs_total,
-                n_runs_warmup=n_runs_warmup,
-                n_seconds_per_run_target=n_seconds_per_run_target,
+                t_slice_target_ms=t_slice_target_ms,
+                n_rounds_measure=n_rounds_measure,
+                n_rounds_warmup=n_rounds_warmup,
+                input_pool_size=FlopsMicroBenchmark.INPUT_POOL_SIZE,
+                order_shuffled=True,
             ),
             n_cycles_per_op=n_cycles_per_op,
             estimated_flop_latencies=estimated_flop_latencies,

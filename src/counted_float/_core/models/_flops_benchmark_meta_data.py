@@ -15,10 +15,29 @@ from ._base import MyBaseModel
 #  Benchmark Settings
 # =================================================================================================
 class BenchmarkSettings(MyBaseModel):
+    """Settings the benchmark data was collected with.
+
+    Two collection schemes coexist in stored data, and a settings block self-documents
+    which one produced it:
+      - contiguous per-benchmark blocks (legacy): n_runs_total / n_runs_warmup /
+        n_seconds_per_run_target
+      - round-robin interleaved rounds: t_slice_target_ms / n_rounds_measure /
+        n_rounds_warmup / input_pool_size / order_shuffled
+    All scheme fields are optional so results from either scheme (including data
+    collected before this distinction existed) parse unchanged.
+    """
+
     array_size: int
-    n_runs_total: int
-    n_runs_warmup: int
-    n_seconds_per_run_target: float
+    # legacy contiguous scheme
+    n_runs_total: int | None = None
+    n_runs_warmup: int | None = None
+    n_seconds_per_run_target: float | None = None
+    # interleaved scheme
+    t_slice_target_ms: float | None = None
+    n_rounds_measure: int | None = None
+    n_rounds_warmup: int | None = None
+    input_pool_size: int | None = None
+    order_shuffled: bool | None = None
 
 
 # =================================================================================================

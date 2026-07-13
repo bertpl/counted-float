@@ -14,8 +14,8 @@ class ArrayGenerator(ABC):
     #  API
     # -------------------------------------------------------------------------
     @abstractmethod
-    def new_array(self, size: int) -> np.ndarray:
-        """Generates random 1D numpy array of requested size."""
+    def new_array(self, size: int, rng: random.Random | None = None) -> np.ndarray:
+        """Generates random 1D numpy array of requested size (reproducible when rng is given)."""
         raise NotImplementedError
 
     # -------------------------------------------------------------------------
@@ -39,8 +39,8 @@ class ArrayGeneratorLinear(ArrayGenerator):
         self.min_value = min_value
         self.max_value = max_value
 
-    def new_array(self, size: int) -> np.ndarray:
-        uniform_values = 0.5 * (1.0 + _random_balanced_values(size))  # uniform random values in [0,1]
+    def new_array(self, size: int, rng: random.Random | None = None) -> np.ndarray:
+        uniform_values = 0.5 * (1.0 + _random_balanced_values(size, rng))  # uniform random values in [0,1]
         return self.min_value + uniform_values * (self.max_value - self.min_value)
 
 
@@ -50,26 +50,27 @@ class ArrayGeneratorLog(ArrayGenerator):
         self.min_value = min_value
         self.max_value = max_value
 
-    def new_array(self, size: int) -> np.ndarray:
-        uniform_values = 0.5 * (1.0 + _random_balanced_values(size))  # uniform random values in [0,1]
+    def new_array(self, size: int, rng: random.Random | None = None) -> np.ndarray:
+        uniform_values = 0.5 * (1.0 + _random_balanced_values(size, rng))  # uniform random values in [0,1]
         return self.min_value * (self.max_value / self.min_value) ** uniform_values
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _random_balanced_values(size: int) -> np.ndarray:
+def _random_balanced_values(size: int, rng: random.Random | None = None) -> np.ndarray:
     """Return random values in [-1,1] with zero mean and bounded partial sums.
 
     - mean value == 0.0
     - cumulative sum of any arbitrary first n values also lies within [-1,1].
     """
+    uniform = rng.uniform if rng is not None else random.uniform
     cumsum = 0.0
     lst = []
     for _i in range(size - 1):
         next_min_value = max(-1.0, -1.0 - cumsum)
         next_max_value = min(1.0, 1.0 - cumsum)
-        next_value = random.uniform(next_min_value, next_max_value)  # noqa: S311 -- benchmark data, not crypto
+        next_value = uniform(next_min_value, next_max_value)
         lst.append(next_value)
         cumsum += next_value
     lst.append(-cumsum)

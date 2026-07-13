@@ -1,1 +1,2 @@
+from ._interleaved_runner import InterleavedBenchmarkRunner, SliceController
 from ._micro_benchmark import MicroBenchmark
