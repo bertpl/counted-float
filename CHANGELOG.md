@@ -5,22 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 1.4.1 (2026-07-13)
 
 ### Changed
 
 - the package version is now derived from git at build time; development builds self-report PEP 440 dev versions (e.g. `1.4.1.devN+g<sha>`) instead of the previous release's version
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
-
 ## 1.4.0 (2026-07-12)
 
 ### Added
