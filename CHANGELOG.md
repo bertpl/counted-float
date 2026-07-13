@@ -5,19 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 1.4.2 (2026-07-13)
 
 ### Changed
 
 - refreshed the entire built-in flop-weight dataset with measurements collected under the new interleaved benchmark scheme (adds a Graviton 5 / Neoverse V3 data point)
 - `**` with a constant exponent now strength-reduces beyond the square: `x**0.5` counts SQRT, `x**-1` counts DIV, small int exponents count their multiply chain (e.g. `x**3` -> 2 MUL) instead of a full POW
 - built-in consensus flop weights are now loaded lazily on first use, cutting `import counted_float` time roughly 3x
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -26,9 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `counted_float` CLI now exits with a clear "install counted-float[cli]" message instead of a raw traceback when the optional `cli` extra is missing
 - the FLOPs benchmark now interleaves kernel execution and uses a low-quantile estimator, making measured weights robust to transient CPU contention and thermal drift (built-in M3 Max data re-measured accordingly)
 - benchmark-derived flop weights are now floored to a small positive value, so a noisy run can no longer produce negative or invalid weights
-
-### Security
-
 ## 1.4.1 (2026-07-13)
 
 ### Changed
