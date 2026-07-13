@@ -12,6 +12,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          # full history + tags: hatch-vcs derives the package version via git describe
+          fetch-depth: 0
           persist-credentials: false
       - name: Run counted_float benchmark
         uses: ./.github/actions/benchmark

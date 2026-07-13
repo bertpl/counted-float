@@ -1,10 +1,12 @@
 [project]
 name = "counted-float"
-version = "1.4.0"
 description = "Count floating-point operations in Python code & benchmark relative flop costs."
 # readme is dynamic: hatch-fancy-pypi-readme builds the PyPI long-description from
 # README.md, rewriting relative links to tag-pinned absolute URLs (config below).
-dynamic = ["readme"]
+# version is dynamic: hatch-vcs derives it from git at build time — a checkout of tag
+# vX.Y.Z builds as exactly X.Y.Z, an untagged commit as the PEP 440 dev version
+# X.Y.(Z+1).devN+g<sha> — so dev builds self-report their provenance (config below).
+dynamic = ["readme", "version"]
 requires-python = ">=3.11"
 dependencies = [
     # Per-Python floors: each compiled dep's floor is the earliest version shipping a
@@ -82,8 +84,11 @@ docs = [
 ]
 
 [build-system]
-requires = ["hatchling", "hatch-fancy-pypi-readme"]
+requires = ["hatchling", "hatch-fancy-pypi-readme", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.hatch.metadata.hooks.fancy-pypi-readme]
 content-type = "text/markdown"
