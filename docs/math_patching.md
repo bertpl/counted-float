@@ -44,19 +44,36 @@ The counting replacements only count operations touching `CountedFloat`
 values; on plain floats they delegate straight through with no counting (see
 [the counting model](counting_flops.md#the-counting-model-what-gets-counted-and-why)).
 Two functions carry extra classification logic. As everywhere in the counting
-model, an `int` operand is treated as a compile-time constant — it enables
+model, any constant (non-`CountedFloat`) operand folds by value — it enables
 strength reduction and never adds an I2F conversion:
 
-- `math.pow(x, y)` classifies like `x ** y`: `x**2` counts MUL, `2**x` counts
-  EXP2, `10**x` counts EXP10, other cases count POW.
-- `math.log(x, base)` classifies per log variant: base omitted → LOG; int
-  base 2 / 10 → LOG2 / LOG10 (a compiled port calls `log2`/`log10` directly);
-  other int base → LOG + MUL (a port computes `log(x) * C` with
-  `C = 1/log(base)` folded at compile time); float base → a port computes
-  `log(x)/log(base)`: LOG per counted operand + DIV.
+- `math.pow(x, y)` classifies like `x ** y`: constant exponents/bases
+  strength-reduce (`x**2` → MUL, `x**0.5` → SQRT, `x**-1` → DIV, small int
+  exponents → their multiply chain, base 2/10 → EXP2/EXP10), other cases
+  count POW.
+- `math.log(x, base)` classifies per log variant: base omitted → LOG;
+  constant base 2 / 10 → LOG2 / LOG10 (a compiled port calls `log2`/`log10`
+  directly); other constant base → LOG + MUL (a port computes `log(x) * C`
+  with `C = 1/log(base)` folded at compile time); `CountedFloat` base →
+  genuinely runtime, a port computes `log(x)/log(base)`: LOG per counted
+  operand + DIV.
 
 The full per-operation counting rules are in the
 [FLOP types reference](flop_types.md).
+
+## Coverage of the `math` module
+
+Every commonly used `math` function, and how it participates in counting:
+
+| Coverage | Functions |
+|---|---|
+| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot`, `fmod`, `fabs` |
+| **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
+| **Not instrumented** (returns a plain, uncounted `float`) | `copysign`, `remainder`, `frexp`, `ldexp`, `modf`, `degrees`, `radians`, `dist`, `fsum`, `prod`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp` |
+
+The not-instrumented set breaks contagion: the plain-`float` result silently
+stops all downstream counting, so convert back with `CountedFloat(...)` if a
+result of these feeds counted computation.
 
 Which functions are patched is also the boundary of what gets counted — see
 [Known limitations](known_limitations.md).

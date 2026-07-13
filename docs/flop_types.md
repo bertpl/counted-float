@@ -302,6 +302,10 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.hypot(x, y, ...)` for `CountedFloat` —
   counted once when *any* coordinate is a `CountedFloat`
 - **Not counted:** `hypot` on plain floats only, `numpy.hypot`
+- **Arity assumption:** `HYPOT` is modeled as a 2D primitive. `math.hypot`
+  accepts any number of coordinates, but an n-D call still counts a single
+  `HYPOT` — under-counting vs. the n·MUL + (n−1)·ADD + SQRT a port would
+  execute. Decompose manually if n-D `hypot` cost matters.
 
 ## FlopType.EXPM1 (`expm1(x)`)
 
