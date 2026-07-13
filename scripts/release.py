@@ -1,8 +1,9 @@
 """Release driver for counted-float.
 
-Run via ``make release VERSION=X.Y.Z``.  Validates state, bumps
-version, finalizes the changelog, commits, tags, opens a new
-Unreleased section, commits, and pushes main + tag atomically.
+Run via ``make release VERSION=X.Y.Z``.  Validates state, finalizes the
+changelog, commits, tags, opens a new Unreleased section, commits, and
+pushes main + tag atomically.  The package version itself is derived from
+the git tag at build time (hatch-vcs), so no version bump is written.
 """
 
 from __future__ import annotations
@@ -65,13 +66,10 @@ def parse_semver(version: str) -> tuple[int, int, int]:
     return tuple(int(p) for p in version.split("."))  # type: ignore[return-value]
 
 
-def read_pyproject_version() -> str:
-    """Read the current version from pyproject.toml."""
-    text = PYPROJECT.read_text()
-    m = re.search(r'(?m)^version\s*=\s*"([^"]+)"', text)
-    if not m:
-        fail_with_message("Could not find version in pyproject.toml")
-    return m.group(1)
+def read_latest_tag_version() -> str:
+    """Read the latest released version from the git tags reachable from HEAD."""
+    tag = run_command(["git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*"]).strip()
+    return tag.removeprefix("v")
 
 
 def read_python_versions() -> list[str]:
@@ -104,12 +102,12 @@ def step_2_check_in_sync() -> None:
 
 
 def step_3_check_version_upgrade(version: str) -> None:
-    """Validate VERSION is strictly greater than current."""
+    """Validate VERSION is strictly greater than the latest released tag."""
     print_step(3, f"VERSION {version} is an upgrade")
     new = parse_semver(version)
-    current = parse_semver(read_pyproject_version())
+    current = parse_semver(read_latest_tag_version())
     if new <= current:
-        fail_with_message(f"VERSION {version} is not greater than current {'.'.join(str(p) for p in current)}")
+        fail_with_message(f"VERSION {version} is not greater than latest tag {'.'.join(str(p) for p in current)}")
 
 
 def step_4_check_tag_doesnt_exist(version: str) -> None:
@@ -163,23 +161,11 @@ def step_7_check_changelog_has_entries() -> None:
 
 
 # ==================================================================================================
-#  release commit steps (8-12)
+#  release commit steps (8-10)
 # ==================================================================================================
-def step_8_bump_version(version: str) -> None:
-    """Set version in pyproject.toml."""
-    print_step(8, f"bump version to {version}")
-    run_command(["uv", "version", version])
-
-
-def step_9_lock() -> None:
-    """Refresh uv.lock after version bump."""
-    print_step(9, "refresh uv.lock")
-    run_command(["uv", "lock"])
-
-
-def step_10_finalize_changelog(version: str) -> None:
+def step_8_finalize_changelog(version: str) -> None:
     """Move Unreleased entries to a dated version section."""
-    print_step(10, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
+    print_step(8, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
     text = CHANGELOG.read_text()
     m = re.search(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
     if not m:
@@ -296,26 +282,26 @@ def refresh_readme_badges() -> None:
     README.write_text(text)
 
 
-def step_11_commit_release(version: str) -> None:
+def step_9_commit_release(version: str) -> None:
     """Refresh README badges, then create the release commit."""
-    print_step(11, f"refresh README badges + commit 'release: {version}'")
+    print_step(9, f"refresh README badges + commit 'release: {version}'")
     refresh_readme_badges()
-    run_command(["git", "add", "pyproject.toml", "uv.lock", "CHANGELOG.md", "README.md"])
+    run_command(["git", "add", "CHANGELOG.md", "README.md"])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
 
-def step_12_tag(version: str) -> None:
+def step_10_tag(version: str) -> None:
     """Create the version tag."""
-    print_step(12, f"create tag v{version}")
+    print_step(10, f"create tag v{version}")
     run_command(["git", "tag", f"v{version}"])
 
 
 # ==================================================================================================
-#  post-release steps (13-15)
+#  post-release steps (11-13)
 # ==================================================================================================
-def step_13_add_unreleased_section() -> None:
+def step_11_add_unreleased_section() -> None:
     """Add a fresh Unreleased section to the changelog."""
-    print_step(13, "add fresh '## Unreleased' section to CHANGELOG.md")
+    print_step(11, "add fresh '## Unreleased' section to CHANGELOG.md")
     text = CHANGELOG.read_text()
     m = re.search(r"^## ", text, re.MULTILINE)
     if not m:
@@ -325,16 +311,16 @@ def step_13_add_unreleased_section() -> None:
     CHANGELOG.write_text(text)
 
 
-def step_14_commit_next_cycle() -> None:
+def step_12_commit_next_cycle() -> None:
     """Commit the fresh Unreleased section."""
-    print_step(14, "commit 'chore: begin next development cycle'")
+    print_step(12, "commit 'chore: begin next development cycle'")
     run_command(["git", "add", "CHANGELOG.md"])
     run_command(["git", "commit", "-m", "chore: begin next development cycle"])
 
 
-def step_15_push(version: str) -> None:
+def step_13_push(version: str) -> None:
     """Push main and the tag atomically."""
-    print_step(15, f"push main + v{version} atomically")
+    print_step(13, f"push main + v{version} atomically")
     run_command(["git", "push", "--atomic", "origin", "main", f"refs/tags/v{version}"])
 
 
@@ -374,24 +360,22 @@ def main() -> None:
     step_7_check_changelog_has_entries()
 
     print("\nRelease commit:")
-    step_8_bump_version(version)
-    step_9_lock()
-    step_10_finalize_changelog(version)
-    step_11_commit_release(version)
-    step_12_tag(version)
+    step_8_finalize_changelog(version)
+    step_9_commit_release(version)
+    step_10_tag(version)
 
     print("\nPost-release:")
     also_next_cycle = False
     try:
-        step_13_add_unreleased_section()
-        step_14_commit_next_cycle()
+        step_11_add_unreleased_section()
+        step_12_commit_next_cycle()
         also_next_cycle = True
-        step_15_push(version)
+        step_13_push(version)
     except subprocess.CalledProcessError:
-        post_tag_recovery_hint(13, version, also_next_cycle)
+        post_tag_recovery_hint(11, version, also_next_cycle)
         sys.exit(1)
     except SystemExit:
-        post_tag_recovery_hint(13, version, also_next_cycle)
+        post_tag_recovery_hint(11, version, also_next_cycle)
         raise
 
 

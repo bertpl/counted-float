@@ -194,7 +194,6 @@ wheels = [
 
 [[package]]
 name = "counted-float"
-version = "1.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "numpy" },
@@ -249,7 +248,7 @@ requires-dist = [
     { name = "pydantic", marker = "python_full_version >= '3.14'", specifier = ">=2.12" },
     { name = "rich", specifier = ">=13.0.0" },
 ]
-provides-extras = ["numba", "cli"]
+provides-extras = ["cli", "numba"]
 
 [package.metadata.requires-dev]
 dev = [

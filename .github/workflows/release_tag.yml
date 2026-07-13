@@ -14,6 +14,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          # full history + tags: hatch-vcs derives the package version via git describe
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Install uv
@@ -24,7 +26,9 @@ jobs:
 
       - name: Validate tag and version match
         run: |
-          PACKAGE_VERSION=$(uv version --short)
+          # the version is hatch-vcs-derived from the tag itself, so this validates the
+          # derivation is clean (exact-tag checkout => plain X.Y.Z, no dev/dirty suffix)
+          PACKAGE_VERSION=$(uvx --with hatch-vcs hatch version)
           TAG_NAME="${GITHUB_REF_NAME}"
           EXPECTED_TAG="v${PACKAGE_VERSION}"
 
@@ -105,6 +109,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
+          # full history + tags: hatch-vcs derives the package version via git describe
+          fetch-depth: 0
           persist-credentials: false
       - name: Install uv
         uses: astral-sh/setup-uv@d31148d669074a8d0a63714ba94f3201e7020bc3 # v8.3.0
@@ -126,5 +132,5 @@ jobs:
             --title "$TAG" \
             --notes-file release_notes.md \
             provenance.intoto.jsonl
-  # No bump-version job: release.py owns versioning (it bumps pyproject and opens
-  # the next Unreleased section as part of the local release, before the tag push).
+  # No bump-version job: the package version is derived from the git tag at build
+  # time (hatch-vcs); release.py finalizes the changelog and pushes the tag.

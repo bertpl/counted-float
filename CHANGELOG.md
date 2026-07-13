@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the package version is now derived from git at build time; development builds self-report PEP 440 dev versions (e.g. `1.4.1.devN+g<sha>`) instead of the previous release's version
+
 ### Deprecated
 
 ### Removed
