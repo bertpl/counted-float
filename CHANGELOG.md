@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- refreshed the entire built-in flop-weight dataset with measurements collected under the new interleaved benchmark scheme (adds a Graviton 5 / Neoverse V3 data point)
 - `**` with a constant exponent now strength-reduces beyond the square: `x**0.5` counts SQRT, `x**-1` counts DIV, small int exponents count their multiply chain (e.g. `x**3` -> 2 MUL) instead of a full POW
 - built-in consensus flop weights are now loaded lazily on first use, cutting `import counted_float` time roughly 3x
 
