@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- built-in consensus flop weights are now loaded lazily on first use, cutting `import counted_float` time roughly 3x
+
 ### Deprecated
 
 ### Removed
