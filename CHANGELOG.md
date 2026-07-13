@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- the `counted_float` CLI now exits with a clear "install counted-float[cli]" message instead of a raw traceback when the optional `cli` extra is missing
 - the FLOPs benchmark now interleaves kernel execution and uses a low-quantile estimator, making measured weights robust to transient CPU contention and thermal drift (built-in M3 Max data re-measured accordingly)
 - benchmark-derived flop weights are now floored to a small positive value, so a noisy run can no longer produce negative or invalid weights
 

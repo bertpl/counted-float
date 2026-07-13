@@ -33,8 +33,9 @@ Flop weights are computed using a highly curated dataset spanning a wide range o
 Use your favorite package manager such as `uv` or `pip`:
 
 ```
-pip install counted-float           # install without numba optional dependency
+pip install counted-float           # install without optional dependencies
 pip install counted-float[numba]    # install with numba optional dependency
+pip install counted-float[cli]      # install with CLI support (click)
 ```
 
 Numba is optional due to its relatively large size (40-50MB, including llvmlite), but without it, benchmarks will
