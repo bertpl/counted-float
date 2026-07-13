@@ -106,15 +106,23 @@ class TargetInstance:
 #   .xlarge (4 vCPU) -- SMT-2 cores (Intel server + zen1/zen3), 2 vCPU/core
 # Every launch is gated on the identity below, asserted against the probed
 # CPUID/MIDR before benchmarking, so a re-backed family can't mislabel data.
+# MIDR part id -> Neoverse core name. py-cpuinfo cannot resolve these newer ARM parts to a
+# brand string, so Graviton results come back with a blank `description`; the backfill in
+# benchmark_one fills it from the part the identity gate has already verified against the
+# live CPU. This is the single source of truth for the arm part ids used by the gate below.
+NEOVERSE_CORES: dict[str, str] = {
+    "0xd0c": "Neoverse-N1",  # Graviton 2
+    "0xd40": "Neoverse-V1",  # Graviton 3
+    "0xd4f": "Neoverse-V2",  # Graviton 4
+    "0xd84": "Neoverse-V3",  # Graviton 5
+}
+
 TARGETS: dict[str, TargetInstance] = {
     # Graviton, 1 thread/core -> .large = 2 physical cores
     "m6g.large": TargetInstance("m6g.large", "arm64", {"part": "0xd0c"}),  # Graviton 2 / Neoverse N1
     "m7g.large": TargetInstance("m7g.large", "arm64", {"part": "0xd40"}),  # Graviton 3 / Neoverse V1
     "m8g.large": TargetInstance("m8g.large", "arm64", {"part": "0xd4f"}),  # Graviton 4 / Neoverse V2
-    # Graviton 5 / Neoverse V3 (Armv9.2). Part 0xd84 is the expected MIDR; the identity
-    # gate confirms it against the probed CPU on first launch (a mismatch fails safely,
-    # logging the actual part, rather than mislabelling the data point).
-    "m9g.large": TargetInstance("m9g.large", "arm64", {"part": "0xd84"}),
+    "m9g.large": TargetInstance("m9g.large", "arm64", {"part": "0xd84"}),  # Graviton 5 / Neoverse V3
     # AMD Genoa/Turin, SMT-off -> .large = 2 physical cores (Turin: family alone pins zen5)
     "m7a.large": TargetInstance("m7a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "25", "model": "17"}),
     "m8a.large": TargetInstance("m8a.large", "x86_64", {"vendor": "AuthenticAMD", "family": "26"}),
@@ -339,6 +347,21 @@ class RunResult:
     result_path: Path | None = None
 
 
+def backfill_arm_core_description(data: dict, identity: dict[str, str]) -> None:
+    """Fill a blank processor description from the gate-verified MIDR part, in place.
+
+    py-cpuinfo does not resolve the newer Neoverse parts to a brand string, so Graviton
+    results arrive with an empty `description`. The identity gate has already asserted the
+    MIDR part against the live CPU, so the mapped core name is authoritative. Only fills a
+    genuinely blank description; x86 identities carry no `part`, so they are left untouched.
+    """
+    processor = data.get("system", {}).get("processor", {})
+    if not processor.get("description"):
+        core = NEOVERSE_CORES.get(identity.get("part", ""))
+        if core:
+            processor["description"] = core
+
+
 def benchmark_one(cfg: Config, target: TargetInstance) -> RunResult:
     """Launch, gate, benchmark, collect, and terminate one target instance."""
     instance_id: str | None = None
@@ -356,6 +379,7 @@ def benchmark_one(cfg: Config, target: TargetInstance) -> RunResult:
         print("      running benchmark (install + JIT + measure ~5 min)")
         result_json = run_ssm_command(cfg, instance_id, benchmark_script(cfg.package_spec, cfg.python_version))
         data = json.loads(result_json)  # validates it parsed; also fails loudly on truncation
+        backfill_arm_core_description(data, identity)  # name the Neoverse core py-cpuinfo left blank
 
         result_path = cfg.output_dir / f"{target.instance_type}.json"
         result_path.write_text(json.dumps(data, indent=4) + "\n", encoding="utf-8")
