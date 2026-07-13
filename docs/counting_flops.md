@@ -176,3 +176,13 @@ with FlopCountingContext() as ctx:
 counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
 counts.total_count()         # 2
 ```
+
+## Performance overhead
+
+Counting costs roughly 40–60× per operation vs. plain `float` (see the
+[Benchmarking page](benchmarking.md#performance-impact) for a measured
+example). The overhead is inherent to Python-level instrumentation;
+`PauseFlopCounting` stops count registration but not the instrumented
+dispatch, so hot regions that need raw speed should convert back to plain
+`float`. Counts themselves are always exact — overhead affects wall time,
+never accuracy.

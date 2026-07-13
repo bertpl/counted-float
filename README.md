@@ -74,6 +74,22 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.ADD: 1}
 counts.total_count()         # 2
 ```
 
+## Performance overhead
+
+Using `CountedFloat` instead of plain `float` costs roughly **40–60× per
+operation** (environment-dependent) — the price of Python-level operator
+dispatch and result wrapping. Measure your own machine with
+`counted_float benchmark-counted-float`. Two facts worth knowing:
+
+- the overhead is inherent and `PauseFlopCounting` does **not** reduce it
+  (the instrumented operators still execute; only count registration stops) —
+  the escape hatch for hot uncounted regions is converting back via
+  `float(x)`;
+- overhead never affects *count* accuracy — counts are exact regardless.
+
+This makes `CountedFloat` a tool for research and prototyping code, not
+production hot loops.
+
 ## Documentation
 
 The [documentation site](https://counted-float.readthedocs.io/) covers the rest:
