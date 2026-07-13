@@ -12,7 +12,11 @@ the ability to micro-benchmark floating point operations as follows:
 Running FLOPS benchmarks using counted-float 1.4.2 ...
 (Expected duration: ~171 seconds, plus jit compilation & calibration)
 
-setup calibrate warmup measure .................... done
+setup     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42/42   0:00:00
+jit       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42/42   0:00:09
+calibrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10/10   0:00:04
+warmup    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/3     0:00:03
+measure   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200/200 0:02:48
 
 >>> results.flop_weights().show()
 

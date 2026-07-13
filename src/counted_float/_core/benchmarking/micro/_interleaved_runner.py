@@ -13,6 +13,8 @@ from __future__ import annotations
 import random
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
+
 from counted_float._core.models import MicroBenchmarkResult
 from counted_float._core.utils import get_cpu_frequency_mhz_current
 
@@ -144,37 +146,46 @@ class InterleavedBenchmarkRunner(Generic[K]):
         warmup_runs: dict[K, list[SingleRunResult]] = {key: [] for key in self.benchmarks}
         benchmark_runs: dict[K, list[SingleRunResult]] = {key: [] for key in self.benchmarks}
 
-        # --- phase 1+2: setup & JIT pass -----------------
-        self._print("setup ")
-        for benchmark in self.benchmarks.values():
-            benchmark.prepare_suite(rng_pool)
-        cpu_freq_mhz = get_cpu_frequency_mhz_current()
-        for key, benchmark in self.benchmarks.items():
-            result = benchmark.run_slice(n_executions=1, round_index=0, cpu_freq_mhz=cpu_freq_mhz)
-            controllers[key].record_slice(result.t_nsecs)
+        with self._make_progress() as progress:
+            # --- phase 1: setup --------------------------
+            task = progress.add_task("setup", total=len(self.benchmarks))
+            for benchmark in self.benchmarks.values():
+                benchmark.prepare_suite(rng_pool)
+                self._advance(progress, task)
 
-        # --- phase 3: calibration rounds -----------------
-        self._print("calibrate ")
-        for round_index in range(self.N_ROUNDS_CALIBRATION_MAX):
-            if all(c.is_calibrated for c in controllers.values()):
-                break
-            self._run_round(rng_calibration, controllers, round_index, record_into=None)
+            # --- phase 2: JIT pass -----------------------
+            task = progress.add_task("jit", total=len(self.benchmarks))
+            cpu_freq_mhz = get_cpu_frequency_mhz_current()
+            for key, benchmark in self.benchmarks.items():
+                result = benchmark.run_slice(n_executions=1, round_index=0, cpu_freq_mhz=cpu_freq_mhz)
+                controllers[key].record_slice(result.t_nsecs)
+                self._advance(progress, task)
 
-        # --- phase 4+5: warmup & measurement rounds ------
-        self._print("warmup ")
-        for round_index in range(self.n_rounds_warmup):
-            self._run_round(rng_schedule, controllers, round_index, record_into=warmup_runs)
-        self._print("measure ")
-        for round_index in range(self.n_rounds_measure):
-            self._run_round(rng_schedule, controllers, round_index, record_into=benchmark_runs)
-            if (round_index + 1) % 10 == 0:
-                self._print(".")
-        self._print(" done\n")
+            # --- phase 3: calibration rounds -------------
+            task = progress.add_task("calibrate", total=self.N_ROUNDS_CALIBRATION_MAX)
+            for round_index in range(self.N_ROUNDS_CALIBRATION_MAX):
+                if all(c.is_calibrated for c in controllers.values()):
+                    break
+                self._run_round(rng_calibration, controllers, round_index, record_into=None)
+                self._advance(progress, task)
+            progress.update(task, completed=self.N_ROUNDS_CALIBRATION_MAX)  # usually finishes early
+
+            # --- phase 4: warmup rounds ------------------
+            task = progress.add_task("warmup", total=self.n_rounds_warmup)
+            for round_index in range(self.n_rounds_warmup):
+                self._run_round(rng_schedule, controllers, round_index, record_into=warmup_runs)
+                self._advance(progress, task)
+
+            # --- phase 5: measurement rounds -------------
+            task = progress.add_task("measure", total=self.n_rounds_measure)
+            for round_index in range(self.n_rounds_measure):
+                self._run_round(rng_schedule, controllers, round_index, record_into=benchmark_runs)
+                self._advance(progress, task)
 
         # --- report + return -----------------------------
         floored = [str(key) for key, c in controllers.items() if c.execution_floor_active]
-        if floored:
-            self._print(f"note: minimum-executions floor was active for: {', '.join(floored)}\n")
+        if floored and self.show_progress:
+            print(f"note: minimum-executions floor was active for: {', '.join(floored)}")
         return {
             key: MicroBenchmarkResult(warmup_runs=warmup_runs[key], benchmark_runs=benchmark_runs[key])
             for key in self.benchmarks
@@ -203,6 +214,22 @@ class InterleavedBenchmarkRunner(Generic[K]):
             if record_into is not None:
                 record_into[key].append(result)
 
-    def _print(self, text: str) -> None:
-        if self.show_progress:
-            print(text, end="", flush=True)
+    def _make_progress(self) -> Progress:
+        """One bar per phase, rendered strictly from the orchestrating thread.
+
+        auto_refresh is off so rich never repaints from its background timer thread —
+        all terminal I/O happens on our explicit per-item/per-round updates, in the gap
+        between timed regions (the same discipline as the rest of the inter-slice path).
+        """
+        return Progress(
+            TextColumn("{task.description:<9}"),
+            BarColumn(),
+            MofNCompleteColumn(),
+            TimeElapsedColumn(),
+            auto_refresh=False,
+            disable=not self.show_progress,
+        )
+
+    def _advance(self, progress: Progress, task_id: TaskID, amount: int = 1) -> None:
+        progress.advance(task_id, amount)
+        progress.refresh()
