@@ -87,13 +87,13 @@ Micro-benchmarking of a bisection algorithm using
 ------------------------------------------------------------------------------------------------------------------------
 Running CountedFloat benchmark...
 
-float                              : wwwwwwwwwwwwwww...................................   [  12.34 µs ±  1.2% | 50.1K cpu cycles ±  1.2% ]  /  execution
-CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 459.95 µs ±  0.2% | 1.87M cpu cycles ±  0.2% ]  /  execution
+float                              : wwwwwwwwwwwwwww...................................   [  12.54 µs ±  3.7% | 50.8K cpu cycles ±  3.7% ]  /  execution
+CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 283.91 µs ±  0.3% | 1.15M cpu cycles ±  0.3% ]  /  execution
 ------------------------------------------------------------------------------------------------------------------------
 
 CountedFloat Benchmark Results:
-  Bisection using float        :   12.34 µs / execution
-  Bisection using CountedFloat :  459.95 µs / execution
+  Bisection using float        :   12.54 µs / execution
+  Bisection using CountedFloat :  283.91 µs / execution
 
-CountedFloat is 37.3x slower than float
+CountedFloat is 22.6x slower than float
 ```

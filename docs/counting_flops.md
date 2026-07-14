@@ -186,10 +186,13 @@ counts.total_count()         # 2
 
 ## Performance overhead
 
-Counting costs roughly 40–60× per operation vs. plain `float` (see the
-[Benchmarking page](benchmarking.md#performance-impact) for a measured
-example). The overhead is inherent to Python-level instrumentation;
-`PauseFlopCounting` stops count registration but not the instrumented
-dispatch, so hot regions that need raw speed should convert back to plain
-`float`. Counts themselves are always exact — overhead affects wall time,
-never accuracy.
+Counting adds overhead in two forms, measured on an Apple M3 Max (see the
+[Benchmarking page](benchmarking.md#performance-impact) for the CLI example):
+native float ops (`+`, `-`, `*`, `/`, comparisons) run roughly 20–40× slower
+than plain `float` per operation (environment-dependent), while a
+patched `math.*` call carries a roughly fixed ~0.1 µs of overhead — about 6–7×
+for cheap functions like `sqrt`, less for costlier ones. The overhead is inherent
+to Python-level instrumentation; `PauseFlopCounting` stops count registration but
+not the instrumented dispatch, so hot regions that need raw speed should convert
+back to plain `float`. Counts themselves are always exact — overhead affects wall
+time, never accuracy.
