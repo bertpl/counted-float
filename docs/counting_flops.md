@@ -87,7 +87,14 @@ patched `math` functions:
 The one place an `I2F` conversion *is* counted is explicit construction from an
 int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer
 (a loop index, a computed count) into the counting model: wrap it, and its
-int→float conversion counts like any other FLOP.
+int→float conversion counts like any other FLOP. This is deliberate and
+load-bearing: `CountedFloat(n)` is the **only** way a developer can express that
+an integer is a genuine runtime value rather than a constant, so the conversion
+cannot be excluded here without removing that ability entirely. Counting it is
+therefore a pure opt-in that relies on developer discipline to wrap only genuine
+runtime integers — a computed count, not a literal `5`. To admit an integer
+*constant* without counting its conversion, convert with plain `float(n)` first,
+keeping it outside the counting model.
 
 The flip side: an unwrapped runtime input is invisible to the counter — that
 is a wrapping error at your algorithm's boundary, not something the library
