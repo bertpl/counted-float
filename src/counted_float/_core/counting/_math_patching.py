@@ -69,14 +69,14 @@ def math_sqrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sqrt(x)  # compute first: domain error (x < 0) raises before counting
         GLOBAL_COUNTER.incr_sqrt()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_sqrt(x)
 
 
 def math_cbrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_cbrt()
-        return CountedFloat(original_math_cbrt(x))
+        return float.__new__(CountedFloat, original_math_cbrt(x))
     return original_math_cbrt(x)
 
 
@@ -103,7 +103,7 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
         if isinstance(x, CountedFloat):
             result = original_math_log(x)  # compute first: domain error (x <= 0) raises before counting
             GLOBAL_COUNTER.incr_log()
-            return CountedFloat(result)
+            return float.__new__(CountedFloat, result)
         return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
@@ -123,7 +123,7 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
             GLOBAL_COUNTER.incr_log()
             GLOBAL_COUNTER.incr_mul()
     if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return result
 
 
@@ -131,7 +131,7 @@ def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log2(x)  # compute first: domain error (x <= 0) raises before counting
         GLOBAL_COUNTER.incr_log2()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_log2(x)
 
 
@@ -139,7 +139,7 @@ def math_log10(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log10(x)  # compute first: domain error (x <= 0) raises before counting
         GLOBAL_COUNTER.incr_log10()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_log10(x)
 
 
@@ -147,7 +147,7 @@ def math_exp(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_exp(x)  # compute first: exp overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_exp()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_exp(x)
 
 
@@ -155,7 +155,7 @@ def math_exp2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_exp2(x)  # compute first: exp2 overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_exp2()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_exp2(x)
 
 
@@ -176,7 +176,7 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
             count_pow_with_constant_exponent(y)
         else:
             count_pow_with_constant_base(x)
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_pow(x, y)
 
 
@@ -184,7 +184,7 @@ def math_sin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sin(x)  # compute first: sin(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_sin()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_sin(x)
 
 
@@ -192,7 +192,7 @@ def math_cos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_cos(x)  # compute first: cos(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_cos()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_cos(x)
 
 
@@ -200,7 +200,7 @@ def math_tan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_tan(x)  # compute first: tan(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_tan()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_tan(x)
 
 
@@ -208,7 +208,7 @@ def math_asin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_asin(x)  # compute first: domain errors raise before anything is counted
         GLOBAL_COUNTER.incr_asin()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_asin(x)
 
 
@@ -216,28 +216,28 @@ def math_acos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_acos(x)  # compute first: domain errors raise before anything is counted
         GLOBAL_COUNTER.incr_acos()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_acos(x)
 
 
 def math_atan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_atan()
-        return CountedFloat(original_math_atan(x))
+        return float.__new__(CountedFloat, original_math_atan(x))
     return original_math_atan(x)
 
 
 def math_atan2(y: float, x: float) -> float | CountedFloat:
     if isinstance(y, CountedFloat) or isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_atan2()
-        return CountedFloat(original_math_atan2(y, x))
+        return float.__new__(CountedFloat, original_math_atan2(y, x))
     return original_math_atan2(y, x)
 
 
 def math_hypot(*coordinates: float) -> float | CountedFloat:
     if any(isinstance(c, CountedFloat) for c in coordinates):
         GLOBAL_COUNTER.incr_hypot()
-        return CountedFloat(original_math_hypot(*coordinates))
+        return float.__new__(CountedFloat, original_math_hypot(*coordinates))
     return original_math_hypot(*coordinates)
 
 
@@ -245,7 +245,7 @@ def math_expm1(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_expm1(x)  # compute first: expm1 overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_expm1()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_expm1(x)
 
 
@@ -253,7 +253,7 @@ def math_log1p(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log1p(x)  # compute first: domain error (x <= -1) raises before counting
         GLOBAL_COUNTER.incr_log1p()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_log1p(x)
 
 
@@ -261,14 +261,14 @@ def math_fmod(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         result = original_math_fmod(x, y)  # compute first: fmod(x, 0) raises before anything is counted
         GLOBAL_COUNTER.incr_fmod()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_fmod(x, y)
 
 
 def math_fabs(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_abs()  # same FABS/ANDPD instruction as abs(); reuses FlopType.ABS
-        return CountedFloat(original_math_fabs(x))
+        return float.__new__(CountedFloat, original_math_fabs(x))
     return original_math_fabs(x)
 
 
@@ -276,7 +276,7 @@ def math_sinh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sinh(x)  # compute first: sinh overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_sinh()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_sinh(x)
 
 
@@ -284,21 +284,21 @@ def math_cosh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_cosh(x)  # compute first: cosh overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_cosh()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_cosh(x)
 
 
 def math_tanh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_tanh()
-        return CountedFloat(original_math_tanh(x))
+        return float.__new__(CountedFloat, original_math_tanh(x))
     return original_math_tanh(x)
 
 
 def math_asinh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         GLOBAL_COUNTER.incr_asinh()
-        return CountedFloat(original_math_asinh(x))
+        return float.__new__(CountedFloat, original_math_asinh(x))
     return original_math_asinh(x)
 
 
@@ -306,7 +306,7 @@ def math_acosh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_acosh(x)  # compute first: domain error (x < 1) raises before counting
         GLOBAL_COUNTER.incr_acosh()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_acosh(x)
 
 
@@ -314,7 +314,7 @@ def math_atanh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_atanh(x)  # compute first: domain error (|x| >= 1) raises before counting
         GLOBAL_COUNTER.incr_atanh()
-        return CountedFloat(result)
+        return float.__new__(CountedFloat, result)
     return original_math_atanh(x)
 
 
