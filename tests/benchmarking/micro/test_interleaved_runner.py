@@ -2,8 +2,16 @@ import random
 
 import pytest
 
+from counted_float._core.benchmarking._output import output_quiet
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner, MicroBenchmark, SliceController
 from counted_float._core.models import MicroBenchmarkResult
+
+
+@pytest.fixture(autouse=True)
+def _quiet_console():
+    """Silence the shared benchmark console for the runner tests (they assert on results, not output)."""
+    with output_quiet(True):
+        yield
 
 
 # =================================================================================================
@@ -119,7 +127,7 @@ def fake_benchmarks() -> dict[str, FakeBenchmark]:
 def test_runner_returns_requested_number_of_recorded_slices(fake_benchmarks):
     # --- arrange -----------------------------------------
     runner = InterleavedBenchmarkRunner(
-        fake_benchmarks, t_slice_target_ms=0.001, n_rounds_measure=7, n_rounds_warmup=2, seed=1, show_progress=False
+        fake_benchmarks, t_slice_target_ms=0.001, n_rounds_measure=7, n_rounds_warmup=2, seed=1
     )
 
     # --- act ---------------------------------------------
@@ -136,7 +144,7 @@ def test_runner_returns_requested_number_of_recorded_slices(fake_benchmarks):
 def test_runner_prepares_each_suite_exactly_once(fake_benchmarks):
     # --- arrange -----------------------------------------
     runner = InterleavedBenchmarkRunner(
-        fake_benchmarks, t_slice_target_ms=0.001, n_rounds_measure=3, n_rounds_warmup=1, seed=1, show_progress=False
+        fake_benchmarks, t_slice_target_ms=0.001, n_rounds_measure=3, n_rounds_warmup=1, seed=1
     )
 
     # --- act ---------------------------------------------
@@ -155,7 +163,6 @@ def test_runner_runs_every_benchmark_exactly_once_per_round(fake_benchmarks):
         n_rounds_measure=n_rounds_measure,
         n_rounds_warmup=n_rounds_warmup,
         seed=1,
-        show_progress=False,
     )
 
     # --- act ---------------------------------------------
@@ -186,7 +193,6 @@ def test_runner_shuffles_order_between_rounds():
         n_rounds_measure=n_rounds_measure,
         n_rounds_warmup=0,
         seed=123,
-        show_progress=False,
     )
 
     # --- act ---------------------------------------------
@@ -213,7 +219,7 @@ def test_runner_schedule_is_reproducible_with_seed():
         shared_log: list[tuple[str, int]] = []
         benchmarks = {name: FakeBenchmark(name, shared_log) for name in ["alpha", "beta", "gamma"]}
         InterleavedBenchmarkRunner(
-            benchmarks, t_slice_target_ms=0.001, n_rounds_measure=4, n_rounds_warmup=1, seed=seed, show_progress=False
+            benchmarks, t_slice_target_ms=0.001, n_rounds_measure=4, n_rounds_warmup=1, seed=seed
         ).run()
         return shared_log
 

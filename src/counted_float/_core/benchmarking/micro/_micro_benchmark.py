@@ -1,6 +1,7 @@
 import random
 from abc import ABC, abstractmethod
 
+from counted_float._core.benchmarking._output import console
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 from counted_float._core.utils import (
     Timer,
@@ -41,6 +42,8 @@ class MicroBenchmark(ABC):
     ) -> MicroBenchmarkResult:
         """Run the MicroBenchmark multiple times and return (q25, q50, q75) quantiles of run times in nanoseconds.
 
+        Per-run progress goes to the shared benchmark console (silenced via output_quiet).
+
         Runs consist of warmup_runs & actual test runs, with the provided parameters.
         :param n_runs_total: (int, default=20) total number of benchmark_runs runs
         :param n_runs_warmup: (int, default=5) number of warmup_runs runs
@@ -51,7 +54,7 @@ class MicroBenchmark(ABC):
         :param n_seconds_per_run_target: (float, default=0.5) target time (sec) per benchmark_runs run (prepare + run).
                                              n_executions will be iteratively adjusted to achieve this target time.
         """
-        print(f"{self.name.ljust(35)}: ", end="")
+        console.print(f"{self.name.ljust(35)}: ", end="")
 
         # repeat benchmark_runs n_runs_total times
         n_executions = 1  # start with a benchmark_runs of 1 operation and scale up as needed
@@ -67,11 +70,11 @@ class MicroBenchmark(ABC):
             # --- capture result ---
             if i < n_runs_warmup:
                 # warmup run that doesn't count
-                print("w", end="", flush=True)
+                console.print("w", end="")
                 warmup_runs.append(single_run_result)
             else:
                 # benchmark run that does count
-                print(".", end="", flush=True)
+                console.print(".", end="")
                 benchmark_runs.append(single_run_result)
 
             # --- adjust n_ops ---
@@ -90,7 +93,7 @@ class MicroBenchmark(ABC):
         stats_cycles = benchmark_result.summary_stats_cycles_per_exec()
         s_time_duration = f"{format_time_duration(stats_nsecs.q50)} ± {stats_nsecs.format_uncertainty()}"
         s_latency = f"{format_latency(stats_cycles.q50)} ± {stats_cycles.format_uncertainty()}"
-        print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
+        console.print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
 
         # return final result
         return benchmark_result

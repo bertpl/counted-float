@@ -2,6 +2,7 @@ import time
 
 import pytest
 
+from counted_float._core.benchmarking._output import output_quiet
 from counted_float._core.benchmarking.micro import MicroBenchmark
 from counted_float._core.models import MicroBenchmarkResult
 from counted_float._core.utils import Timer
@@ -76,6 +77,20 @@ def test_micro_benchmark(n_runs_total: int, n_runs_warmup: int, n_seconds_per_ru
     assert results.summary_stats_nsecs_per_exec().q75 > 0.9 * nsec_per_exec, (
         "estimated time range should approx. enclose actual time"
     )
+
+
+def test_micro_benchmark_run_many_console_verbosity(capsys):
+    """run_many prints per-run progress by default and is fully silent under output_quiet."""
+    # --- arrange ----------------------
+    benchmark = DummyMicroBenchmark(nsecs_per_execution=1_000)
+
+    # --- act / assert -----------------
+    benchmark.run_many(n_runs_total=4, n_runs_warmup=1, n_seconds_per_run_target=0.001)
+    assert capsys.readouterr().out != ""  # baseline: progress reaches stdout (confirms capture works)
+
+    with output_quiet(True):
+        benchmark.run_many(n_runs_total=4, n_runs_warmup=1, n_seconds_per_run_target=0.001)
+    assert capsys.readouterr().out == ""  # silenced: nothing reaches stdout
 
 
 class FlatRuntimeMicroBenchmark(MicroBenchmark):

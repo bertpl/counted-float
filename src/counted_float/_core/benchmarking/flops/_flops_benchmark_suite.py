@@ -1,9 +1,11 @@
 import math
 import sys
+import warnings
 from importlib.metadata import version
 
 import numpy as np
 
+from counted_float._core.benchmarking._output import console
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner
 from counted_float._core.compatibility import is_numba_installed, numba
 from counted_float._core.models import (
@@ -50,22 +52,28 @@ class FlopsBenchmarkSuite:
         approaches the uncontended latency (q10 rather than the minimum, so a single
         too-low CPU-frequency sample cannot select the worst conversion outlier).
         An optional seed makes input pools and round shuffles reproducible.
-        """
-        # warn if needed
-        if not is_numba_installed():
-            print("========= WARNING =========")
-            print("'numba' was not found; results of this benchmark will be wildly inaccurate & unusable.")
-            print("Install this package with the numba optional dependency: 'pip install counted-float[numba]'")
-            print("========= WARNING =========")
 
-        print()
-        print(f"Running FLOPS benchmarks using counted-float {version('counted-float')} ...")
-        print(
+        Progress goes to the shared benchmark console (silenced via output_quiet); the
+        missing-numba RuntimeWarning is emitted regardless of console verbosity.
+        """
+        # a missing numba yields unusable results -- always surface it (regardless of console
+        # verbosity) through the warnings machinery, so callers can filter or escalate it
+        if not is_numba_installed():
+            warnings.warn(
+                "'numba' is not installed; FLOPS benchmark results will be wildly inaccurate "
+                "and unusable. Install the optional dependency with pip install 'counted-float[numba]'.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+        console.print()
+        console.print(f"Running FLOPS benchmarks using counted-float {version('counted-float')} ...")
+        console.print(
             f"(Expected duration: "
             f"~{(n_rounds_measure + n_rounds_warmup) * len(FlopsBenchmarkType) * t_slice_target_ms / 1000:.0f}"
             f" seconds, plus jit compilation & calibration)"
         )
-        print()
+        console.print()
 
         # run actual benchmarks (round-robin interleaved)
         benchmarks = self.get_flops_benchmarking_suite(size=array_size)

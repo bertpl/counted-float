@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 
+from counted_float._core.benchmarking._output import console
 from counted_float._core.models import MicroBenchmarkResult
 from counted_float._core.utils import get_cpu_frequency_mhz_current
 
@@ -123,14 +124,12 @@ class InterleavedBenchmarkRunner(Generic[K]):
         n_rounds_measure: int = 200,
         n_rounds_warmup: int = 3,
         seed: int | None = None,
-        show_progress: bool = True,
     ) -> None:
         self.benchmarks = benchmarks
         self.t_slice_target_ms = t_slice_target_ms
         self.n_rounds_measure = n_rounds_measure
         self.n_rounds_warmup = n_rounds_warmup
         self.seed = seed
-        self.show_progress = show_progress
 
     def run(self) -> dict[K, MicroBenchmarkResult]:
         """Run all phases and return one MicroBenchmarkResult per benchmark."""
@@ -184,8 +183,8 @@ class InterleavedBenchmarkRunner(Generic[K]):
 
         # --- report + return -----------------------------
         floored = [str(key) for key, c in controllers.items() if c.execution_floor_active]
-        if floored and self.show_progress:
-            print(f"note: minimum-executions floor was active for: {', '.join(floored)}")
+        if floored:
+            console.print(f"note: minimum-executions floor was active for: {', '.join(floored)}")
         return {
             key: MicroBenchmarkResult(warmup_runs=warmup_runs[key], benchmark_runs=benchmark_runs[key])
             for key in self.benchmarks
@@ -221,13 +220,17 @@ class InterleavedBenchmarkRunner(Generic[K]):
         all terminal I/O happens on our explicit per-item/per-round updates, in the gap
         between timed regions (the same discipline as the rest of the inter-slice path).
         """
+        # render onto the shared benchmark console; when it is quiet (output_quiet), the bar
+        # is disabled and nothing -- not even the stray newline older rich emits on a merely
+        # disabled progress context -- reaches stdout
         return Progress(
             TextColumn("{task.description:<9}"),
             BarColumn(),
             MofNCompleteColumn(),
             TimeElapsedColumn(),
             auto_refresh=False,
-            disable=not self.show_progress,
+            disable=console.quiet,
+            console=console,
         )
 
     def _advance(self, progress: Progress, task_id: TaskID, amount: int = 1) -> None:
