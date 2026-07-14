@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- per-operation `CountedFloat` overhead is reduced by roughly a third (faster operator dispatch and result wrapping); counts are unchanged
+
 ### Deprecated
 
 ### Removed
