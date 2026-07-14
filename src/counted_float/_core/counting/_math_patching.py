@@ -67,8 +67,9 @@ _NO_BASE = object()
 # -------------------------------------------------------------------------
 def math_sqrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_sqrt(x)  # compute first: domain error (x < 0) raises before counting
         GLOBAL_COUNTER.incr_sqrt()
-        return CountedFloat(original_math_sqrt(x))
+        return CountedFloat(result)
     return original_math_sqrt(x)
 
 
@@ -100,8 +101,9 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
     """
     if base is _NO_BASE:
         if isinstance(x, CountedFloat):
+            result = original_math_log(x)  # compute first: domain error (x <= 0) raises before counting
             GLOBAL_COUNTER.incr_log()
-            return CountedFloat(original_math_log(x))
+            return CountedFloat(result)
         return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
@@ -127,29 +129,33 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
 
 def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_log2(x)  # compute first: domain error (x <= 0) raises before counting
         GLOBAL_COUNTER.incr_log2()
-        return CountedFloat(original_math_log2(x))
+        return CountedFloat(result)
     return original_math_log2(x)
 
 
 def math_log10(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_log10(x)  # compute first: domain error (x <= 0) raises before counting
         GLOBAL_COUNTER.incr_log10()
-        return CountedFloat(original_math_log10(x))
+        return CountedFloat(result)
     return original_math_log10(x)
 
 
 def math_exp(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_exp(x)  # compute first: exp overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_exp()
-        return CountedFloat(original_math_exp(x))
+        return CountedFloat(result)
     return original_math_exp(x)
 
 
 def math_exp2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_exp2(x)  # compute first: exp2 overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_exp2()
-        return CountedFloat(original_math_exp2(x))
+        return CountedFloat(result)
     return original_math_exp2(x)
 
 
@@ -176,22 +182,25 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
 
 def math_sin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_sin(x)  # compute first: sin(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_sin()
-        return CountedFloat(original_math_sin(x))
+        return CountedFloat(result)
     return original_math_sin(x)
 
 
 def math_cos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_cos(x)  # compute first: cos(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_cos()
-        return CountedFloat(original_math_cos(x))
+        return CountedFloat(result)
     return original_math_cos(x)
 
 
 def math_tan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_tan(x)  # compute first: tan(±inf) raises (ValueError) before counting
         GLOBAL_COUNTER.incr_tan()
-        return CountedFloat(original_math_tan(x))
+        return CountedFloat(result)
     return original_math_tan(x)
 
 
@@ -234,8 +243,9 @@ def math_hypot(*coordinates: float) -> float | CountedFloat:
 
 def math_expm1(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_expm1(x)  # compute first: expm1 overflows (OverflowError) before counting
         GLOBAL_COUNTER.incr_expm1()
-        return CountedFloat(original_math_expm1(x))
+        return CountedFloat(result)
     return original_math_expm1(x)
 
 
