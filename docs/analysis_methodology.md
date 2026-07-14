@@ -75,13 +75,20 @@ Given the mentioned PROs & CONs, these 3 sources can be considered complementary
 
 ## 2.1. Combining incomplete data
 
-No single source covers every (CPU, operation) pair — benchmarks omit int↔float conversions,
-vendor spec sheets omit unpublished cores, and so on. Missing cells are imputed from a log-domain
+No single source covers every (CPU, operation) pair. Benchmarks omit int↔float conversions, and
+spec sheets and third-party analyses only report operations with a direct hardware instruction — so
+transcendentals executed via a `libm` routine (`sin`, `exp`, `log`, ...) have no entry for those
+CPUs. (A CPU absent from a source entirely is simply a missing *row*, not a gap: there is nothing to
+impute, and it just isn't part of that source.) Such missing *cells* are imputed from a log-domain
 rank-1 fit before averaging: each cost is modeled as `speed[cpu] · difficulty[op]` (a *separable*
-model), so a gap is filled from the CPU's overall speed and the operation's typical difficulty.
-Only missing cells are ever filled; observed values are never modified. The assumption's blind spot:
-a CPU with an atypical *relative* profile (e.g. unusually fast division relative to addition) cannot
-be represented by a separable model, so its imputed cells are pulled toward the corpus norm.
+model), so a gap is filled from the CPU's overall speed and the operation's typical difficulty. Only
+missing cells are ever filled; observed values are never modified.
+
+Imputation runs **hierarchically** — a gap is filled from the most similar CPUs first (same
+microarchitecture, then vendor, then ISA family) before the broader corpus, which is the main reason
+the aggregation is nested this way. A separable model still cannot fully capture a CPU with an
+atypical *relative* profile (e.g. unusually fast division relative to addition), but its gaps are
+pulled toward close relatives rather than the whole-corpus norm.
 
 # 3. Instruction Mappings
 
