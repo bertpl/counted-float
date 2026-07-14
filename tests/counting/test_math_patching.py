@@ -263,6 +263,30 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
     assert global_counter.total_count() == 0
 
 
+@pytest.mark.parametrize(
+    ("fname", "arg"),
+    [
+        ("sqrt", CountedFloat(-1.0)),  # domain: x >= 0
+        ("log", CountedFloat(-1.0)),  # domain: x > 0  (single-arg form)
+        ("log2", CountedFloat(-1.0)),  # domain: x > 0
+        ("log10", CountedFloat(-1.0)),  # domain: x > 0
+        ("exp", CountedFloat(710.0)),  # overflow (OverflowError)
+        ("exp2", CountedFloat(2000.0)),  # overflow (OverflowError)
+        ("sin", CountedFloat(math.inf)),  # sin/cos/tan raise on +/-inf
+        ("cos", CountedFloat(math.inf)),
+        ("tan", CountedFloat(math.inf)),
+        ("expm1", CountedFloat(710.0)),  # overflow (OverflowError)
+    ],
+)
+def test_single_arg_math_ops_error_counts_nothing(global_counter, fname, arg):
+    # regression: these all counted BEFORE the underlying call and leaked a phantom flop when it
+    # raised; the compute-first contract now leaves nothing counted (matching the log-base/pow paths)
+    # --- act & assert ------------------------------------
+    with pytest.raises((ValueError, OverflowError)):
+        getattr(math, fname)(arg)
+    assert global_counter.total_count() == 0
+
+
 # =================================================================================================
 #  Patched math functions - new higher-order ops (asin/acos/atan/atan2/hypot/expm1/log1p/fmod/fabs)
 # =================================================================================================

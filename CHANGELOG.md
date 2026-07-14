@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- patched `math` functions no longer leave a spurious flop count when the underlying call raises a domain or overflow error
+
 ### Security
 
 ## 1.5.0 (2026-07-14)
