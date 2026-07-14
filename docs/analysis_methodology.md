@@ -37,7 +37,20 @@ For most processors, two instruction latency figures can typically be obtained (
 - **execution latency**: time needed for end-to-end execution until a new instruction can start using the end result
 - **(reciprocal) throughput**: time needed per instruction with maximal throughput for independent similar operations
 
-Given the nature of code we intend to analyze, we focus on **execution latency**, i.e. the full end-to-end latency.
+We focus on **execution latency**. Reciprocal throughput is only realized when many
+*independent* same-type operations are in flight; the iterative numerical kernels this package
+targets (root finders, ODE steps, ...) are **dependent chains** — each step consumes the previous
+result (§1.2) — so the cost actually paid per operation is the full end-to-end latency, not the
+pipelined throughput. Code with enough independent parallelism to reach throughput would be
+vectorized, and is out of scope (§1.2). Execution latency is also the conservative choice: it is
+never below reciprocal throughput, so wherever a little instruction-level parallelism does exist we
+over- rather than under-estimate cost.
+
+When a source reports execution latency as a **range** (data-dependent latency for
+division/square-root, or measurement-path variation), we take the **upper bound**. Across the
+built-in corpus this tracks the benchmark-measured cost most closely: a benchmark running real
+operands through a dependent chain realizes the actual latency, which for these variable-latency
+operations sits at the top of the reported range.
 
 ## 1.5. Benchmark setup
 
@@ -59,6 +72,16 @@ We will focus on 3 types of sources for FPU instruction 'cost':
   those instructions that have hardware support.
 
 Given the mentioned PROs & CONs, these 3 sources can be considered complementary, and we can expect them to provide a balanced holistic picture.
+
+## 2.1. Combining incomplete data
+
+No single source covers every (CPU, operation) pair — benchmarks omit int↔float conversions,
+vendor spec sheets omit unpublished cores, and so on. Missing cells are imputed from a log-domain
+rank-1 fit before averaging: each cost is modeled as `speed[cpu] · difficulty[op]` (a *separable*
+model), so a gap is filled from the CPU's overall speed and the operation's typical difficulty.
+Only missing cells are ever filled; observed values are never modified. The assumption's blind spot:
+a CPU with an atypical *relative* profile (e.g. unusually fast division relative to addition) cannot
+be represented by a separable model, so its imputed cells are pulled toward the corpus norm.
 
 # 3. Instruction Mappings
 

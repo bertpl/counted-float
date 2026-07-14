@@ -87,7 +87,11 @@ patched `math` functions:
 The one place an `I2F` conversion *is* counted is explicit construction from an
 int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer
 (a loop index, a computed count) into the counting model: wrap it, and its
-int→float conversion counts like any other FLOP.
+int→float conversion counts like any other FLOP. The constructor counts this
+`I2F` unconditionally — it cannot tell a runtime int from a constant one — so
+wrapping a *constant* int (`CountedFloat(5)`) does register an `I2F` a compiled
+port would fold away; the "wrap only runtime inputs" side of the contract is
+what keeps that from arising in practice.
 
 The flip side: an unwrapped runtime input is invisible to the counter — that
 is a wrapping error at your algorithm's boundary, not something the library

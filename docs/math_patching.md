@@ -69,11 +69,16 @@ Every commonly used `math` function, and how it participates in counting:
 |---|---|
 | **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot`, `fmod`, `fabs` |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
-| **Not instrumented** (returns a plain, uncounted `float`) | `copysign`, `remainder`, `frexp`, `ldexp`, `modf`, `degrees`, `radians`, `dist`, `fsum`, `prod`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp` |
+| **Not instrumented** (returns a plain, uncounted `float`) | `copysign`, `remainder`, `frexp`, `ldexp`, `modf`, `degrees`, `radians`, `dist`, `fsum`, `prod`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp`, `fma` |
 
 The not-instrumented set breaks contagion: the plain-`float` result silently
 stops all downstream counting, so convert back with `CountedFloat(...)` if a
 result of these feeds counted computation.
+
+`math.fma(x, y, z)` (Python 3.13+) is in this set for a second reason: it is the
+one place a fused multiply-add is observable at the Python level. Counting it
+faithfully would need a dedicated FMA flop type; until then a multiply-add is
+counted as separate MUL + ADD — see [Known limitations](known_limitations.md).
 
 Which functions are patched is also the boundary of what gets counted — see
 [Known limitations](known_limitations.md).

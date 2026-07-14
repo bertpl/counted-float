@@ -3,6 +3,9 @@ dist
 *.tar.gz
 *.whl
 
+# mkdocs build output (local `mkdocs build`; Read the Docs builds its own)
+site
+
 # Python cache files
 __pycache__
 *.pyc

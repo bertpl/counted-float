@@ -39,8 +39,6 @@ class Latency(MyBaseModel):
 #  InstructionLatencies - SSE2
 # =================================================================================================
 class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established public API name
-    # SEE: https://github.com/bertpl/counted-float/tree/develop/counted_float/data/fpu_data_sources.md
-
     # --- primary fields ----------------------------------
     architecture: Literal["sse2"] = "sse2"
 
@@ -49,7 +47,7 @@ class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established publi
     CVTSD2SI: Latency = Latency()  # double -> int
     CVTSI2SD: Latency = Latency()  # int -> double
     XORPD: Latency = Latency()  # -x
-    UCOMISD: Latency = Latency()  # x < == > y, x < == > 0    NOTE: should be ranges of UCOMISD & COMISD merged
+    UCOMISD: Latency = Latency()  # x < == > y, x < == > 0
     MAXSD: Latency = Latency()  # max(x,y)
     MINSD: Latency = Latency()  # min(x,y)
     ADDSD: Latency = Latency()  # x+y
@@ -81,8 +79,6 @@ class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established publi
 #  InstructionLatencies - ARM
 # =================================================================================================
 class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public API name
-    # SEE: https://github.com/bertpl/counted-float/tree/develop/counted_float/data/fpu_data_sources.md
-
     # --- primary fields ----------------------------------
     architecture: Literal["arm"] = "arm"
 
