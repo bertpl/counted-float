@@ -123,14 +123,14 @@ class InterleavedBenchmarkRunner(Generic[K]):
         n_rounds_measure: int = 200,
         n_rounds_warmup: int = 3,
         seed: int | None = None,
-        show_progress: bool = True,
+        verbose: bool = True,
     ) -> None:
         self.benchmarks = benchmarks
         self.t_slice_target_ms = t_slice_target_ms
         self.n_rounds_measure = n_rounds_measure
         self.n_rounds_warmup = n_rounds_warmup
         self.seed = seed
-        self.show_progress = show_progress
+        self.verbose = verbose
 
     def run(self) -> dict[K, MicroBenchmarkResult]:
         """Run all phases and return one MicroBenchmarkResult per benchmark."""
@@ -184,7 +184,7 @@ class InterleavedBenchmarkRunner(Generic[K]):
 
         # --- report + return -----------------------------
         floored = [str(key) for key, c in controllers.items() if c.execution_floor_active]
-        if floored and self.show_progress:
+        if floored and self.verbose:
             print(f"note: minimum-executions floor was active for: {', '.join(floored)}")
         return {
             key: MicroBenchmarkResult(warmup_runs=warmup_runs[key], benchmark_runs=benchmark_runs[key])
@@ -227,7 +227,7 @@ class InterleavedBenchmarkRunner(Generic[K]):
             MofNCompleteColumn(),
             TimeElapsedColumn(),
             auto_refresh=False,
-            disable=not self.show_progress,
+            disable=not self.verbose,
         )
 
     def _advance(self, progress: Progress, task_id: TaskID, amount: int = 1) -> None:

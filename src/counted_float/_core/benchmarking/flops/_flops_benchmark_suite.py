@@ -84,7 +84,7 @@ class FlopsBenchmarkSuite:
             n_rounds_measure=n_rounds_measure,
             n_rounds_warmup=n_rounds_warmup,
             seed=seed,
-            show_progress=verbose,
+            verbose=verbose,
         )
         raw_results = runner.run()
 
