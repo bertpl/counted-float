@@ -16,6 +16,7 @@ from counted_float._core.models import (
     Quantiles,
     SystemInfo,
 )
+from counted_float._core.utils import get_cpu_frequency_mhz_current
 
 from ._array_generator import ArrayGenerator
 from ._flops_micro_benchmark import FlopsMicroBenchmark
@@ -62,6 +63,17 @@ class FlopsBenchmarkSuite:
             warnings.warn(
                 "'numba' is not installed; FLOPS benchmark results will be wildly inaccurate "
                 "and unusable. Install the optional dependency with pip install 'counted-float[numba]'.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+        # a missing CPU-frequency reading makes the ns->cycles conversion fall back to a nominal
+        # 1 GHz (see convert_nsecs_to_cycles), so the reported per-op "cycle" figures are then really
+        # nanoseconds -- surface that; only the derived flop-weight ratios (scale-invariant) stay valid
+        if get_cpu_frequency_mhz_current() is None:
+            warnings.warn(
+                "CPU frequency is unavailable; benchmark per-op figures are reported in nanoseconds, "
+                "not cycles. The derived flop weights (ratios) are unaffected.",
                 RuntimeWarning,
                 stacklevel=2,
             )

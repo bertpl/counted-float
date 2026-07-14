@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- the FLOPs benchmark now warns when it can't read the CPU frequency, since its per-op cycle figures are then effectively nanoseconds (flop-weight ratios are unaffected)
+
 ### Changed
 
 ### Deprecated
