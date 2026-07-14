@@ -69,10 +69,10 @@ class CountedFloat(float):
         return self.__repr__()
 
     def __repr__(self) -> str:
-        return f"CountedFloat({super().__repr__()})"
+        return f"CountedFloat({float.__repr__(self)})"
 
     def __hash__(self) -> int:
-        return super().__hash__()
+        return float.__hash__(self)
 
     # -------------------------------------------------------------------------
     #  OVERLOADED MATH OPERATIONS
@@ -80,12 +80,12 @@ class CountedFloat(float):
     def __abs__(self) -> CountedFloat:
         """abs(x)."""
         GLOBAL_COUNTER.incr_abs()
-        return CountedFloat(super().__abs__())
+        return CountedFloat(float.__abs__(self))
 
     def __neg__(self) -> CountedFloat:
         """-x."""
         GLOBAL_COUNTER.incr_minus()
-        return CountedFloat(super().__neg__())
+        return CountedFloat(float.__neg__(self))
 
     def __pos__(self) -> CountedFloat:
         """+x.
@@ -93,11 +93,11 @@ class CountedFloat(float):
         Unary plus is the identity; a compiled port emits no instruction, so nothing is counted.
         The type is preserved (returns a CountedFloat) so downstream counting survives.
         """
-        return CountedFloat(super().__pos__())
+        return CountedFloat(float.__pos__(self))
 
     def __eq__(self, other: object) -> bool:
         """x==other or other==x."""
-        result = super().__eq__(other)
+        result = float.__eq__(self, other)
         if result is NotImplemented:
             return NotImplemented  # let Python try the reflected operation; nothing was computed, so nothing counts
         GLOBAL_COUNTER.incr_comp()
@@ -105,7 +105,7 @@ class CountedFloat(float):
 
     def __ne__(self, other: object) -> bool:
         """x!=other or other!=x."""
-        result = super().__ne__(other)
+        result = float.__ne__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_comp()
@@ -113,7 +113,7 @@ class CountedFloat(float):
 
     def __lt__(self, other: float) -> bool:
         """x<other."""
-        result = super().__lt__(other)
+        result = float.__lt__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_comp()
@@ -121,7 +121,7 @@ class CountedFloat(float):
 
     def __le__(self, other: float) -> bool:
         """x<=other."""
-        result = super().__le__(other)
+        result = float.__le__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_comp()
@@ -129,7 +129,7 @@ class CountedFloat(float):
 
     def __gt__(self, other: float) -> bool:
         """x>other."""
-        result = super().__gt__(other)
+        result = float.__gt__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_comp()
@@ -137,7 +137,7 @@ class CountedFloat(float):
 
     def __ge__(self, other: float) -> bool:
         """x>=other."""
-        result = super().__ge__(other)
+        result = float.__ge__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_comp()
@@ -157,31 +157,31 @@ class CountedFloat(float):
         else:
             GLOBAL_COUNTER.incr_rnd()  # will round and return float
 
-        return super().__round__(n)
+        return float.__round__(self, n)
 
     def __floor__(self) -> int:
         """math.floor(x)."""
         GLOBAL_COUNTER.incr_f2i()
-        return super().__floor__()
+        return float.__floor__(self)
 
     def __ceil__(self) -> int:
         """math.ceil(x)."""
         GLOBAL_COUNTER.incr_f2i()
-        return super().__ceil__()
+        return float.__ceil__(self)
 
     def __int__(self) -> int:
         """int(x)."""
         GLOBAL_COUNTER.incr_f2i()
-        return super().__int__()
+        return float.__int__(self)
 
     def __trunc__(self) -> int:
         """int(x)."""
         GLOBAL_COUNTER.incr_f2i()
-        return super().__trunc__()
+        return float.__trunc__(self)
 
     def __add__(self, other: float) -> CountedFloat:
         """x+other."""
-        result = super().__add__(other)
+        result = float.__add__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_add()
@@ -189,7 +189,7 @@ class CountedFloat(float):
 
     def __radd__(self, other: float) -> CountedFloat:
         """other+x."""
-        result = super().__radd__(other)
+        result = float.__radd__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_add()
@@ -197,7 +197,7 @@ class CountedFloat(float):
 
     def __sub__(self, other: float) -> CountedFloat:
         """x-other."""
-        result = super().__sub__(other)
+        result = float.__sub__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_sub()
@@ -205,7 +205,7 @@ class CountedFloat(float):
 
     def __rsub__(self, other: float) -> CountedFloat:
         """other-x."""
-        result = super().__rsub__(other)
+        result = float.__rsub__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_sub()
@@ -213,7 +213,7 @@ class CountedFloat(float):
 
     def __mul__(self, other: float) -> CountedFloat:
         """x*other or other*x."""
-        result = super().__mul__(other)
+        result = float.__mul__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_mul()
@@ -221,7 +221,7 @@ class CountedFloat(float):
 
     def __rmul__(self, other: float) -> CountedFloat:
         """other*x."""
-        result = super().__rmul__(other)
+        result = float.__rmul__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_mul()
@@ -229,7 +229,7 @@ class CountedFloat(float):
 
     def __truediv__(self, other: float) -> CountedFloat:
         """x/other."""
-        result = super().__truediv__(other)
+        result = float.__truediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -237,7 +237,7 @@ class CountedFloat(float):
 
     def __rtruediv__(self, other: float) -> CountedFloat:
         """other/x."""
-        result = super().__rtruediv__(other)
+        result = float.__rtruediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -249,7 +249,7 @@ class CountedFloat(float):
         Floored division decomposes into DIV + RND: a compiled port computes x/y and rounds the
         quotient toward -inf, a float->float round (RND / FRINTM / ROUNDSD class), not an F2I.
         """
-        result = super().__floordiv__(other)
+        result = float.__floordiv__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -258,7 +258,7 @@ class CountedFloat(float):
 
     def __rfloordiv__(self, other: float) -> CountedFloat:
         """other//x. See __floordiv__ for the DIV + RND decomposition."""
-        result = super().__rfloordiv__(other)
+        result = float.__rfloordiv__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -271,7 +271,7 @@ class CountedFloat(float):
         Python's % is the floored remainder r = x - y*floor(x/y), which a compiled port emits as
         DIV + RND (the floor) + MUL + SUB. Distinct from math.fmod, the truncated C remainder.
         """
-        result = super().__mod__(other)
+        result = float.__mod__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -282,7 +282,7 @@ class CountedFloat(float):
 
     def __rmod__(self, other: float) -> CountedFloat:
         """other%x. See __mod__ for the DIV + RND + MUL + SUB decomposition."""
-        result = super().__rmod__(other)
+        result = float.__rmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -297,7 +297,7 @@ class CountedFloat(float):
         Quotient and remainder share the DIV + RND (the floor); the remainder adds MUL + SUB, so
         divmod counts DIV + RND + MUL + SUB — the same as a lone %, since the // part is shared.
         """
-        result = super().__divmod__(other)
+        result = float.__divmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -309,7 +309,7 @@ class CountedFloat(float):
 
     def __rdivmod__(self, other: float) -> tuple[CountedFloat, CountedFloat]:
         """divmod(other, x). See __divmod__ for the DIV + RND + MUL + SUB decomposition."""
-        result = super().__rdivmod__(other)
+        result = float.__rdivmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
         GLOBAL_COUNTER.incr_div()
@@ -331,7 +331,7 @@ class CountedFloat(float):
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
         """
-        result = super().__pow__(other)
+        result = float.__pow__(self, other)
         if result is NotImplemented:
             return NotImplemented
         if not isinstance(result, float):
@@ -354,7 +354,7 @@ class CountedFloat(float):
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
         """
-        result = super().__rpow__(other)
+        result = float.__rpow__(self, other)
         if result is NotImplemented:
             return NotImplemented
         if not isinstance(result, float):
