@@ -76,7 +76,7 @@ counts.total_count()         # 2
 
 ## Performance overhead
 
-Using `CountedFloat` instead of plain `float` costs roughly **40–60× per
+Using `CountedFloat` instead of plain `float` costs roughly **20–40× per
 operation** (environment-dependent) — the price of Python-level operator
 dispatch and result wrapping. Measure your own machine with
 `counted_float benchmark-counted-float`. Two facts worth knowing:
