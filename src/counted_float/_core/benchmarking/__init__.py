@@ -1,3 +1,4 @@
+from ._output import console, output_quiet
 from .counted_float import BenchmarkCountedFloat, BenchmarkFloat, CountedFloatBenchmarkResults
 from .flops import FlopsBenchmarkResults, FlopsBenchmarkSuite
 
@@ -14,16 +15,14 @@ def run_flops_benchmark(
     An optional seed makes input pools and per-round shuffles reproducible. Progress output is
     printed unless verbose is False; a missing-numba RuntimeWarning is emitted regardless.
     """
-    benchmark_results = FlopsBenchmarkSuite().run(
-        t_slice_target_ms=t_slice_target_ms,
-        n_rounds_measure=n_rounds_measure,
-        n_rounds_warmup=n_rounds_warmup,
-        seed=seed,
-        verbose=verbose,
-    )
-
-    if verbose:
-        print()
+    with output_quiet(not verbose):
+        benchmark_results = FlopsBenchmarkSuite().run(
+            t_slice_target_ms=t_slice_target_ms,
+            n_rounds_measure=n_rounds_measure,
+            n_rounds_warmup=n_rounds_warmup,
+            seed=seed,
+        )
+        console.print()
 
     return benchmark_results
 
@@ -33,26 +32,24 @@ def run_counted_float_benchmark(t_target_sec: float = 0.1, verbose: bool = True)
 
     Progress output is printed unless verbose is False.
     """
-    if verbose:
-        print("-" * 120)
-        print("Running CountedFloat benchmark...")
-        print()
+    with output_quiet(not verbose):
+        console.print("-" * 120, soft_wrap=True)
+        console.print("Running CountedFloat benchmark...")
+        console.print()
 
-    result_float = BenchmarkFloat().run_many(
-        n_runs_total=50,
-        n_runs_warmup=15,
-        n_seconds_per_run_target=t_target_sec,
-        verbose=verbose,
-    )
-    result_counted_float = BenchmarkCountedFloat().run_many(
-        n_runs_total=50,
-        n_runs_warmup=15,
-        n_seconds_per_run_target=t_target_sec,
-        verbose=verbose,
-    )
-    if verbose:
-        print("-" * 120)
-        print()
+        result_float = BenchmarkFloat().run_many(
+            n_runs_total=50,
+            n_runs_warmup=15,
+            n_seconds_per_run_target=t_target_sec,
+        )
+        result_counted_float = BenchmarkCountedFloat().run_many(
+            n_runs_total=50,
+            n_runs_warmup=15,
+            n_seconds_per_run_target=t_target_sec,
+        )
+
+        console.print("-" * 120, soft_wrap=True)
+        console.print()
 
     return CountedFloatBenchmarkResults(
         float_time_nsec=result_float.summary_stats_nsecs_per_exec().q50,
