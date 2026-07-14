@@ -78,6 +78,17 @@ def test_micro_benchmark(n_runs_total: int, n_runs_warmup: int, n_seconds_per_ru
     )
 
 
+def test_micro_benchmark_run_many_verbose_false_is_silent(capsys):
+    # --- arrange ----------------------
+    benchmark = DummyMicroBenchmark(nsecs_per_execution=1_000)
+
+    # --- act --------------------------
+    benchmark.run_many(n_runs_total=6, n_runs_warmup=2, n_seconds_per_run_target=0.001, verbose=False)
+
+    # --- assert -----------------------
+    assert capsys.readouterr().out == ""
+
+
 class FlatRuntimeMicroBenchmark(MicroBenchmark):
     """Benchmark whose runtime does not scale with n_executions, mimicking a dead-code-eliminated kernel."""
 

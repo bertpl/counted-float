@@ -37,7 +37,11 @@ class MicroBenchmark(ABC):
         self.single_execution = single_execution
 
     def run_many(
-        self, n_runs_total: int = 20, n_runs_warmup: int = 5, n_seconds_per_run_target: float = 0.5
+        self,
+        n_runs_total: int = 20,
+        n_runs_warmup: int = 5,
+        n_seconds_per_run_target: float = 0.5,
+        verbose: bool = True,
     ) -> MicroBenchmarkResult:
         """Run the MicroBenchmark multiple times and return (q25, q50, q75) quantiles of run times in nanoseconds.
 
@@ -50,8 +54,10 @@ class MicroBenchmark(ABC):
                                                  in a stable, representative state
         :param n_seconds_per_run_target: (float, default=0.5) target time (sec) per benchmark_runs run (prepare + run).
                                              n_executions will be iteratively adjusted to achieve this target time.
+        :param verbose: (bool, default=True) print per-run progress; set False to run silently.
         """
-        print(f"{self.name.ljust(35)}: ", end="")
+        if verbose:
+            print(f"{self.name.ljust(35)}: ", end="")
 
         # repeat benchmark_runs n_runs_total times
         n_executions = 1  # start with a benchmark_runs of 1 operation and scale up as needed
@@ -67,11 +73,13 @@ class MicroBenchmark(ABC):
             # --- capture result ---
             if i < n_runs_warmup:
                 # warmup run that doesn't count
-                print("w", end="", flush=True)
+                if verbose:
+                    print("w", end="", flush=True)
                 warmup_runs.append(single_run_result)
             else:
                 # benchmark run that does count
-                print(".", end="", flush=True)
+                if verbose:
+                    print(".", end="", flush=True)
                 benchmark_runs.append(single_run_result)
 
             # --- adjust n_ops ---
@@ -90,7 +98,8 @@ class MicroBenchmark(ABC):
         stats_cycles = benchmark_result.summary_stats_cycles_per_exec()
         s_time_duration = f"{format_time_duration(stats_nsecs.q50)} ± {stats_nsecs.format_uncertainty()}"
         s_latency = f"{format_latency(stats_cycles.q50)} ± {stats_cycles.format_uncertainty()}"
-        print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
+        if verbose:
+            print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
 
         # return final result
         return benchmark_result

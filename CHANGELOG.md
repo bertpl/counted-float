@@ -10,8 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - the `show-data` CLI command accepts `--key-filter` in addition to the original `--key_filter`
+- `run_flops_benchmark()` and `run_counted_float_benchmark()` accept a `verbose` flag to silence progress output
 
 ### Changed
+
+- the FLOPs benchmark's "numba not installed" notice is now a `RuntimeWarning` (filterable and catchable) instead of printed text
 
 ### Deprecated
 
