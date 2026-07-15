@@ -37,7 +37,7 @@ In general, we focus on those micro-architectures that are _not_ mobile-only and
 **Notes:**
 
 - ***(1)*** but with improvements to FPU multiplication latencies
-- ***(2)*** no server variants announced at the time of writing.
+- ***(2)*** no server variants announced as of September 2025.
 
 ## 2.1.2. AMD
 
@@ -83,7 +83,7 @@ in the last ±10 years, we will focus on **ARM v8.2-A or higher**, as this ISA w
 
 Notes:
 
-- ***(1)*** at the time of writing no chips have been released with support for these ISA levels.
+- ***(1)*** as of September 2025 no chips had been released with support for these ISA levels.
 
 Finally, since the ARM microarchitecture is used over a wide range of devices from low-power embedded chips to high-performance
 HPC servers, we will restrict ourselves to ARM cores that are classified as either 'performance' or 'balanced', but will

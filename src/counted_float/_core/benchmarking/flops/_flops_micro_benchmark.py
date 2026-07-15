@@ -21,7 +21,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
       - we prepare the output arrays: of size 'size': out_f, out_i
          - 1 output array per type of result: float, int
          - initialized with zeros
-      - the function f will loop over a&b and write the result to c
+      - the function f will loop over in_f and write its results to out_f / out_i
          - the function should be implemented such that it does not use vectorized operations, we want to avoid
              using vectorized CPU instructions (AVX, etc...): we want to measure the speed of the regular, scalar
              operations
