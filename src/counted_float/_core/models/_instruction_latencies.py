@@ -39,6 +39,14 @@ class Latency(MyBaseModel):
 #  InstructionLatencies - SSE2
 # =================================================================================================
 class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established public API name
+    """Latencies of the x86 instructions a modern compiler emits for scalar double-precision math.
+
+    The `sse2` tag distinguishes this from the ancient x87 FPU, rather than asserting that every
+    instruction below belongs to the SSE2 extension: it names the modern scalar x86 baseline, and
+    each field is whatever the current best instruction for that operation is. ROUNDSD (SSE4.1)
+    and VFMADD213SD (FMA3) are both here for that reason.
+    """
+
     # --- primary fields ----------------------------------
     architecture: Literal["sse2"] = "sse2"
 
@@ -54,6 +62,7 @@ class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established publi
     SUBSD: Latency = Latency()  # x-y
     MULSD: Latency = Latency()  # x*y
     DIVSD: Latency = Latency()  # x/y
+    VFMADD213SD: Latency = Latency()  # x*y+z, fused
     SQRTSD: Latency = Latency()  # sqrt(x)
 
     # --- helpers -----------------------------------------
@@ -70,6 +79,7 @@ class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established publi
                 FlopType.SUB: self.SUBSD.consensus(),
                 FlopType.MUL: self.MULSD.consensus(),
                 FlopType.DIV: self.DIVSD.consensus(),
+                FlopType.FMA: self.VFMADD213SD.consensus(),
                 FlopType.SQRT: self.SQRTSD.consensus(),
             }
         )
@@ -94,6 +104,7 @@ class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public
     FSUB: Latency = Latency()  # x-y
     FMUL: Latency = Latency()  # x*y
     FDIV: Latency = Latency()  # x/y
+    FMADD: Latency = Latency()  # x*y+z, fused
     FSQRT: Latency = Latency()  # sqrt(x)
 
     # --- helpers -----------------------------------------
@@ -110,6 +121,7 @@ class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public
                 FlopType.SUB: self.FSUB.consensus(),
                 FlopType.MUL: self.FMUL.consensus(),
                 FlopType.DIV: self.FDIV.consensus(),
+                FlopType.FMA: self.FMADD.consensus(),
                 FlopType.SQRT: self.FSQRT.consensus(),
             }
         )

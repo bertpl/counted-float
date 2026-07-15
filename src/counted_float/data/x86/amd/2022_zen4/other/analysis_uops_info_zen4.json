@@ -65,6 +65,11 @@
             "min_cycles": null,
             "max_cycles": 13
         },
+        "VFMADD213SD": {
+            "note": "https://uops.info/html-lat/ZEN4/VFMADD213SD_XMM_XMM_XMM-Measurements.html",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
         "SQRTSD": {
             "note": "https://uops.info/html-lat/ZEN4/SQRTSD_XMM_XMM-Measurements.html",
             "min_cycles": null,
