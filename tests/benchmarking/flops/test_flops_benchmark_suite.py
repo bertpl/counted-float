@@ -1,8 +1,11 @@
 import math
+import re
 
+import numpy as np
 import pytest
 
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
+from counted_float._core.compatibility import is_numba_installed
 from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType, FlopType, FlopWeights
 
 
@@ -34,6 +37,62 @@ def test_flops_benchmarking_suite_run():
 
     # --- assert ------------------------------------------
     assert isinstance(result, FlopsBenchmarkResults)
+
+
+# =================================================================================================
+#  FMA kernel fusion
+# =================================================================================================
+# fused multiply-add mnemonics, and their unfused counterparts, on aarch64 and x86-64
+_FUSED = re.compile(r"\b(fmadd|fmsub|fnmadd|fnmsub|vfmadd\w*|vfmsub\w*)\b", re.IGNORECASE)
+_UNFUSED_MUL_ADD = re.compile(r"\b(fmul|fadd|mulsd|addsd|vmulsd|vaddsd)\b", re.IGNORECASE)
+
+
+def _kernel_assembly(benchmark: FlopsMicroBenchmark) -> str:
+    """Compile a benchmark's kernel and return the assembly emitted for it."""
+    # njit compiles lazily, so run the kernel once to give it a signature to report on
+    in_f = benchmark.array_init.new_array(benchmark.size)
+    benchmark.f(1, benchmark.size, in_f, np.zeros(benchmark.size), np.zeros(benchmark.size, dtype=int))
+    return "\n".join(benchmark.f.inspect_asm().values())
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.parametrize("benchmark_type", [FlopsBenchmarkType.FMA, FlopsBenchmarkType.FMA_FMA])
+def test_fma_kernels_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmarkType):
+    """Each multiply-add in the FMA kernels must collapse into one fused instruction, leaving none behind.
+
+    This is what makes the FMA latency estimate falsifiable. A toolchain that stopped contracting would
+    leave the pair measuring a separate multiply and add while still reporting the difference as an FMA
+    latency, and nothing else in the suite would notice.
+
+    Instruction counts are deliberately not asserted: LLVM's unroll factor differs per kernel and across
+    versions, so a count pins a heuristic rather than the property that matters.
+    """
+    # --- arrange -----------------------------------------
+    benchmark = FlopsBenchmarkSuite.get_flops_benchmarking_suite(size=100)[benchmark_type]
+
+    # --- act ---------------------------------------------
+    asm = _kernel_assembly(benchmark)
+
+    # --- assert ------------------------------------------
+    assert _FUSED.search(asm), "multiply-add did not fuse: this kernel measures MUL + ADD, not FMA"
+    assert not _UNFUSED_MUL_ADD.search(asm), "an unfused multiply or add survived in an FMA kernel"
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.parametrize(
+    "benchmark_type",
+    [FlopsBenchmarkType.ADD, FlopsBenchmarkType.ADD_ADD, FlopsBenchmarkType.MUL, FlopsBenchmarkType.MUL_MUL],
+)
+def test_contraction_is_scoped_to_the_fma_kernels(benchmark_type: FlopsBenchmarkType):
+    """No other kernel may fuse: the ADD and MUL pairs have to measure the operation they are named for."""
+    # --- arrange -----------------------------------------
+    benchmark = FlopsBenchmarkSuite.get_flops_benchmarking_suite(size=100)[benchmark_type]
+
+    # --- act ---------------------------------------------
+    asm = _kernel_assembly(benchmark)
+
+    # --- assert ------------------------------------------
+    assert not _FUSED.search(asm)
 
 
 # =================================================================================================

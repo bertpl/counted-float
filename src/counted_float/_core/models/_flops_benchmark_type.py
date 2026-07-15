@@ -43,4 +43,6 @@ class FlopsBenchmarkType(StrEnum):
     MUL_MUL = "mul_mul"
     DIV = "div"
     DIV_DIV = "div_div"
+    FMA = "fma"
+    FMA_FMA = "fma_fma"
     LTE_ADDSUB = "lte_addsub"
