@@ -3,7 +3,7 @@
         "Data from Agner Fog's instruction tables",
         "https://www.agner.org/optimize/instruction_tables.pdf",
         "pages 341-345, column 'latency'",
-        "page numbers above refer to the revision last updated 2025-07-25 (485 pages, sha256 753d4a4d3f40e99909ea7b0cddb2ea69fd24f32cc6f5aa8a49945bac39f9ff18); agner.org publishes only the latest revision at that URL and re-paginates it on every update, so the pages cited here will not match a differently-dated copy"
+        "page numbers above refer to the revision last updated 2025-09-20 (485 pages, sha256 6b9b58d1177884f9dcb5b88fbb4ac43135565a4295e76101464d1a5d286fe25a); agner.org publishes only the latest revision at that URL and re-paginates it on every update, so the pages cited here will not match a differently-dated copy"
     ],
     "latencies": {
         "architecture": "sse2",
