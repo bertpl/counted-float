@@ -147,7 +147,7 @@ def test_from_abs_flop_costs_without_add_raises_value_error():
 
 def test_from_abs_flop_costs_with_zero_add_raises_value_error():
     # --- arrange -----------------------------------------
-    flop_costs = {flop_type: 0.0 for flop_type in FlopType}
+    flop_costs = dict.fromkeys(FlopType, 0.0)
 
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="non-zero"):

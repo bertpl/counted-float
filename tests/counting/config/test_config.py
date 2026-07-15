@@ -68,7 +68,7 @@ def test_bare_import_does_not_parse_builtin_data():
 
 def test_set_active_flop_weights_stores_a_copy():
     # --- arrange -----------------------------------------
-    weights = FlopWeights(weights={flop_type: 1.0 for flop_type in FlopType})
+    weights = FlopWeights(weights=dict.fromkeys(FlopType, 1.0))
 
     # --- act ---------------------------------------------
     set_active_flop_weights(weights)
