@@ -1,9 +1,13 @@
 """Top-level public API for flop counting: CountedFloat, FlopCountingContext, and related models."""
 
 from importlib.metadata import PackageNotFoundError, version
+from types import ModuleType
+from typing import TYPE_CHECKING
 
-import counted_float.benchmarking as benchmarking
 import counted_float.config as config
+
+if TYPE_CHECKING:
+    import counted_float.benchmarking as benchmarking
 
 try:
     __version__ = version("counted-float")
@@ -26,3 +30,27 @@ __all__ = [
     "benchmarking",
     "config",
 ]
+
+
+def __getattr__(name: str) -> ModuleType:
+    """Resolve the benchmarking subpackage on first access.
+
+    Benchmarking pulls in numba and rich, which the counting core never touches. Importing it
+    eagerly would make every importer -- including those who only count flops -- pay for the
+    benchmarking toolchain, which is the bulk of this package's import cost.
+
+    Args:
+        name: Attribute being looked up on the package.
+
+    Returns:
+        The imported `counted_float.benchmarking` module.
+
+    Raises:
+        AttributeError: For any other attribute name.
+    """
+    if name == "benchmarking":
+        import counted_float.benchmarking as benchmarking
+
+        globals()["benchmarking"] = benchmarking  # resolve once; later lookups skip __getattr__
+        return benchmarking
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

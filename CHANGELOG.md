@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `import counted_float` is roughly 1.7x faster; the benchmarking subpackage and its numba dependency now load on first use
 - `FlopWeights.from_abs_flop_costs()` raises a clear `ValueError` instead of a raw `KeyError` or `ZeroDivisionError`
 
 ### Deprecated
