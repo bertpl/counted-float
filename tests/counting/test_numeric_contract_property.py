@@ -2,9 +2,11 @@
 
 For every supported operator and operand type, ``CountedFloat(x) op y`` must match ``x op y`` in
 value, result type (contagion), and error behavior. These blanket the numeric contract that the
-hand-written tests probe point-by-point — exactly the protocol surface the 2026-07-07 audit
-flagged as a blind spot. Only operators are covered here; the patched ``math.*`` functions have
-their own tests in ``test_math_patching.py``.
+hand-written tests probe point-by-point: a point-by-point suite only reaches the operand types and
+values someone thought to enumerate, so a hole in the protocol surface — a reflected operator, an
+operand type that silently demotes to plain float — survives until a caller finds it. Only
+operators are covered here; the patched ``math.*`` functions have their own tests in
+``test_math_patching.py``.
 """
 
 import math
