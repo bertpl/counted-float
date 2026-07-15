@@ -1,7 +1,8 @@
 {
     "notes": [
         "Data from uops.info/table.html",
-        "Alder Lake-P - SSE - Measurements - Latency"
+        "Alder Lake-P - SSE - Measurements - Latency",
+        "VFMADD213SD is an FMA3 instruction and so falls outside the SSE view above; as for every entry, its value comes from the per-instruction measurement page linked in its note"
     ],
     "latencies": {
         "architecture": "sse2",
@@ -32,7 +33,7 @@
         },
         "UCOMISD": {
             "note": "https://uops.info/html-lat/ADL-P/UCOMISD_XMM_XMM-Measurements.html",
-            "min_cycles": 3,
+            "min_cycles": null,
             "max_cycles": 3
         },
         "MAXSD": {
@@ -48,12 +49,12 @@
         "ADDSD": {
             "note": "https://uops.info/html-lat/ADL-P/ADDSD_XMM_XMM-Measurements.html",
             "min_cycles": 2,
-            "max_cycles": 3
+            "max_cycles": 2
         },
         "SUBSD": {
             "note": "https://uops.info/html-lat/ADL-P/SUBSD_XMM_XMM-Measurements.html",
             "min_cycles": 2,
-            "max_cycles": 3
+            "max_cycles": 2
         },
         "MULSD": {
             "note": "https://uops.info/html-lat/ADL-P/MULSD_XMM_XMM-Measurements.html",
@@ -63,7 +64,7 @@
         "DIVSD": {
             "note": "https://uops.info/html-lat/ADL-P/DIVSD_XMM_XMM-Measurements.html",
             "min_cycles": null,
-            "max_cycles": 15
+            "max_cycles": 13
         },
         "VFMADD213SD": {
             "note": "https://uops.info/html-lat/ADL-P/VFMADD213SD_XMM_XMM_XMM-Measurements.html",
@@ -73,7 +74,7 @@
         "SQRTSD": {
             "note": "https://uops.info/html-lat/ADL-P/SQRTSD_XMM_XMM-Measurements.html",
             "min_cycles": null,
-            "max_cycles": 19
+            "max_cycles": 13
         }
     }
 }

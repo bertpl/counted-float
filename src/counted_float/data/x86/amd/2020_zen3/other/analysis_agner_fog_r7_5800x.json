@@ -57,7 +57,7 @@
             "max_cycles": 3
         },
         "MULSD": {
-            "note": "",
+            "note": "no scalar form in this table: multiply is listed only as packed (MULPS MULPD)",
             "min_cycles": null,
             "max_cycles": null
         },
@@ -67,7 +67,7 @@
             "max_cycles": 13.5
         },
         "VFMADD213SD": {
-            "note": "",
+            "note": "table lists VFMADD132PS/PD followed by 'All other FMA3 instructions: same as above', which covers the scalar form",
             "min_cycles": 4,
             "max_cycles": 4
         },

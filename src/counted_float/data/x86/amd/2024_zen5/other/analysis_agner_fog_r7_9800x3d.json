@@ -57,7 +57,7 @@
             "max_cycles": 2
         },
         "MULSD": {
-            "note": "",
+            "note": "no scalar form in this table: multiply is listed only as packed (MULPS MULPD)",
             "min_cycles": null,
             "max_cycles": null
         },
@@ -67,9 +67,9 @@
             "max_cycles": 13
         },
         "VFMADD213SD": {
-            "note": "",
-            "min_cycles": 4,
-            "max_cycles": 4
+            "note": "no scalar form in this table: the FMA row lists only packed forms (VFMADD...PS/PD)",
+            "min_cycles": null,
+            "max_cycles": null
         },
         "SQRTSD": {
             "note": "",

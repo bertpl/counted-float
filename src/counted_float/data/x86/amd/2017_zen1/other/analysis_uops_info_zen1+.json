@@ -1,7 +1,8 @@
 {
     "notes": [
         "Data from uops.info/table.html",
-        "Zen 1+ - SSE - Measurements - Latency"
+        "Zen 1+ - SSE - Measurements - Latency",
+        "VFMADD213SD is an FMA3 instruction and so falls outside the SSE view above; as for every entry, its value comes from the per-instruction measurement page linked in its note"
     ],
     "latencies": {
         "architecture": "sse2",
@@ -27,7 +28,7 @@
         },
         "XORPD": {
             "note": "https://uops.info/html-lat/ZEN+/XORPD_XMM_XMM-Measurements.html",
-            "min_cycles": 0,
+            "min_cycles": 1,
             "max_cycles": 1
         },
         "UCOMISD": {

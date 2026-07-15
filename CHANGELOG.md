@@ -22,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- corrected a number of third-party instruction latencies that had been transcribed from the wrong table row, slightly adjusting the built-in flop weights
+
 ### Security
 
 ## 1.5.2 (2026-07-14)

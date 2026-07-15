@@ -68,7 +68,7 @@
             "max_cycles": 14
         },
         "VFMADD213SD": {
-            "notes": "",
+            "notes": "table row reads 'VFMADD... (all FMA instr.)', which covers the scalar form",
             "min_cycles": 4,
             "max_cycles": 4
         },
