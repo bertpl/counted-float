@@ -534,3 +534,23 @@ def test_unbalanced_remove_math_patches_does_not_clobber_a_later_patch():
 
     # --- assert ------------------------------------------
     assert survived
+
+
+def test_capture_originals_keeps_both_original_tables_in_sync():
+    """Every patched function's delegation global must match its restoration entry.
+
+    The originals are captured twice over: a module global per function, which the counting
+    replacements delegate to, and a dict used to restore the module afterwards. Adding a patch
+    while forgetting its global leaves restoration working while delegation silently calls a
+    stale import-time reference, so nothing downstream would notice.
+    """
+    # --- act ---------------------------------------------
+    _math_patching._capture_originals()
+
+    # --- assert ------------------------------------------
+    for name in _math_patching._PATCHES:
+        delegation_target = getattr(_math_patching, f"original_math_{name}", None)
+        assert delegation_target is not None, f"no original_math_{name} global for patched '{name}'"
+        assert delegation_target is _math_patching._saved_originals[name], (
+            f"original_math_{name} does not match the restoration snapshot for '{name}'"
+        )
