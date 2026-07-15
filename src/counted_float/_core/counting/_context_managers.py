@@ -35,6 +35,10 @@ class FlopCountingContext:
         #   - current count == GLOBAL_COUNTER - self.__cnt_start_snapshot
         self.__active: bool = False
 
+        # Number of with-blocks currently open on this instance.  Only the outermost one drives
+        # counting, so re-entering the same instance yields a single, unbroken count.
+        self.__depth: int = 0
+
         # flop count bookkeeping
         self.__cnt_subtotal: FlopCounts = FlopCounts()
         self.__cnt_start_snapshot: FlopCounts = FlopCounts()
@@ -55,16 +59,55 @@ class FlopCountingContext:
     #  Pause/Resume
     # -------------------------------------------------------------------------
     def pause(self) -> None:
-        if self.__active:
-            self.__cnt_subtotal = self.flop_counts()
-            self.__cnt_start_snapshot = FlopCounts()
-            self.__active = False
+        """Stop registering counts on this context until resume() is called.
+
+        Raises:
+            RuntimeError: If this context has no with-block open.
+        """
+        self.__require_open("pause")
+        self.__deactivate()
 
     def resume(self) -> None:
+        """Resume registering counts on this context after a pause().
+
+        Raises:
+            RuntimeError: If this context has no with-block open.
+        """
+        self.__require_open("resume")
+        self.__activate()
+
+    # -------------------------------------------------------------------------
+    #  Internal state transitions
+    # -------------------------------------------------------------------------
+    def __require_open(self, action: str) -> None:
+        """Reject a pause/resume attempted outside this context's with-block.
+
+        Outside the block the math module is no longer patched, so registering counts there
+        would silently blend instrumented operator semantics with un-instrumented `math.*`
+        ones into a single count.
+
+        Args:
+            action: Name of the attempted operation, used in the error message.
+
+        Raises:
+            RuntimeError: If this context has no with-block open.
+        """
+        if self.__depth == 0:
+            raise RuntimeError(f"cannot {action}() a FlopCountingContext outside its 'with' block")
+
+    def __activate(self) -> None:
+        """Start attributing global counts to this context, preserving any earlier subtotal."""
         if not self.__active:
             self.__cnt_start_snapshot = GLOBAL_COUNTER.flop_counts() - self.__cnt_subtotal
             self.__cnt_subtotal = FlopCounts()
             self.__active = True
+
+    def __deactivate(self) -> None:
+        """Freeze the running count into the subtotal and stop attributing global counts."""
+        if self.__active:
+            self.__cnt_subtotal = self.flop_counts()
+            self.__cnt_start_snapshot = FlopCounts()
+            self.__active = False
 
     # -------------------------------------------------------------------------
     #  Context manager interface
@@ -73,7 +116,9 @@ class FlopCountingContext:
         # patching the math module is tied to the with-block lifetime (not to pause()/resume(),
         # which only control whether counts are registered)
         apply_math_patches()
-        self.resume()
+        self.__depth += 1
+        if self.__depth == 1:
+            self.__activate()
         return self
 
     def __exit__(
@@ -82,7 +127,9 @@ class FlopCountingContext:
         exc_val: BaseException | None,
         exc_tb: TracebackType | None,
     ) -> None:
-        self.pause()
+        self.__depth -= 1
+        if self.__depth == 0:
+            self.__deactivate()
         remove_math_patches()
 
 

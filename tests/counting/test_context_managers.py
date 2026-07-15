@@ -1,3 +1,7 @@
+import math
+
+import pytest
+
 from counted_float._core.counting._context_managers import FlopCountingContext, PauseFlopCounting
 from counted_float._core.counting._counted_float import CountedFloat
 from counted_float._core.counting._global_counter import GLOBAL_COUNTER
@@ -230,3 +234,71 @@ def test_pause_flop_counting_restores_paused_state():
     flop_counts = fcc.flop_counts()
     assert flop_counts.ADD == 0
     assert flop_counts.MUL == 1
+
+
+def test_flop_counting_context_reentrant_same_instance():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+    fcc = FlopCountingContext()
+
+    # --- act ---------------------------------------------
+    with fcc:
+        _ = cf1 + cf2
+        with fcc:  # re-entering the same instance
+            _ = cf1 + cf2
+        _ = cf1 + cf2  # still inside the outer block, so still counted
+
+    # --- assert ------------------------------------------
+    assert fcc.flop_counts().ADD == 3
+
+
+def test_flop_counting_context_reentrant_keeps_math_patched_until_outermost_exit():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(4.0)
+    fcc = FlopCountingContext()
+
+    # --- act ---------------------------------------------
+    with fcc:
+        with fcc:
+            pass
+        _ = math.sqrt(cf1)  # the inner exit must not have unpatched math
+
+    # --- assert ------------------------------------------
+    # counting the sqrt at all proves math was still patched after the inner exit
+    assert fcc.flop_counts().SQRT == 1
+
+
+def test_flop_counting_context_sequential_reuse_accumulates_and_excludes_the_gap():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+    fcc = FlopCountingContext()
+
+    # --- act ---------------------------------------------
+    with fcc:
+        _ = cf1 + cf2
+    _ = cf1 * cf2  # between the blocks: must not be counted
+    with fcc:
+        _ = cf1 + cf2
+
+    # --- assert ------------------------------------------
+    flop_counts = fcc.flop_counts()
+    assert flop_counts.ADD == 2
+    assert flop_counts.MUL == 0
+
+
+@pytest.mark.parametrize("action", ["pause", "resume"])
+def test_flop_counting_context_pause_resume_outside_with_block_raises(action: str):
+    # --- arrange -----------------------------------------
+    fcc = FlopCountingContext()
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(RuntimeError, match=action):
+        getattr(fcc, action)()  # never entered
+
+    with fcc:
+        pass
+
+    with pytest.raises(RuntimeError, match=action):
+        getattr(fcc, action)()  # already exited

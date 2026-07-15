@@ -511,3 +511,26 @@ def test_math_fma_domain_error_counts_nothing(global_counter):
         math.fma(math.inf, 0.0, cf)
 
     assert global_counter.total_count() == 0
+
+
+def test_unbalanced_remove_math_patches_does_not_clobber_a_later_patch():
+    """An unbalanced removal must not re-apply the snapshot over a third-party patch."""
+    # --- arrange -----------------------------------------
+    with FlopCountingContext():
+        pass  # patches applied and restored; the snapshot has served its purpose
+
+    def third_party_sqrt(x: float) -> float:
+        return x
+
+    original_sqrt = math.sqrt
+    math.sqrt = third_party_sqrt  # ty: ignore[invalid-assignment]
+
+    # --- act ---------------------------------------------
+    try:
+        _math_patching.remove_math_patches()  # unbalanced: no context is open
+        survived = math.sqrt is third_party_sqrt
+    finally:
+        math.sqrt = original_sqrt  # ty: ignore[invalid-assignment]
+
+    # --- assert ------------------------------------------
+    assert survived
