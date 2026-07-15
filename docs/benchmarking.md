@@ -9,52 +9,53 @@ the ability to micro-benchmark floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-Running FLOPS benchmarks using counted-float 1.4.2 ...
-(Expected duration: ~171 seconds, plus jit compilation & calibration)
+Running FLOPS benchmarks using counted-float 1.6.0 ...
+(Expected duration: ~179 seconds, plus jit compilation & calibration)
 
-setup     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42/42   0:00:00
-jit       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42/42   0:00:09
+setup     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44/44   0:00:00
+jit       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44/44   0:00:09
 calibrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10/10   0:00:04
 warmup    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/3     0:00:03
-measure   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200/200 0:02:48
+measure   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200/200 0:02:56
 
 >>> results.flop_weights().show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.90066
-    FlopType.MINUS      [-x]            :   0.90185
+    FlopType.ABS        [abs(x)]        :   0.90086
+    FlopType.MINUS      [-x]            :   0.90128
+    FlopType.SUB        [x-y]           :   0.99924
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00006
-    FlopType.RND        [round]         :   1.23318
-    FlopType.MUL        [x*y]           :   1.49293
-    FlopType.COMP       [x<=y]          :   1.65702
-    FlopType.DIV        [x/y]           :   3.96976
-    FlopType.SQRT       [sqrt(x)]       :   5.08313
-    FlopType.FMOD       [fmod(x,y)]     :   6.19209
-    FlopType.HYPOT      [hypot(x,y)]    :  15.12720
-    FlopType.EXP2       [2^x]           :  16.32379
-    FlopType.EXP        [e^x]           :  16.97535
-    FlopType.LOG10      [log10(x)]      :  16.98483
-    FlopType.LOG        [log(x)]        :  17.25491
-    FlopType.LOG2       [log2(x)]       :  17.68443
-    FlopType.ACOSH      [acosh(x)]      :  18.82279
-    FlopType.COSH       [cosh(x)]       :  18.95751
-    FlopType.EXP10      [10^x]          :  19.91439
-    FlopType.SINH       [sinh(x)]       :  20.30701
-    FlopType.EXPM1      [expm1(x)]      :  20.57782
-    FlopType.CBRT       [cbrt(x)]       :  20.74467
-    FlopType.LOG1P      [log1p(x)]      :  20.92068
-    FlopType.ASINH      [asinh(x)]      :  22.12902
-    FlopType.ACOS       [acos(x)]       :  24.64399
-    FlopType.TANH       [tanh(x)]       :  26.17544
-    FlopType.ASIN       [asin(x)]       :  27.77200
-    FlopType.ATAN       [atan(x)]       :  27.95380
-    FlopType.SIN        [sin(x)]        :  28.04906
-    FlopType.COS        [cos(x)]        :  28.43823
-    FlopType.ATAN2      [atan2(y,x)]    :  29.67176
-    FlopType.ATANH      [atanh(x)]      :  31.47494
-    FlopType.TAN        [tan(x)]        :  31.53547
-    FlopType.POW        [x^y]           :  37.44672
+    FlopType.RND        [round]         :   1.23358
+    FlopType.FMA        [x*y+z]         :   1.49364
+    FlopType.MUL        [x*y]           :   1.49670
+    FlopType.COMP       [x<=y]          :   1.65971
+    FlopType.DIV        [x/y]           :   3.96720
+    FlopType.SQRT       [sqrt(x)]       :   5.08079
+    FlopType.FMOD       [fmod(x,y)]     :   6.24736
+    FlopType.HYPOT      [hypot(x,y)]    :  15.14849
+    FlopType.EXP2       [2^x]           :  16.33827
+    FlopType.EXP        [e^x]           :  16.93635
+    FlopType.LOG10      [log10(x)]      :  17.01702
+    FlopType.LOG        [log(x)]        :  17.34751
+    FlopType.LOG2       [log2(x)]       :  17.73992
+    FlopType.COSH       [cosh(x)]       :  18.84562
+    FlopType.ACOSH      [acosh(x)]      :  19.00542
+    FlopType.SINH       [sinh(x)]       :  20.24303
+    FlopType.EXP10      [10^x]          :  20.32107
+    FlopType.EXPM1      [expm1(x)]      :  20.54583
+    FlopType.CBRT       [cbrt(x)]       :  20.77356
+    FlopType.LOG1P      [log1p(x)]      :  20.99742
+    FlopType.ASINH      [asinh(x)]      :  22.27093
+    FlopType.ACOS       [acos(x)]       :  24.68559
+    FlopType.TANH       [tanh(x)]       :  26.20514
+    FlopType.ASIN       [asin(x)]       :  27.88059
+    FlopType.SIN        [sin(x)]        :  28.08448
+    FlopType.ATAN       [atan(x)]       :  28.12979
+    FlopType.COS        [cos(x)]        :  28.49190
+    FlopType.ATAN2      [atan2(y,x)]    :  29.74369
+    FlopType.TAN        [tan(x)]        :  31.64899
+    FlopType.ATANH      [atanh(x)]      :  31.65176
+    FlopType.POW        [x^y]           :  37.55957
     FlopType.F2I        [float->int]    :       nan
     FlopType.I2F        [int->float]    :       nan
 }
