@@ -66,6 +66,11 @@
             "min_cycles": 14,
             "max_cycles": 14
         },
+        "VFMADD213SD": {
+            "note": "",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
         "SQRTSD": {
             "note": "",
             "min_cycles": 18,

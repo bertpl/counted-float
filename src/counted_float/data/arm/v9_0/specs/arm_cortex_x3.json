@@ -66,6 +66,11 @@
             "min_cycles": 7,
             "max_cycles": 15
         },
+        "FMADD": {
+            "notes": "guide lists '4 (2)'; the parenthetical is the accumulator-forwarding fast path, not the general latency",
+            "min_cycles": 4,
+            "max_cycles": 4
+        },
         "FSQRT": {
             "notes": "",
             "min_cycles": 7,
