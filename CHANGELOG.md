@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `math.fma` (Python 3.13+) is now counted as a single fused multiply-add instead of a separate multiply and add
 - the FLOPs benchmark now measures fused multiply-add (`FMA`)
 
 ### Changed

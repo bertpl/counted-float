@@ -18,7 +18,7 @@ from counted_float import CountedFloat
 from counted_float._core.counting import _math_patching
 
 _PATCHED_NAMES = sorted(_math_patching._PATCHES.keys())
-_BINARY = {"atan2", "hypot", "fmod", "pow"}  # invoked with two operands; the rest take one
+_ARITY = {"atan2": 2, "hypot": 2, "fmod": 2, "pow": 2, "fma": 3}  # every other patched function takes one operand
 
 
 @pytest.mark.parametrize("fname", _PATCHED_NAMES)
@@ -27,7 +27,7 @@ _BINARY = {"atan2", "hypot", "fmod", "pow"}  # invoked with two operands; the re
 def test_raising_math_call_leaves_count_unchanged(global_counter, fname: str, x: float) -> None:
     # --- arrange -----------------------------------------
     func = getattr(math, fname)  # the fixture keeps a context active, so this is the patched version
-    args = (CountedFloat(x), CountedFloat(x)) if fname in _BINARY else (CountedFloat(x),)
+    args = tuple(CountedFloat(x) for _ in range(_ARITY.get(fname, 1)))
     global_counter.reset()
 
     # --- act / assert ------------------------------------
