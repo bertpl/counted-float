@@ -84,6 +84,15 @@ patched `math` functions:
    `CountedFloat`, it is genuinely runtime: no folding applies (`x ** y`
    counts POW; `math.log(x, y)` counts LOG per counted operand + DIV).
 
+   Reduction by *value* only earns its keep where the folded form is genuinely
+   cheaper — a short chain of multiplies instead of a libm `pow` call is an
+   enormous saving. So it stops where that stops being true: `math.fma` gets no
+   value-based reduction, because every variant of it (`fma(x, 1.0, z)`,
+   `fma(x, 0.0, z)`, or any other) is the same single instruction and folding a
+   value would buy nothing. Its one fold is structural rather than value-based —
+   two constant multiplicands collapse to a single constant, leaving a compiled
+   port with a bare add, so that counts ADD.
+
 The one place an `I2F` conversion *is* counted is explicit construction from an
 int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer
 (a loop index, a computed count) into the counting model: wrap it, and its
@@ -105,6 +114,28 @@ participate in counting (and in contagion) only while a `FlopCountingContext`
 is active. Operator-based contagion (`+`, `*`, `**`, ...) works everywhere,
 but counts are meant to be read through a context — so the practical rule is
 simply: run your measured algorithm inside one.
+
+### What the library will and will not instrument
+
+The library's side of the contract counts what a compiled port would execute —
+but only for operations your Python code actually performs. It *instruments*; it
+does not offer a vocabulary for *declaring* costs. That boundary explains two
+things that would otherwise look inconsistent:
+
+- **`math.fma` is counted; `a*b + c` is not fused.** A compiled port emits a
+  fused multiply-add as one instruction with one rounding, and `math.fma`
+  (Python 3.13+) is the single place that fusion is observable from Python — so
+  it counts as one `FMA`. The operator form is invisible to the interpreter,
+  which sees nothing distinguishing it from any other multiply followed by any
+  other add, so it stays MUL + ADD.
+- **No portable `fma` is provided.** It would be simple to ship a
+  `counted_float.fma()` that counts one `FMA` everywhere and computes `x*y + z`
+  where `math.fma` is missing. That is deliberately not done. It would turn the
+  library from an instrument of what your code executes into a cost-annotation
+  API, where a count asserts what you *intend* a port to do rather than
+  recording an operation that happened — and it would silently return a
+  differently-rounded result depending on the interpreter underneath. Counting
+  stays tied to what actually ran.
 
 Not everything is counted — see [Known limitations](known_limitations.md) for
 what falls outside the counting model (e.g. `numpy` operations).

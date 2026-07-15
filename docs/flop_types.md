@@ -27,6 +27,7 @@ find:
 | `round(x)`, `int(x)`, `math.floor`/`ceil`/`trunc` | `F2I` | operator | ISA | returns `int` |
 | `CountedFloat(int)` | `I2F` | constructor | ISA | yes |
 | `x ** y`, `math.pow(x, y)` | `POW` (or cheaper via constant strength reduction — MULs, SQRT, DIV, EXP2, EXP10) | operator / patch | benchmarked | yes |
+| `math.fma(x, y, z)` (3.13+) | `FMA` (or `ADD` when both multiplicands are constant) | patch | ISA | yes |
 | `math.sqrt(x)` | `SQRT` | patch | ISA | yes |
 | `math.cbrt(x)` | `CBRT` | patch | benchmarked | yes |
 | `math.exp(x)`, `math.exp2(x)`, `2 ** x` | `EXP`, `EXP2` | patch / operator | benchmarked | yes |
@@ -154,6 +155,23 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `DIVSD`
 - **Counted Python operations:** `x / y` or `y / x` for `CountedFloat`
 - **Not counted:** Division on non-CountedFloat, numpy division
+
+## FlopType.FMA (`x*y+z`)
+
+- Relevant CPU instructions
+    - **ARM:** `FMADD`
+    - **x86:** `VFMADD213SD`
+- **Counted Python operations:** `math.fma(x, y, z)` (Python 3.13+) — counted
+  when *any* operand is a `CountedFloat`, as one fused multiply-add: a single
+  instruction with a single rounding
+- **Constant multiplicands decompose:** when *both* `x` and `y` are constants
+  their product folds at compile time, leaving a compiled port with a bare add,
+  so that counts ADD rather than FMA. No reduction is done by constant *value* —
+  every FMA variant is one instruction, so there is nothing to win (see
+  [the counting model](counting_flops.md#the-counting-model-what-gets-counted-and-why))
+- **Not counted:** `math.fma` on plain floats only; `a*b + c` written with
+  operators, which counts MUL + ADD because the interpreter cannot observe the
+  fusion (see [Known limitations](known_limitations.md))
 
 ## FlopType.SQRT (`sqrt(x)`)
 

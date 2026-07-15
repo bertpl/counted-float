@@ -93,10 +93,11 @@ pulled toward close relatives rather than the whole-corpus norm.
 # 3. Instruction Mappings
 
 The table below shows the mapping between math operations & FPU instructions for different architectures.
-x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructions are considered.
+x87 instructions are provided fyi; for x86 CPUs only the modern scalar instruction set is considered —
+SSE2/3/4.1 plus the FMA3 fused multiply-add, i.e. whatever a current compiler emits for each operation.
 
-| math                   | x87                           | SSE(2/3/4.1)  | ARM v8/9       |
-|------------------------|-------------------------------|---------------|----------------|
+| math                   | x87                           | modern x86 scalar | ARM v8/9       |
+|------------------------|-------------------------------|-------------------|----------------|
 | abs(x)                 | FABS                          | ANDPD (1)     | FABS           |
 | round (double->double) | ?                             | ROUNDSD       | FRINT(N/P/Z/A) |
 | double->int            | FRND                          | CVTSD2SI      | FCVTZS         |
@@ -114,6 +115,7 @@ x87 instructions are provided fyi; for x86 CPUs only SSE2/3/4.1 scalar instructi
 | x - y                  | FSUB                          | SUBSD         | FSUB           |
 | x*y                    | FMUL                          | MULSD         | FMUL           |
 | x/y                    | FDIV                          | DIVSD         | FDIV           |
+| x*y+z (fused)          | /                             | VFMADD213SD   | FMADD          |
 | sqrt(x)                | FSQRT                         | SQRTSD        | FSQRT          |
 | log2(x)                | FYL2X                         | /             | /              |
 | exp2(x)                | F2XM1 + FADD + FSCALE         | /             | /              |
