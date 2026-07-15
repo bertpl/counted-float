@@ -124,6 +124,7 @@ class FlopsBenchmarkSuite:
             FlopType.SUB: q10s[FBT.ADD_SUB] - q10s[FBT.ADD],
             FlopType.MUL: q10s[FBT.MUL_MUL] - q10s[FBT.MUL],
             FlopType.DIV: q10s[FBT.DIV_DIV] - q10s[FBT.DIV],
+            FlopType.FMA: q10s[FBT.FMA_FMA] - q10s[FBT.FMA],
             FlopType.SQRT: q10s[FBT.ADD_SQRT] - q10s[FBT.ADD],
             FlopType.CBRT: q10s[FBT.ADD_CBRT] - q10s[FBT.ADD],
             FlopType.EXP: q10s[FBT.ADD_LOG_EXP] - q10s[FBT.ADD_LOG],
@@ -539,6 +540,30 @@ class FlopsBenchmarkSuite:
                     tmp = tmp / in_f[i]
                     out_f[i] = tmp
 
+        # the two FMA kernels are the only ones compiled with contraction enabled: LLVM fuses a
+        # multiply-add into a single FMA instruction only when granted permission, so without the
+        # flag `tmp * in_f[i] + in_f[i]` emits a separate multiply and add and the pair below would
+        # measure MUL + ADD while reporting FMA.  Only the `contract` flag is granted -- the blanket
+        # fastmath=True would also permit reassociation and no-NaN/no-Inf assumptions, which have no
+        # place in a latency measurement.  Contraction stays scoped to these two kernels: no other
+        # kernel needs it, and the suite's tests pin that the fusion lands here and nowhere else.
+        @numba.njit(parallel=False, fastmath={"contract"})
+        def f_fma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = tmp * in_f[i] + in_f[i]
+                    out_f[i] = tmp
+
+        @numba.njit(parallel=False, fastmath={"contract"})
+        def f_fma_fma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+            for _ in range(n_executions):
+                tmp = math.e
+                for i in range(n):
+                    tmp = tmp * in_f[i] + in_f[i]
+                    tmp = tmp * in_f[i] + in_f[i]
+                    out_f[i] = tmp
+
         @numba.njit(parallel=False)
         def f_lte_addsub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
             for _ in range(n_executions):
@@ -597,6 +622,8 @@ class FlopsBenchmarkSuite:
                 (FBT.MUL_MUL, f_mul_mul, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
                 (FBT.DIV, f_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
                 (FBT.DIV_DIV, f_div_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.FMA, f_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.FMA_FMA, f_fma_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
                 (FBT.LTE_ADDSUB, f_lte_addsub, ArrayGenerator.lin_range(min_value=1.0, max_value=1e16)),
             ]
         }

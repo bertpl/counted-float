@@ -78,6 +78,9 @@ class GlobalFlopCounter:
     def incr_div(self) -> None:
         self.__counts.DIV += self.__incr
 
+    def incr_fma(self) -> None:
+        self.__counts.FMA += self.__incr
+
     def incr_sqrt(self) -> None:
         self.__counts.SQRT += self.__incr
 

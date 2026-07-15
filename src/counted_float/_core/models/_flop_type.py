@@ -18,6 +18,7 @@ class FlopType(StrEnum):
     SUB = "x-y"
     MUL = "x*y"
     DIV = "x/y"
+    FMA = "x*y+z"  # fused multiply-add: one instruction, one rounding
     SQRT = "sqrt(x)"
     CBRT = "cbrt(x)"
     EXP = "e^x"

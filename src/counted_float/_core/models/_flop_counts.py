@@ -29,6 +29,7 @@ class FlopCounts:
     SUB: int = 0
     MUL: int = 0
     DIV: int = 0
+    FMA: int = 0
     SQRT: int = 0
     CBRT: int = 0
     EXP: int = 0
