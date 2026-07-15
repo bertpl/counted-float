@@ -63,6 +63,8 @@ class FlopCounts:
         return FlopCounts(**{attr: getattr(self, attr) + getattr(other, attr) for attr in _FIELD_NAMES})
 
     def __sub__(self, other: FlopCounts) -> FlopCounts:
+        # raw element-wise difference: subtracting larger counts yields negative ones, which are
+        # meaningless as counts but are how a context derives its own total from two snapshots
         return FlopCounts(**{attr: getattr(self, attr) - getattr(other, attr) for attr in _FIELD_NAMES})
 
     # --- extract info ------------------------------------
@@ -80,7 +82,7 @@ class FlopCounts:
         Uses the provided weights in the computations.
         When omitted, the currently configured weights (see Config class) will be used.
         """
-        if not weights:
+        if weights is None:
             from counted_float._core.counting.config import get_active_flop_weights
 
             weights = get_active_flop_weights()
