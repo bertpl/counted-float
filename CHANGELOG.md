@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `FlopWeights.from_abs_flop_costs()` raises a clear `ValueError` instead of a raw `KeyError` or `ZeroDivisionError`
+
 ### Deprecated
 
 ### Removed
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - a `FlopCountingContext` that is re-entered, or resumed outside its `with` block, no longer produces silently wrong counts
+- `set_active_flop_weights()` now stores a copy, so mutating the object you passed no longer changes the configured weights
 
 ### Security
 
