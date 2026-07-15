@@ -134,3 +134,21 @@ def test_flop_weights_show(key_filter: str, rounding_mode: None | str):
 
     # --- act & assert ------------------------------------
     flop_weights.show()
+
+
+def test_from_abs_flop_costs_without_add_raises_value_error():
+    # --- arrange -----------------------------------------
+    flop_costs = {FlopType.MUL: 1.0}
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="reference operation"):
+        FlopWeights.from_abs_flop_costs(flop_costs)
+
+
+def test_from_abs_flop_costs_with_zero_add_raises_value_error():
+    # --- arrange -----------------------------------------
+    flop_costs = {flop_type: 0.0 for flop_type in FlopType}
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="non-zero"):
+        FlopWeights.from_abs_flop_costs(flop_costs)

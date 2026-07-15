@@ -27,9 +27,13 @@ class Config:
         """Set the weights for the flops used in the package.
 
         These weights will be used in any calculation of weighted flops, going forward.
+
+        Stores a deep copy, so later mutating the passed instance does not reconfigure the
+        package -- the mirror image of the value semantics get_flop_weights() provides.
+
         :param weights: FlopWeights instance containing the weights.
         """
-        cls.__weights = weights
+        cls.__weights = weights.model_copy(deep=True)
 
     @classmethod
     def get_flop_weights(cls) -> FlopWeights:
