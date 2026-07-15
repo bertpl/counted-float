@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- refreshed the built-in flop-weight dataset with re-collected measurements, adding a measured `FMA` weight
+
 ### Deprecated
 
 ### Removed
