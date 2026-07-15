@@ -432,3 +432,82 @@ def test_math_functions_do_not_count_outside_context():
     # --- assert ------------------------------------------
     assert result == 2.0
     assert not isinstance(result, CountedFloat)
+
+
+# =================================================================================================
+#  Patched math functions - fused multiply-add
+# =================================================================================================
+requires_fma = pytest.mark.skipif(not hasattr(math, "fma"), reason="math.fma requires Python 3.13+")
+
+
+def test_math_fma_registered_only_where_available():
+    """math.fma is patched exactly on the interpreters that have it, and never elsewhere."""
+    # --- act & assert ------------------------------------
+    assert ("fma" in _math_patching._PATCHES) == hasattr(math, "fma")
+
+
+@requires_fma
+@pytest.mark.parametrize(
+    ("x", "y", "z"),
+    [
+        (CountedFloat(2.0), CountedFloat(3.0), CountedFloat(4.0)),
+        (CountedFloat(2.0), 3.0, 4.0),
+        (2.0, CountedFloat(3.0), 4.0),
+        (CountedFloat(2.0), CountedFloat(3.0), 4.0),
+        (2, CountedFloat(3.0), 4),
+    ],
+    ids=["all_runtime", "constant_y_and_z", "constant_x", "constant_z", "int_constants"],
+)
+def test_math_fma_counts_one_fma(global_counter, x: float, y: float, z: float):
+    """One fused instruction whenever a runtime multiplicand is involved; constants add no cost of their own."""
+    # --- act ---------------------------------------------
+    result = math.fma(x, y, z)
+
+    # --- assert ------------------------------------------
+    # count checked first: comparing a CountedFloat below counts a COMP itself
+    assert global_counter.total_count() == 1
+    assert global_counter.FMA == 1
+    assert result == 10.0
+    assert isinstance(result, CountedFloat)
+
+
+@requires_fma
+def test_math_fma_with_constant_multiplicands_counts_add(global_counter):
+    """Two constant multiplicands fold to one constant, leaving a compiled port with a bare add."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(4.0)
+
+    # --- act ---------------------------------------------
+    result = math.fma(2.0, 3.0, cf)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 1
+    assert global_counter.ADD == 1
+    assert global_counter.FMA == 0
+    assert result == 10.0
+    assert isinstance(result, CountedFloat)
+
+
+@requires_fma
+def test_math_fma_without_counted_operands_counts_nothing(global_counter):
+    """Every operand constant: the expression folds entirely and contagion does not start."""
+    # --- act ---------------------------------------------
+    result = math.fma(2.0, 3.0, 4.0)
+
+    # --- assert ------------------------------------------
+    assert global_counter.total_count() == 0
+    assert result == 10.0
+    assert type(result) is float
+
+
+@requires_fma
+def test_math_fma_domain_error_counts_nothing(global_counter):
+    """The stdlib's error surfaces before anything is counted."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.0)
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
+        math.fma(math.inf, 0.0, cf)
+
+    assert global_counter.total_count() == 0

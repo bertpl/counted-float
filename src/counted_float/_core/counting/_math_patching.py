@@ -25,6 +25,17 @@ import math
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
 from ._global_counter import GLOBAL_COUNTER
 
+
+def _math_fma_unavailable(x: float, y: float, z: float) -> float:
+    """Stand-in for `math.fma` on interpreters predating it (below 3.13).
+
+    Never called: the counting replacement is registered only where `math.fma` exists (see
+    _PATCHES). It exists so the `original_math_fma` reference is callable on every supported
+    interpreter rather than `None`, which would make the patch's own call sites unsound.
+    """
+    raise NotImplementedError("math.fma requires Python 3.13 or newer")
+
+
 # -------------------------------------------------------------------------
 #  original math module functions
 #  (import-time values are only a default; re-captured on every 0->1 patch
@@ -38,6 +49,7 @@ original_math_log10 = math.log10
 original_math_exp = math.exp
 original_math_exp2 = math.exp2
 original_math_pow = math.pow
+original_math_fma = getattr(math, "fma", _math_fma_unavailable)
 original_math_sin = math.sin
 original_math_cos = math.cos
 original_math_tan = math.tan
@@ -178,6 +190,32 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
             count_pow_with_constant_base(x)
         return float.__new__(CountedFloat, result)
     return original_math_pow(x, y)
+
+
+def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
+    """Patch math.fma: stdlib contract (fused multiply-add, a single rounding).
+
+    This is the one place a fusion is observable from Python, so it is the one place it can be
+    counted; `a*b + c` written as operators is invisible to the interpreter and stays MUL + ADD.
+
+    Flop classification follows the constant-folding convention, treating any non-CountedFloat
+    operand as a compile-time constant:
+      - two constant multiplicands -> their product folds, leaving a compiled port with a bare
+                                      add on the remaining runtime value -> ADD
+      - any other counted operand  -> the port emits one fused instruction -> FMA
+    Constant *values* are never inspected: unlike POW, no FMA variant is cheaper than another --
+    every one is a single instruction -- so there is nothing to strength-reduce.
+    """
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat) or isinstance(z, CountedFloat):
+        # computed first: math.fma raises ValueError on invalid operand combinations
+        # (e.g. fma(inf, 0.0, z)) and then nothing should be counted
+        result = original_math_fma(x, y, z)
+        if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+            GLOBAL_COUNTER.incr_fma()
+        else:
+            GLOBAL_COUNTER.incr_add()  # x*y is a constant product; only the add survives folding
+        return float.__new__(CountedFloat, result)
+    return original_math_fma(x, y, z)
 
 
 def math_sin(x: float) -> float | CountedFloat:
@@ -349,6 +387,10 @@ _PATCHES: dict[str, object] = {
     "acosh": math_acosh,
     "atanh": math_atanh,
 }
+if hasattr(math, "fma"):
+    # Python 3.13+ only. Registering conditionally is what keeps every loop over _PATCHES --
+    # capture, apply, restore -- free of version checks of its own.
+    _PATCHES["fma"] = math_fma
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
 
@@ -365,7 +407,7 @@ def _capture_originals() -> None:
     possibly another package's patches, not the stdlib originals.
     """
     global original_math_sqrt, original_math_cbrt, original_math_log, original_math_log2
-    global original_math_log10, original_math_exp, original_math_exp2, original_math_pow
+    global original_math_log10, original_math_exp, original_math_exp2, original_math_pow, original_math_fma
     global original_math_sin, original_math_cos, original_math_tan
     global original_math_asin, original_math_acos, original_math_atan, original_math_atan2
     global original_math_hypot, original_math_expm1, original_math_log1p, original_math_fmod, original_math_fabs
@@ -380,6 +422,7 @@ def _capture_originals() -> None:
     original_math_exp = math.exp
     original_math_exp2 = math.exp2
     original_math_pow = math.pow
+    original_math_fma = getattr(math, "fma", _math_fma_unavailable)
     original_math_sin = math.sin
     original_math_cos = math.cos
     original_math_tan = math.tan
