@@ -41,9 +41,19 @@ class Config:
 
         Returns a fresh deep copy; mutating it does not affect the configured weights.
         """
+        return cls.peek_flop_weights().model_copy(deep=True)
+
+    @classmethod
+    def peek_flop_weights(cls) -> FlopWeights:
+        """Get the configured flop weights without copying them, for read-only use.
+
+        Returns the live instance the package is configured with, so callers must not mutate
+        it -- use get_flop_weights() for anything that escapes the caller. This exists for
+        read-only internal paths, where the deep copy is pure overhead.
+        """
         if cls.__weights is None:
             cls.__weights = get_default_consensus_flop_weights()
-        return cls.__weights.model_copy(deep=True)
+        return cls.__weights
 
 
 # =================================================================================================
