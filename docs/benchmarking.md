@@ -69,6 +69,17 @@ is estimated from a low quantile (q10) of its recorded slices, which discards
 residual burst-contaminated rounds. An optional `seed` argument makes the
 input data and round order reproducible.
 
+The fused multiply-add kernels are the one exception to how the kernels are
+compiled: they alone enable LLVM's `contract` fast-math flag, because a
+multiply-add is fused into a single FMA instruction only where the compiler is
+permitted to, and without that permission the kernels would time a separate
+multiply and add and report the result as an FMA latency. Only `contract` is
+granted — not the blanket fast-math switch, which would also permit
+reassociation and no-NaN/no-Inf assumptions that have no place in a latency
+measurement — and only on those kernels, so every other measurement times the
+operation it is named for. The test suite pins both halves of that by inspecting
+the emitted assembly.
+
 The resulting weights can then be configured as the active flop weights — see
 [Configuring FLOP weights](flop_weights.md#configuring-flop-weights).
 

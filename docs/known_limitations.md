@@ -7,12 +7,15 @@
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) for
   the full per-function status and the
   [FLOP types reference](flop_types.md) for per-operation counting rules
-- fused multiply-add is not modeled: `a*b + c` counts as separate MUL + ADD,
-  but a compiled port on any modern target (x86 FMA3, ARMv8) commonly fuses it
-  into a single FMA instruction with a single rounding, so flop counts
-  over-estimate fusable multiply-add sequences (dot products, Horner
-  evaluation). Python can't observe operator-level fusion; `math.fma` (3.13+)
-  is the one observable case and is currently uncounted (returns a plain float)
+- operator-level fused multiply-add is not modeled: `a*b + c` counts as separate
+  MUL + ADD, but a compiled port on any modern target (x86 FMA3, ARMv8) commonly
+  fuses it into a single FMA instruction with a single rounding, so flop counts
+  over-estimate fusable multiply-add sequences (dot products, Horner evaluation).
+  Python cannot observe operator-level fusion, so the library cannot count it.
+  `math.fma` (Python 3.13+) is the one place a fusion *is* observable, and it is
+  counted as a single `FMA`; expressing a multiply-add that way is therefore the
+  only means of having one counted as fused — and there is none on older
+  interpreters, where `math.fma` does not exist
 - mixed operations with non-float numeric types are outside the counting
   model: `CountedFloat` delegates to the other operand exactly like `float`
   does, so e.g. a `fractions.Fraction` operand generally yields a correct but
