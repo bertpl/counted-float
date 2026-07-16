@@ -1,7 +1,29 @@
 # Known limitations
 
-- currently any non-Python-built-in math operations are not counted (e.g.
-  `numpy`)
+## numpy counting is an explicit non-goal
+
+The counting model prices scalar code as a compiled port would execute it;
+array operations are bulk kernels outside that model, and no part of numpy's
+semantics is adopted. Concretely:
+
+- `np.float64` scalars work and count correctly on **either** side of an
+  operator — not because numpy is supported, but because `np.float64` is a
+  plain C double subclassing `float`, so it flows through the ordinary float
+  path.
+- mixing `CountedFloat` with numpy **arrays**, or with numpy scalar dtypes
+  that do not subclass `float` (`np.float32`, `np.int64`, ...), raises
+  `TypeError`. `CountedFloat` refuses numpy's ufunc protocol
+  (`__array_ufunc__ = None`) on purpose: the alternative is an operation that
+  silently returns an *uncounted* result whose type may later recover to
+  `CountedFloat`, hiding that flops went missing — the loud boundary is the
+  honest one.
+
+Keep counted algorithms in scalar `float`/`CountedFloat` code; hand values to
+numpy only after converting to plain `float` (e.g. `float(x)`), outside the
+counted region.
+
+## Other limitations
+
 - a few Python built-in math operations remain uncounted — notably
   `math.copysign`; see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) for

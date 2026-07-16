@@ -57,6 +57,15 @@ def count_pow_with_constant_base(base: float) -> None:
 
 
 class CountedFloat(float):
+    # numpy counting is an explicit non-goal; refusing numpy's ufunc protocol makes the boundary
+    # loud instead of silently uncounted. With the protocol refused, numpy's scalar operators
+    # return NotImplemented and Python falls back to this class's reflected methods — np.float64
+    # (a plain C double subclassing float) then counts correctly from either side without any
+    # numpy semantics being adopted. ndarrays and numpy scalar dtypes that do not subclass float
+    # (np.float32, np.int64, ...) raise TypeError instead of producing uncounted results whose
+    # type may later recover to CountedFloat and mask the missing flops.
+    __array_ufunc__ = None
+
     # -------------------------------------------------------------------------
     #  CONSTRUCTOR
     # -------------------------------------------------------------------------
