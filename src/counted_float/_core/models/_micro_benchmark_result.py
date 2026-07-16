@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import numpy as np
 
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 
 
-class SingleRunResult(MyBaseModel):
+class SingleRunResult(JsonReprModel):
     """Result of a single run of our micro-benchmark_runs for a give # of executions."""
 
     n_executions: int
@@ -19,7 +19,7 @@ class SingleRunResult(MyBaseModel):
         return self.t_cycles / self.n_executions
 
 
-class Quantiles(MyBaseModel):
+class Quantiles(JsonReprModel):
     """Class to represent a fixed set of quantiles of an (empirical) distribution.
 
     q10 is optional for backward compatibility: results collected before interleaved
@@ -36,7 +36,7 @@ class Quantiles(MyBaseModel):
         return f"{50 * (self.q75 - self.q25) / self.q50:4.1f}%"
 
 
-class MicroBenchmarkResult(MyBaseModel):
+class MicroBenchmarkResult(JsonReprModel):
     """Results of all runs in the micro-benchmark_runs (warmup_runs + actual benchmark_runs runs)."""
 
     warmup_runs: list[SingleRunResult]

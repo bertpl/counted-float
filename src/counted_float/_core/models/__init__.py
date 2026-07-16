@@ -1,4 +1,4 @@
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 from ._flop_counts import FlopCounts
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights

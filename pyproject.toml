@@ -172,7 +172,7 @@ convention = "google"
 [tool.ruff.lint.flake8-type-checking]
 # Keep pydantic field types importable at runtime (pydantic evaluates
 # annotations to build validators); don't move them under TYPE_CHECKING.
-runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.models._base.MyBaseModel"]
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.models._base.JsonReprModel"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["SLF001", "S101", "S311", "D", "ANN"]  # AAA tests: asserts, private access, random data, no docstring/annotation duty

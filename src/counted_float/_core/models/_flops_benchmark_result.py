@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
 from ._flops_benchmark_meta_data import BenchmarkSettings, SystemInfo
@@ -11,7 +11,7 @@ from ._micro_benchmark_result import Quantiles
 # =================================================================================================
 #  Main Flops Benchmark Information
 # =================================================================================================
-class FlopsBenchmarkResults(MyBaseModel):
+class FlopsBenchmarkResults(JsonReprModel):
     # --- meta-data ---
     system: SystemInfo
     benchmark_settings: BenchmarkSettings

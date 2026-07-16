@@ -1,13 +1,10 @@
-import math
 import sys
 import warnings
 from importlib.metadata import version
 
-import numpy as np
-
 from counted_float._core.benchmarking._output import console
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner
-from counted_float._core.compatibility import is_numba_installed, numba
+from counted_float._core.compatibility import is_numba_installed
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkResults,
@@ -18,6 +15,7 @@ from counted_float._core.models import (
 )
 from counted_float._core.utils import get_cpu_frequency_mhz_current
 
+from . import _flops_kernels as kernels
 from ._array_generator import ArrayGenerator
 from ._flops_micro_benchmark import FlopsMicroBenchmark
 
@@ -186,444 +184,77 @@ class FlopsBenchmarkSuite:
         return {flop_type: max(latency, floor) for flop_type, latency in latencies.items()}
 
     @staticmethod
-    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:  # noqa: C901 -- flat registry of per-flop-type jit kernels
+    def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:
         """Returns a benchmark for each FlopsBenchmarkType, of requested array size."""
-
-        # --- define all test functions -------------------
-        @numba.njit(parallel=False)
-        def f_baseline(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp + in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_minus(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = -(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_abs(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = abs(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp + in_f[i]
-                    tmp = tmp + in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp + in_f[i]
-                    tmp = tmp - in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_round(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.round(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_sqrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.sqrt(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.cbrt(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.log(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log_exp(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.exp(math.log(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.log2(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log2_exp2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.exp2(np.log2(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log10(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.log10(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log10_exp10(
-            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
-        ) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = 10 ** np.log10(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_sin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.sin(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_cos(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.cos(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_tan(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.tan(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_sin_asin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # sin bounds the argument to [-1, 1] so asin stays in-domain in the dependent chain;
-            # subtract add_sin to isolate the asin cost
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.asin(math.sin(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_sin_acos(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # sin bounds the argument to [-1, 1] for acos; subtract add_sin to isolate the acos cost
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.acos(math.sin(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_atan(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.atan(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_atan2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.atan2(tmp + in_f[i], in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_hypot(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.hypot(tmp + in_f[i], in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log1p(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.log1p(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_log1p_expm1(
-            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
-        ) -> None:
-            # log1p is the inverse of expm1, keeping the chain bounded (mirrors add_log_exp for exp);
-            # subtract add_log1p to isolate the expm1 cost
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.expm1(math.log1p(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_fmod(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # np.fmod: numba lacks math.fmod; the positive divisor range avoids the fmod(x, 0) domain error
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = np.fmod(tmp + in_f[i], in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_tanh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.tanh(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_asinh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.asinh(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_asinh_sinh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # asinh is the inverse of sinh, keeping the chain bounded (mirrors add_log_exp for exp);
-            # subtract add_asinh to isolate the sinh cost
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.sinh(math.asinh(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_acosh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # the large positive range keeps the argument >= 1 (acosh's domain)
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.acosh(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_acosh_cosh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # acosh is the inverse of cosh (for x >= 1), keeping the chain bounded; subtract add_acosh
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.cosh(math.acosh(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_halfsin(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            # baseline for atanh: 0.5*sin keeps the argument in [-0.5, 0.5], safely inside atanh's (-1, 1) domain
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = 0.5 * math.sin(tmp + in_f[i])
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_add_halfsin_atanh(
-            n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray
-        ) -> None:
-            # 0.5*sin bounds the argument well inside (-1, 1); subtract add_halfsin to isolate the atanh cost
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = math.atanh(0.5 * math.sin(tmp + in_f[i]))
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp ** in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_pow_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = (tmp ** in_f[i]) ** in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp - in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_sub_sub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp - in_f[i]
-                    tmp = tmp - in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp * in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_mul_mul(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp * in_f[i]
-                    tmp = tmp * in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp / in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_div_div(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp / in_f[i]
-                    tmp = tmp / in_f[i]
-                    out_f[i] = tmp
-
-        # the two FMA kernels are the only ones compiled with contraction enabled: LLVM fuses a
-        # multiply-add into a single FMA instruction only when granted permission, so without the
-        # flag `tmp * in_f[i] + in_f[i]` emits a separate multiply and add and the pair below would
-        # measure MUL + ADD while reporting FMA.  Only the `contract` flag is granted -- the blanket
-        # fastmath=True would also permit reassociation and no-NaN/no-Inf assumptions, which have no
-        # place in a latency measurement.  Contraction stays scoped to these two kernels: no other
-        # kernel needs it, and the suite's tests pin that the fusion lands here and nowhere else.
-        @numba.njit(parallel=False, fastmath={"contract"})
-        def f_fma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp * in_f[i] + in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False, fastmath={"contract"})
-        def f_fma_fma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    tmp = tmp * in_f[i] + in_f[i]
-                    tmp = tmp * in_f[i] + in_f[i]
-                    out_f[i] = tmp
-
-        @numba.njit(parallel=False)
-        def f_lte_addsub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-            for _ in range(n_executions):
-                tmp = math.e
-                for i in range(n):
-                    if tmp >= in_f[i]:  # noqa: SIM108 -- timed kernel: keep the branchy shape being measured
-                        tmp = tmp - in_f[i]
-                    else:
-                        tmp = tmp + in_f[i]
-                    out_f[i] = tmp
-
-        # --- return in appropriate format ----------------
+        # --- assemble the registry -----------------------
         return {
             key: FlopsMicroBenchmark(name=str(key), size=size, f=f, array_init=array_init)
             for key, f, array_init in [
-                (FBT.BASELINE, f_baseline, ArrayGenerator.lin_range(min_value=1.0, max_value=2.0)),
-                (FBT.ADD, f_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_MINUS, f_add_minus, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_ABS, f_add_abs, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_ADD, f_add_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_SUB, f_add_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_ROUND, f_add_round, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_SQRT, f_add_sqrt, ArrayGenerator.lin_range(min_value=0.0, max_value=1e16)),
-                (FBT.ADD_CBRT, f_add_cbrt, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.ADD_LOG, f_add_log, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG_EXP, f_add_log_exp, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG2, f_add_log2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG2_EXP2, f_add_log2_exp2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG10, f_add_log10, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG10_EXP10, f_add_log10_exp10, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_SIN, f_add_sin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_COS, f_add_cos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_TAN, f_add_tan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_SIN_ASIN, f_add_sin_asin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_SIN_ACOS, f_add_sin_acos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_ATAN, f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_ATAN2, f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_HYPOT, f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_LOG1P, f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_LOG1P_EXPM1, f_add_log1p_expm1, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_FMOD, f_add_fmod, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.BASELINE, kernels.f_baseline, ArrayGenerator.lin_range(min_value=1.0, max_value=2.0)),
+                (FBT.ADD, kernels.f_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_MINUS, kernels.f_add_minus, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_ABS, kernels.f_add_abs, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_ADD, kernels.f_add_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_SUB, kernels.f_add_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_ROUND, kernels.f_add_round, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_SQRT, kernels.f_add_sqrt, ArrayGenerator.lin_range(min_value=0.0, max_value=1e16)),
+                (FBT.ADD_CBRT, kernels.f_add_cbrt, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.ADD_LOG, kernels.f_add_log, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG_EXP, kernels.f_add_log_exp, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG2, kernels.f_add_log2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG2_EXP2, kernels.f_add_log2_exp2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_LOG10, kernels.f_add_log10, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (
+                    FBT.ADD_LOG10_EXP10,
+                    kernels.f_add_log10_exp10,
+                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                ),
+                (FBT.ADD_SIN, kernels.f_add_sin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_COS, kernels.f_add_cos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_TAN, kernels.f_add_tan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_SIN_ASIN, kernels.f_add_sin_asin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_SIN_ACOS, kernels.f_add_sin_acos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_ATAN, kernels.f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_ATAN2, kernels.f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_HYPOT, kernels.f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_LOG1P, kernels.f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (
+                    FBT.ADD_LOG1P_EXPM1,
+                    kernels.f_add_log1p_expm1,
+                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                ),
+                (FBT.ADD_FMOD, kernels.f_add_fmod, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
                 # tanh saturates to +/-1 via a cheap early-return for |arg| > ~20, so (unlike the
                 # periodic sin/cos/tan) keep inputs small to measure its real, exp-based cost
-                (FBT.ADD_TANH, f_add_tanh, ArrayGenerator.lin_range(min_value=-5.0, max_value=5.0)),
-                (FBT.ADD_ASINH, f_add_asinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_ASINH_SINH, f_add_asinh_sinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_ACOSH, f_add_acosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_ACOSH_COSH, f_add_acosh_cosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
-                (FBT.ADD_HALFSIN, f_add_halfsin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_HALFSIN_ATANH, f_add_halfsin_atanh, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.POW, f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
-                (FBT.POW_POW, f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
-                (FBT.SUB, f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.SUB_SUB, f_sub_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
-                (FBT.MUL, f_mul, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.MUL_MUL, f_mul_mul, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.DIV, f_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.DIV_DIV, f_div_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.FMA, f_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.FMA_FMA, f_fma_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
-                (FBT.LTE_ADDSUB, f_lte_addsub, ArrayGenerator.lin_range(min_value=1.0, max_value=1e16)),
+                (FBT.ADD_TANH, kernels.f_add_tanh, ArrayGenerator.lin_range(min_value=-5.0, max_value=5.0)),
+                (FBT.ADD_ASINH, kernels.f_add_asinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (
+                    FBT.ADD_ASINH_SINH,
+                    kernels.f_add_asinh_sinh,
+                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                ),
+                (FBT.ADD_ACOSH, kernels.f_add_acosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (
+                    FBT.ADD_ACOSH_COSH,
+                    kernels.f_add_acosh_cosh,
+                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                ),
+                (FBT.ADD_HALFSIN, kernels.f_add_halfsin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (
+                    FBT.ADD_HALFSIN_ATANH,
+                    kernels.f_add_halfsin_atanh,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (FBT.POW, kernels.f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
+                (FBT.POW_POW, kernels.f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
+                (FBT.SUB, kernels.f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.SUB_SUB, kernels.f_sub_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (FBT.MUL, kernels.f_mul, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.MUL_MUL, kernels.f_mul_mul, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.DIV, kernels.f_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.DIV_DIV, kernels.f_div_div, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.FMA, kernels.f_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.FMA_FMA, kernels.f_fma_fma, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (FBT.LTE_ADDSUB, kernels.f_lte_addsub, ArrayGenerator.lin_range(min_value=1.0, max_value=1e16)),
             ]
         }

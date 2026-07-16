@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 from ._flop_type import FlopType
 from ._flop_weights import FlopWeights
 
@@ -13,7 +13,7 @@ from ._flop_weights import FlopWeights
 # =================================================================================================
 #  Single-Instruction Latency
 # =================================================================================================
-class Latency(MyBaseModel):
+class Latency(JsonReprModel):
     note: str = ""
     min_cycles: float | None = None
     max_cycles: float | None = None
@@ -38,7 +38,7 @@ class Latency(MyBaseModel):
 # =================================================================================================
 #  InstructionLatencies - SSE2
 # =================================================================================================
-class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established public API name
+class InstructionLatencies_SSE2(JsonReprModel):  # noqa: N801 -- established public API name
     """Latencies of the x86 instructions a modern compiler emits for scalar double-precision math.
 
     The `sse2` tag distinguishes this from the ancient x87 FPU, rather than asserting that every
@@ -88,7 +88,7 @@ class InstructionLatencies_SSE2(MyBaseModel):  # noqa: N801 -- established publi
 # =================================================================================================
 #  InstructionLatencies - ARM
 # =================================================================================================
-class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public API name
+class InstructionLatencies_ARM(JsonReprModel):  # noqa: N801 -- established public API name
     # --- primary fields ----------------------------------
     architecture: Literal["arm"] = "arm"
 
@@ -130,7 +130,7 @@ class InstructionLatencies_ARM(MyBaseModel):  # noqa: N801 -- established public
 # =================================================================================================
 #  Union Class
 # =================================================================================================
-class InstructionLatencies(MyBaseModel):
+class InstructionLatencies(JsonReprModel):
     notes: list[str] | None = [""]  # noqa: RUF012 -- pydantic deep-copies field defaults per instance
     latencies: Annotated[
         InstructionLatencies_SSE2 | InstructionLatencies_ARM,
