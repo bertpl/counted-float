@@ -18,10 +18,13 @@
   interpreters, where `math.fma` does not exist
 - mixed operations with non-float numeric types are outside the counting
   model: `CountedFloat` delegates to the other operand exactly like `float`
-  does, so e.g. a `fractions.Fraction` operand generally yields a correct but
-  plain — and uncounted — `float` result (downstream counting stops), while a
-  `decimal.Decimal` operand raises `TypeError` just as with plain `float`.
-  Numerical algorithms should use `float`/`CountedFloat` values throughout.
+  does, so e.g. `CountedFloat(x) * Fraction(1, 2)` yields a correct but plain —
+  and uncounted — `float` result (downstream counting stops). The reverse order
+  counts normally: `Fraction` hands the operation back, and the `CountedFloat`
+  performs it. A `decimal.Decimal` operand raises `TypeError` just as with plain
+  `float`, in either order. Numerical algorithms should use
+  `float`/`CountedFloat` values throughout, rather than relying on which side an
+  operand happens to sit.
 - counting state is process-global and **not thread-safe or async-safe**:
   concurrent counted computations interfere with each other's counts (and on
   free-threaded Python builds concurrent increments can be lost), so run one

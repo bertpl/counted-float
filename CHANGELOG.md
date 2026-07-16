@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fix issue where NaN-valued flop weights would break a serialization round-trip
 - the flop-weight display no longer scatters missing weights among the measured ones
 - `FlopWeights.from_abs_flop_costs()` rejects a negative flop cost instead of silently producing a negative weight
+- the docs now list the `show-data` options and state the `Fraction` limitation accurately (it holds only with the `Fraction` on the right)
 
 ### Security
 
