@@ -5,17 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 1.6.2 (2026-07-16)
 
 ### Changed
 
 - the built-in consensus weights ship precomputed, so the first weighted-cost call no longer parses the whole built-in dataset
-
-### Deprecated
-
-### Removed
 
 ### Fixed
 
@@ -23,9 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the flop-weight display no longer scatters missing weights among the measured ones
 - `FlopWeights.from_abs_flop_costs()` rejects a negative flop cost instead of silently producing a negative weight
 - the docs now list the `show-data` options and state the `Fraction` limitation accurately (it holds only with the `Fraction` on the right)
-
-### Security
-
 ## 1.6.1 (2026-07-16)
 
 ### Changed
