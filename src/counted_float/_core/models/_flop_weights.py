@@ -59,6 +59,19 @@ class FlopWeights(MyBaseModel):
     # -------------------------------------------------------------------------
     #  Validation
     # -------------------------------------------------------------------------
+    @field_validator("weights", mode="before")
+    @classmethod
+    def accept_null_as_missing_weight(cls, v: object) -> object:
+        """Read a JSON `null` back as a missing (NaN) weight.
+
+        A missing weight is NaN in memory and serializes to `null` -- valid JSON, and what a strict
+        reader expects. This maps it back on the way in, so that weights with missing data survive a
+        serialization round-trip; the field type alone accepts only numbers.
+        """
+        if isinstance(v, dict):
+            return {key: (math.nan if weight is None else weight) for key, weight in v.items()}
+        return v
+
     @field_validator("weights")
     @classmethod
     def ensure_all_flop_types_present(cls, v: dict[FlopType, float | int]) -> dict[FlopType, float | int]:
