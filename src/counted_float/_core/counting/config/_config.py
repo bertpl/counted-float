@@ -59,5 +59,10 @@ def set_active_flop_weights(weights: FlopWeights) -> None:
 
 
 def get_active_flop_weights() -> FlopWeights:
-    """Get the currently configured flop weights."""
+    """Get the currently configured flop weights.
+
+    Returns a fresh deep copy, deliberately: the returned object is yours to inspect or modify
+    without reconfiguring the package. Mutating it therefore has no effect on what gets counted --
+    to change the active weights, pass the modified instance to set_active_flop_weights().
+    """
     return Config.get_flop_weights()

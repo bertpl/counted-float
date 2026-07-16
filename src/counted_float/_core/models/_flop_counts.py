@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
+from copy import copy as shallow_copy
 from typing import TYPE_CHECKING
 
 from ._flop_type import FlopType
@@ -59,10 +60,10 @@ class FlopCounts:
 
     # --- math --------------------------------------------
     def __add__(self, other: FlopCounts) -> FlopCounts:
-        return FlopCounts(**{attr: getattr(self, attr) + getattr(other, attr) for attr in self.field_names()})
+        return FlopCounts(**{attr: getattr(self, attr) + getattr(other, attr) for attr in _FIELD_NAMES})
 
     def __sub__(self, other: FlopCounts) -> FlopCounts:
-        return FlopCounts(**{attr: getattr(self, attr) - getattr(other, attr) for attr in self.field_names()})
+        return FlopCounts(**{attr: getattr(self, attr) - getattr(other, attr) for attr in _FIELD_NAMES})
 
     # --- extract info ------------------------------------
     def as_dict(self) -> dict[FlopType, int]:
@@ -71,7 +72,7 @@ class FlopCounts:
 
     def total_count(self) -> int:
         """Sum of all flop counts."""
-        return sum(getattr(self, attr) for attr in self.field_names())
+        return sum(getattr(self, attr) for attr in _FIELD_NAMES)
 
     def total_weighted_cost(self, weights: FlopWeights | None = None) -> float:
         """Return a weighted total count of all flops (counterpart of the unweighted total_count() method).
@@ -89,12 +90,21 @@ class FlopCounts:
     # --- other -------------------------------------------
     def reset(self) -> None:
         """Reset all counts to 0."""
-        for attr in self.field_names():
+        for attr in _FIELD_NAMES:
             setattr(self, attr, 0)
 
     def copy(self) -> FlopCounts:
-        return FlopCounts(**dataclasses.asdict(self))
+        """Return an independent copy of these counts."""
+        # every field is an int, so a shallow copy is already independent -- asdict() would walk
+        # the deepcopy machinery over them for nothing
+        return shallow_copy(self)
 
     @classmethod
     def field_names(cls) -> list[str]:
-        return [field.name for field in dataclasses.fields(cls)]
+        """Return the names of the per-flop-type count fields."""
+        return list(_FIELD_NAMES)
+
+
+# the field names are fixed at class-creation time; resolving them through dataclasses.fields()
+# on every call showed up in the reporting path, which reads them once per count readout
+_FIELD_NAMES: tuple[str, ...] = tuple(field.name for field in dataclasses.fields(FlopCounts))
