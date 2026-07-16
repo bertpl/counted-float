@@ -12,6 +12,8 @@ help:
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
+	@echo '  precompute-weights            Regenerate the shipped consensus flop weights from the built-in source data.'
+	@echo ''
 	@echo '  release       		            Release a version: make release VERSION=X.Y.Z (validates, bumps, tags, pushes).'
 	@echo ''
 	@echo 'Options:'
@@ -35,6 +37,9 @@ format:
 format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
+
+precompute-weights:
+	uv run python scripts/generate_precomputed_weights.py
 
 release:
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)

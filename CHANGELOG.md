@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the built-in consensus weights ship precomputed, so the first weighted-cost call no longer parses the whole built-in dataset
+
 ### Deprecated
 
 ### Removed
