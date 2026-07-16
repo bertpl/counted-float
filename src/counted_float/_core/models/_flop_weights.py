@@ -12,7 +12,7 @@ from ._base import MyBaseModel
 from ._flop_type import FlopType
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class FlopWeights(MyBaseModel):
@@ -29,11 +29,15 @@ class FlopWeights(MyBaseModel):
         - "nearest_int"     : round to nearest int with minimum of 1.
         """
         if mode == "nearest_int":
-            return FlopWeights(
-                weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
-            )
+            return self._map_present_weights(lambda weight: max(1, round(weight)))
+        return self._map_present_weights(lambda weight: round_number(weight, mode="10%"))
+
+    def _map_present_weights(self, fn: Callable[[float | int], float | int]) -> FlopWeights:
+        """Apply fn to every known weight, leaving missing ones missing."""
         return FlopWeights(
-            weights={k: math.nan if math.isnan(v) else round_number(v, mode="10%") for k, v in self.weights.items()},
+            weights={
+                flop_type: (weight if math.isnan(weight) else fn(weight)) for flop_type, weight in self.weights.items()
+            },
         )
 
     def has_missing_data(self) -> bool:
@@ -164,7 +168,9 @@ class FlopWeights(MyBaseModel):
                 f"it is the reference operation every other cost is divided by."
             )
 
-        # a negative cost normalizes to a negative weight -- an operation that gives time back.
+        # a negative cost normalizes to a negative weight -- an operation that gives time back. The
+        # built-in pipelines cannot produce one (benchmark latencies are floored, spec latencies are
+        # clamped to >= 1 cycle), so this guards hand-built costs arriving through the public API.
         # NaN is left alone: it is this model's marker for an unknown cost, not a bad one.
         for flop_type, flop_cost in flop_costs.items():
             if math.isnan(flop_cost):
