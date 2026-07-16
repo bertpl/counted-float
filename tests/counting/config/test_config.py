@@ -64,3 +64,15 @@ def test_bare_import_does_not_parse_builtin_data():
     )
     result = subprocess.run([sys.executable, "-c", code], check=False)  # noqa: S603 -- fixed args, no user input
     assert result.returncode == 0, "importing counted_float opened built-in data files"
+
+
+def test_set_active_flop_weights_stores_a_copy():
+    # --- arrange -----------------------------------------
+    weights = FlopWeights(weights=dict.fromkeys(FlopType, 1.0))
+
+    # --- act ---------------------------------------------
+    set_active_flop_weights(weights)
+    weights.weights[FlopType.ADD] = 999.0  # mutate the caller's instance after configuring
+
+    # --- assert ------------------------------------------
+    assert get_active_flop_weights().weights[FlopType.ADD] == 1.0

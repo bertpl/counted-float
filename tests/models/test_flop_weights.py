@@ -134,3 +134,23 @@ def test_flop_weights_show(key_filter: str, rounding_mode: None | str):
 
     # --- act & assert ------------------------------------
     flop_weights.show()
+
+
+def test_from_abs_flop_costs_without_add_raises_value_error():
+    # --- arrange -----------------------------------------
+    flop_costs = {FlopType.MUL: 1.0}
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="reference operation"):
+        FlopWeights.from_abs_flop_costs(flop_costs)
+
+
+@pytest.mark.parametrize("ref_cost", [0.0, -2.0, math.nan, math.inf])
+def test_from_abs_flop_costs_with_unusable_add_raises_value_error(ref_cost: float):
+    # --- arrange -----------------------------------------
+    flop_costs = dict.fromkeys(FlopType, 1.0)
+    flop_costs[FlopType.ADD] = ref_cost
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="finite and positive"):
+        FlopWeights.from_abs_flop_costs(flop_costs)

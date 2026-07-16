@@ -119,10 +119,32 @@ class FlopWeights(MyBaseModel):
         """Compute FlopWeights based on absolute costs (in clock cycles, nanoseconds, ...) of each flop type.
 
         As a reference duration, we take the cost of the ADD operation.
+
+        Args:
+            flop_costs: Absolute cost per flop type, in any unit; only their ratios matter.
+
+        Returns:
+            FlopWeights normalized so that the ADD cost becomes weight 1.0.
+
+        Raises:
+            ValueError: If `flop_costs` has no ADD entry, or its ADD cost is not finite and
+                positive.
         """
         # step 1) compute reference duration based on 1 simple flop type
         #         (SUB, MUL and a few others are usually very close)
+        if FlopType.ADD not in flop_costs:
+            raise ValueError(
+                f"flop_costs must contain a {FlopType.ADD!r} entry: it is the reference operation "
+                f"every other cost is normalized against."
+            )
         ref_cost = flop_costs[FlopType.ADD]
+        # a zero reference raises on division, but a negative one silently inverts the sign of every
+        # other weight while normalizing itself to 1.0 -- so the result looks valid and is not
+        if not math.isfinite(ref_cost) or ref_cost <= 0:
+            raise ValueError(
+                f"the {FlopType.ADD!r} cost in flop_costs must be finite and positive, got {ref_cost}: "
+                f"it is the reference operation every other cost is divided by."
+            )
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(
