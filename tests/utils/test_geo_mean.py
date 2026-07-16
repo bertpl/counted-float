@@ -1,6 +1,8 @@
 import math
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from counted_float._core.utils import geo_mean
 
@@ -35,3 +37,51 @@ def test_geo_mean_rejects_degenerate_input(values: list):
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError, match="geo_mean"):
         geo_mean(values)
+
+
+# =================================================================================================
+#  Property-based coverage
+# =================================================================================================
+_positive = st.floats(min_value=1e-6, max_value=1e12, allow_nan=False, allow_infinity=False)
+
+
+@given(values=st.lists(_positive, min_size=1, max_size=20))
+def test_geo_mean_lies_between_the_min_and_max(values: list[float]):
+    # --- act ---------------------------------------------
+    result = geo_mean(values)
+
+    # --- assert ------------------------------------------
+    assert min(values) <= result <= max(values) or math.isclose(result, min(values), rel_tol=1e-9)
+
+
+@given(value=_positive, n=st.integers(min_value=1, max_value=20))
+def test_geo_mean_of_a_constant_list_is_that_constant(value: float, n: int):
+    # --- act / assert ------------------------------------
+    assert math.isclose(geo_mean([value] * n), value, rel_tol=1e-9)
+
+
+@given(values=st.lists(_positive, min_size=1, max_size=15), factor=_positive)
+def test_geo_mean_scales_with_its_inputs(values: list[float], factor: float):
+    """geo_mean(k*x) == k*geo_mean(x): a homogeneity the weighting relies on."""
+    # --- act ---------------------------------------------
+    scaled = geo_mean([factor * v for v in values])
+
+    # --- assert ------------------------------------------
+    assert math.isclose(scaled, factor * geo_mean(values), rel_tol=1e-9)
+
+
+@given(values=st.lists(_positive, min_size=1, max_size=20))
+def test_geo_mean_does_not_exceed_the_arithmetic_mean(values: list[float]):
+    """The AM-GM inequality: a basic sanity bound the log-space form must still respect."""
+    # --- act ---------------------------------------------
+    arithmetic_mean = sum(values) / len(values)
+
+    # --- assert ------------------------------------------
+    # relative slack: at large magnitudes the two means differ only in float-noise digits
+    assert geo_mean(values) <= arithmetic_mean * (1 + 1e-9)
+
+
+@given(values=st.lists(_positive, min_size=1, max_size=10))
+def test_a_single_zero_makes_the_geo_mean_zero(values: list[float]):
+    # --- act / assert ------------------------------------
+    assert geo_mean([*values, 0.0]) == 0.0
