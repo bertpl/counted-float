@@ -170,7 +170,7 @@ def test_weights_with_missing_data_survive_a_json_round_trip():
 
 
 def test_every_builtin_source_survives_a_json_round_trip():
-    """Every built-in per-source weight set has missing data; none of them could be read back."""
+    """Every built-in per-source weight set has missing data, so all of them exercise the null path."""
     # --- arrange -----------------------------------------
     per_source_weights = BuiltInData.get_flop_weights_dict()
 
