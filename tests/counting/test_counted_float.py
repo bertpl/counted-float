@@ -1,5 +1,6 @@
 import math
 import operator
+import weakref
 from collections.abc import Callable
 
 import pytest
@@ -56,6 +57,31 @@ def test_counted_float_str_repr(f: float):
     # --- assert ------------------------------------------
     assert cf_str == f"CountedFloat({f!s})", "String representation of CountedFloat is incorrect."
     assert cf_repr == f"CountedFloat({f!r})", "Repr representation of CountedFloat is incorrect."
+
+
+def test_counted_float_refuses_attribute_assignment_like_plain_float():
+    """Empty slots enforce the drop-in-float contract: no per-instance attributes."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.5)
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(AttributeError):
+        (1.5).attr = 1  # ty: ignore[unresolved-attribute] -- pinning plain float's refusal
+    with pytest.raises(AttributeError):
+        cf.attr = 1  # ty: ignore[unresolved-attribute] -- must refuse exactly like plain float
+    assert not hasattr(cf, "__dict__")
+
+
+def test_counted_float_refuses_weak_references_like_plain_float():
+    """Empty slots enforce the drop-in-float contract: no weak references."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.5)
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(TypeError):
+        weakref.ref(1.5)
+    with pytest.raises(TypeError):
+        weakref.ref(cf)
 
 
 # =================================================================================================
