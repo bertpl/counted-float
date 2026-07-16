@@ -183,3 +183,44 @@ def test_every_builtin_source_survives_a_json_round_trip():
                 assert math.isnan(restored_weight), f"{key}: {flop_type.name} lost its missing marker"
             else:
                 assert restored_weight == weight, f"{key}: {flop_type.name} changed value"
+
+
+@pytest.mark.parametrize("bad_cost", [-0.5, -math.inf, math.inf])
+def test_from_abs_flop_costs_with_an_unusable_non_reference_cost_raises_value_error(bad_cost: float):
+    # --- arrange -----------------------------------------
+    flop_costs = dict.fromkeys(FlopType, 1.0)
+    flop_costs[FlopType.MUL] = bad_cost
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        FlopWeights.from_abs_flop_costs(flop_costs)
+
+
+@pytest.mark.parametrize(("cost", "expected"), [(0.0, 0.0), (math.nan, math.nan)])
+def test_from_abs_flop_costs_accepts_a_free_or_unknown_non_reference_cost(cost: float, expected: float):
+    """Zero means free and NaN means unknown; only negative and infinite costs are nonsense."""
+    # --- arrange -----------------------------------------
+    flop_costs = dict.fromkeys(FlopType, 1.0)
+    flop_costs[FlopType.MUL] = cost
+
+    # --- act ---------------------------------------------
+    weights = FlopWeights.from_abs_flop_costs(flop_costs)
+
+    # --- assert ------------------------------------------
+    weight = weights.weights[FlopType.MUL]
+    assert math.isnan(weight) if math.isnan(expected) else weight == expected
+
+
+def test_show_lists_measured_weights_before_missing_ones(capsys):
+    # --- arrange -----------------------------------------
+    weights = dict.fromkeys(FlopType, math.nan)
+    weights[FlopType.ADD] = 1.0
+    weights[FlopType.MUL] = 2.0
+
+    # --- act ---------------------------------------------
+    FlopWeights(weights=weights).show()
+
+    # --- assert ------------------------------------------
+    shown = [line for line in capsys.readouterr().out.split("\n") if ":" in line]
+    assert FlopType.ADD.long_name() in shown[0]
+    assert FlopType.MUL.long_name() in shown[1]

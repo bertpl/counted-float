@@ -12,7 +12,7 @@ from ._base import MyBaseModel
 from ._flop_type import FlopType
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
 
 class FlopWeights(MyBaseModel):
@@ -29,11 +29,15 @@ class FlopWeights(MyBaseModel):
         - "nearest_int"     : round to nearest int with minimum of 1.
         """
         if mode == "nearest_int":
-            return FlopWeights(
-                weights={k: math.nan if math.isnan(v) else max(1, round(v)) for k, v in self.weights.items()},
-            )
+            return self._map_present_weights(lambda weight: max(1, round(weight)))
+        return self._map_present_weights(lambda weight: round_number(weight, mode="10%"))
+
+    def _map_present_weights(self, fn: Callable[[float | int], float | int]) -> FlopWeights:
+        """Apply fn to every known weight, leaving missing ones missing."""
         return FlopWeights(
-            weights={k: math.nan if math.isnan(v) else round_number(v, mode="10%") for k, v in self.weights.items()},
+            weights={
+                flop_type: (weight if math.isnan(weight) else fn(weight)) for flop_type, weight in self.weights.items()
+            },
         )
 
     def has_missing_data(self) -> bool:
@@ -90,12 +94,16 @@ class FlopWeights(MyBaseModel):
     #  Custom visualization
     # -------------------------------------------------------------------------
     def show(self) -> None:
+        """Print the weights, cheapest first, with missing ones last."""
         print("{")
-        for k, v in sorted(self.weights.items(), key=lambda kv: (kv[1], kv[0].long_name())):
-            if isinstance(v, float):
-                print(f"    {k.long_name()}".ljust(40) + f": {v:9.5f}")
+        # ordering comes from get_sorted_flop_types() so the two cannot disagree: sorting on the raw
+        # weight here would compare against NaN, scattering the measured weights among the missing
+        for flop_type in self.get_sorted_flop_types():
+            weight = self.weights[flop_type]
+            if isinstance(weight, float):
+                print(f"    {flop_type.long_name()}".ljust(40) + f": {weight:9.5f}")
             else:
-                print(f"    {k.long_name()}".ljust(40) + f": {v:>4}")
+                print(f"    {flop_type.long_name()}".ljust(40) + f": {weight:>4}")
         print("}")
 
     # -------------------------------------------------------------------------
@@ -140,8 +148,9 @@ class FlopWeights(MyBaseModel):
             FlopWeights normalized so that the ADD cost becomes weight 1.0.
 
         Raises:
-            ValueError: If `flop_costs` has no ADD entry, or its ADD cost is not finite and
-                positive.
+            ValueError: If `flop_costs` has no ADD entry, if its ADD cost is not finite and
+                positive, or if any other cost is negative or infinite. A NaN cost is accepted:
+                it carries through to a NaN weight, which is how this model marks "unknown".
         """
         # step 1) compute reference duration based on 1 simple flop type
         #         (SUB, MUL and a few others are usually very close)
@@ -158,6 +167,18 @@ class FlopWeights(MyBaseModel):
                 f"the {FlopType.ADD!r} cost in flop_costs must be finite and positive, got {ref_cost}: "
                 f"it is the reference operation every other cost is divided by."
             )
+
+        # a negative cost normalizes to a negative weight -- an operation that gives time back. The
+        # built-in pipelines cannot produce one (benchmark latencies are floored, spec latencies are
+        # clamped to >= 1 cycle), so this guards hand-built costs arriving through the public API.
+        # NaN is left alone: it is this model's marker for an unknown cost, not a bad one.
+        for flop_type, flop_cost in flop_costs.items():
+            if math.isnan(flop_cost):
+                continue
+            if not math.isfinite(flop_cost) or flop_cost < 0:
+                raise ValueError(
+                    f"the {flop_type!r} cost in flop_costs must be finite and non-negative, got {flop_cost}."
+                )
 
         # step 2) normalize and construct FlopWeights object
         return FlopWeights(
