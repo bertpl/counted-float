@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- a micro-benchmark whose runs all measure zero elapsed time now reports its uncertainty as `n/a` instead of crashing
+- a micro-benchmark whose runs all measure zero elapsed time now omits the uncertainty from its report instead of crashing
 
 ### Security
 

@@ -31,15 +31,17 @@ class Quantiles(JsonReprModel):
     q50: float
     q75: float
 
-    def format_uncertainty(self) -> str:
-        """Half the inter-quartile range as a percentage of the median, or 'n/a' when the median is zero.
+    def format_uncertainty_suffix(self) -> str:
+        """' ± X.X%' to append after the median, or '' when the median is zero.
 
-        A zero median arises when most runs measure zero elapsed time (e.g. a dead-code-eliminated
-        kernel on a coarse-resolution clock); no percentage of it is meaningful.
+        The uncertainty is half the inter-quartile range as a percentage of the median. A zero
+        median arises when most runs measure zero elapsed time (e.g. a dead-code-eliminated kernel
+        on a coarse-resolution clock); no percentage of it is meaningful, so the suffix — separator
+        included, which is why the method owns the '±' — is omitted entirely.
         """
         if self.q50 == 0:
-            return "n/a"
-        return f"{50 * (self.q75 - self.q25) / self.q50:4.1f}%"
+            return ""
+        return f" ± {50 * (self.q75 - self.q25) / self.q50:4.1f}%"
 
 
 class MicroBenchmarkResult(JsonReprModel):
