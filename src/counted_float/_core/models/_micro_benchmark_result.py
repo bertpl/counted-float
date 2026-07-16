@@ -32,7 +32,13 @@ class Quantiles(JsonReprModel):
     q75: float
 
     def format_uncertainty(self) -> str:
-        # return uncertainty as a % in string format
+        """Half the inter-quartile range as a percentage of the median, or 'n/a' when the median is zero.
+
+        A zero median arises when most runs measure zero elapsed time (e.g. a dead-code-eliminated
+        kernel on a coarse-resolution clock); no percentage of it is meaningful.
+        """
+        if self.q50 == 0:
+            return "n/a"
         return f"{50 * (self.q75 - self.q25) / self.q50:4.1f}%"
 
 

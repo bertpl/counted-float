@@ -137,6 +137,21 @@ def test_run_many_flat_runtime_respects_the_cap(fake_clock):
     assert max(benchmark.n_executions_per_run) == MicroBenchmark.MAX_N_EXECUTIONS
 
 
+def test_run_many_survives_runs_measuring_zero_elapsed_time(fake_clock):
+    """Every run measuring exactly 0 ns (dead-code-eliminated kernel on a coarse-resolution clock)
+    must still produce a result and a report, not a ZeroDivisionError."""
+    # --- arrange -----------------------------------------
+    benchmark = ClockAdvancingBenchmark(fake_clock, nsecs_per_execution=0)
+
+    # --- act ---------------------------------------------
+    results = benchmark.run_many(n_runs_total=15, n_runs_warmup=5, n_seconds_per_run_target=0.1)
+
+    # --- assert ------------------------------------------
+    assert isinstance(results, MicroBenchmarkResult)
+    assert results.summary_stats_nsecs_per_exec().q50 == 0.0
+    assert max(benchmark.n_executions_per_run) == MicroBenchmark.MAX_N_EXECUTIONS  # 1e-9 floor, then capped
+
+
 # =================================================================================================
 #  Warmup split & quantile stats
 # =================================================================================================
