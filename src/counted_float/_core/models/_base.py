@@ -1,7 +1,13 @@
 from pydantic import BaseModel
 
 
-class MyBaseModel(BaseModel):
+class JsonReprModel(BaseModel):
+    """A pydantic model that renders itself as indented JSON, for repr, str and show().
+
+    Purely presentational: pydantic already handles serialization, this only decides what a model
+    looks like when a human prints one.
+    """
+
     def __repr__(self) -> str:
         return str(self)
 

@@ -8,13 +8,13 @@ import psutil
 
 from counted_float._core.utils import get_cpu_frequency_mhz_max, get_cpu_frequency_mhz_min
 
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 
 
 # =================================================================================================
 #  Benchmark Settings
 # =================================================================================================
-class BenchmarkSettings(MyBaseModel):
+class BenchmarkSettings(JsonReprModel):
     """Settings the round-robin interleaved benchmark run was collected with.
 
     The fields describing the run shape are optional so a partial or future-scheme
@@ -35,7 +35,7 @@ class BenchmarkSettings(MyBaseModel):
 # =================================================================================================
 #  System Info
 # =================================================================================================
-class SystemInfo(MyBaseModel):
+class SystemInfo(JsonReprModel):
     processor: ProcessorInfo
     os: OSInfo
     python: PythonInfo
@@ -54,7 +54,7 @@ class SystemInfo(MyBaseModel):
 # =================================================================================================
 #  Sub-models
 # =================================================================================================
-class ProcessorInfo(MyBaseModel):
+class ProcessorInfo(JsonReprModel):
     description: str
     architecture: str
     n_logical_core_count: int
@@ -85,7 +85,7 @@ class ProcessorInfo(MyBaseModel):
         )
 
 
-class OSInfo(MyBaseModel):
+class OSInfo(JsonReprModel):
     platform: str
     system: str
     release: str
@@ -101,7 +101,7 @@ class OSInfo(MyBaseModel):
         )
 
 
-class PythonInfo(MyBaseModel):
+class PythonInfo(JsonReprModel):
     version: str
     implementation: str
     compiler: str
@@ -115,7 +115,7 @@ class PythonInfo(MyBaseModel):
         )
 
 
-class PackagesInfo(MyBaseModel):
+class PackagesInfo(JsonReprModel):
     counted_float: str
     llvmlite: str
     numba: str

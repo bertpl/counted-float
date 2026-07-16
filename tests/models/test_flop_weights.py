@@ -97,7 +97,7 @@ def test_flop_weights_missing_flop_types(
 
 
 def test_flop_weights_show_smoke(sample_flop_weights_dict_by_str):
-    """Very minimal test to check if MyBaseModel.print() at least does not raise exceptions."""
+    """Very minimal test to check if show() at least does not raise exceptions."""
     # --- arrange -----------------------------------------
     flop_weights = FlopWeights(weights=sample_flop_weights_dict_by_str)
 

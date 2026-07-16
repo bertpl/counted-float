@@ -8,14 +8,14 @@ from pydantic import field_serializer, field_validator
 
 from counted_float._core.utils import geo_mean, impute_missing_data, round_number
 
-from ._base import MyBaseModel
+from ._base import JsonReprModel
 from ._flop_type import FlopType
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
 
-class FlopWeights(MyBaseModel):
+class FlopWeights(JsonReprModel):
     weights: dict[FlopType, float | int]  # note: math.nan will indicate "unknown" weights  (e.g. missing FPU specs)
 
     # -------------------------------------------------------------------------
