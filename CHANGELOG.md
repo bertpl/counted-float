@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- flop weights with missing data can be read back from JSON again; every built-in per-source weight set previously serialized to a document the library rejected
+
 ### Security
 
 ## 1.6.1 (2026-07-16)

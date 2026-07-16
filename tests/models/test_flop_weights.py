@@ -2,6 +2,7 @@ import math
 
 import pytest
 
+from counted_float._core.counting import BuiltInData
 from counted_float._core.counting.config import get_builtin_flop_weights
 from counted_float._core.models import FlopType, FlopWeights
 
@@ -154,3 +155,31 @@ def test_from_abs_flop_costs_with_unusable_add_raises_value_error(ref_cost: floa
     # --- act / assert ------------------------------------
     with pytest.raises(ValueError, match="finite and positive"):
         FlopWeights.from_abs_flop_costs(flop_costs)
+
+
+def test_weights_with_missing_data_survive_a_json_round_trip():
+    # --- arrange -----------------------------------------
+    weights = FlopWeights(weights={FlopType.ADD: 1.0, FlopType.MUL: math.nan})
+
+    # --- act ---------------------------------------------
+    restored = FlopWeights.model_validate_json(weights.model_dump_json())
+
+    # --- assert ------------------------------------------
+    assert restored.weights[FlopType.ADD] == 1.0
+    assert math.isnan(restored.weights[FlopType.MUL])  # missing must stay missing, not become a number
+
+
+def test_every_builtin_source_survives_a_json_round_trip():
+    """Every built-in per-source weight set has missing data; none of them could be read back."""
+    # --- arrange -----------------------------------------
+    per_source_weights = BuiltInData.get_flop_weights_dict()
+
+    # --- act / assert ------------------------------------
+    for key, weights in per_source_weights.items():
+        restored = FlopWeights.model_validate_json(weights.model_dump_json())
+        for flop_type, weight in weights.weights.items():
+            restored_weight = restored.weights[flop_type]
+            if math.isnan(weight):
+                assert math.isnan(restored_weight), f"{key}: {flop_type.name} lost its missing marker"
+            else:
+                assert restored_weight == weight, f"{key}: {flop_type.name} changed value"
