@@ -1,6 +1,25 @@
 import pytest
 
-from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
+from counted_float._core.models import MicroBenchmarkResult, Quantiles, SingleRunResult
+
+
+# =================================================================================================
+#  Quantiles
+# =================================================================================================
+@pytest.mark.parametrize(
+    ("q25", "q50", "q75", "expected"),
+    [
+        (90.0, 100.0, 110.0, " ± 10.0%"),
+        (0.0, 0.0, 0.0, ""),  # all runs measured zero -> no meaningful percentage, no dangling ±
+        (0.0, 0.0, 10.0, ""),  # zero median with nonzero spread must not divide by zero
+    ],
+)
+def test_format_uncertainty_suffix(q25: float, q50: float, q75: float, expected: str):
+    # --- arrange -----------------------------------------
+    quantiles = Quantiles(q25=q25, q50=q50, q75=q75)
+
+    # --- act / assert ------------------------------------
+    assert quantiles.format_uncertainty_suffix() == expected
 
 
 # =================================================================================================

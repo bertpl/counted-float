@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- a micro-benchmark whose runs all measure zero elapsed time now omits the uncertainty from its report instead of crashing
+
 ### Security
 
 ## 1.6.2 (2026-07-16)

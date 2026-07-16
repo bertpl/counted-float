@@ -91,8 +91,8 @@ class MicroBenchmark(ABC):
         # display duration estimates
         stats_nsecs = benchmark_result.summary_stats_nsecs_per_exec()
         stats_cycles = benchmark_result.summary_stats_cycles_per_exec()
-        s_time_duration = f"{format_time_duration(stats_nsecs.q50)} ± {stats_nsecs.format_uncertainty()}"
-        s_latency = f"{format_latency(stats_cycles.q50)} ± {stats_cycles.format_uncertainty()}"
+        s_time_duration = f"{format_time_duration(stats_nsecs.q50)}{stats_nsecs.format_uncertainty_suffix()}"
+        s_latency = f"{format_latency(stats_cycles.q50)}{stats_cycles.format_uncertainty_suffix()}"
         console.print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
 
         # return final result
