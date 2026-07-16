@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import math
+from functools import cache
 from importlib.resources import files
 from typing import TYPE_CHECKING, TypeVar
 
@@ -21,6 +23,22 @@ PydanticModelT = TypeVar("PydanticModelT", bound=BaseModel)
 
 DATA_PACKAGE = "counted_float.data"
 
+# The source tree is crawled for every .json it contains, so it holds nothing but sources: derived
+# artifacts live in sibling folders under the data package, out of the crawler's reach.
+SOURCES_DIR = "sources"
+PRECOMPUTED_DIR = "precomputed"
+PRECOMPUTED_WEIGHTS_FILE = "consensus_flop_weights.json"
+
+
+def _data_sources_root() -> Traversable:
+    """Return the root of the built-in source data tree; source keys are relative to it."""
+    return files(DATA_PACKAGE) / SOURCES_DIR
+
+
+def _precomputed_weights_file() -> Traversable:
+    """Return the shipped file holding aggregates already derived from the source tree."""
+    return files(DATA_PACKAGE) / PRECOMPUTED_DIR / PRECOMPUTED_WEIGHTS_FILE
+
 
 # =================================================================================================
 #  Main accessor class
@@ -38,12 +56,16 @@ class BuiltInData:
         Averaging happens one key-level at a time, which implicitly defines a recursive weighting scheme. At every level
         of aggregation, an attempt is made to impute missing data (if any) to avoid biasing the average towards entries
         with more complete data.
+
+        The aggregation parses every source file, so results for the most-used key filters ship
+        precomputed and are read from disk instead; any other filter is aggregated on the spot. The
+        two paths agree by construction -- the shipped values are this method's own output, and a
+        test re-derives them to keep it that way.
         """
-        flat_flop_weights_dict = cls.get_flop_weights_dict(key_filter)
-        if len(flat_flop_weights_dict) == 0:
-            raise ValueError(f"No built-in flop weights found for key_filter='{key_filter}'")
-        nested_flop_weights_dict = _flat_to_nested_dict(flat_flop_weights_dict)
-        return _compute_nested_average_flop_weights(nested_flop_weights_dict)
+        cached = _precomputed_flop_weights().get(key_filter)
+        if cached is not None:
+            return cached.model_copy(deep=True)  # callers may mutate what they get; the cache is shared
+        return _aggregate_flop_weights_from_sources(key_filter)
 
     @classmethod
     def get_flop_weights_dict(cls, key_filter: str = "") -> dict[str, FlopWeights]:
@@ -59,7 +81,7 @@ class BuiltInData:
         """
         return {
             key: _construct_flop_weights_from_json_str(json_str)
-            for key, json_str in _load_json_files_as_dict(files(DATA_PACKAGE)).items()
+            for key, json_str in _load_json_files_as_dict(_data_sources_root()).items()
             if key_filter in key
         }
 
@@ -70,7 +92,7 @@ class BuiltInData:
     def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
             key: _deserialize_as_any_pydantic_class(json_str, [FlopsBenchmarkResults])
-            for key, json_str in _load_json_files_as_dict(files(f"{DATA_PACKAGE}")).items()
+            for key, json_str in _load_json_files_as_dict(_data_sources_root()).items()
             if "benchmark" in key
         }
 
@@ -88,6 +110,33 @@ class BuiltInData:
 # =================================================================================================
 #  Utilities
 # =================================================================================================
+def _aggregate_flop_weights_from_sources(key_filter: str = "") -> FlopWeights:
+    """Aggregate the matching source files into one FlopWeights, bypassing the precomputed cache.
+
+    This is the real computation BuiltInData.get_flop_weights() serves from cache where it can. The
+    generator that writes that cache and the test that checks it both come through here, so neither
+    can be fooled by a stale file.
+    """
+    flat_flop_weights_dict = BuiltInData.get_flop_weights_dict(key_filter)
+    if len(flat_flop_weights_dict) == 0:
+        raise ValueError(f"No built-in flop weights found for key_filter='{key_filter}'")
+    return _compute_nested_average_flop_weights(_flat_to_nested_dict(flat_flop_weights_dict))
+
+
+@cache
+def _precomputed_flop_weights() -> dict[str, FlopWeights]:
+    """Read the shipped aggregates: the key filter each was derived for -> its unrounded weights.
+
+    Stored unrounded so one entry serves every rounding mode, which is applied on top by the caller.
+    """
+    raw: dict[str, dict[str, float | None]] = json.loads(
+        _precomputed_weights_file().read_text(encoding="utf-8"),  # ty: ignore[unresolved-attribute] -- Path-like
+    )
+    # validate rather than construct: the stored form is JSON, with labels for keys and null for a
+    # missing weight, which is exactly what the model's own validators already accept
+    return {key_filter: FlopWeights.model_validate({"weights": weights}) for key_filter, weights in raw.items()}
+
+
 def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dict | FlopWeights]) -> FlopWeights:
     # make sure all values of the dict are FlopWeights instances
     for key, value in nested_flop_weights_dict.items():
