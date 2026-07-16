@@ -5,27 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 1.6.1 (2026-07-16)
 
 ### Changed
 
 - reading flop counts is several times faster; counts are unchanged
 - `FlopWeights.from_abs_flop_costs()` raises a clear `ValueError` instead of a raw `KeyError` or `ZeroDivisionError`
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - `BuiltInData` is now exported from the package root, so star imports and strict type checkers recognize it
 - a `FlopCountingContext` that is re-entered, or resumed outside its `with` block, no longer produces silently wrong counts
 - `set_active_flop_weights()` now stores a copy, so mutating the object you passed no longer changes the configured weights
-
-### Security
-
 ## 1.6.0 (2026-07-15)
 
 ### Added
