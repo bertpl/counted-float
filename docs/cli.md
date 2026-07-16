@@ -39,8 +39,14 @@ this way can be inspected, shared, or compared against the built-in entries.
 ## Show built-in data
 
 `show-data` renders the full weight hierarchy: every data source, aggregated
-bottom-up, across all 36 flop-type columns. That table is wide — an abbreviated
+bottom-up, with one column per flop type. That table is wide — an abbreviated
 slice (the ARM subtree, leading columns only) is shown here:
+
+Options:
+
+| Option | Description |
+|---|---|
+| `--key-filter TEXT` | Show only the sources whose key contains `TEXT` — e.g. `--key-filter arm` for the ARM subtree, or `--key-filter benchmarks` for measured sources only. Defaults to showing everything. `--key_filter` is accepted as well. |
 
 ```
 [~] counted_float show-data
