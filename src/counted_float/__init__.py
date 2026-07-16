@@ -14,6 +14,7 @@ from ._core.counting import BuiltInData, CountedFloat, FlopCountingContext, Paus
 from ._core.models import FlopCounts, FlopType, FlopWeights, Quantiles, SystemInfo
 
 __all__ = [
+    "BuiltInData",
     "CountedFloat",
     "FlopCountingContext",
     "FlopCounts",

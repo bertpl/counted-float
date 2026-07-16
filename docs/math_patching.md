@@ -70,10 +70,16 @@ Every commonly used `math` function, and how it participates in counting:
 | **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot`, `fmod`, `fabs`, `fma` (Python 3.13+) |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | `copysign`, `remainder`, `frexp`, `ldexp`, `modf`, `degrees`, `radians`, `dist`, `fsum`, `prod`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp` |
+| **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` |
 
 The not-instrumented set breaks contagion: the plain-`float` result silently
 stops all downstream counting, so convert back with `CountedFloat(...)` if a
 result of these feeds counted computation.
+
+The predicates return a `bool` rather than a number, so contagion does not apply
+to them — but they are uncounted all the same. `math.isclose` is the one where
+that matters: it performs real arithmetic (a difference, absolute values, and a
+scaled tolerance comparison) and none of it is counted.
 
 `math.fma(x, y, z)` exists only from Python 3.13 on, and is patched exactly where
 it exists — on older interpreters there is no such function to call, and a

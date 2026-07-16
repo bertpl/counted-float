@@ -15,8 +15,9 @@ class Config:
 
     # these are the weights that are used to calculate weighted flop counts; update with
     # set_flop_weights(...).  None means "not initialized yet": the default consensus weights
-    # are computed lazily on first access, since deriving them parses every built-in data file
-    # (~0.8 s) — far too expensive to pay at import time for a feature many importers never use.
+    # are computed lazily on first access, since deriving them parses and aggregates every
+    # built-in data file — far too expensive to pay at import time for a feature some users
+    # might not have a need for.
     __weights: FlopWeights | None = None
 
     # -------------------------------------------------------------------------

@@ -48,8 +48,8 @@ def test_flop_weight_getters_return_defensive_copies(getter):
 
 
 def test_bare_import_does_not_parse_builtin_data():
-    # default consensus weights derive from every built-in data file (~0.8 s); that work
-    # must happen lazily on first weights access, not at import time
+    # default consensus weights derive from every built-in data file, which is far too
+    # expensive to pay at import time; that work must happen lazily on first weights access
     code = textwrap.dedent(
         """
         import sys
