@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- a `FlopCountingContext` that is re-entered, or resumed outside its `with` block, no longer produces silently wrong counts
+
 ### Security
 
 ## 1.6.0 (2026-07-15)

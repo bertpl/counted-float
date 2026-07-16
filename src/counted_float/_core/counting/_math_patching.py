@@ -460,9 +460,15 @@ def apply_math_patches() -> None:
 def remove_math_patches() -> None:
     """Undo apply_math_patches; the math module is restored once the last context exits."""
     global _active_context_count
-    _active_context_count = max(0, _active_context_count - 1)
+    if _active_context_count == 0:
+        # nothing is patched, so there is nothing to undo.  Restoring here would re-apply a
+        # snapshot taken before the last context exited, silently overwriting whatever has
+        # patched math since.
+        return
+    _active_context_count -= 1
     if _active_context_count == 0:
         # restore the snapshot unconditionally, assuming LIFO patching discipline of any other
         # patching packages (see module docstring for the exact contract)
         for name, saved in _saved_originals.items():
             setattr(math, name, saved)
+        _saved_originals.clear()
