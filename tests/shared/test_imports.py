@@ -69,3 +69,33 @@ def test_every_public_name_from_this_package_is_advertised(module_name: str):
 
     # --- assert ------------------------------------------
     assert not unadvertised, f"{module_name} exposes {sorted(unadvertised)} but does not list them in __all__"
+
+
+def test_bare_import_stays_free_of_the_benchmarking_stack():
+    """A bare `import counted_float` must not load the benchmarking subpackage or its heavy deps.
+
+    The counting core never touches numba or llvmlite; only the benchmarking subpackage does, and
+    it is reachable by importing it directly. Runs in a fresh interpreter on purpose: in a shared
+    process, other tests' imports would already have populated sys.modules.
+    """
+    # --- arrange -----------------------------------------
+    discover_loaded = textwrap.dedent(
+        """
+        import json, sys
+        import counted_float
+        watched = ("counted_float.benchmarking", "numba", "llvmlite")
+        print(json.dumps([name for name in watched if name in sys.modules]))
+        """
+    )
+
+    # --- act ---------------------------------------------
+    result = subprocess.run(  # noqa: S603 -- fixed args, no user input
+        [sys.executable, "-c", discover_loaded],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    loaded = json.loads(result.stdout)
+
+    # --- assert ------------------------------------------
+    assert loaded == [], f"bare import loaded {loaded}"

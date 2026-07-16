@@ -2,7 +2,6 @@
 
 from importlib.metadata import PackageNotFoundError, version
 
-import counted_float.benchmarking as benchmarking
 import counted_float.config as config
 
 try:
@@ -24,6 +23,5 @@ __all__ = [
     "Quantiles",
     "SystemInfo",
     "__version__",
-    "benchmarking",
     "config",
 ]
