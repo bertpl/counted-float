@@ -54,6 +54,9 @@ class GlobalFlopCounter:
     def incr_minus(self) -> None:
         self.__counts.MINUS += self.__incr
 
+    def incr_copysign(self) -> None:
+        self.__counts.COPYSIGN += self.__incr
+
     def incr_comp(self) -> None:
         self.__counts.COMP += self.__incr
 

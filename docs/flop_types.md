@@ -35,11 +35,15 @@ find:
 | `math.sin`/`cos`/`tan(x)` | `SIN`, `COS`, `TAN` | patch | benchmarked | yes |
 | `math.asin`/`acos`/`atan(x)` | `ASIN`, `ACOS`, `ATAN` | patch | benchmarked | yes |
 | `math.atan2(y, x)` | `ATAN2` | patch | benchmarked | yes |
-| `math.hypot(x, y)` | `HYPOT` | patch | benchmarked | yes |
+| `math.hypot(x, y)` | `HYPOT` (2 args; 3+ decompose to n MUL + (n−1) ADD + SQRT, 1 to ABS) | patch | benchmarked | yes |
 | `math.expm1(x)`, `math.log1p(x)` | `EXPM1`, `LOG1P` | patch | benchmarked | yes |
 | `math.fmod(x, y)` | `FMOD` | patch | benchmarked | yes |
 | `math.sinh`/`cosh`/`tanh(x)`, `asinh`/`acosh`/`atanh(x)` | `SINH`, `COSH`, `TANH`, `ASINH`, `ACOSH`, `ATANH` | patch | benchmarked | yes |
-| `math.copysign` | *(uncounted)* | — | — | no (plain float) |
+| `math.copysign(x, y)` | `COPYSIGN` | patch | benchmarked | yes |
+| `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
+| `math.dist(p, q)` | n `SUB` + n `MUL` + (n−1) `ADD` + `SQRT` *(decomposed)* | patch | — | yes |
+| `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
+| `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
 
 - **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.
@@ -82,6 +86,19 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `XORPD`
 - **Counted Python operations:** Unary minus (`-x`) for `CountedFloat`
 - **Not counted:** Negation on non-CountedFloat, numpy negation
+
+## FlopType.COPYSIGN (`copysign(x,y)`)
+
+- Relevant CPU instructions
+    - **ARM:** `BIT` (bitwise insert with a sign mask — a single instruction)
+    - **x86:** `ANDPD` + `ANDPD` + `ORPD` (no dedicated instruction: clear the sign of `x`,
+      isolate the sign of `y`, merge)
+- **Counted Python operations:** `math.copysign(x, y)` where `x` or `y` is a `CountedFloat`
+- **Not counted:** copysign on non-CountedFloat, numpy copysign
+- **Note:** same sign-bit instruction class as ABS and MINUS, but 1–3 ops depending on
+  architecture — which is why it is measured as its own benchmarked flop type rather than
+  assumed equal to ABS. Its weight comes from benchmarks only (like the libm functions);
+  vendor latency tables have no row for it.
 
 ## FlopType.COMP (`x<=y`, `x>y`, `x==y`, `x==0.0`, ...)
 

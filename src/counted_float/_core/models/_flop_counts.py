@@ -22,6 +22,7 @@ class FlopCounts:
     # --- Counting fields ---------------------------------
     ABS: int = 0
     MINUS: int = 0
+    COPYSIGN: int = 0
     COMP: int = 0
     RND: int = 0
     F2I: int = 0
@@ -87,7 +88,11 @@ class FlopCounts:
 
             weights = get_active_flop_weights()
 
-        return sum([getattr(self, flop_type.name) * weights.weights[flop_type] for flop_type in FlopType])
+        # zero counts are skipped rather than multiplied: 0 * nan is nan, so a missing (NaN)
+        # weight must only affect totals whose counts actually used that flop type
+        return sum(
+            count * weights.weights[flop_type] for flop_type in FlopType if (count := getattr(self, flop_type.name))
+        )
 
     # --- other -------------------------------------------
     def reset(self) -> None:

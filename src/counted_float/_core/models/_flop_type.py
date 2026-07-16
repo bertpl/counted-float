@@ -10,6 +10,7 @@ class FlopType(StrEnum):
 
     ABS = "abs(x)"
     MINUS = "-x"
+    COPYSIGN = "copysign(x,y)"  # sign-bit transfer; same instruction class as ABS/MINUS, but 1-3 ops depending on arch
     COMP = "x<=y"  # includes x>=y, x==y, x<y, x>y, as well as comparison to 0
     RND = "round"  # round float -> float
     F2I = "float->int"  # float -> int, also includes round(x), math.floor(x), math.ceil(x)

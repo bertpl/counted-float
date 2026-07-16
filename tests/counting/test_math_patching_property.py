@@ -18,7 +18,13 @@ from counted_float import CountedFloat
 from counted_float._core.counting import _math_patching
 
 _PATCHED_NAMES = sorted(_math_patching._PATCHES.keys())
-_ARITY = {"atan2": 2, "hypot": 2, "fmod": 2, "pow": 2, "fma": 3}  # every other patched function takes one operand
+_ARITY = {"atan2": 2, "hypot": 2, "fmod": 2, "pow": 2, "fma": 3, "copysign": 2}  # others take one operand
+# the sequence-taking functions get a two-element sequence per argument instead of bare scalars
+_SEQUENCE_ARGS = {
+    "dist": lambda cf: ([cf, cf], [cf, cf]),
+    "prod": lambda cf: ([cf, cf],),
+    "fsum": lambda cf: ([cf, cf],),
+}
 
 
 @pytest.mark.parametrize("fname", _PATCHED_NAMES)
@@ -27,7 +33,10 @@ _ARITY = {"atan2": 2, "hypot": 2, "fmod": 2, "pow": 2, "fma": 3}  # every other 
 def test_raising_math_call_leaves_count_unchanged(global_counter, fname: str, x: float) -> None:
     # --- arrange -----------------------------------------
     func = getattr(math, fname)  # the fixture keeps a context active, so this is the patched version
-    args = tuple(CountedFloat(x) for _ in range(_ARITY.get(fname, 1)))
+    if fname in _SEQUENCE_ARGS:
+        args = _SEQUENCE_ARGS[fname](CountedFloat(x))
+    else:
+        args = tuple(CountedFloat(x) for _ in range(_ARITY.get(fname, 1)))
     global_counter.reset()
 
     # --- act / assert ------------------------------------

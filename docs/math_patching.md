@@ -67,9 +67,10 @@ Every commonly used `math` function, and how it participates in counting:
 
 | Coverage | Functions |
 |---|---|
-| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot`, `fmod`, `fabs`, `fma` (Python 3.13+) |
+| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot`, `fmod`, `fabs`, `copysign`, `fma` (Python 3.13+) |
+| **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `dist` → n SUB + n MUL + (n−1) ADD + SQRT; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; n-ary `hypot` → per arity (2 → HYPOT, 3+ → the naive norm, 1 → ABS) |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
-| **Not instrumented** (returns a plain, uncounted `float`) | `copysign`, `remainder`, `frexp`, `ldexp`, `modf`, `degrees`, `radians`, `dist`, `fsum`, `prod`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp` |
+| **Not instrumented** (returns a plain, uncounted `float`) | `remainder`, `frexp`, `ldexp`, `modf`, `gamma`, `lgamma`, `erf`, `erfc`, `nextafter`, `ulp` |
 | **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` |
 
 The not-instrumented set breaks contagion: the plain-`float` result silently

@@ -6,6 +6,7 @@ class FlopsBenchmarkType(StrEnum):
     ADD = "add"
     ADD_MINUS = "add_minus"
     ADD_ABS = "add_abs"
+    ADD_COPYSIGN = "add_copysign"
     ADD_ADD = "add_add"
     ADD_SUB = "add_sub"
     ADD_ROUND = "add_round"

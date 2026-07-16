@@ -48,6 +48,15 @@ def f_add_abs(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, ou
 
 
 @numba.njit(parallel=False)
+def f_add_copysign(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = math.copysign(tmp + in_f[i], in_f[i])
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
 def f_add_add(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
     for _ in range(n_executions):
         tmp = math.e
