@@ -145,10 +145,12 @@ def test_from_abs_flop_costs_without_add_raises_value_error():
         FlopWeights.from_abs_flop_costs(flop_costs)
 
 
-def test_from_abs_flop_costs_with_zero_add_raises_value_error():
+@pytest.mark.parametrize("ref_cost", [0.0, -2.0, math.nan, math.inf])
+def test_from_abs_flop_costs_with_unusable_add_raises_value_error(ref_cost: float):
     # --- arrange -----------------------------------------
-    flop_costs = dict.fromkeys(FlopType, 0.0)
+    flop_costs = dict.fromkeys(FlopType, 1.0)
+    flop_costs[FlopType.ADD] = ref_cost
 
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError, match="non-zero"):
+    with pytest.raises(ValueError, match="finite and positive"):
         FlopWeights.from_abs_flop_costs(flop_costs)
