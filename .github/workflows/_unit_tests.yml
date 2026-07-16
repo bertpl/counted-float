@@ -8,25 +8,28 @@ permissions:
 
 jobs:
   core:
-    name: py${{ matrix.python }} / ${{ matrix.resolution }} / numba-${{ matrix.all_extras }}
-    runs-on: ubuntu-latest
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / numba-${{ matrix.all_extras }} / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # ubuntu-only: OS-dependent paths (CPU-freq detection, numba JIT) are
-        # exercised by the manual benchmark workflows on real hardware; core
-        # flop-counting is pure Python. Strategic combos cover every axis
-        # (all four Pythons, both resolution ends, numba on/off at the extremes)
-        # rather than their full product.
+        # Core flop-counting is pure Python, so most combos run on ubuntu. But the CPU-freq
+        # detection (psutil) and system-info collection (cpuinfo) paths are OS-dependent, and a
+        # dependency bump can change their behavior on macOS or Windows -- so one leg on each keeps
+        # those paths on the pull-request gate rather than only in the manual benchmark workflows.
+        # Combos cover every axis (all four Pythons, both resolution ends, numba on/off, all three
+        # OSes) strategically rather than as a full product.
         include:
-          - { python: "3.11", resolution: highest,       all_extras: "true"  }
-          - { python: "3.12", resolution: highest,       all_extras: "true"  }
-          - { python: "3.13", resolution: highest,       all_extras: "true"  }
-          - { python: "3.14", resolution: highest,       all_extras: "true"  }
-          - { python: "3.11", resolution: lowest-direct, all_extras: "true"  }
-          - { python: "3.14", resolution: lowest-direct, all_extras: "true"  }
-          - { python: "3.11", resolution: highest,       all_extras: "false" }  # numba-absent shim
-          - { python: "3.14", resolution: highest,       all_extras: "false" }  # numba-absent shim
+          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.12", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.13", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.11", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.14", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "false" }  # numba-absent shim
+          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "false" }  # numba-absent shim
+          - { os: macos-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          - { os: windows-latest, python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
