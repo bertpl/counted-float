@@ -1,9 +1,5 @@
 """The numba kernels the flops benchmark measures, one per benchmark type.
 
-Every kernel takes the values it needs as arguments and closes over nothing, so numba compiles each
-to the same machine code wherever its `def` sits. Keeping them at module scope is what lets the
-suite builder stay a flat registry of kernel -> benchmark type, small enough to read at a glance.
-
 Each kernel is a doubly-nested loop by design: the outer repeats to fill a timing slice, the inner
 walks the input array in a dependent chain, so the measurement reflects operation latency rather
 than the CPU's ability to overlap independent work.
