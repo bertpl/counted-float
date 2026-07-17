@@ -45,6 +45,13 @@ class FlopsBenchmarkType(StrEnum):
     ADD_ACOSH_COSH = "add_acosh_cosh"
     ADD_HALFSIN = "add_halfsin"
     ADD_HALFSIN_ATANH = "add_halfsin_atanh"
+    # shared baseline for gamma/lgamma: 1.5 + 0.5*sin bounds the fed-back argument to [1, 2] near
+    # gamma's minimum, so the chain can't run away into the OverflowError a naive f(tmp+x) chain hits
+    ADD_GAMMABASE = "add_gammabase"
+    ADD_GAMMA = "add_gamma"
+    ADD_LGAMMA = "add_lgamma"
+    ADD_ERF = "add_erf"
+    ADD_ERFC = "add_erfc"
     POW = "pow"
     POW_POW = "pow_pow"
     SUB = "sub"

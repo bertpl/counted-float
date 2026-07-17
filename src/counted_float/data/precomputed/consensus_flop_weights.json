@@ -40,7 +40,11 @@
         "ACOSH": 21.033920534459146,
         "ATANH": 43.20678571546746,
         "DIST": null,
-        "DIST_XARG": null
+        "DIST_XARG": null,
+        "GAMMA": null,
+        "LGAMMA": null,
+        "ERF": null,
+        "ERFC": null
     },
     "arm": {
         "ABS": 1.018032644772082,
@@ -83,7 +87,11 @@
         "ACOSH": 22.335316504694482,
         "ATANH": 46.80589407066858,
         "DIST": null,
-        "DIST_XARG": null
+        "DIST_XARG": null,
+        "GAMMA": null,
+        "LGAMMA": null,
+        "ERF": null,
+        "ERFC": null
     },
     "x86": {
         "ABS": 0.4836625671507618,
@@ -126,6 +134,10 @@
         "ACOSH": 19.808352075823613,
         "ATANH": 39.884428423560244,
         "DIST": null,
-        "DIST_XARG": null
+        "DIST_XARG": null,
+        "GAMMA": null,
+        "LGAMMA": null,
+        "ERF": null,
+        "ERFC": null
     }
 }

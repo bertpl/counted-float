@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
+from counted_float._core.benchmarking.flops import _flops_kernels as kernels
 from counted_float._core.compatibility import is_numba_installed
 from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType, FlopType, FlopWeights
 
@@ -56,6 +57,48 @@ def test_suite_measures_the_arity_flop_types():
     # an extra coordinate is far cheaper than a whole 2-arg call (its squares overlap the sqrt path)
     assert efl[FlopType.HYPOT_XARG] < efl[FlopType.HYPOT]
     assert efl[FlopType.DIST_XARG] < efl[FlopType.DIST]
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="special-function timings need real numba, not the shim")
+def test_suite_measures_the_special_function_flop_types():
+    """The gamma/lgamma/erf/erfc kernels feed their flop types with finite, positive latencies.
+
+    gamma/lgamma are measured through a sin-bounded chain (their outputs grow without bound, so a
+    naive f(tmp + x) chain would overflow); this pins that the bounded kernels stay finite and that
+    differencing the shared sin baseline still yields a positive, non-degenerate cost.
+    """
+    # --- arrange -----------------------------------------
+    suite = FlopsBenchmarkSuite()
+
+    # --- act ---------------------------------------------
+    result = suite.run(array_size=1000, t_slice_target_ms=2.0, n_rounds_measure=15, n_rounds_warmup=2, seed=7)
+    efl = result.estimated_flop_latencies
+
+    # --- assert ------------------------------------------
+    for flop_type in (FlopType.GAMMA, FlopType.LGAMMA, FlopType.ERF, FlopType.ERFC):
+        assert math.isfinite(efl[flop_type]), flop_type
+        assert efl[flop_type] > 0, flop_type
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
+@pytest.mark.parametrize("kernel", [kernels.f_add_gamma, kernels.f_add_lgamma])
+def test_gamma_kernels_never_overflow_even_on_a_wild_input_range(kernel):
+    """The sin bound must keep the gamma/lgamma chain finite regardless of the input magnitudes.
+
+    gamma/lgamma outputs grow without bound, so a naive `f(tmp + x)` chain overflows into a run-ending
+    OverflowError. The `1.5 + 0.5*sin(...)` bound is what prevents that; feeding a deliberately wild
+    input range asserts the guard holds unconditionally, not just for the registered range.
+    """
+    # --- arrange -----------------------------------------
+    rng = np.random.default_rng(0)
+    in_f = rng.uniform(-1e6, 1e6, 2000)
+    out_f, out_i = np.zeros(2000), np.zeros(2000, dtype=int)
+
+    # --- act ---------------------------------------------
+    kernel(50, 2000, in_f, out_f, out_i)
+
+    # --- assert ------------------------------------------
+    assert np.all(np.isfinite(out_f))
 
 
 # =================================================================================================
