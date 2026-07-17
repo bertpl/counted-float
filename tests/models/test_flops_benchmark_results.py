@@ -1,5 +1,8 @@
 import json
 
+import pytest
+from pydantic import ValidationError
+
 from counted_float import BuiltInData
 from counted_float._core.models import FlopsBenchmarkResults, FlopType
 
@@ -28,17 +31,16 @@ def test_estimated_flop_latencies_serialize_on_stable_names():
     assert "x+y" not in on_disk  # ...not the label
 
 
-def test_legacy_label_keyed_latencies_still_load():
+def test_legacy_label_keyed_latencies_raise():
     # --- arrange -----------------------------------------
     result = list(BuiltInData.benchmarks().values()).pop()
-    # rewrite this result's latency keys to the legacy display-label form a pre-2.0.0 file used
+    # rewrite this result's latency keys to the legacy display-label form a pre-2.0.0 file used;
+    # those files must be regenerated, and the failure is loud rather than silent missing data
     as_dict = json.loads(result.model_dump_json())
     as_dict["estimated_flop_latencies"] = {
-        FlopType.from_serialized_key(key).label: value for key, value in as_dict["estimated_flop_latencies"].items()
+        FlopType[key].label: value for key, value in as_dict["estimated_flop_latencies"].items()
     }
 
-    # --- act ---------------------------------------------
-    restored = FlopsBenchmarkResults.model_validate_json(json.dumps(as_dict))
-
-    # --- assert ------------------------------------------
-    assert restored.estimated_flop_latencies == result.estimated_flop_latencies
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValidationError, match="unrecognized flop-type key"):
+        FlopsBenchmarkResults.model_validate_json(json.dumps(as_dict))

@@ -103,11 +103,11 @@ def test_str_renders_human_labels():
     assert "ADD" not in rendered  # ...not the stable name
 
 
-def test_legacy_label_keyed_weights_still_load():
-    # a pre-2.0.0 file keyed weights on the display label; it must keep loading
-    restored = FlopWeights.model_validate_json('{"weights": {"x+y": 1.0, "x*y": 2.0}}')
-    assert restored.weights[FlopType.ADD] == 1.0
-    assert restored.weights[FlopType.MUL] == 2.0
+def test_legacy_label_keyed_weights_raise():
+    # a pre-2.0.0 file keyed weights on the display label; those files must be regenerated,
+    # and the failure is loud rather than a silent degradation to missing data
+    with pytest.raises(ValidationError, match="unrecognized flop-type key"):
+        FlopWeights.model_validate_json('{"weights": {"x+y": 1.0, "x*y": 2.0}}')
 
 
 def test_unrecognized_weight_key_raises_instead_of_becoming_missing_data():
