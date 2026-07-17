@@ -1,6 +1,8 @@
+import json
 import math
 
 import pytest
+from pydantic import ValidationError
 
 from counted_float._core.counting import BuiltInData
 from counted_float._core.counting.config import get_builtin_flop_weights
@@ -15,7 +17,8 @@ def sample_flop_weights_dict_by_enum() -> dict[FlopType, int]:
 
 @pytest.fixture
 def sample_flop_weights_dict_by_str(sample_flop_weights_dict_by_enum) -> dict[str, int]:
-    return {k.value: v for k, v in sample_flop_weights_dict_by_enum.items()}
+    # serialized form keys on the stable name (== member value)
+    return {k.name: v for k, v in sample_flop_weights_dict_by_enum.items()}
 
 
 @pytest.mark.parametrize("use_dict_by_str", [True, False])
@@ -66,7 +69,7 @@ def test_get_sorted_flop_types_orders_by_weight_with_nan_last():
 
     assert finite == [FlopType.ADD, FlopType.MUL, FlopType.DIV]  # finite weights first, ascending
     assert ordered[: len(finite)] == finite  # ...and all before the NaN block
-    assert missing == sorted(missing, key=lambda ft: ft.value)  # NaN block is deterministically ordered
+    assert missing == sorted(missing, key=lambda ft: ft.name)  # NaN block is deterministically ordered
 
 
 def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
@@ -79,6 +82,38 @@ def test_flop_weights_serialization(sample_flop_weights_dict_by_str):
     # --- assert ------------------------------------------
     assert result == {"weights": sample_flop_weights_dict_by_str}
     assert not any(isinstance(k, FlopType) for k in result["weights"]), "keys should be pure strings"
+
+
+def test_serialized_json_keys_on_stable_names_not_labels():
+    # --- arrange -----------------------------------------
+    flop_weights = FlopWeights(weights={FlopType.ADD: 1.0, FlopType.MUL: 2.0})
+
+    # --- act ---------------------------------------------
+    on_disk = json.loads(flop_weights.model_dump_json())["weights"]
+
+    # --- assert ------------------------------------------
+    assert on_disk["ADD"] == 1.0  # stable names, not "x+y" / "x*y"
+    assert on_disk["MUL"] == 2.0
+
+
+def test_str_renders_human_labels():
+    # the pretty (__str__/show) path passes a display context so a human sees the readable labels
+    rendered = json.loads(str(FlopWeights(weights={FlopType.ADD: 1.0})))["weights"]
+    assert "x+y" in rendered  # human label...
+    assert "ADD" not in rendered  # ...not the stable name
+
+
+def test_legacy_label_keyed_weights_still_load():
+    # a pre-2.0.0 file keyed weights on the display label; it must keep loading
+    restored = FlopWeights.model_validate_json('{"weights": {"x+y": 1.0, "x*y": 2.0}}')
+    assert restored.weights[FlopType.ADD] == 1.0
+    assert restored.weights[FlopType.MUL] == 2.0
+
+
+def test_unrecognized_weight_key_raises_instead_of_becoming_missing_data():
+    # a renamed/garbage key must fail loudly, not silently degrade into a NaN weight
+    with pytest.raises(ValidationError, match="unrecognized flop-type key"):
+        FlopWeights.model_validate_json('{"weights": {"not-a-flop-type": 1.0}}')
 
 
 @pytest.mark.parametrize("use_dict_by_str", [True, False])

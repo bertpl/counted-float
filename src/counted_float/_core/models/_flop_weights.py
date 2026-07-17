@@ -9,10 +9,12 @@ from pydantic import field_serializer, field_validator
 from counted_float._core.utils import geo_mean, impute_missing_data, round_number
 
 from ._base import JsonReprModel
-from ._flop_type import FlopType
+from ._flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
+
+    from pydantic import FieldSerializationInfo
 
 
 class FlopWeights(JsonReprModel):
@@ -56,7 +58,7 @@ class FlopWeights(JsonReprModel):
             key=lambda ft: (
                 math.isnan(self.weights[ft]),
                 0.0 if math.isnan(self.weights[ft]) else self.weights[ft],
-                ft.value,
+                ft.name,
             ),
         )
 
@@ -65,16 +67,15 @@ class FlopWeights(JsonReprModel):
     # -------------------------------------------------------------------------
     @field_validator("weights", mode="before")
     @classmethod
-    def accept_null_as_missing_weight(cls, v: object) -> object:
-        """Read a JSON `null` back as a missing (NaN) weight.
+    def normalize_keys_and_missing_weights(cls, v: object) -> object:
+        """Resolve serialized keys to members and read JSON `null` back as a missing (NaN) weight.
 
-        A missing weight is NaN in memory and serializes to `null` -- valid JSON, and what a strict
-        reader expects. This maps it back on the way in, so that weights with missing data survive a
-        serialization round-trip; the field type alone accepts only numbers.
+        Legacy files keyed weights on the display label; those are mapped to the stable member,
+        and an unrecognized key raises rather than silently becoming missing data. A missing weight
+        is NaN in memory and serializes to `null` (valid JSON), so `null` is mapped back on the way
+        in -- both so weights with missing data survive a round-trip.
         """
-        if isinstance(v, dict):
-            return {key: (math.nan if weight is None else weight) for key, weight in v.items()}
-        return v
+        return normalize_flop_type_keyed_dict(v, null_to_nan=True)
 
     @field_validator("weights")
     @classmethod
@@ -86,9 +87,11 @@ class FlopWeights(JsonReprModel):
         return v
 
     @field_serializer("weights")
-    def serialize_weights(self, weights: dict[FlopType, float | int]) -> dict[str, float | int]:
-        # make sure we serialize using the enum values as keys
-        return {k.value: v for k, v in weights.items()}
+    def serialize_weights(
+        self, weights: dict[FlopType, float | int], info: FieldSerializationInfo
+    ) -> dict[str, float | int]:
+        # stable names on disk; human labels only under a {"display": True} context
+        return serialize_flop_type_keyed_dict(weights, info)
 
     # -------------------------------------------------------------------------
     #  Custom visualization

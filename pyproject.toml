@@ -15,9 +15,10 @@ dependencies = [
     "numpy>=1.26.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
     "numpy>=2.3.2; python_version >= '3.14'",
-    # pydantic floor is a code requirement (auto model-rebuild of cross-module forward
-    # refs, from 2.6), raised further where a newer CPython needs a newer pydantic-core wheel.
-    "pydantic>=2.6; python_version < '3.13'",
+    # pydantic floor is a code requirement (auto model-rebuild of cross-module forward refs, from
+    # 2.6; serialization `context` for the display-vs-stored key rendering, from 2.7), raised
+    # further where a newer CPython needs a newer pydantic-core wheel.
+    "pydantic>=2.7; python_version < '3.13'",
     "pydantic>=2.9; python_version == '3.13'",
     "pydantic>=2.12; python_version >= '3.14'",
     "psutil>=5.9.4; python_version < '3.13'",

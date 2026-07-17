@@ -12,7 +12,9 @@ class JsonReprModel(BaseModel):
         return str(self)
 
     def __str__(self) -> str:
-        return self.model_dump_json(indent=4)
+        # the display context makes FlopType-keyed dicts render with human labels rather than the
+        # stable on-disk names; models without such a field simply ignore it
+        return self.model_dump_json(indent=4, context={"display": True})
 
     def show(self) -> None:
-        print(self.model_dump_json(indent=4))
+        print(self.model_dump_json(indent=4, context={"display": True}))
