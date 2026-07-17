@@ -9,53 +9,54 @@ the ability to micro-benchmark floating point operations as follows:
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
 
-Running FLOPS benchmarks using counted-float 1.6.0 ...
-(Expected duration: ~179 seconds, plus jit compilation & calibration)
+Running FLOPS benchmarks using counted-float 1.7.0 ...
+(Expected duration: ~183 seconds, plus jit compilation & calibration)
 
-setup     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44/44   0:00:00
-jit       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 44/44   0:00:09
-calibrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10/10   0:00:04
-warmup    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/3     0:00:03
+setup     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45/45   0:00:00
+jit       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45/45   0:00:01
+calibrate ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10/10   0:00:06
+warmup    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3/3     0:00:02
 measure   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 200/200 0:02:56
 
 >>> results.flop_weights().show()
 
 {
-    FlopType.ABS        [abs(x)]        :   0.90086
-    FlopType.MINUS      [-x]            :   0.90128
-    FlopType.SUB        [x-y]           :   0.99924
+    FlopType.COPYSIGN   [copysign(x,y)] :   0.87831
+    FlopType.MINUS      [-x]            :   0.90193
+    FlopType.ABS        [abs(x)]        :   0.90363
+    FlopType.SUB        [x-y]           :   0.99836
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.RND        [round]         :   1.23358
-    FlopType.FMA        [x*y+z]         :   1.49364
-    FlopType.MUL        [x*y]           :   1.49670
-    FlopType.COMP       [x<=y]          :   1.65971
-    FlopType.DIV        [x/y]           :   3.96720
-    FlopType.SQRT       [sqrt(x)]       :   5.08079
-    FlopType.FMOD       [fmod(x,y)]     :   6.24736
-    FlopType.HYPOT      [hypot(x,y)]    :  15.14849
-    FlopType.EXP2       [2^x]           :  16.33827
-    FlopType.EXP        [e^x]           :  16.93635
-    FlopType.LOG10      [log10(x)]      :  17.01702
-    FlopType.LOG        [log(x)]        :  17.34751
-    FlopType.LOG2       [log2(x)]       :  17.73992
-    FlopType.COSH       [cosh(x)]       :  18.84562
-    FlopType.ACOSH      [acosh(x)]      :  19.00542
-    FlopType.SINH       [sinh(x)]       :  20.24303
-    FlopType.EXP10      [10^x]          :  20.32107
-    FlopType.EXPM1      [expm1(x)]      :  20.54583
-    FlopType.CBRT       [cbrt(x)]       :  20.77356
-    FlopType.LOG1P      [log1p(x)]      :  20.99742
-    FlopType.ASINH      [asinh(x)]      :  22.27093
-    FlopType.ACOS       [acos(x)]       :  24.68559
-    FlopType.TANH       [tanh(x)]       :  26.20514
-    FlopType.ASIN       [asin(x)]       :  27.88059
-    FlopType.SIN        [sin(x)]        :  28.08448
-    FlopType.ATAN       [atan(x)]       :  28.12979
-    FlopType.COS        [cos(x)]        :  28.49190
-    FlopType.ATAN2      [atan2(y,x)]    :  29.74369
-    FlopType.TAN        [tan(x)]        :  31.64899
-    FlopType.ATANH      [atanh(x)]      :  31.65176
-    FlopType.POW        [x^y]           :  37.55957
+    FlopType.RND        [round]         :   1.23959
+    FlopType.FMA        [x*y+z]         :   1.49503
+    FlopType.MUL        [x*y]           :   1.49575
+    FlopType.COMP       [x<=y]          :   1.66421
+    FlopType.DIV        [x/y]           :   3.95925
+    FlopType.SQRT       [sqrt(x)]       :   5.06561
+    FlopType.FMOD       [fmod(x,y)]     :   6.21345
+    FlopType.HYPOT      [hypot(x,y)]    :  15.19485
+    FlopType.EXP2       [2^x]           :  16.34974
+    FlopType.LOG10      [log10(x)]      :  17.00526
+    FlopType.EXP        [e^x]           :  17.02853
+    FlopType.LOG        [log(x)]        :  17.29792
+    FlopType.LOG2       [log2(x)]       :  17.75923
+    FlopType.ACOSH      [acosh(x)]      :  18.83182
+    FlopType.COSH       [cosh(x)]       :  18.99199
+    FlopType.EXP10      [10^x]          :  19.91784
+    FlopType.SINH       [sinh(x)]       :  20.33317
+    FlopType.EXPM1      [expm1(x)]      :  20.65683
+    FlopType.CBRT       [cbrt(x)]       :  20.81894
+    FlopType.LOG1P      [log1p(x)]      :  20.92136
+    FlopType.ASINH      [asinh(x)]      :  22.20889
+    FlopType.ACOS       [acos(x)]       :  24.85752
+    FlopType.TANH       [tanh(x)]       :  26.35794
+    FlopType.SIN        [sin(x)]        :  28.04244
+    FlopType.ATAN       [atan(x)]       :  28.10357
+    FlopType.ASIN       [asin(x)]       :  28.17009
+    FlopType.COS        [cos(x)]        :  28.31717
+    FlopType.ATAN2      [atan2(y,x)]    :  29.76497
+    FlopType.TAN        [tan(x)]        :  31.46474
+    FlopType.ATANH      [atanh(x)]      :  31.59515
+    FlopType.POW        [x^y]           :  37.72695
     FlopType.F2I        [float->int]    :       nan
     FlopType.I2F        [int->float]    :       nan
 }
@@ -99,13 +100,13 @@ Micro-benchmarking of a bisection algorithm using
 ------------------------------------------------------------------------------------------------------------------------
 Running CountedFloat benchmark...
 
-float                              : wwwwwwwwwwwwwww...................................   [  12.54 µs ±  3.7% | 50.8K cpu cycles ±  3.7% ]  /  execution
-CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 283.91 µs ±  0.3% | 1.15M cpu cycles ±  0.3% ]  /  execution
+float                              : wwwwwwwwwwwwwww...................................   [  12.35 µs ±  2.4% | 50.1K cpu cycles ±  2.4% ]  /  execution
+CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 290.57 µs ±  0.4% | 1.18M cpu cycles ±  0.4% ]  /  execution
 ------------------------------------------------------------------------------------------------------------------------
 
 CountedFloat Benchmark Results:
-  Bisection using float        :   12.54 µs / execution
-  Bisection using CountedFloat :  283.91 µs / execution
+  Bisection using float        :   12.35 µs / execution
+  Bisection using CountedFloat :  290.57 µs / execution
 
-CountedFloat is 22.6x slower than float
+CountedFloat is 23.5x slower than float
 ```
