@@ -232,6 +232,121 @@ def f_add_hypot(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, 
             out_f[i] = tmp
 
 
+# The arity kernels below hand-roll the overflow-safe scaling a faithful port of math.hypot /
+# math.dist emits -- numba cannot compile the n-ary stdlib forms, and a spike confirmed this scaled
+# form reproduces libm's 2-arg hypot cost to within ~10% (a naive sum-of-squares comes in at ~half,
+# so it would under-price every coordinate). Each coordinate is divided by the largest magnitude
+# before squaring, so no intermediate overflows -- the extra abs/compare/scale per coordinate is
+# the real cost these measure. The dependency runs through the first coordinate; the rest read
+# distinct array elements at small negative offsets (valid for any n >= 8, far below the suite's
+# ~1000). Differencing the arity-2 and arity-8 forms yields the per-extra-coordinate slope.
+@numba.njit(parallel=False)
+def f_add_hypot_scaled2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            c0 = tmp + in_f[i]
+            c1 = in_f[i - 1]
+            m = max(abs(c0), abs(c1))
+            inv = 1.0 / m
+            t0 = c0 * inv
+            t1 = c1 * inv
+            tmp = m * math.sqrt(t0 * t0 + t1 * t1)
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_hypot_scaled8(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            c0 = tmp + in_f[i]
+            m = abs(c0)
+            m = max(m, abs(in_f[i - 1]))
+            m = max(m, abs(in_f[i - 2]))
+            m = max(m, abs(in_f[i - 3]))
+            m = max(m, abs(in_f[i - 4]))
+            m = max(m, abs(in_f[i - 5]))
+            m = max(m, abs(in_f[i - 6]))
+            m = max(m, abs(in_f[i - 7]))
+            inv = 1.0 / m
+            t = c0 * inv
+            s = t * t
+            t = in_f[i - 1] * inv
+            s += t * t
+            t = in_f[i - 2] * inv
+            s += t * t
+            t = in_f[i - 3] * inv
+            s += t * t
+            t = in_f[i - 4] * inv
+            s += t * t
+            t = in_f[i - 5] * inv
+            s += t * t
+            t = in_f[i - 6] * inv
+            s += t * t
+            t = in_f[i - 7] * inv
+            s += t * t
+            tmp = m * math.sqrt(s)
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_dist2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            c0 = (tmp + in_f[i]) - in_f[i - 1]
+            c1 = in_f[i - 1] - in_f[i - 2]
+            m = max(abs(c0), abs(c1))
+            inv = 1.0 / m
+            t0 = c0 * inv
+            t1 = c1 * inv
+            tmp = m * math.sqrt(t0 * t0 + t1 * t1)
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_dist8(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            c0 = (tmp + in_f[i]) - in_f[i - 1]
+            c1 = in_f[i - 1] - in_f[i - 2]
+            c2 = in_f[i - 2] - in_f[i - 3]
+            c3 = in_f[i - 3] - in_f[i - 4]
+            c4 = in_f[i - 4] - in_f[i - 5]
+            c5 = in_f[i - 5] - in_f[i - 6]
+            c6 = in_f[i - 6] - in_f[i - 7]
+            c7 = in_f[i - 7] - in_f[i - 8]
+            m = abs(c0)
+            m = max(m, abs(c1))
+            m = max(m, abs(c2))
+            m = max(m, abs(c3))
+            m = max(m, abs(c4))
+            m = max(m, abs(c5))
+            m = max(m, abs(c6))
+            m = max(m, abs(c7))
+            inv = 1.0 / m
+            t = c0 * inv
+            s = t * t
+            t = c1 * inv
+            s += t * t
+            t = c2 * inv
+            s += t * t
+            t = c3 * inv
+            s += t * t
+            t = c4 * inv
+            s += t * t
+            t = c5 * inv
+            s += t * t
+            t = c6 * inv
+            s += t * t
+            t = c7 * inv
+            s += t * t
+            tmp = m * math.sqrt(s)
+            out_f[i] = tmp
+
+
 @numba.njit(parallel=False)
 def f_add_log1p(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
     for _ in range(n_executions):

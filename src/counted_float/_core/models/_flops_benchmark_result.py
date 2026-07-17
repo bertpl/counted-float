@@ -27,7 +27,7 @@ class FlopsBenchmarkResults(JsonReprModel):
     n_cycles_per_op: dict[FlopsBenchmarkType, Quantiles]  # number of cpu cycles per element in array
     estimated_flop_latencies: dict[FlopType, float]  # number of cpu cycles per flop type
 
-    # --- serialization: same stable-name / legacy-label handling as FlopWeights ---
+    # --- serialization: same stable-name key handling as FlopWeights ---
     @field_validator("estimated_flop_latencies", mode="before")
     @classmethod
     def normalize_latency_keys(cls, v: object) -> object:

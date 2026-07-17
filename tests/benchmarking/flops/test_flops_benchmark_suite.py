@@ -39,6 +39,25 @@ def test_flops_benchmarking_suite_run():
     assert isinstance(result, FlopsBenchmarkResults)
 
 
+@pytest.mark.skipif(not is_numba_installed(), reason="arity-slope values need real numba timings, not the shim")
+def test_suite_measures_the_arity_flop_types():
+    """The hypot/dist arity kernels feed HYPOT_XARG / DIST / DIST_XARG with sane, ordered latencies."""
+    # --- arrange -----------------------------------------
+    suite = FlopsBenchmarkSuite()
+
+    # --- act ---------------------------------------------
+    result = suite.run(array_size=1000, t_slice_target_ms=2.0, n_rounds_measure=15, n_rounds_warmup=2, seed=7)
+    efl = result.estimated_flop_latencies
+
+    # --- assert ------------------------------------------
+    for flop_type in (FlopType.HYPOT_XARG, FlopType.DIST, FlopType.DIST_XARG):
+        assert math.isfinite(efl[flop_type]), flop_type
+        assert efl[flop_type] > 0, flop_type
+    # an extra coordinate is far cheaper than a whole 2-arg call (its squares overlap the sqrt path)
+    assert efl[FlopType.HYPOT_XARG] < efl[FlopType.HYPOT]
+    assert efl[FlopType.DIST_XARG] < efl[FlopType.DIST]
+
+
 # =================================================================================================
 #  FMA kernel fusion
 # =================================================================================================

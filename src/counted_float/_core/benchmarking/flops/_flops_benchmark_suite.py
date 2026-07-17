@@ -141,6 +141,14 @@ class FlopsBenchmarkSuite:
             FlopType.ATAN: q10s[FBT.ADD_ATAN] - q10s[FBT.ADD],
             FlopType.ATAN2: q10s[FBT.ADD_ATAN2] - q10s[FBT.ADD],
             FlopType.HYPOT: q10s[FBT.ADD_HYPOT] - q10s[FBT.ADD],
+            # per-extra-coordinate cost of the overflow-safe (scaled) form: the arity-2 kernel cancels
+            # the shared scaling + sqrt + chained coordinate, so dividing the arity-8 minus arity-2 gap
+            # by the 6 extra coordinates isolates the slope. The scaled arity-2 form reproduces the libm
+            # HYPOT above, so base and slope are one algorithm.
+            FlopType.HYPOT_XARG: (q10s[FBT.ADD_HYPOT_SCALED8] - q10s[FBT.ADD_HYPOT_SCALED2]) / 6,
+            # dist carries its own 2-D offset (it counts a subtraction per coordinate that hypot does not)
+            FlopType.DIST: q10s[FBT.ADD_DIST2] - q10s[FBT.ADD],
+            FlopType.DIST_XARG: (q10s[FBT.ADD_DIST8] - q10s[FBT.ADD_DIST2]) / 6,
             FlopType.LOG1P: q10s[FBT.ADD_LOG1P] - q10s[FBT.ADD],
             FlopType.EXPM1: q10s[FBT.ADD_LOG1P_EXPM1] - q10s[FBT.ADD_LOG1P],
             FlopType.FMOD: q10s[FBT.ADD_FMOD] - q10s[FBT.ADD],
@@ -223,6 +231,18 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_ATAN, kernels.f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_ATAN2, kernels.f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_HYPOT, kernels.f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (
+                    FBT.ADD_HYPOT_SCALED2,
+                    kernels.f_add_hypot_scaled2,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (
+                    FBT.ADD_HYPOT_SCALED8,
+                    kernels.f_add_hypot_scaled8,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (FBT.ADD_DIST2, kernels.f_add_dist2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (FBT.ADD_DIST8, kernels.f_add_dist8, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_LOG1P, kernels.f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (
                     FBT.ADD_LOG1P_EXPM1,

@@ -185,6 +185,18 @@ def test_total_weighted_cost_missing_weight_only_affects_totals_that_used_it():
     assert math.isnan(FlopCounts(ADD=3, COPYSIGN=1).total_weighted_cost(weights=weights))
 
 
+def test_default_weights_with_unpriced_arity_types_still_yield_a_finite_total():
+    """The arity types are NaN-weighted in the default consensus; a zero count of them must stay inert."""
+    # --- arrange -----------------------------------------
+    counts = FlopCounts(ADD=10, MUL=5, HYPOT=2)  # no HYPOT_XARG / DIST / DIST_XARG counted
+
+    # --- act ---------------------------------------------
+    total = counts.total_weighted_cost()  # uses the default consensus, where the arity types are NaN
+
+    # --- assert ------------------------------------------
+    assert math.isfinite(total), "an unpriced but uncounted flop type leaked NaN into the total"
+
+
 def test_flop_counts_total_weighted_cost_custom():
     # --- arrange -----------------------------------------
     flop_counts = FlopCounts(**{attr: random.randint(0, 10_000) for attr in FlopCounts.field_names()})
