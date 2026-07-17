@@ -99,15 +99,11 @@ Two facts worth knowing:
 This makes `CountedFloat` a tool for research and prototyping code, not
 production hot loops.
 
-## numpy: an explicit non-goal
-
-The counting model prices scalar code as a compiled port would execute it;
-counting numpy operations is deliberately out of scope. `np.float64` scalars
-work and count correctly on either side of an operator (they are plain C
-doubles subclassing `float`), but mixing `CountedFloat` with numpy arrays or
-non-double numpy scalars raises `TypeError` rather than silently returning
-uncounted results. Details in
-[Known limitations](https://counted-float.readthedocs.io/en/latest/known_limitations/).
+**numpy counting is an explicit non-goal**: `np.float64` scalars work and count
+correctly, but mixing `CountedFloat` with numpy arrays raises `TypeError` rather
+than silently returning uncounted results — see
+[Known limitations](https://counted-float.readthedocs.io/en/latest/known_limitations/)
+for the full boundary.
 
 ## Documentation
 
