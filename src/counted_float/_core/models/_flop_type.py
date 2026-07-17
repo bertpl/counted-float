@@ -52,6 +52,7 @@ class FlopType(StrEnum):
     ATAN = "ATAN"
     ATAN2 = "ATAN2"
     HYPOT = "HYPOT"
+    HYPOT_XARG = "HYPOT_XARG"
     EXPM1 = "EXPM1"
     LOG1P = "LOG1P"
     FMOD = "FMOD"
@@ -61,6 +62,8 @@ class FlopType(StrEnum):
     ASINH = "ASINH"
     ACOSH = "ACOSH"
     ATANH = "ATANH"
+    DIST = "DIST"
+    DIST_XARG = "DIST_XARG"
 
     @property
     def label(self) -> str:
@@ -121,6 +124,7 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ATAN: "atan(x)",
     FlopType.ATAN2: "atan2(y,x)",
     FlopType.HYPOT: "hypot(x,y)",
+    FlopType.HYPOT_XARG: "hypot(+arg)",
     FlopType.EXPM1: "expm1(x)",
     FlopType.LOG1P: "log1p(x)",
     FlopType.FMOD: "fmod(x,y)",
@@ -130,6 +134,8 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ASINH: "asinh(x)",
     FlopType.ACOSH: "acosh(x)",
     FlopType.ATANH: "atanh(x)",
+    FlopType.DIST: "dist(p,q)",
+    FlopType.DIST_XARG: "dist(+arg)",
 }
 
 

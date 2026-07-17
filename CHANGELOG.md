@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- the flops benchmark now measures how `math.hypot` / `math.dist` latency scales with the number of coordinates, via new `HYPOT_XARG`, `DIST`, and `DIST_XARG` flop types
+
 ### Changed
 
 - flop-weight JSON files now key on stable identifiers instead of display labels; an unrecognized key now raises instead of silently degrading to a missing weight. Pre-2.0.0 label-keyed files (including your own saved benchmark results) no longer load and must be regenerated

@@ -53,9 +53,11 @@ def test_every_rounding_mode_is_served_from_the_stored_aggregate(rounding_mode):
     if rounding_mode is not None:
         expected = expected.round(mode=rounding_mode)
     for flop_type in FlopType:
-        assert weights.weights[flop_type] == pytest.approx(
-            expected.weights[flop_type], abs=DRIFT_TOLERANCE, rel=DRIFT_TOLERANCE
-        )
+        served, want = weights.weights[flop_type], expected.weights[flop_type]
+        if math.isnan(want):
+            assert math.isnan(served), f"{flop_type.name}: served a value where the aggregate is missing"
+        else:
+            assert served == pytest.approx(want, abs=DRIFT_TOLERANCE, rel=DRIFT_TOLERANCE)
 
 
 def test_an_unprecomputed_filter_still_derives():

@@ -26,6 +26,15 @@ class FlopsBenchmarkType(StrEnum):
     ADD_ATAN = "add_atan"
     ADD_ATAN2 = "add_atan2"
     ADD_HYPOT = "add_hypot"
+    # overflow-safe (scaled) hypot at two arities: their difference gives the per-extra-coordinate
+    # slope (HYPOT_XARG); the 2-arg libm ADD_HYPOT above stays the HYPOT base weight (the scaled
+    # arity-2 form reproduces it to within ~10%, so base and slope share one algorithm)
+    ADD_HYPOT_SCALED2 = "add_hypot_scaled2"
+    ADD_HYPOT_SCALED8 = "add_hypot_scaled8"
+    # overflow-safe (scaled) Euclidean dist at two arities: DIST base weight from arity 2,
+    # DIST_XARG slope from the pair
+    ADD_DIST2 = "add_dist2"
+    ADD_DIST8 = "add_dist8"
     ADD_LOG1P = "add_log1p"
     ADD_LOG1P_EXPM1 = "add_log1p_expm1"
     ADD_FMOD = "add_fmod"
