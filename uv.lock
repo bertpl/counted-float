@@ -250,7 +250,7 @@ requires-dist = [
     { name = "psutil", marker = "python_full_version < '3.13'", specifier = ">=5.9.4" },
     { name = "psutil", marker = "python_full_version >= '3.13'", specifier = ">=7.1.2" },
     { name = "py-cpuinfo", specifier = ">=9.0.0" },
-    { name = "pydantic", marker = "python_full_version < '3.13'", specifier = ">=2.6" },
+    { name = "pydantic", marker = "python_full_version < '3.13'", specifier = ">=2.7" },
     { name = "pydantic", marker = "python_full_version == '3.13.*'", specifier = ">=2.9" },
     { name = "pydantic", marker = "python_full_version >= '3.14'", specifier = ">=2.12" },
     { name = "rich", specifier = ">=13.0.0" },

@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from pydantic import field_serializer, field_validator
+
 from ._base import JsonReprModel
-from ._flop_type import FlopType
+from ._flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
 from ._flop_weights import FlopWeights
 from ._flops_benchmark_meta_data import BenchmarkSettings, SystemInfo
 from ._flops_benchmark_type import FlopsBenchmarkType
 from ._micro_benchmark_result import Quantiles
+
+if TYPE_CHECKING:
+    from pydantic import FieldSerializationInfo
 
 
 # =================================================================================================
@@ -19,6 +26,18 @@ class FlopsBenchmarkResults(JsonReprModel):
     # --- results ---
     n_cycles_per_op: dict[FlopsBenchmarkType, Quantiles]  # number of cpu cycles per element in array
     estimated_flop_latencies: dict[FlopType, float]  # number of cpu cycles per flop type
+
+    # --- serialization: same stable-name / legacy-label handling as FlopWeights ---
+    @field_validator("estimated_flop_latencies", mode="before")
+    @classmethod
+    def normalize_latency_keys(cls, v: object) -> object:
+        """Resolve serialized keys to members; legacy label keys map back, unknown keys raise."""
+        return normalize_flop_type_keyed_dict(v, null_to_nan=False)
+
+    @field_serializer("estimated_flop_latencies")
+    def serialize_latencies(self, latencies: dict[FlopType, float], info: FieldSerializationInfo) -> dict[str, float]:
+        # stable names on disk; human labels only under a {"display": True} context
+        return serialize_flop_type_keyed_dict(latencies, info)
 
     # --- helpers ---
     def flop_weights(self) -> FlopWeights:

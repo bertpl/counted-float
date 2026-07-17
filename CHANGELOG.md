@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- flop-weight JSON files now key on stable identifiers instead of display labels; pre-2.0.0 label-keyed files (including your own saved benchmark results) still load, but an unrecognized key now raises instead of silently degrading to a missing weight
+
 ### Deprecated
 
 ### Removed
