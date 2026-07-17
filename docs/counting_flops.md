@@ -142,17 +142,30 @@ things that would otherwise look inconsistent:
 Flop weights are **latency** weights: each one is measured from a
 dependent-chain benchmark (and, where available, vendor latency tables), so a
 weighted total prices every operation as if it waited for the previous one to
-finish. That is exact for dependency-chained code — recursive filters and
-scalar iterations, the kind of algorithm this library exists for, where each
-step needs the previous step's result. For code with instruction-level
+finish. That is a good match for dependency-chained code — recursive filters
+and scalar iterations, the kind of algorithm this library exists for, where
+each step needs the previous step's result. For code with instruction-level
 parallelism (independent multiplies in a wide expression, the coordinate
 subtractions inside `math.dist`, an n-ary `math.hypot`), real hardware
-overlaps work that the weighted sum prices sequentially — so weighted costs
-are upper-ish estimates there. This is deliberate: modeling the overlap would
-take a scheduling model (ports, dependency graphs, throughput-vs-latency per
-instruction), not a per-operation weight table, and a function must never
-count differently from its own hand-written expansion. Counts themselves are
-unaffected; this nuance applies only to the weighted totals.
+overlaps work that the weighted sum prices sequentially — read weighted
+totals for such structures as upper-ish estimates rather than expected
+latencies. The current model prices a function identically to its
+hand-written expansion and does not model the overlap; how much of that
+internal parallelism a weight *should* capture is a modeling choice, not a
+law of the counting model. Counts themselves are unaffected; this nuance
+applies only to the weighted totals.
+
+Weights are also **normalized**: every cost is expressed relative to the ADD
+latency of the CPUs it was derived from, so ADD always carries weight 1.0.
+Two architectures executing some operation at identical absolute latency can
+therefore assign it different weights when their ADD latencies differ —
+weighted costs compare operations and algorithms *within* one weight set,
+not individual flop latencies *across* architectures. This holds at every
+aggregation scope: whether you use a single CPU's weights, an architecture
+aggregate (`arm`, `x86`), or the overall consensus, ADD is 1.0 and every
+weight is comparable to the other weights in that same set — what changes
+with the scope is which (group of) architectures the relative costs
+represent.
 
 Not everything is counted — see [Known limitations](known_limitations.md) for
 what falls outside the counting model (e.g. `numpy` operations).
