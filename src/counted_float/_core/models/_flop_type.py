@@ -73,24 +73,17 @@ class FlopType(StrEnum):
 
     @classmethod
     def from_serialized_key(cls, key: str) -> FlopType:
-        """Resolve a serialized weight-dict key to a member.
-
-        Accepts the current stable name and, for backward compatibility, the legacy display
-        label a pre-2.0.0 file used as its key.
+        """Resolve a serialized weight-dict key (a stable member name) to its member.
 
         Raises:
-            ValueError: If the key matches neither a current name nor a legacy label -- a loud
-                failure, rather than silently degrading into a missing (NaN) weight.
+            ValueError: If the key is not a FlopType name -- a loud failure, rather than
+                silently degrading into a missing (NaN) weight. Pre-2.0.0 files keyed on
+                display labels; those are no longer readable and must be regenerated.
         """
         try:
             return cls[key]
         except KeyError:
-            member = _LABEL_TO_MEMBER.get(key)
-            if member is None:
-                raise ValueError(
-                    f"unrecognized flop-type key {key!r}: not a FlopType name, nor a known legacy label"
-                ) from None
-            return member
+            raise ValueError(f"unrecognized flop-type key {key!r}: not a FlopType name") from None
 
 
 # =================================================================================================
@@ -138,17 +131,14 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ACOSH: "acosh(x)",
     FlopType.ATANH: "atanh(x)",
 }
-# legacy files keyed weight dicts on the display label; map those back to members on read
-_LABEL_TO_MEMBER: dict[str, FlopType] = {label: flop_type for flop_type, label in _LABELS.items()}
 
 
 def normalize_flop_type_keyed_dict(v: object, *, null_to_nan: bool) -> object:
     """Resolve the string keys of a serialized FlopType-keyed dict to members.
 
     Shared by the ``mode="before"`` validators of every model that stores a ``dict[FlopType, ...]``.
-    Legacy label keys map to their member; unrecognized keys raise (via ``from_serialized_key``);
-    already-resolved ``FlopType`` keys pass through. Non-dict input is returned untouched so
-    pydantic can raise its own type error.
+    Unrecognized keys raise (via ``from_serialized_key``); already-resolved ``FlopType`` keys pass
+    through. Non-dict input is returned untouched so pydantic can raise its own type error.
 
     Args:
         v: The raw validator input -- a dict with string (or already-resolved member) keys when it

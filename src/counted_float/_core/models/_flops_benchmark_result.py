@@ -31,7 +31,7 @@ class FlopsBenchmarkResults(JsonReprModel):
     @field_validator("estimated_flop_latencies", mode="before")
     @classmethod
     def normalize_latency_keys(cls, v: object) -> object:
-        """Resolve serialized keys to members; legacy label keys map back, unknown keys raise."""
+        """Resolve serialized keys (stable member names) to members; unknown keys raise."""
         return normalize_flop_type_keyed_dict(v, null_to_nan=False)
 
     @field_serializer("estimated_flop_latencies")

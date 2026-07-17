@@ -70,8 +70,7 @@ class FlopWeights(JsonReprModel):
     def normalize_keys_and_missing_weights(cls, v: object) -> object:
         """Resolve serialized keys to members and read JSON `null` back as a missing (NaN) weight.
 
-        Legacy files keyed weights on the display label; those are mapped to the stable member,
-        and an unrecognized key raises rather than silently becoming missing data. A missing weight
+        An unrecognized key raises rather than silently becoming missing data. A missing weight
         is NaN in memory and serializes to `null` (valid JSON), so `null` is mapped back on the way
         in -- both so weights with missing data survive a round-trip.
         """
