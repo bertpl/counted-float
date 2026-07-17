@@ -99,6 +99,12 @@ Two facts worth knowing:
 This makes `CountedFloat` a tool for research and prototyping code, not
 production hot loops.
 
+**numpy counting is an explicit non-goal**: `np.float64` (`float` subclass) scalars
+work and count correctly, but mixing `CountedFloat` with numpy arrays raises `TypeError` rather
+than silently returning uncounted results — see
+[Known limitations](https://counted-float.readthedocs.io/en/latest/known_limitations/)
+for the full boundary.
+
 ## Documentation
 
 The [documentation site](https://counted-float.readthedocs.io/) covers the rest:
