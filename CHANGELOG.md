@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
-- `counted_float.benchmarking` is no longer re-exported from the package root; import it directly. `import counted_float` is roughly 1.7x faster as a result, and no longer loads numba.
+- `counted_float.benchmarking` is no longer re-exported from the package root; import it directly. `import counted_float` is roughly 1.7x faster as a result, and no longer loads numba eagerly.
 
 ### Fixed
 
