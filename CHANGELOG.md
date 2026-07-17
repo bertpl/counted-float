@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `math.degrees`, `math.radians`, `math.dist`, `math.fsum` and `math.copysign` are now counted; `copysign` gets its own benchmarked flop type
+
 ### Changed
 
 - mixing `CountedFloat` with numpy arrays (or non-double numpy scalars) now raises `TypeError` instead of silently returning uncounted results; `np.float64` scalar operations now count correctly from either side. numpy counting is documented as an explicit non-goal.
@@ -21,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `counted_float.benchmarking` is no longer re-exported from the package root; import it directly. `import counted_float` is roughly 1.7x faster as a result, and no longer loads numba eagerly.
 
 ### Fixed
+
+- `math.hypot` with other than 2 arguments is now counted per its dimension instead of always as the 2-argument form
+- `math.prod` no longer counts an extra multiply for its implicit start value
 
 ### Security
 

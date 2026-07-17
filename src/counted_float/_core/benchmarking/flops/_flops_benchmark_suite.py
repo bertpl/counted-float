@@ -116,6 +116,7 @@ class FlopsBenchmarkSuite:
         estimated_flop_latencies = {
             FlopType.ABS: q10s[FBT.ADD_ABS] - q10s[FBT.ADD],
             FlopType.MINUS: q10s[FBT.ADD_MINUS] - q10s[FBT.ADD],
+            FlopType.COPYSIGN: q10s[FBT.ADD_COPYSIGN] - q10s[FBT.ADD],
             FlopType.COMP: q10s[FBT.LTE_ADDSUB] - addsub_avg,
             FlopType.RND: q10s[FBT.ADD_ROUND] - q10s[FBT.ADD],
             FlopType.ADD: q10s[FBT.ADD_ADD] - q10s[FBT.ADD],
@@ -194,6 +195,11 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD, kernels.f_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_MINUS, kernels.f_add_minus, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_ABS, kernels.f_add_abs, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                (
+                    FBT.ADD_COPYSIGN,
+                    kernels.f_add_copysign,
+                    ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16),
+                ),
                 (FBT.ADD_ADD, kernels.f_add_add, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_SUB, kernels.f_add_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_ROUND, kernels.f_add_round, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),

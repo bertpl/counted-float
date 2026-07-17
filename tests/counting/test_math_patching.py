@@ -80,6 +80,15 @@ def test_math_module_patched_inside_context_only(fname):
         ("asinh", (0.5,)),
         ("acosh", (2.0,)),
         ("atanh", (0.5,)),
+        ("degrees", (2.0,)),
+        ("radians", (90.0,)),
+        ("dist", ((1.0, 2.0), (4.0, 6.0))),
+        ("prod", ([2.0, 3.0, 4.0],)),
+        ("prod", ([2, 3, 4],)),  # int-exactness of the original is preserved
+        ("fsum", ([0.1] * 10,)),
+        ("copysign", (3.0, -2.0)),
+        ("hypot", (1.0, 2.0, 2.0)),
+        ("hypot", (-3.0,)),
     ],
 )
 def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
@@ -386,6 +395,140 @@ def test_hyperbolic_math_ops_error_counts_nothing(global_counter, fname, arg):
     with pytest.raises((ValueError, OverflowError)):
         getattr(math, fname)(arg)
     assert global_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Patched math functions - decomposed ops (degrees/radians/dist/prod/fsum/copysign/hypot arity)
+# =================================================================================================
+@pytest.mark.parametrize("fname", ["degrees", "radians"])
+def test_degrees_radians_count_one_mul(global_counter, fname):
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(CountedFloat(1.0))
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert global_counter.MUL == 1
+    assert global_counter.total_count() == 1
+
+
+@pytest.mark.parametrize("n_dims", [1, 2, 3, 5])
+def test_dist_counts_the_naive_euclidean_decomposition(global_counter, n_dims):
+    # --- arrange -----------------------------------------
+    p = [CountedFloat(float(i)) for i in range(n_dims)]
+    q = [float(2 * i + 1) for i in range(n_dims)]
+
+    # --- act ---------------------------------------------
+    result = math.dist(p, q)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert n_dims == global_counter.SUB
+    assert n_dims == global_counter.MUL
+    assert n_dims - 1 == global_counter.ADD
+    assert global_counter.SQRT == 1
+
+
+def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(global_counter):
+    # --- act / assert ------------------------------------
+    result = math.dist(iter([CountedFloat(0.0), CountedFloat(0.0)]), iter([3.0, 4.0]))
+    assert float(result) == 5.0
+    assert isinstance(result, CountedFloat)
+
+    with pytest.raises(ValueError):  # noqa: PT011 -- stdlib wording ("both points must have the same dimension")
+        math.dist([CountedFloat(1.0)], [1.0, 2.0])
+    assert global_counter.SQRT == 1  # only the successful call above counted anything
+
+
+@pytest.mark.parametrize("n_values", [1, 2, 4])
+def test_prod_counts_the_multiply_chain(global_counter, n_values):
+    # --- arrange -----------------------------------------
+    values = [CountedFloat(float(i + 2)) for i in range(n_values)]
+
+    # --- act ---------------------------------------------
+    result = math.prod(values)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert float(result) == math.prod(float(v) for v in values)
+    assert n_values - 1 == global_counter.MUL, "the identity start folds away: n-1 multiplies"
+    assert global_counter.total_count() == n_values - 1
+
+
+def test_prod_with_an_explicit_start_counts_its_multiply(global_counter):
+    # --- act ---------------------------------------------
+    result = math.prod([CountedFloat(2.0), CountedFloat(3.0)], start=CountedFloat(5.0))
+
+    # --- assert ------------------------------------------
+    assert float(result) == 30.0
+    assert isinstance(result, CountedFloat)
+    assert global_counter.MUL == 2  # start*v1, then *v2
+
+
+def test_prod_without_counted_values_keeps_stdlib_behavior(global_counter):
+    # --- act / assert ------------------------------------
+    result = math.prod([2, 3, 4])
+    assert result == 24
+    assert isinstance(result, int)  # int-exactness of the original is preserved
+    assert global_counter.total_count() == 0
+
+
+@pytest.mark.parametrize("n_values", [1, 2, 5])
+def test_fsum_counts_the_addition_chain(global_counter, n_values):
+    # --- arrange -----------------------------------------
+    values = [CountedFloat(0.1)] * n_values
+
+    # --- act ---------------------------------------------
+    result = math.fsum(values)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert n_values - 1 == global_counter.ADD
+    assert global_counter.total_count() == n_values - 1
+
+
+def test_fsum_keeps_its_exactness(global_counter):
+    # the whole point of fsum: 0.1 summed ten times is exactly 1.0 (naive addition is not)
+    # --- act ---------------------------------------------
+    result = math.fsum([CountedFloat(0.1)] * 10)
+
+    # --- assert ------------------------------------------
+    assert float(result) == 1.0
+
+
+def test_copysign_counts_its_own_flop_type(global_counter):
+    # --- act ---------------------------------------------
+    r_left = math.copysign(CountedFloat(3.0), -2.0)
+    r_right = math.copysign(3.0, CountedFloat(-2.0))
+
+    # --- assert ------------------------------------------
+    assert float(r_left) == float(r_right) == -3.0
+    assert isinstance(r_left, CountedFloat)
+    assert isinstance(r_right, CountedFloat)
+    assert global_counter.COPYSIGN == 2
+    assert global_counter.total_count() == 2
+
+
+@pytest.mark.parametrize(
+    ("n_args", "expected"),
+    [
+        (1, {"ABS": 1}),  # |x|: a port emits fabs
+        (2, {"HYPOT": 1}),  # the libm hypot(x, y) call, as benchmarked
+        (3, {"MUL": 3, "ADD": 2, "SQRT": 1}),  # no n-ary hypot in C: a port writes the loop
+        (5, {"MUL": 5, "ADD": 4, "SQRT": 1}),
+    ],
+)
+def test_hypot_counts_per_arity(global_counter, n_args, expected):
+    # --- arrange -----------------------------------------
+    args = tuple(CountedFloat(1.0) for _ in range(n_args))
+
+    # --- act ---------------------------------------------
+    result = math.hypot(*args)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    for flop_type_name, count in expected.items():
+        assert getattr(global_counter, flop_type_name) == count
+    assert global_counter.total_count() == sum(expected.values())
 
 
 # =================================================================================================

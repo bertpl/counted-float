@@ -21,9 +21,13 @@ The patching contract (mirroring unittest.mock.patch / pytest monkeypatch conven
 from __future__ import annotations
 
 import math
+from typing import TYPE_CHECKING
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
 from ._global_counter import GLOBAL_COUNTER
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _math_fma_unavailable(x: float, y: float, z: float) -> float:
@@ -68,6 +72,12 @@ original_math_tanh = math.tanh
 original_math_asinh = math.asinh
 original_math_acosh = math.acosh
 original_math_atanh = math.atanh
+original_math_degrees = math.degrees
+original_math_radians = math.radians
+original_math_dist = math.dist
+original_math_prod = math.prod
+original_math_fsum = math.fsum
+original_math_copysign = math.copysign
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -273,10 +283,34 @@ def math_atan2(y: float, x: float) -> float | CountedFloat:
 
 
 def math_hypot(*coordinates: float) -> float | CountedFloat:
-    if any(isinstance(c, CountedFloat) for c in coordinates):
+    """Patch math.hypot: stdlib contract (n-ary since Python 3.8), counted per arity.
+
+    Each arity models the code a compiled port would emit — the same port-fidelity rule as
+    math_dist's naive decomposition:
+      - 2 coordinates  -> HYPOT: the libm hypot(x, y) call the source explicitly made (and what
+                          the HYPOT weight is benchmarked from)
+      - 3+ coordinates -> n MUL + (n-1) ADD + SQRT: C has no n-ary hypot, so a port writes the
+                          loop
+      - 1 coordinate   -> ABS: it computes |x|, and a port emits fabs
+    Accepted asymmetry, deliberate: 2-D dist counts SUB + naive norm while hypot(dx, dy) counts
+    a single HYPOT — different prices for the same mathematics, because they model different
+    emitted code.
+    """
+    if not any(isinstance(c, CountedFloat) for c in coordinates):
+        return original_math_hypot(*coordinates)
+    result = original_math_hypot(*coordinates)
+    n = len(coordinates)
+    if n == 1:
+        GLOBAL_COUNTER.incr_abs()
+    elif n == 2:
         GLOBAL_COUNTER.incr_hypot()
-        return float.__new__(CountedFloat, original_math_hypot(*coordinates))
-    return original_math_hypot(*coordinates)
+    else:
+        for _ in range(n):
+            GLOBAL_COUNTER.incr_mul()
+        for _ in range(n - 1):
+            GLOBAL_COUNTER.incr_add()
+        GLOBAL_COUNTER.incr_sqrt()
+    return float.__new__(CountedFloat, result)
 
 
 def math_expm1(x: float) -> float | CountedFloat:
@@ -356,6 +390,93 @@ def math_atanh(x: float) -> float | CountedFloat:
     return original_math_atanh(x)
 
 
+def math_degrees(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_mul()  # x * (180/pi), the constant folded at compile time
+        return float.__new__(CountedFloat, original_math_degrees(x))
+    return original_math_degrees(x)
+
+
+def math_radians(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        GLOBAL_COUNTER.incr_mul()  # x * (pi/180), the constant folded at compile time
+        return float.__new__(CountedFloat, original_math_radians(x))
+    return original_math_radians(x)
+
+
+def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
+    """Patch math.dist: stdlib contract, counted as the naive Euclidean loop a port would write.
+
+    Counted as n SUB + n MUL + (n-1) ADD + SQRT for n-dimensional inputs — deliberately not
+    routed through HYPOT: a compiled port of n-dimensional distance is a loop plus sqrt, not a
+    hypot call. Iterator inputs are materialized up front (the stdlib accepts them too), so the
+    coordinates can be inspected after computing the result.
+    """
+    p_seq = list(p)
+    q_seq = list(q)
+    # computed first: raises per stdlib contract (unequal lengths, non-numbers) before counting
+    result = original_math_dist(p_seq, q_seq)
+    if not any(isinstance(c, CountedFloat) for c in (*p_seq, *q_seq)):
+        return result
+    n = len(p_seq)
+    for _ in range(n):
+        GLOBAL_COUNTER.incr_sub()
+        GLOBAL_COUNTER.incr_mul()
+    for _ in range(n - 1):
+        GLOBAL_COUNTER.incr_add()
+    GLOBAL_COUNTER.incr_sqrt()
+    return float.__new__(CountedFloat, result)
+
+
+def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
+    """Patch math.prod: stdlib contract, counted as the multiply chain it computes.
+
+    The product is folded left-to-right with real multiplications, so counting and contagion
+    emerge from the operations themselves — mixed inputs count exactly what writing the chain
+    out would. A start equal to 1 (the default) is the multiplicative identity: a compiled port
+    folds it away, so it opens the chain without a counted multiply — unless it is itself a
+    CountedFloat, a runtime value whose multiply is real. Inputs without any CountedFloat are
+    delegated to the original wholesale (preserving its int-exactness and fast paths).
+    """
+    values = list(iterable)
+    if not isinstance(start, CountedFloat) and not any(isinstance(v, CountedFloat) for v in values):
+        return original_math_prod(values, start=start)
+    if isinstance(start, CountedFloat) or start != 1:
+        acc, remaining = start, values
+    elif values:
+        acc, remaining = values[0], values[1:]
+    else:
+        return start
+    for value in remaining:
+        acc = acc * value
+    return acc
+
+
+def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
+    """Patch math.fsum: stdlib contract (Shewchuk exact summation), counted as (n-1) ADD.
+
+    Counts the mathematical reduction, knowingly under-counting fsum's compensation machinery
+    (a semantics-preserving compiled port would emit compensated summation at ~3-4 flops per
+    element). The compensation multiplier would be a speculative constant; a prototype that
+    wants compensation costed can write Kahan out in operators and have it counted exactly.
+    The value is computed by the original, so fsum's exactness is untouched.
+    """
+    values = list(seq)
+    result = original_math_fsum(values)
+    if not any(isinstance(v, CountedFloat) for v in values):
+        return result
+    for _ in range(len(values) - 1):
+        GLOBAL_COUNTER.incr_add()
+    return float.__new__(CountedFloat, result)
+
+
+def math_copysign(x: float, y: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        GLOBAL_COUNTER.incr_copysign()
+        return float.__new__(CountedFloat, original_math_copysign(x, y))
+    return original_math_copysign(x, y)
+
+
 # -------------------------------------------------------------------------
 #  applying / removing the patches
 # -------------------------------------------------------------------------
@@ -386,6 +507,12 @@ _PATCHES: dict[str, object] = {
     "asinh": math_asinh,
     "acosh": math_acosh,
     "atanh": math_atanh,
+    "degrees": math_degrees,
+    "radians": math_radians,
+    "dist": math_dist,
+    "prod": math_prod,
+    "fsum": math_fsum,
+    "copysign": math_copysign,
 }
 if hasattr(math, "fma"):
     # Python 3.13+ only. Registering conditionally is what keeps every loop over _PATCHES --
@@ -413,6 +540,8 @@ def _capture_originals() -> None:
     global original_math_hypot, original_math_expm1, original_math_log1p, original_math_fmod, original_math_fabs
     global original_math_sinh, original_math_cosh, original_math_tanh
     global original_math_asinh, original_math_acosh, original_math_atanh
+    global original_math_degrees, original_math_radians, original_math_dist
+    global original_math_prod, original_math_fsum, original_math_copysign
 
     original_math_sqrt = math.sqrt
     original_math_cbrt = math.cbrt
@@ -441,6 +570,12 @@ def _capture_originals() -> None:
     original_math_asinh = math.asinh
     original_math_acosh = math.acosh
     original_math_atanh = math.atanh
+    original_math_degrees = math.degrees
+    original_math_radians = math.radians
+    original_math_dist = math.dist
+    original_math_prod = math.prod
+    original_math_fsum = math.fsum
+    original_math_copysign = math.copysign
 
     _saved_originals.clear()
     for name in _PATCHES:

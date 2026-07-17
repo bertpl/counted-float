@@ -1,4 +1,5 @@
 import dataclasses
+import math
 import random
 
 from counted_float import FlopWeights
@@ -30,27 +31,28 @@ def test_flop_counts_construction():
     expected_values = {
         "ABS": [0, 0, 1],
         "MINUS": [0, 0, 2],
-        "COMP": [0, 0, 3],
-        "RND": [0, 0, 4],
-        "F2I": [0, 0, 5],
-        "I2F": [0, 0, 6],
-        "ADD": [0, 5, 7],
-        "SUB": [0, 0, 8],
-        "MUL": [0, 0, 9],
-        "DIV": [0, 0, 10],
-        "FMA": [0, 0, 11],
-        "SQRT": [0, 6, 12],
-        "CBRT": [0, 0, 13],
-        "EXP": [0, 0, 14],
-        "EXP2": [0, 0, 15],
-        "EXP10": [0, 0, 16],
-        "LOG": [0, 0, 17],
-        "LOG2": [0, 0, 18],
-        "LOG10": [0, 0, 19],
-        "POW": [0, 0, 20],
-        "SIN": [0, 0, 21],
-        "COS": [0, 0, 22],
-        "TAN": [0, 3, 23],
+        "COPYSIGN": [0, 0, 3],
+        "COMP": [0, 0, 4],
+        "RND": [0, 0, 5],
+        "F2I": [0, 0, 6],
+        "I2F": [0, 0, 7],
+        "ADD": [0, 5, 8],
+        "SUB": [0, 0, 9],
+        "MUL": [0, 0, 10],
+        "DIV": [0, 0, 11],
+        "FMA": [0, 0, 12],
+        "SQRT": [0, 6, 13],
+        "CBRT": [0, 0, 14],
+        "EXP": [0, 0, 15],
+        "EXP2": [0, 0, 16],
+        "EXP10": [0, 0, 17],
+        "LOG": [0, 0, 18],
+        "LOG2": [0, 0, 19],
+        "LOG10": [0, 0, 20],
+        "POW": [0, 0, 21],
+        "SIN": [0, 0, 22],
+        "COS": [0, 0, 23],
+        "TAN": [0, 3, 24],
     }
 
     # --- assert ------------------------------------------
@@ -150,11 +152,20 @@ def test_flop_counts_reset():
 
 def test_flop_counts_total_weighted_cost_default():
     # --- arrange -----------------------------------------
-    flop_counts = FlopCounts(**{attr: random.randint(0, 10_000) for attr in FlopCounts.field_names()})
+    # types without a built-in weight yet (NaN, e.g. newly added and not re-measured) stay at
+    # zero here; the NaN-propagation contract has its own test below
     default_weights = get_active_flop_weights()
+    flop_counts = FlopCounts(
+        **{
+            flop_type.name: (0 if math.isnan(default_weights.weights[flop_type]) else random.randint(0, 10_000))
+            for flop_type in FlopType
+        }
+    )
 
     expected_total_cost = sum(
-        getattr(flop_counts, flop_type.name) * default_weights.weights[flop_type] for flop_type in FlopType
+        getattr(flop_counts, flop_type.name) * default_weights.weights[flop_type]
+        for flop_type in FlopType
+        if getattr(flop_counts, flop_type.name)
     )
 
     # --- act ---------------------------------------------
@@ -162,6 +173,16 @@ def test_flop_counts_total_weighted_cost_default():
 
     # --- assert ------------------------------------------
     assert total_weighted_cost == expected_total_cost
+
+
+def test_total_weighted_cost_missing_weight_only_affects_totals_that_used_it():
+    """A NaN (missing) weight must not poison totals whose counts never touched that flop type."""
+    # --- arrange -----------------------------------------
+    weights = FlopWeights(weights={ft: (math.nan if ft is FlopType.COPYSIGN else 1.0) for ft in FlopType})
+
+    # --- act / assert ------------------------------------
+    assert FlopCounts(ADD=3).total_weighted_cost(weights=weights) == 3.0
+    assert math.isnan(FlopCounts(ADD=3, COPYSIGN=1).total_weighted_cost(weights=weights))
 
 
 def test_flop_counts_total_weighted_cost_custom():
