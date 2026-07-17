@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 1.7.0 (2026-07-17)
 
 ### Added
 
@@ -17,8 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CountedFloat` no longer accepts attribute assignment or weak references, matching plain `float` exactly.
 - refreshed the built-in flop-weight dataset with re-collected measurements, adding `COPYSIGN` weights and two new CPU sources
 
-### Deprecated
-
 ### Removed
 
 - `counted_float.benchmarking` is no longer re-exported from the package root; import it directly. `import counted_float` is roughly 1.7x faster as a result, and no longer loads numba eagerly.
@@ -27,9 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `math.hypot` with other than 2 arguments is now counted per its dimension instead of always as the 2-argument form
 - `math.prod` no longer counts an extra multiply for its implicit start value
-
-### Security
-
 ## 1.6.3 (2026-07-16)
 
 ### Fixed
