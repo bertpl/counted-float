@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - mixing `CountedFloat` with numpy arrays (or non-double numpy scalars) now raises `TypeError` instead of silently returning uncounted results; `np.float64` scalar operations now count correctly from either side. numpy counting is documented as an explicit non-goal.
 - `CountedFloat` no longer accepts attribute assignment or weak references, matching plain `float` exactly.
+- refreshed the built-in flop-weight dataset with re-collected measurements, adding `COPYSIGN` weights and two new CPU sources
 
 ### Deprecated
 
