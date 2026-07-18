@@ -21,7 +21,7 @@ def thread_counter() -> ThreadLocalFlopCounter:
 
 
 # ==================================================================================================
-#  Facade parity (ported from the process-global counter's test suite)
+#  Facade behavior
 # ==================================================================================================
 def test_thread_counter_fixture(thread_counter):
     # --- assert 1 ----------------------------------------
