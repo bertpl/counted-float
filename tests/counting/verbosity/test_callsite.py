@@ -16,11 +16,13 @@ def test_resolve_callsite_reports_the_calling_line():
 
 def test_resolve_callsite_skips_frames_inside_the_package():
     # --- arrange -----------------------------------------
-    # a frame that claims to live in the package, as every counting-machinery frame does
+    # a frame that claims to live in the package, as every counting-machinery frame does.  The
+    # angle-bracketed file name keeps coverage from tracing this fabricated code as if it were a
+    # source file of its own (it has none on disk).
     package_frame = compile(
         "from counted_float._core.counting.verbosity._callsite import resolve_callsite\n"
         "callsite = resolve_callsite()\n",
-        "_counted_float.py",
+        "<fabricated counted_float frame>",
         "exec",
     )
     namespace = {"__name__": "counted_float._core.counting._counted_float"}
