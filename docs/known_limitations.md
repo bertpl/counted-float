@@ -48,10 +48,27 @@ counted region.
   `float`, in either order. Numerical algorithms should use
   `float`/`CountedFloat` values throughout, rather than relying on which side an
   operand happens to sit.
-- counting state is process-global and **not thread-safe or async-safe**:
-  concurrent counted computations interfere with each other's counts (and on
-  free-threaded Python builds concurrent increments can be lost), so run one
-  counted algorithm at a time
+- counting state is **per OS thread** (created lazily, freed with the thread):
+  a `FlopCountingContext` measures only the thread that opened it, is confined
+  to that thread while open (cross-thread use raises `RuntimeError`), and
+  `PauseFlopCounting` pauses the calling thread only. To measure a
+  multi-threaded computation, open one context per worker and sum the results:
+
+  ```python
+  def worker(job):
+      with FlopCountingContext() as ctx:
+          run(job)
+      return ctx.flop_counts()
+
+  with ThreadPoolExecutor() as ex:
+      total = sum(ex.map(worker, jobs), FlopCounts())
+  ```
+
+  All asyncio tasks running on one thread share that thread's counter — there
+  is no per-task isolation. Note that while *any* thread has a context open,
+  all threads see the patched `math.*` functions (patching is inherently
+  process-wide); plain-float calls still take the fast path, and counts always
+  land in the thread performing the operation
 - dict/set membership of `CountedFloat` keys inflates `COMP`: hash-bucket
   equality checks count as comparisons. This is consistent with the model
   (those comparisons really execute) but can surprise when a dict is used as

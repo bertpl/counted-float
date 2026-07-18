@@ -81,15 +81,18 @@ operator dispatch and result wrapping. Measured on an Apple M3 Max (measure your
 own machine with `counted_float benchmark-counted-float`):
 
 - **native float ops** (`+`, `-`, `*`, `/`, comparisons): roughly **20–40×**
-  slower than plain `float` per operation, environment-dependent (~23× on the M3
+  slower than plain `float` per operation, environment-dependent (~21× on the M3
   Max bisection benchmark);
 - **patched `math.*` calls** (`math.sqrt`, `math.exp`, …): a roughly fixed
   **~0.1 µs** of overhead per call — about **6–7×** for cheap functions like
   `sqrt`, and a smaller multiple for costlier ones (the fixed overhead is a
   smaller share of a slower call).
 
-Two facts worth knowing:
+Three facts worth knowing:
 
+- counting state is **per-thread**: a `FlopCountingContext` measures only the
+  thread that opened it (open one context per worker thread to measure
+  multi-threaded code, and sum the results);
 - the overhead is inherent and `PauseFlopCounting` does **not** reduce it
   (the instrumented operators still execute; only count registration stops) —
   the escape hatch for hot uncounted regions is converting back via
