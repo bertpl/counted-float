@@ -91,7 +91,7 @@ def test_math_module_patched_inside_context_only(fname):
         ("hypot", (-3.0,)),
     ],
 )
-def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fname, args):
+def test_patched_math_functions_match_stdlib_for_plain_floats(thread_counter, fname, args):
     # --- arrange -----------------------------------------
     patched = getattr(math, fname)  # fixture keeps a context active, so this is the replacement
     original = STDLIB_MATH_FUNCTIONS[fname]
@@ -107,7 +107,7 @@ def test_patched_math_functions_match_stdlib_for_plain_floats(global_counter, fn
     assert not isinstance(result, CountedFloat)
 
 
-def test_math_log_supports_two_arg_form(global_counter):
+def test_math_log_supports_two_arg_form(thread_counter):
     # regression test: patched math.log used to raise TypeError for the 2-arg form
     # --- act ---------------------------------------------
     result = math.log(8, 2)
@@ -117,14 +117,14 @@ def test_math_log_supports_two_arg_form(global_counter):
     assert not isinstance(result, CountedFloat)
 
 
-def test_math_pow_raises_domain_error_for_negative_base(global_counter):
+def test_math_pow_raises_domain_error_for_negative_base(thread_counter):
     # regression test: patched math.pow used to return a complex number instead of raising
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.pow(-8.0, 1 / 3)
 
 
-def test_math_pow_returns_float_not_int(global_counter):
+def test_math_pow_returns_float_not_int(thread_counter):
     # --- act ---------------------------------------------
     result = math.pow(2, 3)
 
@@ -136,7 +136,7 @@ def test_math_pow_returns_float_not_int(global_counter):
 # =================================================================================================
 #  Patched math functions - CountedFloat behavior of the log/pow code paths
 # =================================================================================================
-def test_math_log_int_base_2_counts_log2(global_counter):
+def test_math_log_int_base_2_counts_log2(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
 
@@ -145,13 +145,13 @@ def test_math_log_int_base_2_counts_log2(global_counter):
 
     # --- assert ------------------------------------------
     # count checked first: comparing a CountedFloat below counts a COMP itself
-    assert global_counter.total_count() == 1
-    assert global_counter.LOG2 == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.LOG2 == 1
     assert result == 3.0
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_int_base_10_counts_log10(global_counter):
+def test_math_log_int_base_10_counts_log10(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(100.0)
 
@@ -159,13 +159,13 @@ def test_math_log_int_base_10_counts_log10(global_counter):
     result = math.log(cf, 10)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.LOG10 == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.LOG10 == 1
     assert result == 2.0
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_other_int_base_counts_log_mul(global_counter):
+def test_math_log_other_int_base_counts_log_mul(thread_counter):
     # a hardcoded int base folds to log(x) * (1/log(base)) in a compiled port
     # --- arrange -----------------------------------------
     cf = CountedFloat(27.0)
@@ -174,14 +174,14 @@ def test_math_log_other_int_base_counts_log_mul(global_counter):
     result = math.log(cf, 3)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 2
-    assert global_counter.LOG == 1
-    assert global_counter.MUL == 1
+    assert thread_counter.total_count() == 2
+    assert thread_counter.LOG == 1
+    assert thread_counter.MUL == 1
     assert result == pytest.approx(3.0)
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_constant_float_base_folds_like_int(global_counter):
+def test_math_log_constant_float_base_folds_like_int(thread_counter):
     # constants fold by value: a plain-float base is as precomputable as an int one, so a
     # compiled port emits log(x) * (1/log(base)) — LOG + MUL, not a runtime DIV
     # --- arrange -----------------------------------------
@@ -189,26 +189,26 @@ def test_math_log_constant_float_base_folds_like_int(global_counter):
 
     # --- act & assert ------------------------------------
     result = math.log(cf, 3.0)
-    assert global_counter.total_count() == 2
-    assert global_counter.LOG == 1
-    assert global_counter.MUL == 1
+    assert thread_counter.total_count() == 2
+    assert thread_counter.LOG == 1
+    assert thread_counter.MUL == 1
     assert isinstance(result, CountedFloat)
 
     # special constant values fold all the way to the dedicated instruction
-    global_counter.reset()
+    thread_counter.reset()
     result = math.log(cf, 2.0)
-    assert global_counter.total_count() == 1
-    assert global_counter.LOG2 == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.LOG2 == 1
     assert isinstance(result, CountedFloat)
 
-    global_counter.reset()
+    thread_counter.reset()
     result = math.log(cf, 10.0)
-    assert global_counter.total_count() == 1
-    assert global_counter.LOG10 == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.LOG10 == 1
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_counted_base_counts_runtime_division(global_counter):
+def test_math_log_counted_base_counts_runtime_division(thread_counter):
     # a CountedFloat base is genuinely runtime: a port computes log(x)/log(base)
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
@@ -216,21 +216,21 @@ def test_math_log_counted_base_counts_runtime_division(global_counter):
     # --- act & assert ------------------------------------
     # plain x, counted base: LOG (of the base) + DIV
     result = math.log(16.0, CountedFloat(2.0))
-    assert global_counter.total_count() == 2
-    assert global_counter.LOG == 1
-    assert global_counter.DIV == 1
+    assert thread_counter.total_count() == 2
+    assert thread_counter.LOG == 1
+    assert thread_counter.DIV == 1
     assert isinstance(result, CountedFloat)
 
     # both counted: 2 x LOG + DIV
-    global_counter.reset()
+    thread_counter.reset()
     result = math.log(cf, CountedFloat(2.0))
-    assert global_counter.total_count() == 3
-    assert global_counter.LOG == 2
-    assert global_counter.DIV == 1
+    assert thread_counter.total_count() == 3
+    assert thread_counter.LOG == 2
+    assert thread_counter.DIV == 1
     assert isinstance(result, CountedFloat)
 
 
-def test_math_log_one_arg_form_still_counts(global_counter):
+def test_math_log_one_arg_form_still_counts(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(8.0)
 
@@ -239,37 +239,37 @@ def test_math_log_one_arg_form_still_counts(global_counter):
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert global_counter.total_count() == 1
-    assert global_counter.LOG == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.LOG == 1
 
 
-def test_math_log_two_arg_form_plain_floats_count_nothing(global_counter):
+def test_math_log_two_arg_form_plain_floats_count_nothing(thread_counter):
     # --- act ---------------------------------------------
     result = math.log(8.0, 2.0)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
     assert not isinstance(result, CountedFloat)
 
 
-def test_math_log_domain_error_counts_nothing(global_counter):
+def test_math_log_domain_error_counts_nothing(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.log(cf, 2)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_math_pow_domain_error_counts_nothing(global_counter):
+def test_math_pow_domain_error_counts_nothing(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(-8.0)
 
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.pow(cf, 1 / 3)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 @pytest.mark.parametrize(
@@ -287,13 +287,13 @@ def test_math_pow_domain_error_counts_nothing(global_counter):
         ("expm1", CountedFloat(710.0)),  # overflow (OverflowError)
     ],
 )
-def test_single_arg_math_ops_error_counts_nothing(global_counter, fname, arg):
+def test_single_arg_math_ops_error_counts_nothing(thread_counter, fname, arg):
     # regression: these all counted BEFORE the underlying call and leaked a phantom flop when it
     # raised; the compute-first contract now leaves nothing counted (matching the log-base/pow paths)
     # --- act & assert ------------------------------------
     with pytest.raises((ValueError, OverflowError)):
         getattr(math, fname)(arg)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 # =================================================================================================
@@ -313,7 +313,7 @@ def test_single_arg_math_ops_error_counts_nothing(global_counter, fname, arg):
         ("fabs", 1, "ABS"),  # fabs reuses the existing ABS type, not a new one
     ],
 )
-def test_new_math_ops_count_and_are_contagious(global_counter, fname, n_args, flop_type_name):
+def test_new_math_ops_count_and_are_contagious(thread_counter, fname, n_args, flop_type_name):
     # --- arrange -----------------------------------------
     args = tuple(CountedFloat(0.5) for _ in range(n_args))
 
@@ -322,12 +322,12 @@ def test_new_math_ops_count_and_are_contagious(global_counter, fname, n_args, fl
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert getattr(global_counter, flop_type_name) == 1
-    assert global_counter.total_count() == 1
+    assert getattr(thread_counter, flop_type_name) == 1
+    assert thread_counter.total_count() == 1
 
 
 @pytest.mark.parametrize("fname", ["atan2", "hypot", "fmod"])
-def test_new_binary_math_ops_count_with_either_operand_counted(global_counter, fname):
+def test_new_binary_math_ops_count_with_either_operand_counted(thread_counter, fname):
     # counted (and contagious) when EITHER operand is a CountedFloat, like the existing binary ops
     # --- act ---------------------------------------------
     r_left = getattr(math, fname)(CountedFloat(3.0), 2.0)
@@ -336,7 +336,7 @@ def test_new_binary_math_ops_count_with_either_operand_counted(global_counter, f
     # --- assert ------------------------------------------
     assert isinstance(r_left, CountedFloat)
     assert isinstance(r_right, CountedFloat)
-    assert global_counter.total_count() == 2
+    assert thread_counter.total_count() == 2
 
 
 @pytest.mark.parametrize(
@@ -348,12 +348,12 @@ def test_new_binary_math_ops_count_with_either_operand_counted(global_counter, f
         ("fmod", (CountedFloat(5.0), CountedFloat(0.0))),  # fmod by zero
     ],
 )
-def test_new_math_ops_domain_error_counts_nothing(global_counter, fname, args):
+def test_new_math_ops_domain_error_counts_nothing(thread_counter, fname, args):
     # compute-first contract: a raised domain error leaves nothing counted
     # --- act & assert ------------------------------------
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         getattr(math, fname)(*args)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 # =================================================================================================
@@ -370,14 +370,14 @@ def test_new_math_ops_domain_error_counts_nothing(global_counter, fname, args):
         ("atanh", 0.5, "ATANH"),  # atanh domain: |x| < 1
     ],
 )
-def test_hyperbolic_math_ops_count_and_are_contagious(global_counter, fname, arg, flop_type_name):
+def test_hyperbolic_math_ops_count_and_are_contagious(thread_counter, fname, arg, flop_type_name):
     # --- act ---------------------------------------------
     result = getattr(math, fname)(CountedFloat(arg))
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert getattr(global_counter, flop_type_name) == 1
-    assert global_counter.total_count() == 1
+    assert getattr(thread_counter, flop_type_name) == 1
+    assert thread_counter.total_count() == 1
 
 
 @pytest.mark.parametrize(
@@ -389,30 +389,30 @@ def test_hyperbolic_math_ops_count_and_are_contagious(global_counter, fname, arg
         ("cosh", CountedFloat(1e6)),  # overflow
     ],
 )
-def test_hyperbolic_math_ops_error_counts_nothing(global_counter, fname, arg):
+def test_hyperbolic_math_ops_error_counts_nothing(thread_counter, fname, arg):
     # compute-first contract: a domain/overflow error leaves nothing counted
     # --- act & assert ------------------------------------
     with pytest.raises((ValueError, OverflowError)):
         getattr(math, fname)(arg)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 # =================================================================================================
 #  Patched math functions - decomposed ops (degrees/radians/dist/prod/fsum/copysign/hypot arity)
 # =================================================================================================
 @pytest.mark.parametrize("fname", ["degrees", "radians"])
-def test_degrees_radians_count_one_mul(global_counter, fname):
+def test_degrees_radians_count_one_mul(thread_counter, fname):
     # --- act ---------------------------------------------
     result = getattr(math, fname)(CountedFloat(1.0))
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert global_counter.MUL == 1
-    assert global_counter.total_count() == 1
+    assert thread_counter.MUL == 1
+    assert thread_counter.total_count() == 1
 
 
 @pytest.mark.parametrize("n_dims", [1, 2, 3, 5])
-def test_dist_counts_the_naive_euclidean_decomposition(global_counter, n_dims):
+def test_dist_counts_the_naive_euclidean_decomposition(thread_counter, n_dims):
     # --- arrange -----------------------------------------
     p = [CountedFloat(float(i)) for i in range(n_dims)]
     q = [float(2 * i + 1) for i in range(n_dims)]
@@ -422,13 +422,13 @@ def test_dist_counts_the_naive_euclidean_decomposition(global_counter, n_dims):
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert n_dims == global_counter.SUB
-    assert n_dims == global_counter.MUL
-    assert n_dims - 1 == global_counter.ADD
-    assert global_counter.SQRT == 1
+    assert n_dims == thread_counter.SUB
+    assert n_dims == thread_counter.MUL
+    assert n_dims - 1 == thread_counter.ADD
+    assert thread_counter.SQRT == 1
 
 
-def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(global_counter):
+def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(thread_counter):
     # --- act / assert ------------------------------------
     result = math.dist(iter([CountedFloat(0.0), CountedFloat(0.0)]), iter([3.0, 4.0]))
     assert float(result) == 5.0
@@ -436,11 +436,11 @@ def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(global_counte
 
     with pytest.raises(ValueError):  # noqa: PT011 -- stdlib wording ("both points must have the same dimension")
         math.dist([CountedFloat(1.0)], [1.0, 2.0])
-    assert global_counter.SQRT == 1  # only the successful call above counted anything
+    assert thread_counter.SQRT == 1  # only the successful call above counted anything
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 4])
-def test_prod_counts_the_multiply_chain(global_counter, n_values):
+def test_prod_counts_the_multiply_chain(thread_counter, n_values):
     # --- arrange -----------------------------------------
     values = [CountedFloat(float(i + 2)) for i in range(n_values)]
 
@@ -450,30 +450,30 @@ def test_prod_counts_the_multiply_chain(global_counter, n_values):
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
     assert float(result) == math.prod(float(v) for v in values)
-    assert n_values - 1 == global_counter.MUL, "the identity start folds away: n-1 multiplies"
-    assert global_counter.total_count() == n_values - 1
+    assert n_values - 1 == thread_counter.MUL, "the identity start folds away: n-1 multiplies"
+    assert thread_counter.total_count() == n_values - 1
 
 
-def test_prod_with_an_explicit_start_counts_its_multiply(global_counter):
+def test_prod_with_an_explicit_start_counts_its_multiply(thread_counter):
     # --- act ---------------------------------------------
     result = math.prod([CountedFloat(2.0), CountedFloat(3.0)], start=CountedFloat(5.0))
 
     # --- assert ------------------------------------------
     assert float(result) == 30.0
     assert isinstance(result, CountedFloat)
-    assert global_counter.MUL == 2  # start*v1, then *v2
+    assert thread_counter.MUL == 2  # start*v1, then *v2
 
 
-def test_prod_without_counted_values_keeps_stdlib_behavior(global_counter):
+def test_prod_without_counted_values_keeps_stdlib_behavior(thread_counter):
     # --- act / assert ------------------------------------
     result = math.prod([2, 3, 4])
     assert result == 24
     assert isinstance(result, int)  # int-exactness of the original is preserved
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 5])
-def test_fsum_counts_the_addition_chain(global_counter, n_values):
+def test_fsum_counts_the_addition_chain(thread_counter, n_values):
     # --- arrange -----------------------------------------
     values = [CountedFloat(0.1)] * n_values
 
@@ -482,11 +482,11 @@ def test_fsum_counts_the_addition_chain(global_counter, n_values):
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert n_values - 1 == global_counter.ADD
-    assert global_counter.total_count() == n_values - 1
+    assert n_values - 1 == thread_counter.ADD
+    assert thread_counter.total_count() == n_values - 1
 
 
-def test_fsum_keeps_its_exactness(global_counter):
+def test_fsum_keeps_its_exactness(thread_counter):
     # the whole point of fsum: 0.1 summed ten times is exactly 1.0 (naive addition is not)
     # --- act ---------------------------------------------
     result = math.fsum([CountedFloat(0.1)] * 10)
@@ -495,7 +495,7 @@ def test_fsum_keeps_its_exactness(global_counter):
     assert float(result) == 1.0
 
 
-def test_copysign_counts_its_own_flop_type(global_counter):
+def test_copysign_counts_its_own_flop_type(thread_counter):
     # --- act ---------------------------------------------
     r_left = math.copysign(CountedFloat(3.0), -2.0)
     r_right = math.copysign(3.0, CountedFloat(-2.0))
@@ -504,8 +504,8 @@ def test_copysign_counts_its_own_flop_type(global_counter):
     assert float(r_left) == float(r_right) == -3.0
     assert isinstance(r_left, CountedFloat)
     assert isinstance(r_right, CountedFloat)
-    assert global_counter.COPYSIGN == 2
-    assert global_counter.total_count() == 2
+    assert thread_counter.COPYSIGN == 2
+    assert thread_counter.total_count() == 2
 
 
 @pytest.mark.parametrize(
@@ -517,7 +517,7 @@ def test_copysign_counts_its_own_flop_type(global_counter):
         (5, {"MUL": 5, "ADD": 4, "SQRT": 1}),
     ],
 )
-def test_hypot_counts_per_arity(global_counter, n_args, expected):
+def test_hypot_counts_per_arity(thread_counter, n_args, expected):
     # --- arrange -----------------------------------------
     args = tuple(CountedFloat(1.0) for _ in range(n_args))
 
@@ -527,8 +527,8 @@ def test_hypot_counts_per_arity(global_counter, n_args, expected):
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
     for flop_type_name, count in expected.items():
-        assert getattr(global_counter, flop_type_name) == count
-    assert global_counter.total_count() == sum(expected.values())
+        assert getattr(thread_counter, flop_type_name) == count
+    assert thread_counter.total_count() == sum(expected.values())
 
 
 # =================================================================================================
@@ -601,21 +601,21 @@ def test_math_fma_registered_only_where_available():
     ],
     ids=["all_runtime", "constant_y_and_z", "constant_x", "constant_z", "int_constants"],
 )
-def test_math_fma_counts_one_fma(global_counter, x: float, y: float, z: float):
+def test_math_fma_counts_one_fma(thread_counter, x: float, y: float, z: float):
     """One fused instruction whenever a runtime multiplicand is involved; constants add no cost of their own."""
     # --- act ---------------------------------------------
     result = math.fma(x, y, z)
 
     # --- assert ------------------------------------------
     # count checked first: comparing a CountedFloat below counts a COMP itself
-    assert global_counter.total_count() == 1
-    assert global_counter.FMA == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.FMA == 1
     assert result == 10.0
     assert isinstance(result, CountedFloat)
 
 
 @requires_fma
-def test_math_fma_with_constant_multiplicands_counts_add(global_counter):
+def test_math_fma_with_constant_multiplicands_counts_add(thread_counter):
     """Two constant multiplicands fold to one constant, leaving a compiled port with a bare add."""
     # --- arrange -----------------------------------------
     cf = CountedFloat(4.0)
@@ -624,27 +624,27 @@ def test_math_fma_with_constant_multiplicands_counts_add(global_counter):
     result = math.fma(2.0, 3.0, cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.ADD == 1
-    assert global_counter.FMA == 0
+    assert thread_counter.total_count() == 1
+    assert thread_counter.ADD == 1
+    assert thread_counter.FMA == 0
     assert result == 10.0
     assert isinstance(result, CountedFloat)
 
 
 @requires_fma
-def test_math_fma_without_counted_operands_counts_nothing(global_counter):
+def test_math_fma_without_counted_operands_counts_nothing(thread_counter):
     """Every operand constant: the expression folds entirely and contagion does not start."""
     # --- act ---------------------------------------------
     result = math.fma(2.0, 3.0, 4.0)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
     assert result == 10.0
     assert type(result) is float
 
 
 @requires_fma
-def test_math_fma_domain_error_counts_nothing(global_counter):
+def test_math_fma_domain_error_counts_nothing(thread_counter):
     """The stdlib's error surfaces before anything is counted."""
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.0)
@@ -653,7 +653,7 @@ def test_math_fma_domain_error_counts_nothing(global_counter):
     with pytest.raises(ValueError):  # noqa: PT011 -- domain-error message wording varies across CPython versions
         math.fma(math.inf, 0.0, cf)
 
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 def test_unbalanced_remove_math_patches_does_not_clobber_a_later_patch():

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import SupportsIndex
+from typing import TYPE_CHECKING, SupportsIndex
 
-from ._global_counter import GLOBAL_COUNTER
+from ._thread_counter import _TLS, _create_thread_state
+
+if TYPE_CHECKING:
+    from counted_float._core.models import FlopCounts
 
 
 def count_pow_with_constant_exponent(exponent: float) -> None:
@@ -21,25 +24,28 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
     value = float(exponent)
     if value in (0.0, 1.0):
         return
+    try:
+        cnt: FlopCounts = _TLS.flop_counts
+    except AttributeError:  # first counted op on this thread
+        cnt: FlopCounts = _create_thread_state()
     if value == 0.5:
-        GLOBAL_COUNTER.incr_sqrt()
+        cnt.SQRT += 1
         return
     if value == -0.5:
-        GLOBAL_COUNTER.incr_sqrt()
-        GLOBAL_COUNTER.incr_div()
+        cnt.SQRT += 1
+        cnt.DIV += 1
         return
     if value == -1.0:
-        GLOBAL_COUNTER.incr_div()
+        cnt.DIV += 1
         return
     if value.is_integer() and 2 <= abs(value) <= 16:
         n = abs(int(value))
         n_muls = (n.bit_length() - 1) + bin(n).count("1") - 1  # square-and-multiply cost
-        for _ in range(n_muls):
-            GLOBAL_COUNTER.incr_mul()
+        cnt.MUL += n_muls
         if value < 0:
-            GLOBAL_COUNTER.incr_div()
+            cnt.DIV += 1
         return
-    GLOBAL_COUNTER.incr_pow()
+    cnt.POW += 1
 
 
 def count_pow_with_constant_base(base: float) -> None:
@@ -48,12 +54,16 @@ def count_pow_with_constant_base(base: float) -> None:
     Constants are folded by value: base 2 -> EXP2, base 10 -> EXP10, anything else -> POW.
     """
     value = float(base)
+    try:
+        cnt: FlopCounts = _TLS.flop_counts
+    except AttributeError:  # first counted op on this thread
+        cnt: FlopCounts = _create_thread_state()
     if value == 2.0:
-        GLOBAL_COUNTER.incr_exp2()
+        cnt.EXP2 += 1
     elif value == 10.0:
-        GLOBAL_COUNTER.incr_exp10()
+        cnt.EXP10 += 1
     else:
-        GLOBAL_COUNTER.incr_pow()
+        cnt.POW += 1
 
 
 class CountedFloat(float):
@@ -76,7 +86,10 @@ class CountedFloat(float):
     # -------------------------------------------------------------------------
     def __new__(cls, value: float | int) -> CountedFloat:
         if isinstance(value, int):
-            GLOBAL_COUNTER.incr_i2f()
+            try:
+                _TLS.flop_counts.I2F += 1
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().I2F += 1
         return super().__new__(cls, float(value))
 
     def __str__(self) -> str:
@@ -93,12 +106,18 @@ class CountedFloat(float):
     # -------------------------------------------------------------------------
     def __abs__(self) -> CountedFloat:
         """abs(x)."""
-        GLOBAL_COUNTER.incr_abs()
+        try:
+            _TLS.flop_counts.ABS += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().ABS += 1
         return float.__new__(CountedFloat, float.__abs__(self))
 
     def __neg__(self) -> CountedFloat:
         """-x."""
-        GLOBAL_COUNTER.incr_minus()
+        try:
+            _TLS.flop_counts.MINUS += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().MINUS += 1
         return float.__new__(CountedFloat, float.__neg__(self))
 
     def __pos__(self) -> CountedFloat:
@@ -114,7 +133,10 @@ class CountedFloat(float):
         result = float.__eq__(self, other)
         if result is NotImplemented:
             return NotImplemented  # let Python try the reflected operation; nothing was computed, so nothing counts
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __ne__(self, other: object) -> bool:
@@ -122,7 +144,10 @@ class CountedFloat(float):
         result = float.__ne__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __lt__(self, other: float) -> bool:
@@ -130,7 +155,10 @@ class CountedFloat(float):
         result = float.__lt__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __le__(self, other: float) -> bool:
@@ -138,7 +166,10 @@ class CountedFloat(float):
         result = float.__le__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __gt__(self, other: float) -> bool:
@@ -146,7 +177,10 @@ class CountedFloat(float):
         result = float.__gt__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __ge__(self, other: float) -> bool:
@@ -154,7 +188,10 @@ class CountedFloat(float):
         result = float.__ge__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_comp()
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
         return result
 
     def __round__(  # ty: ignore[invalid-method-override] -- float's stub narrows return per overload; this is the union
@@ -167,30 +204,48 @@ class CountedFloat(float):
         n > 0    -> round to n decimal places and return float.
         """
         if n is None:
-            GLOBAL_COUNTER.incr_f2i()  # will round and return int
+            try:
+                _TLS.flop_counts.F2I += 1  # will round and return int
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().F2I += 1
         else:
-            GLOBAL_COUNTER.incr_rnd()  # will round and return float
+            try:
+                _TLS.flop_counts.RND += 1  # will round and return float
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().RND += 1
 
         return float.__round__(self, n)
 
     def __floor__(self) -> int:
         """math.floor(x)."""
-        GLOBAL_COUNTER.incr_f2i()
+        try:
+            _TLS.flop_counts.F2I += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().F2I += 1
         return float.__floor__(self)
 
     def __ceil__(self) -> int:
         """math.ceil(x)."""
-        GLOBAL_COUNTER.incr_f2i()
+        try:
+            _TLS.flop_counts.F2I += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().F2I += 1
         return float.__ceil__(self)
 
     def __int__(self) -> int:
         """int(x)."""
-        GLOBAL_COUNTER.incr_f2i()
+        try:
+            _TLS.flop_counts.F2I += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().F2I += 1
         return float.__int__(self)
 
     def __trunc__(self) -> int:
         """int(x)."""
-        GLOBAL_COUNTER.incr_f2i()
+        try:
+            _TLS.flop_counts.F2I += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().F2I += 1
         return float.__trunc__(self)
 
     def __add__(self, other: float) -> CountedFloat:
@@ -198,7 +253,10 @@ class CountedFloat(float):
         result = float.__add__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_add()
+        try:
+            _TLS.flop_counts.ADD += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().ADD += 1
         return float.__new__(CountedFloat, result)
 
     def __radd__(self, other: float) -> CountedFloat:
@@ -206,7 +264,10 @@ class CountedFloat(float):
         result = float.__radd__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_add()
+        try:
+            _TLS.flop_counts.ADD += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().ADD += 1
         return float.__new__(CountedFloat, result)
 
     def __sub__(self, other: float) -> CountedFloat:
@@ -214,7 +275,10 @@ class CountedFloat(float):
         result = float.__sub__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            _TLS.flop_counts.SUB += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __rsub__(self, other: float) -> CountedFloat:
@@ -222,7 +286,10 @@ class CountedFloat(float):
         result = float.__rsub__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            _TLS.flop_counts.SUB += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __mul__(self, other: float) -> CountedFloat:
@@ -230,7 +297,10 @@ class CountedFloat(float):
         result = float.__mul__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_mul()
+        try:
+            _TLS.flop_counts.MUL += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, result)
 
     def __rmul__(self, other: float) -> CountedFloat:
@@ -238,7 +308,10 @@ class CountedFloat(float):
         result = float.__rmul__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_mul()
+        try:
+            _TLS.flop_counts.MUL += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, result)
 
     def __truediv__(self, other: float) -> CountedFloat:
@@ -246,7 +319,10 @@ class CountedFloat(float):
         result = float.__truediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
+        try:
+            _TLS.flop_counts.DIV += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().DIV += 1
         return float.__new__(CountedFloat, result)
 
     def __rtruediv__(self, other: float) -> CountedFloat:
@@ -254,7 +330,10 @@ class CountedFloat(float):
         result = float.__rtruediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
+        try:
+            _TLS.flop_counts.DIV += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().DIV += 1
         return float.__new__(CountedFloat, result)
 
     def __floordiv__(self, other: float) -> CountedFloat:
@@ -266,8 +345,12 @@ class CountedFloat(float):
         result = float.__floordiv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
         return float.__new__(CountedFloat, result)
 
     def __rfloordiv__(self, other: float) -> CountedFloat:
@@ -275,8 +358,12 @@ class CountedFloat(float):
         result = float.__rfloordiv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
         return float.__new__(CountedFloat, result)
 
     def __mod__(self, other: float) -> CountedFloat:
@@ -288,10 +375,14 @@ class CountedFloat(float):
         result = float.__mod__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
-        GLOBAL_COUNTER.incr_mul()
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __rmod__(self, other: float) -> CountedFloat:
@@ -299,10 +390,14 @@ class CountedFloat(float):
         result = float.__rmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
-        GLOBAL_COUNTER.incr_mul()
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __divmod__(self, other: float) -> tuple[CountedFloat, CountedFloat]:
@@ -314,10 +409,14 @@ class CountedFloat(float):
         result = float.__divmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
-        GLOBAL_COUNTER.incr_mul()
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         quotient, remainder = result
         return float.__new__(CountedFloat, quotient), float.__new__(CountedFloat, remainder)
 
@@ -326,10 +425,14 @@ class CountedFloat(float):
         result = float.__rdivmod__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        GLOBAL_COUNTER.incr_div()
-        GLOBAL_COUNTER.incr_rnd()
-        GLOBAL_COUNTER.incr_mul()
-        GLOBAL_COUNTER.incr_sub()
+        try:
+            cnt: FlopCounts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         quotient, remainder = result
         return float.__new__(CountedFloat, quotient), float.__new__(CountedFloat, remainder)
 
@@ -351,7 +454,10 @@ class CountedFloat(float):
         if not isinstance(result, float):
             return result
         if isinstance(other, CountedFloat):
-            GLOBAL_COUNTER.incr_pow()  # genuinely runtime exponent
+            try:
+                _TLS.flop_counts.POW += 1  # genuinely runtime exponent
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().POW += 1
         else:
             count_pow_with_constant_exponent(other)
         return float.__new__(CountedFloat, result)
@@ -374,7 +480,10 @@ class CountedFloat(float):
         if not isinstance(result, float):
             return result
         if isinstance(other, CountedFloat):
-            GLOBAL_COUNTER.incr_pow()  # genuinely runtime base
+            try:
+                _TLS.flop_counts.POW += 1  # genuinely runtime base
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().POW += 1
         else:
             count_pow_with_constant_base(other)
         return float.__new__(CountedFloat, result)
