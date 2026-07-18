@@ -6,20 +6,6 @@ from counted_float._core.counting._thread_counter import THREAD_COUNTER, ThreadL
 from counted_float._core.models import FlopCounts
 
 
-@pytest.fixture
-def thread_counter() -> ThreadLocalFlopCounter:
-    """Fixture giving access to the calling thread's flop counter, reset BEFORE & AFTER each test."""
-
-    # prepare
-    THREAD_COUNTER.reset()
-
-    # yield
-    yield THREAD_COUNTER
-
-    # cleanup
-    THREAD_COUNTER.reset()
-
-
 # ==================================================================================================
 #  Facade parity (ported from the process-global counter's test suite)
 # ==================================================================================================

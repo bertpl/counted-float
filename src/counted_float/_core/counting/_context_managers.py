@@ -6,8 +6,8 @@ Also provides .pause() and .resume() methods to control flop counting.
 from types import TracebackType
 from typing import Self
 
-from counted_float._core.counting._global_counter import GLOBAL_COUNTER
 from counted_float._core.counting._math_patching import apply_math_patches, remove_math_patches
+from counted_float._core.counting._thread_counter import THREAD_COUNTER
 from counted_float._core.models import FlopCounts
 
 
@@ -20,7 +20,7 @@ class FlopCountingContext:
     Only floating-point operations of CountedFloat objects are counted.  So make sure all math uses this type.
 
     LIMITATIONS:
-        - this context manager is not thread-safe
+        - counting state is per-thread: this context measures only the thread it runs in
         - not _all_ floating-point operations are counted, see the docs for more details.
     """
 
@@ -32,7 +32,7 @@ class FlopCountingContext:
         # When inactive:
         #   - current count == self.__cnt_subtotal
         # When active:
-        #   - current count == GLOBAL_COUNTER - self.__cnt_start_snapshot
+        #   - current count == THREAD_COUNTER - self.__cnt_start_snapshot
         self.__active: bool = False
 
         # Number of with-blocks currently open on this instance.  Only the outermost one drives
@@ -52,7 +52,7 @@ class FlopCountingContext:
     def flop_counts(self) -> FlopCounts:
         """Returns current total flop count for this context manager.  See constructor comments for details."""
         if self.__active:
-            return GLOBAL_COUNTER.flop_counts() - self.__cnt_start_snapshot
+            return THREAD_COUNTER.flop_counts() - self.__cnt_start_snapshot
         return self.__cnt_subtotal.copy()
 
     # -------------------------------------------------------------------------
@@ -96,14 +96,14 @@ class FlopCountingContext:
             raise RuntimeError(f"cannot {action}() a FlopCountingContext outside its 'with' block")
 
     def __activate(self) -> None:
-        """Start attributing global counts to this context, preserving any earlier subtotal."""
+        """Start attributing the thread's counts to this context, preserving any earlier subtotal."""
         if not self.__active:
-            self.__cnt_start_snapshot = GLOBAL_COUNTER.flop_counts() - self.__cnt_subtotal
+            self.__cnt_start_snapshot = THREAD_COUNTER.flop_counts() - self.__cnt_subtotal
             self.__cnt_subtotal = FlopCounts()
             self.__active = True
 
     def __deactivate(self) -> None:
-        """Freeze the running count into the subtotal and stop attributing global counts."""
+        """Freeze the running count into the subtotal and stop attributing the thread's counts."""
         if self.__active:
             self.__cnt_subtotal = self.flop_counts()
             self.__cnt_start_snapshot = FlopCounts()
@@ -139,7 +139,8 @@ class FlopCountingContext:
 class PauseFlopCounting:
     """Context manager that pauses flop counting for the enclosed code block.
 
-    This acts globally, across all active FlopCountingContext instances.  On exit the counter's
+    This acts on the calling thread, across all of that thread's active FlopCountingContext
+    instances.  On exit the counter's
     prior state is restored (rather than counting being resumed unconditionally), so these blocks
     can be nested and can sit inside code that already paused counting.
     """
@@ -148,8 +149,8 @@ class PauseFlopCounting:
         self.__was_active: bool = False
 
     def __enter__(self) -> Self:
-        self.__was_active = GLOBAL_COUNTER.is_active()
-        GLOBAL_COUNTER.pause()
+        self.__was_active = THREAD_COUNTER.is_active()
+        THREAD_COUNTER.pause()
         return self
 
     def __exit__(
@@ -159,4 +160,4 @@ class PauseFlopCounting:
         exc_tb: TracebackType | None,
     ) -> None:
         if self.__was_active:
-            GLOBAL_COUNTER.resume()
+            THREAD_COUNTER.resume()

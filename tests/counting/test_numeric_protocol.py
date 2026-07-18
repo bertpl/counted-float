@@ -14,7 +14,7 @@ from fractions import Fraction
 import pytest
 
 from counted_float._core.counting._counted_float import CountedFloat
-from counted_float._core.counting._global_counter import GlobalFlopCounter
+from counted_float._core.counting._thread_counter import ThreadLocalFlopCounter
 
 ARITHMETIC_OPERATORS = [
     operator.add,
@@ -65,7 +65,7 @@ class ReflectedOps:
 @pytest.mark.parametrize(
     "op", [operator.add, operator.sub, operator.mul, operator.truediv, operator.floordiv, operator.mod]
 )
-def test_arithmetic_with_fraction_matches_float(op: Callable, global_counter: GlobalFlopCounter):
+def test_arithmetic_with_fraction_matches_float(op: Callable, thread_counter: ThreadLocalFlopCounter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.5)
     frac = Fraction(1, 2)
@@ -78,10 +78,10 @@ def test_arithmetic_with_fraction_matches_float(op: Callable, global_counter: Gl
     # and the result demotes to plain float (documented known limitation)
     assert result == op(1.5, frac)
     assert type(result) is float
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_pow_with_fraction_stays_counted(global_counter: GlobalFlopCounter):
+def test_pow_with_fraction_stays_counted(thread_counter: ThreadLocalFlopCounter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.5)
 
@@ -94,11 +94,11 @@ def test_pow_with_fraction_stays_counted(global_counter: GlobalFlopCounter):
     # stays contagious and is counted (the 0.5 exponent strength-reduces to SQRT)
     assert result == 1.5 ** Fraction(1, 2)
     assert isinstance(result, CountedFloat)
-    assert global_counter.SQRT == 1
+    assert thread_counter.SQRT == 1
 
 
 @pytest.mark.parametrize("op", COMPARISON_OPERATORS)
-def test_comparison_with_fraction_matches_float(op: Callable, global_counter: GlobalFlopCounter):
+def test_comparison_with_fraction_matches_float(op: Callable, thread_counter: ThreadLocalFlopCounter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.5)
     frac = Fraction(1, 2)
@@ -108,10 +108,10 @@ def test_comparison_with_fraction_matches_float(op: Callable, global_counter: Gl
 
     # --- assert ------------------------------------------
     assert result == op(1.5, frac)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_reflected_operators_of_foreign_type_win(global_counter: GlobalFlopCounter):
+def test_reflected_operators_of_foreign_type_win(thread_counter: ThreadLocalFlopCounter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.5)
     foreign = ReflectedOps()
@@ -126,7 +126,7 @@ def test_reflected_operators_of_foreign_type_win(global_counter: GlobalFlopCount
     assert cf // foreign == "rfloordiv"
     assert divmod(cf, foreign) == ("rdivmod",)
     assert (cf < foreign) == "gt"
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 # =================================================================================================
@@ -134,7 +134,9 @@ def test_reflected_operators_of_foreign_type_win(global_counter: GlobalFlopCount
 # =================================================================================================
 @pytest.mark.parametrize("op", ARITHMETIC_OPERATORS)
 @pytest.mark.parametrize("other", ["abc", Decimal("0.5"), None])
-def test_arithmetic_with_unsupported_operand_raises(op: Callable, other: object, global_counter: GlobalFlopCounter):
+def test_arithmetic_with_unsupported_operand_raises(
+    op: Callable, other: object, thread_counter: ThreadLocalFlopCounter
+):
     # --- act & assert ------------------------------------
     # error parity with plain float (the exact message varies: str.__rmul__ raises its own
     # "can't multiply sequence" TypeError, exactly as for plain float)
@@ -142,29 +144,29 @@ def test_arithmetic_with_unsupported_operand_raises(op: Callable, other: object,
         op(1.5, other)
     with pytest.raises(TypeError):
         op(CountedFloat(1.5), other)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_ordering_with_unsupported_operand_raises(global_counter: GlobalFlopCounter):
+def test_ordering_with_unsupported_operand_raises(thread_counter: ThreadLocalFlopCounter):
     # --- act & assert ------------------------------------
     with pytest.raises(TypeError):
         _ = CountedFloat(1.5) < "abc"
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_equality_with_unsupported_operand_is_uncounted(global_counter: GlobalFlopCounter):
+def test_equality_with_unsupported_operand_is_uncounted(thread_counter: ThreadLocalFlopCounter):
     # --- act ---------------------------------------------
     result = CountedFloat(1.5) == "abc"  # resolves via identity fallback, not a float comparison
 
     # --- assert ------------------------------------------
     assert result is False
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 # =================================================================================================
 #  Failed operations do not count
 # =================================================================================================
-def test_failed_division_is_uncounted(global_counter: GlobalFlopCounter):
+def test_failed_division_is_uncounted(thread_counter: ThreadLocalFlopCounter):
     # --- act ---------------------------------------------
     with pytest.raises(ZeroDivisionError):
         _ = CountedFloat(1.5) / CountedFloat(0.0)
@@ -172,19 +174,19 @@ def test_failed_division_is_uncounted(global_counter: GlobalFlopCounter):
         _ = 1.5 / CountedFloat(0.0)  # via __rtruediv__
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_failed_pow_is_uncounted(global_counter: GlobalFlopCounter):
+def test_failed_pow_is_uncounted(thread_counter: ThreadLocalFlopCounter):
     # --- act ---------------------------------------------
     with pytest.raises(OverflowError):
         _ = CountedFloat(2.0) ** 1e6
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
-def test_complex_pow_result_matches_float_and_is_uncounted(global_counter: GlobalFlopCounter):
+def test_complex_pow_result_matches_float_and_is_uncounted(thread_counter: ThreadLocalFlopCounter):
     # --- act ---------------------------------------------
     result_pow = CountedFloat(-8.0) ** 0.333
     result_rpow = (-8.0) ** CountedFloat(0.333)
@@ -196,4 +198,4 @@ def test_complex_pow_result_matches_float_and_is_uncounted(global_counter: Globa
     assert result_rpow == (-8.0) ** 0.333
     assert isinstance(result_pow, complex)
     assert isinstance(result_rpow, complex)
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0

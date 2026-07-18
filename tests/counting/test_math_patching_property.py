@@ -30,18 +30,18 @@ _SEQUENCE_ARGS = {
 @pytest.mark.parametrize("fname", _PATCHED_NAMES)
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(x=st.floats(allow_nan=True, allow_infinity=True, width=64))
-def test_raising_math_call_leaves_count_unchanged(global_counter, fname: str, x: float) -> None:
+def test_raising_math_call_leaves_count_unchanged(thread_counter, fname: str, x: float) -> None:
     # --- arrange -----------------------------------------
     func = getattr(math, fname)  # the fixture keeps a context active, so this is the patched version
     if fname in _SEQUENCE_ARGS:
         args = _SEQUENCE_ARGS[fname](CountedFloat(x))
     else:
         args = tuple(CountedFloat(x) for _ in range(_ARITY.get(fname, 1)))
-    global_counter.reset()
+    thread_counter.reset()
 
     # --- act / assert ------------------------------------
     try:
         func(*args)
     except (ValueError, OverflowError):
         # compute-first contract: a raised call counts nothing
-        assert global_counter.total_count() == 0
+        assert thread_counter.total_count() == 0
