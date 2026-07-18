@@ -179,8 +179,6 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.mod
 "__init__.py" = ["F401"]                 # re-export modules: naked imports, no `as` alias
 # module-level mutable patching state (original-function snapshots + context refcount) is the design
 "src/counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
-# the _-prefixed thread-local fields are this module's own state, accessed only from within it
-"src/counted_float/_core/counting/_thread_counter.py" = ["SLF001"]
 # maintainer tooling, not the shipped library: not a package (INP001), subprocess is fine (S)
 "scripts/**" = ["INP001", "S"]
 ".github/scripts/**" = ["INP001", "S"]

@@ -3,9 +3,9 @@
 Each OS thread owns two FlopCounts objects, created lazily on the thread's first counter
 access:
 
-  - ``_flop_counts_active``   : the thread's real counts (what counting contexts snapshot
+  - ``flop_counts_active``   : the thread's real counts (what counting contexts snapshot
                                 and diff)
-  - ``_flop_counts_inactive`` : a sink that absorbs increments while counting is paused
+  - ``flop_counts_inactive`` : a sink that absorbs increments while counting is paused
 
 ``flop_counts`` is an alias pointing at one of the two, and increments always go through
 the alias.  Because the alias always points at a valid FlopCounts object, an increment is
@@ -68,9 +68,9 @@ def _create_thread_state() -> FlopCounts:
     object lets such a handler initialize the state and still count the triggering
     operation in a single statement.  Threads start with counting unpaused.
     """
-    _TLS._flop_counts_active = FlopCounts()
-    _TLS._flop_counts_inactive = FlopCounts()
-    _TLS.flop_counts = _TLS._flop_counts_active
+    _TLS.flop_counts_active = FlopCounts()
+    _TLS.flop_counts_inactive = FlopCounts()
+    _TLS.flop_counts = _TLS.flop_counts_active
     return _TLS.flop_counts
 
 
@@ -99,35 +99,35 @@ class ThreadLocalFlopCounter:
 
     def pause(self) -> None:
         self._ensure()
-        _TLS.flop_counts = _TLS._flop_counts_inactive
+        _TLS.flop_counts = _TLS.flop_counts_inactive
 
     def resume(self) -> None:
         self._ensure()
-        _TLS.flop_counts = _TLS._flop_counts_active
+        _TLS.flop_counts = _TLS.flop_counts_active
 
     def reset(self) -> None:
         self._ensure()
-        _TLS._flop_counts_active.reset()
-        _TLS.flop_counts = _TLS._flop_counts_active  # reset also resumes
+        _TLS.flop_counts_active.reset()
+        _TLS.flop_counts = _TLS.flop_counts_active  # reset also resumes
 
     def is_active(self) -> bool:
         self._ensure()
-        return _TLS.flop_counts is _TLS._flop_counts_active
+        return _TLS.flop_counts is _TLS.flop_counts_active
 
     def flop_counts(self) -> FlopCounts:
         self._ensure()
-        return _TLS._flop_counts_active.copy()  # single-owner mutation, so the copy is never torn
+        return _TLS.flop_counts_active.copy()  # single-owner mutation, so the copy is never torn
 
     def total_count(self) -> int:
         """Shorthand for self.flop_counts().total_count()."""
         self._ensure()
-        return _TLS._flop_counts_active.total_count()
+        return _TLS.flop_counts_active.total_count()
 
     def __getattr__(self, item: str) -> int:
         # provide shorthand access to the counts
         if item in FlopCounts.field_names():
             self._ensure()
-            return getattr(_TLS._flop_counts_active, item)
+            return getattr(_TLS.flop_counts_active, item)
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     # -------------------------------------------------------------------------
