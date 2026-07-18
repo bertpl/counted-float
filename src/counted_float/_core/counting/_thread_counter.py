@@ -79,8 +79,8 @@ class ThreadLocalFlopCounter:
 
     Every method operates on the calling thread's state only.  All methods here are
     cold-path (see module docstring): they prioritize clarity, going through ``_ensure()``
-    plus plain statements.  The ``incr_*`` methods exist for tests and other occasional
-    callers; per-flop counting sites inline their increments instead.
+    plus plain statements.  The ``incr_*`` methods exist for unit tests only; production
+    counting sites inline their increments instead.
 
     The facade itself is stateless — all state lives on the thread-local ``_TLS`` — so
     this single module-level instance is safe to share across threads.
@@ -131,7 +131,8 @@ class ThreadLocalFlopCounter:
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     # -------------------------------------------------------------------------
-    #  Incrementing counts
+    #  Incrementing counts  (unit tests only -- production counting sites inline
+    #  their increments, see module docstring)
     # -------------------------------------------------------------------------
     def incr_abs(self) -> None:
         self._ensure()
