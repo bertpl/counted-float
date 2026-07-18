@@ -158,6 +158,12 @@ class FlopsBenchmarkSuite:
             FlopType.ACOSH: q10s[FBT.ADD_ACOSH] - q10s[FBT.ADD],
             FlopType.COSH: q10s[FBT.ADD_ACOSH_COSH] - q10s[FBT.ADD_ACOSH],
             FlopType.ATANH: q10s[FBT.ADD_HALFSIN_ATANH] - q10s[FBT.ADD_HALFSIN],
+            # gamma/lgamma subtract the shared sin-bounding baseline (not ADD): it cancels the
+            # sin + shift the two kernels carry to keep the chain finite, leaving the function cost
+            FlopType.GAMMA: q10s[FBT.ADD_GAMMABASE_GAMMA] - q10s[FBT.ADD_GAMMABASE],
+            FlopType.LGAMMA: q10s[FBT.ADD_GAMMABASE_LGAMMA] - q10s[FBT.ADD_GAMMABASE],
+            FlopType.ERF: q10s[FBT.ADD_ERF] - q10s[FBT.ADD],
+            FlopType.ERFC: q10s[FBT.ADD_ERFC] - q10s[FBT.ADD],
         }
         estimated_flop_latencies = self.floor_latencies(estimated_flop_latencies)
 
@@ -271,6 +277,27 @@ class FlopsBenchmarkSuite:
                     kernels.f_add_halfsin_atanh,
                     ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
                 ),
+                # gamma/lgamma: the sin bound makes these kernels insensitive to the input range (it
+                # only perturbs the sin argument), so any finite range works -- match the halfsin span
+                (
+                    FBT.ADD_GAMMABASE,
+                    kernels.f_add_gammabase,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (
+                    FBT.ADD_GAMMABASE_GAMMA,
+                    kernels.f_add_gammabase_gamma,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (
+                    FBT.ADD_GAMMABASE_LGAMMA,
+                    kernels.f_add_gammabase_lgamma,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                # erf/erfc saturate to constants at the tails via cheap fast-paths (erf: |x|>~6; erfc:
+                # x>~27), so -- like tanh -- keep the argument small to measure their real, polynomial cost
+                (FBT.ADD_ERF, kernels.f_add_erf, ArrayGenerator.lin_range(min_value=0.5, max_value=2.0)),
+                (FBT.ADD_ERFC, kernels.f_add_erfc, ArrayGenerator.lin_range(min_value=0.5, max_value=2.5)),
                 (FBT.POW, kernels.f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.POW_POW, kernels.f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.SUB, kernels.f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),

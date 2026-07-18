@@ -447,6 +447,62 @@ def f_add_halfsin_atanh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.n
 
 
 @numba.njit(parallel=False)
+def f_add_gammabase(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # shared baseline for gamma/lgamma: 1.5 + 0.5*sin pins the fed-back argument to [1, 2], straddling
+    # gamma's minimum (~1.4618). gamma/lgamma have no cheap inverse to bound the chain (unlike
+    # sinh/atanh), and their outputs grow without bound, so a naive f(tmp + in_f[i]) chain diverges into
+    # OverflowError; the sin bound keeps the chain finite. Subtract this to isolate the gamma/lgamma cost.
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = 1.5 + 0.5 * math.sin(tmp + in_f[i])
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_gammabase_gamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # f_add_gammabase plus the gamma call: 1.5 + 0.5*sin bounds the argument to [1, 2], where gamma's
+    # output stays in [~0.886, 1] so the chain never overflows; subtract f_add_gammabase to isolate gamma
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = math.gamma(1.5 + 0.5 * math.sin(tmp + in_f[i]))
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_gammabase_lgamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # f_add_gammabase plus the lgamma call (lgamma also grows without bound); subtract f_add_gammabase
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = math.lgamma(1.5 + 0.5 * math.sin(tmp + in_f[i]))
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_erf(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # erf's output is bounded to (-1, 1), so the naive chain never diverges; the small positive input
+    # range keeps the argument clear of the |x|<~0.5 and |x|>~6 cheap fast-paths (see suite registration)
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = math.erf(tmp + in_f[i])
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_erfc(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # erfc's output is bounded to (0, 2); the small positive input range keeps the argument below the
+    # x>~27 underflow-to-zero fast-path (see suite registration)
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = math.erfc(tmp + in_f[i])
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
 def f_pow(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
     for _ in range(n_executions):
         tmp = math.e

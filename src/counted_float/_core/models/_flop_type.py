@@ -64,6 +64,10 @@ class FlopType(StrEnum):
     ATANH = "ATANH"
     DIST = "DIST"
     DIST_XARG = "DIST_XARG"
+    GAMMA = "GAMMA"
+    LGAMMA = "LGAMMA"
+    ERF = "ERF"
+    ERFC = "ERFC"
 
     @property
     def label(self) -> str:
@@ -136,6 +140,10 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ATANH: "atanh(x)",
     FlopType.DIST: "dist(p,q)",
     FlopType.DIST_XARG: "dist(+arg)",
+    FlopType.GAMMA: "gamma(x)",
+    FlopType.LGAMMA: "lgamma(x)",
+    FlopType.ERF: "erf(x)",
+    FlopType.ERFC: "erfc(x)",
 }
 
 
