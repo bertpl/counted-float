@@ -160,8 +160,8 @@ class FlopsBenchmarkSuite:
             FlopType.ATANH: q10s[FBT.ADD_HALFSIN_ATANH] - q10s[FBT.ADD_HALFSIN],
             # gamma/lgamma subtract the shared sin-bounding baseline (not ADD): it cancels the
             # sin + shift the two kernels carry to keep the chain finite, leaving the function cost
-            FlopType.GAMMA: q10s[FBT.ADD_GAMMA] - q10s[FBT.ADD_GAMMABASE],
-            FlopType.LGAMMA: q10s[FBT.ADD_LGAMMA] - q10s[FBT.ADD_GAMMABASE],
+            FlopType.GAMMA: q10s[FBT.ADD_GAMMABASE_GAMMA] - q10s[FBT.ADD_GAMMABASE],
+            FlopType.LGAMMA: q10s[FBT.ADD_GAMMABASE_LGAMMA] - q10s[FBT.ADD_GAMMABASE],
             FlopType.ERF: q10s[FBT.ADD_ERF] - q10s[FBT.ADD],
             FlopType.ERFC: q10s[FBT.ADD_ERFC] - q10s[FBT.ADD],
         }
@@ -284,8 +284,16 @@ class FlopsBenchmarkSuite:
                     kernels.f_add_gammabase,
                     ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
                 ),
-                (FBT.ADD_GAMMA, kernels.f_add_gamma, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_LGAMMA, kernels.f_add_lgamma, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                (
+                    FBT.ADD_GAMMABASE_GAMMA,
+                    kernels.f_add_gammabase_gamma,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
+                (
+                    FBT.ADD_GAMMABASE_LGAMMA,
+                    kernels.f_add_gammabase_lgamma,
+                    ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6),
+                ),
                 # erf/erfc saturate to constants at the tails via cheap fast-paths (erf: |x|>~6; erfc:
                 # x>~27), so -- like tanh -- keep the argument small to measure their real, polynomial cost
                 (FBT.ADD_ERF, kernels.f_add_erf, ArrayGenerator.lin_range(min_value=0.5, max_value=2.0)),

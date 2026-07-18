@@ -48,8 +48,8 @@ class FlopsBenchmarkType(StrEnum):
     # shared baseline for gamma/lgamma: 1.5 + 0.5*sin bounds the fed-back argument to [1, 2] near
     # gamma's minimum, so the chain can't run away into the OverflowError a naive f(tmp+x) chain hits
     ADD_GAMMABASE = "add_gammabase"
-    ADD_GAMMA = "add_gamma"
-    ADD_LGAMMA = "add_lgamma"
+    ADD_GAMMABASE_GAMMA = "add_gammabase_gamma"
+    ADD_GAMMABASE_LGAMMA = "add_gammabase_lgamma"
     ADD_ERF = "add_erf"
     ADD_ERFC = "add_erfc"
     POW = "pow"

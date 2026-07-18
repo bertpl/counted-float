@@ -460,9 +460,9 @@ def f_add_gammabase(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarr
 
 
 @numba.njit(parallel=False)
-def f_add_gamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-    # 1.5 + 0.5*sin bounds the argument to [1, 2] (see f_add_gammabase), where gamma's output stays in
-    # [~0.886, 1] so the chain never overflows; subtract f_add_gammabase to isolate the gamma cost
+def f_add_gammabase_gamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # f_add_gammabase plus the gamma call: 1.5 + 0.5*sin bounds the argument to [1, 2], where gamma's
+    # output stays in [~0.886, 1] so the chain never overflows; subtract f_add_gammabase to isolate gamma
     for _ in range(n_executions):
         tmp = math.e
         for i in range(n):
@@ -471,8 +471,8 @@ def f_add_gamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, 
 
 
 @numba.njit(parallel=False)
-def f_add_lgamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-    # same 1.5 + 0.5*sin bound as f_add_gamma (lgamma also grows without bound); subtract f_add_gammabase
+def f_add_gammabase_lgamma(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # f_add_gammabase plus the lgamma call (lgamma also grows without bound); subtract f_add_gammabase
     for _ in range(n_executions):
         tmp = math.e
         for i in range(n):

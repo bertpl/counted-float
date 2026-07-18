@@ -81,7 +81,7 @@ def test_suite_measures_the_special_function_flop_types():
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
-@pytest.mark.parametrize("kernel", [kernels.f_add_gamma, kernels.f_add_lgamma])
+@pytest.mark.parametrize("kernel", [kernels.f_add_gammabase_gamma, kernels.f_add_gammabase_lgamma])
 def test_gamma_kernels_never_overflow_even_on_a_wild_input_range(kernel):
     """The sin bound must keep the gamma/lgamma chain finite regardless of the input magnitudes.
 
