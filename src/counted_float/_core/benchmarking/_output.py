@@ -2,9 +2,9 @@
 
 A single module-global rich Console funnels every benchmark print, so verbosity is
 governed in exactly one place -- its ``quiet`` flag -- rather than by per-call guards
-scattered across the suite, runner, and entry points. This mirrors the process-global
-model the FLOP counter already uses; thread-safety is a documented non-goal, so a
-shared mutable console is an accepted trade-off.
+scattered across the suite, runner, and entry points. Benchmarks run single-threaded,
+so a shared mutable console is an accepted trade-off (unlike the FLOP counter, which
+keeps per-thread state).
 
 Markup and highlighting are disabled so the console is a faithful plain-text sink:
 existing output contains literal square brackets that rich markup would otherwise try
