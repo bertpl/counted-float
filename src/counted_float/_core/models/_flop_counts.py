@@ -101,6 +101,20 @@ class FlopCounts:
             count * weights.weights[flop_type] for flop_type in FlopType if (count := getattr(self, flop_type.name))
         )
 
+    # --- increment-target contract -----------------------
+    def note(self, rationale: str) -> None:
+        """Discard a rationale for the next flop counted here.
+
+        Counting sites explain their less obvious counting decisions unconditionally, and only a
+        target that renders those explanations (the logging target a verbose counting context
+        installs in place of these counts) does anything with them.
+
+        Args:
+            rationale: Short explanation of the counting rule being applied; ignored here.  Keep
+                it a constant string — counting sites build it on every call, including the runs
+                (like this one) that end up discarding it.
+        """
+
     # --- other -------------------------------------------
     def reset(self) -> None:
         """Reset all counts to 0."""

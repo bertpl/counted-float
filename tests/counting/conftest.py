@@ -4,6 +4,20 @@ from counted_float import FlopCountingContext
 from counted_float._core.counting._thread_counter import THREAD_COUNTER, ThreadLocalFlopCounter
 
 
+@pytest.fixture(autouse=True)
+def restore_verbosity():
+    """Restore the worker thread's verbosity level after each test.
+
+    Verbosity is thread state that outlives a test: one that sets it directly (or fails inside a
+    context before it is restored) would otherwise leave every later test in the same worker
+    logging its counts.
+    """
+
+    previous = THREAD_COUNTER.verbosity()
+    yield
+    THREAD_COUNTER.set_verbosity(previous)
+
+
 @pytest.fixture
 def thread_counter() -> ThreadLocalFlopCounter:
     """

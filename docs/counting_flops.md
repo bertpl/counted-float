@@ -245,6 +245,51 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
 counts.total_count()         # 2
 ```
 
+### Watching flops as they are counted
+
+A context can also report each flop as it registers it, instead of only totalling
+them. This is the tool for answering "why is this count 14 and not 12?" on a small
+snippet: it shows what was counted, where, and — where the counting rule is not
+self-evident from the expression — why.
+
+**Example 5**: _verbose counting_
+
+```python
+import math
+from counted_float import CountedFloat, FlopCountingContext, Verbosity
+
+cf = CountedFloat(1.73)
+
+with FlopCountingContext(verbosity=Verbosity.INFO) as ctx:
+    _ = cf * cf
+    _ = cf**2
+    _ = math.log(cf, 2)
+```
+
+writes to `stderr`:
+
+```text
+INFO  MUL         +1                                               my_algo.py:7
+INFO  MUL         +1     const exponent -> square-and-multiply     my_algo.py:8
+INFO  LOG2        +1     const base 2 -> log2                      my_algo.py:9
+```
+
+Every line names the flop type, how many of them that one statement registered,
+the rationale where the library applied a rule you did not write out (here:
+`cf**2` strength-reduces to a multiply, and a constant base 2 makes `log` a
+`log2`), and the line of *your* code that triggered it — never the library
+internals that did the counting.
+
+Three things worth knowing:
+
+- **The level applies to the whole thread while the block is open.** A context
+  opened inside a verbose one takes over until it exits, whatever level it asks
+  for — so a plain `FlopCountingContext()` is how you mute a noisy stretch.
+- **Paused flops are not logged**, for the same reason they are not counted.
+- **One line per counted flop, with no deduplication.** A loop doing a million
+  operations logs a million lines: this is a microscope for small snippets, not a
+  profiler for a whole run.
+
 ## Performance overhead
 
 Counting adds overhead in two forms, measured on an Apple M3 Max (see the

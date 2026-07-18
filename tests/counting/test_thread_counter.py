@@ -2,6 +2,7 @@ import threading
 
 import pytest
 
+from counted_float import Verbosity
 from counted_float._core.counting._thread_counter import THREAD_COUNTER, ThreadLocalFlopCounter
 from counted_float._core.models import FlopCounts
 
@@ -163,6 +164,67 @@ def test_pause_swap_keeps_live_untouched(thread_counter):
     thread_counter.resume()
     assert thread_counter.flop_counts() == snapshot
     assert thread_counter.is_active()
+
+
+# ==================================================================================================
+#  Verbosity
+# ==================================================================================================
+def test_verbosity_defaults_to_off(thread_counter):
+    # --- act & assert ------------------------------------
+    assert thread_counter.verbosity() == Verbosity.OFF
+
+
+def test_set_verbosity_returns_the_replaced_level(thread_counter):
+    # --- act ---------------------------------------------
+    replaced_by_info = thread_counter.set_verbosity(Verbosity.INFO)
+    replaced_by_off = thread_counter.set_verbosity(Verbosity.OFF)
+
+    # --- assert ------------------------------------------
+    assert replaced_by_info == Verbosity.OFF
+    assert replaced_by_off == Verbosity.INFO
+
+
+def test_counting_through_the_logging_target_still_counts(thread_counter, capsys):
+    # --- act ---------------------------------------------
+    thread_counter.set_verbosity(Verbosity.INFO)
+    thread_counter.incr_add()
+
+    # --- assert ------------------------------------------
+    assert thread_counter.is_active(), "A logging target is not a paused one."
+    assert thread_counter.flop_counts() == FlopCounts(ADD=1)
+    assert "ADD" in capsys.readouterr().err
+
+
+def test_pause_and_resume_keep_the_logging_target(thread_counter, capsys):
+    # --- arrange -----------------------------------------
+    thread_counter.set_verbosity(Verbosity.INFO)
+
+    # --- act ---------------------------------------------
+    thread_counter.pause()
+    thread_counter.incr_mul()  # lands in the discard sink, so there is nothing to log
+    paused_output = capsys.readouterr().err
+    thread_counter.resume()
+    thread_counter.incr_mul()
+    resumed_output = capsys.readouterr().err
+
+    # --- assert ------------------------------------------
+    assert paused_output == ""
+    assert "MUL" in resumed_output
+    assert thread_counter.flop_counts() == FlopCounts(MUL=1)
+
+
+def test_reset_resumes_into_the_logging_target(thread_counter, capsys):
+    # --- arrange -----------------------------------------
+    thread_counter.set_verbosity(Verbosity.INFO)
+    thread_counter.pause()
+
+    # --- act ---------------------------------------------
+    thread_counter.reset()  # reset also resumes
+    thread_counter.incr_add()
+
+    # --- assert ------------------------------------------
+    assert thread_counter.is_active()
+    assert "ADD" in capsys.readouterr().err
 
 
 # ==================================================================================================
