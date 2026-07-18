@@ -25,7 +25,7 @@ import threading
 from typing import TYPE_CHECKING
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
-from ._thread_counter import _TLS, _init_thread_state
+from ._thread_counter import _TLS, _create_thread_state
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -92,9 +92,9 @@ def math_sqrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sqrt(x)  # compute first: domain error (x < 0) raises before counting
         try:
-            _TLS.counts.SQRT += 1
+            _TLS.flop_counts.SQRT += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().SQRT += 1
+            _create_thread_state().SQRT += 1
         return float.__new__(CountedFloat, result)
     return original_math_sqrt(x)
 
@@ -102,9 +102,9 @@ def math_sqrt(x: float) -> float | CountedFloat:
 def math_cbrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.CBRT += 1
+            _TLS.flop_counts.CBRT += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().CBRT += 1
+            _create_thread_state().CBRT += 1
         return float.__new__(CountedFloat, original_math_cbrt(x))
     return original_math_cbrt(x)
 
@@ -132,17 +132,17 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
         if isinstance(x, CountedFloat):
             result = original_math_log(x)  # compute first: domain error (x <= 0) raises before counting
             try:
-                _TLS.counts.LOG += 1
+                _TLS.flop_counts.LOG += 1
             except AttributeError:  # first counted op on this thread
-                _init_thread_state().LOG += 1
+                _create_thread_state().LOG += 1
             return float.__new__(CountedFloat, result)
         return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
     try:
-        c = _TLS.counts
+        c = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        c = _init_thread_state()
+        c = _create_thread_state()
     if isinstance(base, CountedFloat):
         if isinstance(x, CountedFloat):
             c.LOG += 1
@@ -167,9 +167,9 @@ def math_log2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log2(x)  # compute first: domain error (x <= 0) raises before counting
         try:
-            _TLS.counts.LOG2 += 1
+            _TLS.flop_counts.LOG2 += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().LOG2 += 1
+            _create_thread_state().LOG2 += 1
         return float.__new__(CountedFloat, result)
     return original_math_log2(x)
 
@@ -178,9 +178,9 @@ def math_log10(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log10(x)  # compute first: domain error (x <= 0) raises before counting
         try:
-            _TLS.counts.LOG10 += 1
+            _TLS.flop_counts.LOG10 += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().LOG10 += 1
+            _create_thread_state().LOG10 += 1
         return float.__new__(CountedFloat, result)
     return original_math_log10(x)
 
@@ -189,9 +189,9 @@ def math_exp(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_exp(x)  # compute first: exp overflows (OverflowError) before counting
         try:
-            _TLS.counts.EXP += 1
+            _TLS.flop_counts.EXP += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().EXP += 1
+            _create_thread_state().EXP += 1
         return float.__new__(CountedFloat, result)
     return original_math_exp(x)
 
@@ -200,9 +200,9 @@ def math_exp2(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_exp2(x)  # compute first: exp2 overflows (OverflowError) before counting
         try:
-            _TLS.counts.EXP2 += 1
+            _TLS.flop_counts.EXP2 += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().EXP2 += 1
+            _create_thread_state().EXP2 += 1
         return float.__new__(CountedFloat, result)
     return original_math_exp2(x)
 
@@ -220,9 +220,9 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
         result = original_math_pow(x, y)
         if isinstance(x, CountedFloat) and isinstance(y, CountedFloat):
             try:
-                _TLS.counts.POW += 1  # genuinely runtime base and exponent
+                _TLS.flop_counts.POW += 1  # genuinely runtime base and exponent
             except AttributeError:  # first counted op on this thread
-                _init_thread_state().POW += 1
+                _create_thread_state().POW += 1
         elif isinstance(x, CountedFloat):
             count_pow_with_constant_exponent(y)
         else:
@@ -251,14 +251,14 @@ def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
         result = original_math_fma(x, y, z)
         if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
             try:
-                _TLS.counts.FMA += 1
+                _TLS.flop_counts.FMA += 1
             except AttributeError:  # first counted op on this thread
-                _init_thread_state().FMA += 1
+                _create_thread_state().FMA += 1
         else:
             try:
-                _TLS.counts.ADD += 1  # x*y is a constant product; only the add survives folding
+                _TLS.flop_counts.ADD += 1  # x*y is a constant product; only the add survives folding
             except AttributeError:  # first counted op on this thread
-                _init_thread_state().ADD += 1
+                _create_thread_state().ADD += 1
         return float.__new__(CountedFloat, result)
     return original_math_fma(x, y, z)
 
@@ -267,9 +267,9 @@ def math_sin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sin(x)  # compute first: sin(±inf) raises (ValueError) before counting
         try:
-            _TLS.counts.SIN += 1
+            _TLS.flop_counts.SIN += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().SIN += 1
+            _create_thread_state().SIN += 1
         return float.__new__(CountedFloat, result)
     return original_math_sin(x)
 
@@ -278,9 +278,9 @@ def math_cos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_cos(x)  # compute first: cos(±inf) raises (ValueError) before counting
         try:
-            _TLS.counts.COS += 1
+            _TLS.flop_counts.COS += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().COS += 1
+            _create_thread_state().COS += 1
         return float.__new__(CountedFloat, result)
     return original_math_cos(x)
 
@@ -289,9 +289,9 @@ def math_tan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_tan(x)  # compute first: tan(±inf) raises (ValueError) before counting
         try:
-            _TLS.counts.TAN += 1
+            _TLS.flop_counts.TAN += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().TAN += 1
+            _create_thread_state().TAN += 1
         return float.__new__(CountedFloat, result)
     return original_math_tan(x)
 
@@ -300,9 +300,9 @@ def math_asin(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_asin(x)  # compute first: domain errors raise before anything is counted
         try:
-            _TLS.counts.ASIN += 1
+            _TLS.flop_counts.ASIN += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ASIN += 1
+            _create_thread_state().ASIN += 1
         return float.__new__(CountedFloat, result)
     return original_math_asin(x)
 
@@ -311,9 +311,9 @@ def math_acos(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_acos(x)  # compute first: domain errors raise before anything is counted
         try:
-            _TLS.counts.ACOS += 1
+            _TLS.flop_counts.ACOS += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ACOS += 1
+            _create_thread_state().ACOS += 1
         return float.__new__(CountedFloat, result)
     return original_math_acos(x)
 
@@ -321,9 +321,9 @@ def math_acos(x: float) -> float | CountedFloat:
 def math_atan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.ATAN += 1
+            _TLS.flop_counts.ATAN += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ATAN += 1
+            _create_thread_state().ATAN += 1
         return float.__new__(CountedFloat, original_math_atan(x))
     return original_math_atan(x)
 
@@ -331,9 +331,9 @@ def math_atan(x: float) -> float | CountedFloat:
 def math_atan2(y: float, x: float) -> float | CountedFloat:
     if isinstance(y, CountedFloat) or isinstance(x, CountedFloat):
         try:
-            _TLS.counts.ATAN2 += 1
+            _TLS.flop_counts.ATAN2 += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ATAN2 += 1
+            _create_thread_state().ATAN2 += 1
         return float.__new__(CountedFloat, original_math_atan2(y, x))
     return original_math_atan2(y, x)
 
@@ -357,9 +357,9 @@ def math_hypot(*coordinates: float) -> float | CountedFloat:
     result = original_math_hypot(*coordinates)
     n = len(coordinates)
     try:
-        cnt = _TLS.counts
+        cnt = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt = _init_thread_state()
+        cnt = _create_thread_state()
     if n == 1:
         cnt.ABS += 1
     elif n == 2:
@@ -375,9 +375,9 @@ def math_expm1(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_expm1(x)  # compute first: expm1 overflows (OverflowError) before counting
         try:
-            _TLS.counts.EXPM1 += 1
+            _TLS.flop_counts.EXPM1 += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().EXPM1 += 1
+            _create_thread_state().EXPM1 += 1
         return float.__new__(CountedFloat, result)
     return original_math_expm1(x)
 
@@ -386,9 +386,9 @@ def math_log1p(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_log1p(x)  # compute first: domain error (x <= -1) raises before counting
         try:
-            _TLS.counts.LOG1P += 1
+            _TLS.flop_counts.LOG1P += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().LOG1P += 1
+            _create_thread_state().LOG1P += 1
         return float.__new__(CountedFloat, result)
     return original_math_log1p(x)
 
@@ -397,9 +397,9 @@ def math_fmod(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         result = original_math_fmod(x, y)  # compute first: fmod(x, 0) raises before anything is counted
         try:
-            _TLS.counts.FMOD += 1
+            _TLS.flop_counts.FMOD += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().FMOD += 1
+            _create_thread_state().FMOD += 1
         return float.__new__(CountedFloat, result)
     return original_math_fmod(x, y)
 
@@ -407,9 +407,9 @@ def math_fmod(x: float, y: float) -> float | CountedFloat:
 def math_fabs(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.ABS += 1  # same FABS/ANDPD instruction as abs(); reuses FlopType.ABS
+            _TLS.flop_counts.ABS += 1  # same FABS/ANDPD instruction as abs(); reuses FlopType.ABS
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ABS += 1
+            _create_thread_state().ABS += 1
         return float.__new__(CountedFloat, original_math_fabs(x))
     return original_math_fabs(x)
 
@@ -418,9 +418,9 @@ def math_sinh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_sinh(x)  # compute first: sinh overflows (OverflowError) before counting
         try:
-            _TLS.counts.SINH += 1
+            _TLS.flop_counts.SINH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().SINH += 1
+            _create_thread_state().SINH += 1
         return float.__new__(CountedFloat, result)
     return original_math_sinh(x)
 
@@ -429,9 +429,9 @@ def math_cosh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_cosh(x)  # compute first: cosh overflows (OverflowError) before counting
         try:
-            _TLS.counts.COSH += 1
+            _TLS.flop_counts.COSH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().COSH += 1
+            _create_thread_state().COSH += 1
         return float.__new__(CountedFloat, result)
     return original_math_cosh(x)
 
@@ -439,9 +439,9 @@ def math_cosh(x: float) -> float | CountedFloat:
 def math_tanh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.TANH += 1
+            _TLS.flop_counts.TANH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().TANH += 1
+            _create_thread_state().TANH += 1
         return float.__new__(CountedFloat, original_math_tanh(x))
     return original_math_tanh(x)
 
@@ -449,9 +449,9 @@ def math_tanh(x: float) -> float | CountedFloat:
 def math_asinh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.ASINH += 1
+            _TLS.flop_counts.ASINH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ASINH += 1
+            _create_thread_state().ASINH += 1
         return float.__new__(CountedFloat, original_math_asinh(x))
     return original_math_asinh(x)
 
@@ -460,9 +460,9 @@ def math_acosh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_acosh(x)  # compute first: domain error (x < 1) raises before counting
         try:
-            _TLS.counts.ACOSH += 1
+            _TLS.flop_counts.ACOSH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ACOSH += 1
+            _create_thread_state().ACOSH += 1
         return float.__new__(CountedFloat, result)
     return original_math_acosh(x)
 
@@ -471,9 +471,9 @@ def math_atanh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         result = original_math_atanh(x)  # compute first: domain error (|x| >= 1) raises before counting
         try:
-            _TLS.counts.ATANH += 1
+            _TLS.flop_counts.ATANH += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().ATANH += 1
+            _create_thread_state().ATANH += 1
         return float.__new__(CountedFloat, result)
     return original_math_atanh(x)
 
@@ -481,9 +481,9 @@ def math_atanh(x: float) -> float | CountedFloat:
 def math_degrees(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.MUL += 1  # x * (180/pi), the constant folded at compile time
+            _TLS.flop_counts.MUL += 1  # x * (180/pi), the constant folded at compile time
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().MUL += 1
+            _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, original_math_degrees(x))
     return original_math_degrees(x)
 
@@ -491,9 +491,9 @@ def math_degrees(x: float) -> float | CountedFloat:
 def math_radians(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
-            _TLS.counts.MUL += 1  # x * (pi/180), the constant folded at compile time
+            _TLS.flop_counts.MUL += 1  # x * (pi/180), the constant folded at compile time
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().MUL += 1
+            _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, original_math_radians(x))
     return original_math_radians(x)
 
@@ -514,9 +514,9 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
         return result
     n = len(p_seq)
     try:
-        cnt = _TLS.counts
+        cnt = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt = _init_thread_state()
+        cnt = _create_thread_state()
     cnt.SUB += n
     cnt.MUL += n
     cnt.ADD += n - 1
@@ -562,18 +562,18 @@ def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
     if not any(isinstance(v, CountedFloat) for v in values):
         return result
     try:
-        _TLS.counts.ADD += len(values) - 1
+        _TLS.flop_counts.ADD += len(values) - 1
     except AttributeError:  # first counted op on this thread
-        _init_thread_state().ADD += len(values) - 1
+        _create_thread_state().ADD += len(values) - 1
     return float.__new__(CountedFloat, result)
 
 
 def math_copysign(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         try:
-            _TLS.counts.COPYSIGN += 1
+            _TLS.flop_counts.COPYSIGN += 1
         except AttributeError:  # first counted op on this thread
-            _init_thread_state().COPYSIGN += 1
+            _create_thread_state().COPYSIGN += 1
         return float.__new__(CountedFloat, original_math_copysign(x, y))
     return original_math_copysign(x, y)
 
