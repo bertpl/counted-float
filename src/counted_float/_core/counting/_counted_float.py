@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import SupportsIndex
+from typing import TYPE_CHECKING, SupportsIndex
 
 from ._thread_counter import _TLS, _create_thread_state
+
+if TYPE_CHECKING:
+    from counted_float._core.models import FlopCounts
 
 
 def count_pow_with_constant_exponent(exponent: float) -> None:
@@ -22,27 +25,27 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
     if value in (0.0, 1.0):
         return
     try:
-        c = _TLS.flop_counts
+        cnt: FlopCounts = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        c = _create_thread_state()
+        cnt: FlopCounts = _create_thread_state()
     if value == 0.5:
-        c.SQRT += 1
+        cnt.SQRT += 1
         return
     if value == -0.5:
-        c.SQRT += 1
-        c.DIV += 1
+        cnt.SQRT += 1
+        cnt.DIV += 1
         return
     if value == -1.0:
-        c.DIV += 1
+        cnt.DIV += 1
         return
     if value.is_integer() and 2 <= abs(value) <= 16:
         n = abs(int(value))
         n_muls = (n.bit_length() - 1) + bin(n).count("1") - 1  # square-and-multiply cost
-        c.MUL += n_muls
+        cnt.MUL += n_muls
         if value < 0:
-            c.DIV += 1
+            cnt.DIV += 1
         return
-    c.POW += 1
+    cnt.POW += 1
 
 
 def count_pow_with_constant_base(base: float) -> None:
@@ -52,15 +55,15 @@ def count_pow_with_constant_base(base: float) -> None:
     """
     value = float(base)
     try:
-        c = _TLS.flop_counts
+        cnt: FlopCounts = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        c = _create_thread_state()
+        cnt: FlopCounts = _create_thread_state()
     if value == 2.0:
-        c.EXP2 += 1
+        cnt.EXP2 += 1
     elif value == 10.0:
-        c.EXP10 += 1
+        cnt.EXP10 += 1
     else:
-        c.POW += 1
+        cnt.POW += 1
 
 
 class CountedFloat(float):
@@ -343,11 +346,11 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
         return float.__new__(CountedFloat, result)
 
     def __rfloordiv__(self, other: float) -> CountedFloat:
@@ -356,11 +359,11 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
         return float.__new__(CountedFloat, result)
 
     def __mod__(self, other: float) -> CountedFloat:
@@ -373,13 +376,13 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
-        c.MUL += 1
-        c.SUB += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __rmod__(self, other: float) -> CountedFloat:
@@ -388,13 +391,13 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
-        c.MUL += 1
-        c.SUB += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         return float.__new__(CountedFloat, result)
 
     def __divmod__(self, other: float) -> tuple[CountedFloat, CountedFloat]:
@@ -407,13 +410,13 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
-        c.MUL += 1
-        c.SUB += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         quotient, remainder = result
         return float.__new__(CountedFloat, quotient), float.__new__(CountedFloat, remainder)
 
@@ -423,13 +426,13 @@ class CountedFloat(float):
         if result is NotImplemented:
             return NotImplemented
         try:
-            c = _TLS.flop_counts
+            cnt: FlopCounts = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
-            c = _create_thread_state()
-        c.DIV += 1
-        c.RND += 1
-        c.MUL += 1
-        c.SUB += 1
+            cnt: FlopCounts = _create_thread_state()
+        cnt.DIV += 1
+        cnt.RND += 1
+        cnt.MUL += 1
+        cnt.SUB += 1
         quotient, remainder = result
         return float.__new__(CountedFloat, quotient), float.__new__(CountedFloat, remainder)
 

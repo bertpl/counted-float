@@ -30,6 +30,8 @@ from ._thread_counter import _TLS, _create_thread_state
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from counted_float._core.models import FlopCounts
+
 
 def _math_fma_unavailable(x: float, y: float, z: float) -> float:
     """Stand-in for `math.fma` on interpreters predating it (below 3.13).
@@ -140,24 +142,24 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
     try:
-        c = _TLS.flop_counts
+        cnt: FlopCounts = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        c = _create_thread_state()
+        cnt: FlopCounts = _create_thread_state()
     if isinstance(base, CountedFloat):
         if isinstance(x, CountedFloat):
-            c.LOG += 1
-        c.LOG += 1
-        c.DIV += 1
+            cnt.LOG += 1
+        cnt.LOG += 1
+        cnt.DIV += 1
     elif float(base) == 2.0:
         if isinstance(x, CountedFloat):
-            c.LOG2 += 1
+            cnt.LOG2 += 1
     elif float(base) == 10.0:
         if isinstance(x, CountedFloat):
-            c.LOG10 += 1
+            cnt.LOG10 += 1
     else:
         if isinstance(x, CountedFloat):
-            c.LOG += 1
-            c.MUL += 1
+            cnt.LOG += 1
+            cnt.MUL += 1
     if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
         return float.__new__(CountedFloat, result)
     return result
@@ -357,9 +359,9 @@ def math_hypot(*coordinates: float) -> float | CountedFloat:
     result = original_math_hypot(*coordinates)
     n = len(coordinates)
     try:
-        cnt = _TLS.flop_counts
+        cnt: FlopCounts = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt = _create_thread_state()
+        cnt: FlopCounts = _create_thread_state()
     if n == 1:
         cnt.ABS += 1
     elif n == 2:
@@ -514,9 +516,9 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
         return result
     n = len(p_seq)
     try:
-        cnt = _TLS.flop_counts
+        cnt: FlopCounts = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt = _create_thread_state()
+        cnt: FlopCounts = _create_thread_state()
     cnt.SUB += n
     cnt.MUL += n
     cnt.ADD += n - 1
