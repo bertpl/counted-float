@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - flop-weight JSON files now key on stable identifiers instead of display labels; an unrecognized key now raises instead of silently degrading to a missing weight. Pre-2.0.0 label-keyed files (including your own saved benchmark results) no longer load and must be regenerated
+- flop counting state is now per-thread: contexts measure only the thread that opened them, and pausing affects the calling thread only
 
 ### Deprecated
 

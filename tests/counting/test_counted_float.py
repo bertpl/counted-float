@@ -441,7 +441,7 @@ def test_counted_float_math_pow(f1: float, f2: float, cf_left: bool, cf_right: b
 
 
 @pytest.mark.parametrize("f", [0.0, 1.0, 2.0, math.e])
-def test_counted_float_math_sqrt(global_counter, f: float):
+def test_counted_float_math_sqrt(thread_counter, f: float):
     # --- arrange -----------------------------------------
     cf = CountedFloat(f)
 
@@ -455,7 +455,7 @@ def test_counted_float_math_sqrt(global_counter, f: float):
 
 
 @pytest.mark.parametrize("f", [1.0, 2.0, math.e])
-def test_counted_float_math_log2(global_counter, f: float):
+def test_counted_float_math_log2(thread_counter, f: float):
     # --- arrange -----------------------------------------
     cf = CountedFloat(f)
 
@@ -469,7 +469,7 @@ def test_counted_float_math_log2(global_counter, f: float):
 
 
 # =================================================================================================
-#  CountedFloat - Correct integration with GLOBAL_COUNTER
+#  CountedFloat - Correct integration with THREAD_COUNTER
 # =================================================================================================
 @pytest.mark.parametrize(
     ("value", "expected_n_i2f"),
@@ -483,16 +483,16 @@ def test_counted_float_math_log2(global_counter, f: float):
         (-math.e, 0),
     ],
 )
-def test_counted_float_construction(value: float | int, expected_n_i2f: int, global_counter):
+def test_counted_float_construction(value: float | int, expected_n_i2f: int, thread_counter):
     # --- act ---------------------------------------------
     CountedFloat(value)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == expected_n_i2f
-    assert expected_n_i2f == global_counter.I2F
+    assert thread_counter.total_count() == expected_n_i2f
+    assert expected_n_i2f == thread_counter.I2F
 
 
-def test_counted_float_counts_abs(global_counter):
+def test_counted_float_counts_abs(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -500,11 +500,11 @@ def test_counted_float_counts_abs(global_counter):
     _ = abs(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.ABS == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.ABS == 1
 
 
-def test_counted_float_counts_neg(global_counter):
+def test_counted_float_counts_neg(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -512,11 +512,11 @@ def test_counted_float_counts_neg(global_counter):
     _ = -cf
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.MINUS == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.MINUS == 1
 
 
-def test_counted_float_counts_eq(global_counter):
+def test_counted_float_counts_eq(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -528,12 +528,12 @@ def test_counted_float_counts_eq(global_counter):
     _ = cf == 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_ne(global_counter):
+def test_counted_float_counts_ne(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -545,12 +545,12 @@ def test_counted_float_counts_ne(global_counter):
     _ = cf != 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_lt(global_counter):
+def test_counted_float_counts_lt(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -562,12 +562,12 @@ def test_counted_float_counts_lt(global_counter):
     _ = cf < 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_le(global_counter):
+def test_counted_float_counts_le(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -579,12 +579,12 @@ def test_counted_float_counts_le(global_counter):
     _ = cf <= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_gt(global_counter):
+def test_counted_float_counts_gt(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -596,9 +596,9 @@ def test_counted_float_counts_gt(global_counter):
     _ = cf > 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
 @pytest.mark.parametrize("min_max_fun", [min, max])
@@ -608,7 +608,7 @@ def test_counted_float_counts_gt(global_counter):
 )
 @pytest.mark.parametrize(("cf_left", "cf_right"), [(False, True), (True, False), (True, True)])
 def test_counted_float_counts_min_max(
-    min_max_fun: Callable, f1: float, f2: float, cf_left: bool, cf_right: bool, global_counter
+    min_max_fun: Callable, f1: float, f2: float, cf_left: bool, cf_right: bool, thread_counter
 ):
     # --- arrange -----------------------------------------
     expected_i2f = int(cf_left and isinstance(f1, int)) + int(cf_right and isinstance(f2, int))
@@ -621,12 +621,12 @@ def test_counted_float_counts_min_max(
     cf_min_max = min_max_fun(left, right)
 
     # --- assert ------------------------------------------
-    assert global_counter.COMP == 1
-    assert expected_i2f == global_counter.I2F
+    assert thread_counter.COMP == 1
+    assert expected_i2f == thread_counter.I2F
     assert f_min_max == cf_min_max
 
 
-def test_counted_float_counts_ge(global_counter):
+def test_counted_float_counts_ge(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -638,9 +638,9 @@ def test_counted_float_counts_ge(global_counter):
     _ = cf >= 2.34567
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.COMP == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.COMP == 5
+    assert thread_counter.I2F == 0
 
 
 @pytest.mark.parametrize(
@@ -651,7 +651,7 @@ def test_counted_float_counts_ge(global_counter):
         (1, 1, 0),  # round to float -> RND
     ],
 )
-def test_counted_float_counts_round(global_counter, ndigits, expected_n_rnd: int, expected_n_f2i: int):
+def test_counted_float_counts_round(thread_counter, ndigits, expected_n_rnd: int, expected_n_f2i: int):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -659,12 +659,12 @@ def test_counted_float_counts_round(global_counter, ndigits, expected_n_rnd: int
     _ = round(cf, ndigits)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert expected_n_rnd == global_counter.RND
-    assert expected_n_f2i == global_counter.F2I
+    assert thread_counter.total_count() == 1
+    assert expected_n_rnd == thread_counter.RND
+    assert expected_n_f2i == thread_counter.F2I
 
 
-def test_counted_float_counts_floor(global_counter):
+def test_counted_float_counts_floor(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -672,11 +672,11 @@ def test_counted_float_counts_floor(global_counter):
     _ = math.floor(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.F2I == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.F2I == 1
 
 
-def test_counted_float_counts_ceil(global_counter):
+def test_counted_float_counts_ceil(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -684,11 +684,11 @@ def test_counted_float_counts_ceil(global_counter):
     _ = math.ceil(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.F2I == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.F2I == 1
 
 
-def test_counted_float_counts_int(global_counter):
+def test_counted_float_counts_int(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -696,11 +696,11 @@ def test_counted_float_counts_int(global_counter):
     _ = int(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.F2I == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.F2I == 1
 
 
-def test_counted_float_counts_trunc(global_counter):
+def test_counted_float_counts_trunc(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -708,11 +708,11 @@ def test_counted_float_counts_trunc(global_counter):
     _ = math.trunc(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.F2I == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.F2I == 1
 
 
-def test_counted_float_counts_add(global_counter):
+def test_counted_float_counts_add(thread_counter):
     # --- arrange -----------------------------------------
     f = 3.14159
     cf = CountedFloat(1.23456)
@@ -724,11 +724,11 @@ def test_counted_float_counts_add(global_counter):
     _ = (cf + f) + f
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.ADD == 5
+    assert thread_counter.total_count() == 5
+    assert thread_counter.ADD == 5
 
 
-def test_counted_float_counts_add_int(global_counter):
+def test_counted_float_counts_add_int(thread_counter):
     # --- arrange -----------------------------------------
     i = 3
     cf = CountedFloat(1.23456)
@@ -740,12 +740,12 @@ def test_counted_float_counts_add_int(global_counter):
     _ = (cf + i) + i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.ADD == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.ADD == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_sub(global_counter):
+def test_counted_float_counts_sub(thread_counter):
     # --- arrange -----------------------------------------
     f = 3.14159
     cf = CountedFloat(1.23456)
@@ -757,11 +757,11 @@ def test_counted_float_counts_sub(global_counter):
     _ = (cf - f) - f
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.SUB == 5
+    assert thread_counter.total_count() == 5
+    assert thread_counter.SUB == 5
 
 
-def test_counted_float_counts_sub_int(global_counter):
+def test_counted_float_counts_sub_int(thread_counter):
     # --- arrange -----------------------------------------
     i = 3
     cf = CountedFloat(1.23456)
@@ -773,12 +773,12 @@ def test_counted_float_counts_sub_int(global_counter):
     _ = (cf - i) - i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.SUB == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.SUB == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_mul(global_counter):
+def test_counted_float_counts_mul(thread_counter):
     # --- arrange -----------------------------------------
     f = 3.14159
     cf = CountedFloat(1.23456)
@@ -790,11 +790,11 @@ def test_counted_float_counts_mul(global_counter):
     _ = (cf * f) * f
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.MUL == 5
+    assert thread_counter.total_count() == 5
+    assert thread_counter.MUL == 5
 
 
-def test_counted_float_counts_mul_int(global_counter):
+def test_counted_float_counts_mul_int(thread_counter):
     # --- arrange -----------------------------------------
     i = 3
     cf = CountedFloat(1.23456)
@@ -806,12 +806,12 @@ def test_counted_float_counts_mul_int(global_counter):
     _ = (cf * i) * i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.MUL == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.MUL == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_div(global_counter):
+def test_counted_float_counts_div(thread_counter):
     # --- arrange -----------------------------------------
     f = 3.14159
     cf = CountedFloat(1.23456)
@@ -823,11 +823,11 @@ def test_counted_float_counts_div(global_counter):
     _ = (cf / f) / f
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.DIV == 5
+    assert thread_counter.total_count() == 5
+    assert thread_counter.DIV == 5
 
 
-def test_counted_float_counts_div_int(global_counter):
+def test_counted_float_counts_div_int(thread_counter):
     # --- arrange -----------------------------------------
     i = 3
     cf = CountedFloat(1.23456)
@@ -839,12 +839,12 @@ def test_counted_float_counts_div_int(global_counter):
     _ = (cf / i) / i
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 5
-    assert global_counter.DIV == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 5
+    assert thread_counter.DIV == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_pow_1(global_counter):
+def test_counted_float_counts_pow_1(thread_counter):
     # --- arrange -----------------------------------------
     i = 9
     f = 3.14159
@@ -865,16 +865,16 @@ def test_counted_float_counts_pow_1(global_counter):
     _ = cf**i  # 4 x MUL (i == 9: square-and-multiply)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 17
-    assert global_counter.POW == 8
-    assert global_counter.EXP == 1
-    assert global_counter.EXP2 == 2
-    assert global_counter.EXP10 == 1
-    assert global_counter.MUL == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 17
+    assert thread_counter.POW == 8
+    assert thread_counter.EXP == 1
+    assert thread_counter.EXP2 == 2
+    assert thread_counter.EXP10 == 1
+    assert thread_counter.MUL == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_pow_2(global_counter):
+def test_counted_float_counts_pow_2(thread_counter):
     # --- arrange -----------------------------------------
     i = 9
     f = 3.14159
@@ -893,15 +893,15 @@ def test_counted_float_counts_pow_2(global_counter):
     _ = math.pow(cf, i)  # 4 x MUL (i == 9: square-and-multiply)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 15
-    assert global_counter.POW == 8
-    assert global_counter.EXP2 == 1
-    assert global_counter.EXP10 == 1
-    assert global_counter.MUL == 5
-    assert global_counter.I2F == 0
+    assert thread_counter.total_count() == 15
+    assert thread_counter.POW == 8
+    assert thread_counter.EXP2 == 1
+    assert thread_counter.EXP10 == 1
+    assert thread_counter.MUL == 5
+    assert thread_counter.I2F == 0
 
 
-def test_counted_float_counts_sqrt(global_counter):
+def test_counted_float_counts_sqrt(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -912,11 +912,11 @@ def test_counted_float_counts_sqrt(global_counter):
     _ = math.sqrt(3)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.SQRT == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.SQRT == 1
 
 
-def test_counted_float_counts_cbrt(global_counter):
+def test_counted_float_counts_cbrt(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -927,11 +927,11 @@ def test_counted_float_counts_cbrt(global_counter):
     _ = math.cbrt(3)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.CBRT == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.CBRT == 1
 
 
-def test_counted_float_counts_log(global_counter):
+def test_counted_float_counts_log(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -944,13 +944,13 @@ def test_counted_float_counts_log(global_counter):
     _ = math.log2(3)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 3
-    assert global_counter.LOG == 1
-    assert global_counter.LOG2 == 1
-    assert global_counter.LOG10 == 1
+    assert thread_counter.total_count() == 3
+    assert thread_counter.LOG == 1
+    assert thread_counter.LOG2 == 1
+    assert thread_counter.LOG10 == 1
 
 
-def test_counted_float_counts_sin_cos_tan(global_counter):
+def test_counted_float_counts_sin_cos_tan(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -965,16 +965,16 @@ def test_counted_float_counts_sin_cos_tan(global_counter):
     _ = math.tan(cf)
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.SIN == 1
-    assert global_counter.COS == 2
-    assert global_counter.TAN == 3
+    assert thread_counter.total_count() == 6
+    assert thread_counter.SIN == 1
+    assert thread_counter.COS == 2
+    assert thread_counter.TAN == 3
 
 
 # =================================================================================================
 #  CountedFloat - %, //, divmod, unary + (contagion completion)
 # =================================================================================================
-def test_counted_float_counts_floordiv(global_counter):
+def test_counted_float_counts_floordiv(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(7.5)
 
@@ -987,12 +987,12 @@ def test_counted_float_counts_floordiv(global_counter):
     assert isinstance(forward, CountedFloat)
     assert isinstance(reflected, CountedFloat)
     assert (float(forward), float(reflected)) == (3.0, 2.0)
-    assert global_counter.DIV == 2  # each // counts DIV + RND
-    assert global_counter.RND == 2
-    assert global_counter.total_count() == 4
+    assert thread_counter.DIV == 2  # each // counts DIV + RND
+    assert thread_counter.RND == 2
+    assert thread_counter.total_count() == 4
 
 
-def test_counted_float_counts_mod(global_counter):
+def test_counted_float_counts_mod(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(7.5)
 
@@ -1005,14 +1005,14 @@ def test_counted_float_counts_mod(global_counter):
     assert isinstance(reflected, CountedFloat)
     assert (float(forward), float(reflected)) == (1.5, 2.0)
     # each % counts the floored-remainder decomposition DIV + RND + MUL + SUB
-    assert global_counter.DIV == 2
-    assert global_counter.RND == 2
-    assert global_counter.MUL == 2
-    assert global_counter.SUB == 2
-    assert global_counter.total_count() == 8
+    assert thread_counter.DIV == 2
+    assert thread_counter.RND == 2
+    assert thread_counter.MUL == 2
+    assert thread_counter.SUB == 2
+    assert thread_counter.total_count() == 8
 
 
-def test_counted_float_counts_divmod(global_counter):
+def test_counted_float_counts_divmod(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(7.5)
 
@@ -1027,14 +1027,14 @@ def test_counted_float_counts_divmod(global_counter):
     assert isinstance(rr, CountedFloat)
     assert (float(q), float(r)) == (3.0, 1.5)
     # each divmod shares the quotient's DIV + RND with the remainder: DIV + RND + MUL + SUB per call
-    assert global_counter.DIV == 2
-    assert global_counter.RND == 2
-    assert global_counter.MUL == 2
-    assert global_counter.SUB == 2
-    assert global_counter.total_count() == 8
+    assert thread_counter.DIV == 2
+    assert thread_counter.RND == 2
+    assert thread_counter.MUL == 2
+    assert thread_counter.SUB == 2
+    assert thread_counter.total_count() == 8
 
 
-def test_counted_float_unary_plus_preserves_type_and_counts_nothing(global_counter):
+def test_counted_float_unary_plus_preserves_type_and_counts_nothing(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -1044,11 +1044,11 @@ def test_counted_float_unary_plus_preserves_type_and_counts_nothing(global_count
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
     assert float(result) == 1.23456
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 @pytest.mark.parametrize("op", [operator.floordiv, operator.mod, divmod])
-def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(global_counter, op: Callable):
+def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(thread_counter, op: Callable):
     # --- arrange -----------------------------------------
     cf = CountedFloat(7.5)
     cf_zero = CountedFloat(0.0)  # construction from a float counts nothing
@@ -1058,7 +1058,7 @@ def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(global_c
         op(cf, 0.0)  # forward path: cf // 0.0
     with pytest.raises(ZeroDivisionError):
         op(17.0, cf_zero)  # reflected path: 17.0 // cf_zero
-    assert global_counter.total_count() == 0
+    assert thread_counter.total_count() == 0
 
 
 @pytest.mark.parametrize(
@@ -1083,7 +1083,7 @@ def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(global_c
         (math.nan, {"POW": 1}),
     ],
 )
-def test_counted_float_pow_constant_exponent_strength_reduction(global_counter, exponent, expected_counts):
+def test_counted_float_pow_constant_exponent_strength_reduction(thread_counter, exponent, expected_counts):
     """A constant exponent counts what a compiled port would emit, folded by value."""
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
@@ -1093,12 +1093,12 @@ def test_counted_float_pow_constant_exponent_strength_reduction(global_counter, 
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert global_counter.total_count() == sum(expected_counts.values())
+    assert thread_counter.total_count() == sum(expected_counts.values())
     for flop_name, count in expected_counts.items():
-        assert getattr(global_counter, flop_name) == count
+        assert getattr(thread_counter, flop_name) == count
 
 
-def test_counted_float_pow_strength_reduction_mirrored_in_math_pow(global_counter):
+def test_counted_float_pow_strength_reduction_mirrored_in_math_pow(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -1110,15 +1110,15 @@ def test_counted_float_pow_strength_reduction_mirrored_in_math_pow(global_counte
     _ = math.pow(10.0, cf)  # EXP10
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 6
-    assert global_counter.SQRT == 1
-    assert global_counter.DIV == 1
-    assert global_counter.MUL == 2
-    assert global_counter.EXP2 == 1
-    assert global_counter.EXP10 == 1
+    assert thread_counter.total_count() == 6
+    assert thread_counter.SQRT == 1
+    assert thread_counter.DIV == 1
+    assert thread_counter.MUL == 2
+    assert thread_counter.EXP2 == 1
+    assert thread_counter.EXP10 == 1
 
 
-def test_counted_float_rpow_constant_float_base_folds_by_value(global_counter):
+def test_counted_float_rpow_constant_float_base_folds_by_value(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -1128,13 +1128,13 @@ def test_counted_float_rpow_constant_float_base_folds_by_value(global_counter):
     _ = 3.0**cf  # POW
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 3
-    assert global_counter.EXP2 == 1
-    assert global_counter.EXP10 == 1
-    assert global_counter.POW == 1
+    assert thread_counter.total_count() == 3
+    assert thread_counter.EXP2 == 1
+    assert thread_counter.EXP10 == 1
+    assert thread_counter.POW == 1
 
 
-def test_counted_float_pow_runtime_counted_exponent_counts_pow(global_counter):
+def test_counted_float_pow_runtime_counted_exponent_counts_pow(thread_counter):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -1142,5 +1142,5 @@ def test_counted_float_pow_runtime_counted_exponent_counts_pow(global_counter):
     _ = cf ** CountedFloat(2.0)  # a CountedFloat exponent is genuinely runtime: no folding
 
     # --- assert ------------------------------------------
-    assert global_counter.total_count() == 1
-    assert global_counter.POW == 1
+    assert thread_counter.total_count() == 1
+    assert thread_counter.POW == 1

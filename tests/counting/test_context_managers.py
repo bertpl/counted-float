@@ -4,7 +4,7 @@ import pytest
 
 from counted_float._core.counting._context_managers import FlopCountingContext, PauseFlopCounting
 from counted_float._core.counting._counted_float import CountedFloat
-from counted_float._core.counting._global_counter import GLOBAL_COUNTER
+from counted_float._core.counting._thread_counter import THREAD_COUNTER
 
 
 # =================================================================================================
@@ -223,11 +223,11 @@ def test_pause_flop_counting_restores_paused_state():
 
     # --- act ---------------------------------------------
     with FlopCountingContext() as fcc:
-        GLOBAL_COUNTER.pause()
+        THREAD_COUNTER.pause()
         with PauseFlopCounting():
             pass
         _ = cf1 + cf2  # should not be counted: counter was already paused before the with-block
-        GLOBAL_COUNTER.resume()
+        THREAD_COUNTER.resume()
         _ = cf1 * cf2  # should be counted
 
     # --- assert ------------------------------------------
