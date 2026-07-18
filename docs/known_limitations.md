@@ -68,7 +68,11 @@ counted region.
   is no per-task isolation. Note that while *any* thread has a context open,
   all threads see the patched `math.*` functions (patching is inherently
   process-wide); plain-float calls still take the fast path, and counts always
-  land in the thread performing the operation
+  land in the thread performing the operation. Free-threaded builds (3.14t) are
+  supported and covered by CI; counting there needs no lock, since each thread
+  mutates only its own state. Note that the `numba` extra requires **numba
+  0.65 or newer** on a free-threaded build — earlier versions ship no
+  free-threaded wheels
 - dict/set membership of `CountedFloat` keys inflates `COMP`: hash-bucket
   equality checks count as comparisons. This is consistent with the model
   (those comparisons really execute) but can surprise when a dict is used as

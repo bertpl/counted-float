@@ -30,6 +30,12 @@ jobs:
           - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "false" }  # numba-absent shim
           - { os: macos-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest, python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          # Free-threaded build: counting state is per-thread, so this leg is where the
+          # concurrency tests can actually fail for the reason they were written -- without the
+          # GIL serializing the increments they guard. `highest` resolution is required: the
+          # numba floor for 3.14 predates free-threaded wheels (first shipped in numba 0.65),
+          # and no PEP 508 marker can raise that floor for free-threaded builds only.
+          - { os: ubuntu-latest,  python: "3.14t", resolution: highest,      all_extras: "true"  }
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:

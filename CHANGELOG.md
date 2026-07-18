@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the flops benchmark now measures how `math.hypot` / `math.dist` latency scales with the number of coordinates, via new `HYPOT_XARG`, `DIST`, and `DIST_XARG` flop types
 - the flops benchmark now measures `math.gamma`, `math.lgamma`, `math.erf` and `math.erfc`
 - using a `FlopCountingContext` from a thread other than the one that opened it now raises instead of silently mixing state
+- free-threaded Python builds (3.14t) are now officially supported and CI-tested; the `numba` extra needs numba 0.65 or newer there
 
 ### Changed
 

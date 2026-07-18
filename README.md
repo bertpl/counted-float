@@ -92,7 +92,8 @@ Three facts worth knowing:
 
 - counting state is **per-thread**: a `FlopCountingContext` measures only the
   thread that opened it (open one context per worker thread to measure
-  multi-threaded code, and sum the results);
+  multi-threaded code, and sum the results). Free-threaded builds (3.14t) are
+  supported and CI-tested;
 - the overhead is inherent and `PauseFlopCounting` does **not** reduce it
   (the instrumented operators still execute; only count registration stops) —
   the escape hatch for hot uncounted regions is converting back via
