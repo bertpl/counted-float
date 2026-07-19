@@ -93,22 +93,8 @@ def _create_thread_state() -> CountsTarget:
     _TLS.flop_counts_active = FlopCounts()
     _TLS.flop_counts_inactive = FlopCounts()
     _TLS.verbosity = Verbosity.OFF
-    _TLS.flop_counts = _counting_target()
+    _TLS.flop_counts = ThreadLocalFlopCounter.counts_target_for_verbosity()
     return _TLS.flop_counts
-
-
-def _counting_target() -> CountsTarget:
-    """Return the object this thread's increments should go to while it is counting.
-
-    At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a FlopCountsWithLogging
-    wrapping those same counts, which logs each increment before applying it.
-
-    A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
-    context entry or exit, a pause, a resume, a reset — never per counted flop.
-    """
-    if _TLS.verbosity is not Verbosity.INFO:
-        return _TLS.flop_counts_active
-    return FlopCountsWithLogging(_TLS.flop_counts_active)
 
 
 class ThreadLocalFlopCounter:
@@ -134,18 +120,33 @@ class ThreadLocalFlopCounter:
         except AttributeError:
             _create_thread_state()
 
+    @staticmethod
+    def counts_target_for_verbosity() -> CountsTarget:
+        """Return the object this thread's increments should go to while it is counting.
+
+        At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a
+        FlopCountsWithLogging wrapping those same counts, which logs each increment before
+        applying it.
+
+        A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
+        context entry or exit, a pause, a resume, a reset — never per counted flop.
+        """
+        if _TLS.verbosity is not Verbosity.INFO:
+            return _TLS.flop_counts_active
+        return FlopCountsWithLogging(_TLS.flop_counts_active)
+
     def pause(self) -> None:
         self._ensure()
         _TLS.flop_counts = _TLS.flop_counts_inactive
 
     def resume(self) -> None:
         self._ensure()
-        _TLS.flop_counts = _counting_target()
+        _TLS.flop_counts = self.counts_target_for_verbosity()
 
     def reset(self) -> None:
         self._ensure()
         _TLS.flop_counts_active.reset()
-        _TLS.flop_counts = _counting_target()  # reset also resumes
+        _TLS.flop_counts = self.counts_target_for_verbosity()  # reset also resumes
 
     def is_active(self) -> bool:
         self._ensure()
@@ -189,7 +190,7 @@ class ThreadLocalFlopCounter:
         previous: Verbosity = _TLS.verbosity
         _TLS.verbosity = level
         if _TLS.flop_counts is not _TLS.flop_counts_inactive:
-            _TLS.flop_counts = _counting_target()  # paused threads pick the new target up on resume()
+            _TLS.flop_counts = self.counts_target_for_verbosity()  # paused threads pick the new target up on resume()
         return previous
 
     # -------------------------------------------------------------------------
