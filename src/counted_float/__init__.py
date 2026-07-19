@@ -9,7 +9,7 @@ try:
 except PackageNotFoundError:  # source tree without installed package metadata
     __version__ = "0.0.0"
 
-from ._core.counting import BuiltInData, CountedFloat, FlopCountingContext, PauseFlopCounting
+from ._core.counting import BuiltInData, CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
 from ._core.models import FlopCounts, FlopType, FlopWeights, Quantiles, SystemInfo
 
 __all__ = [
@@ -22,6 +22,7 @@ __all__ = [
     "PauseFlopCounting",
     "Quantiles",
     "SystemInfo",
+    "Verbosity",
     "__version__",
     "config",
 ]

@@ -1,7 +1,50 @@
 import pytest
 
 from counted_float import FlopCountingContext
-from counted_float._core.counting._thread_counter import THREAD_COUNTER, ThreadLocalFlopCounter
+from counted_float._core.counting._thread_counter import (
+    _TLS,
+    THREAD_COUNTER,
+    ThreadLocalFlopCounter,
+    _create_thread_state,
+)
+
+
+@pytest.fixture
+def incr_flop():
+    """Provide the increment call that the packaged code deliberately does not have.
+
+    Production counting sites inline their increments -- a method call costs about as much as the
+    increment itself (see the _thread_counter module docstring) -- so ThreadLocalFlopCounter offers
+    no increment API for tests to borrow.  Tests that want to register a flop without routing it
+    through CountedFloat arithmetic use this helper instead.  It reproduces the production
+    increment pattern exactly: a write through the thread's counts alias, with the lazy-init
+    handler for a thread's first counted op -- so whatever target the alias points at (the live
+    counts, the discard sink, a logging target) is exercised the same way real counting sites
+    exercise it.
+    """
+
+    def incr(field: str, n: int = 1) -> None:
+        try:
+            counts = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            counts = _create_thread_state()
+        setattr(counts, field, getattr(counts, field) + n)
+
+    return incr
+
+
+@pytest.fixture(autouse=True)
+def restore_verbosity():
+    """Restore the worker thread's verbosity level after each test.
+
+    Verbosity is thread state that outlives a test: one that sets it directly (or fails inside a
+    context before it is restored) would otherwise leave every later test in the same worker
+    logging its counts.
+    """
+
+    previous = THREAD_COUNTER.verbosity()
+    yield
+    THREAD_COUNTER.set_verbosity(previous)
 
 
 @pytest.fixture

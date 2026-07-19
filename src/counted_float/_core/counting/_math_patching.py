@@ -1,4 +1,13 @@
-"""Counting replacements for `math` module functions, and the machinery to apply/remove them.
+"""Replacements for `math` module functions, and the machinery to apply/remove them.
+
+There are two independently applied sets, each with its own lifetime:
+  - the **counting** replacements (`_PATCHES`), installed while at least one `FlopCountingContext`
+    is open — they count what they delegate to;
+  - the **reporting** replacements (`_UNCOUNTED_PATCHES`), installed while at least one thread is
+    reporting — they count nothing and exist only to surface the functions that cannot be counted
+    (see `_UNCOUNTED_MATH`). Their lifetime is strictly nested inside the counting set's, since a
+    reporting thread necessarily has a context open, and a run at the default verbosity never
+    installs them at all.
 
 Nothing in this module runs at import time: the `math` module is only patched while at least one
 `FlopCountingContext` is active (see `apply_math_patches` / `remove_math_patches`), so merely
@@ -25,12 +34,13 @@ import threading
 from typing import TYPE_CHECKING
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
-from ._thread_counter import _TLS, _create_thread_state
+from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
+from .verbosity import warn_uncounted_call
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
-    from counted_float._core.models import FlopCounts
+    from ._thread_counter import CountsTarget
 
 
 def _math_fma_unavailable(x: float, y: float, z: float) -> float:
@@ -142,22 +152,26 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
     try:
-        cnt: FlopCounts = _TLS.flop_counts
+        cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt: FlopCounts = _create_thread_state()
+        cnt: CountsTarget = _create_thread_state()
     if isinstance(base, CountedFloat):
+        cnt.note("runtime base -> log(x)/log(base)")
         if isinstance(x, CountedFloat):
             cnt.LOG += 1
         cnt.LOG += 1
         cnt.DIV += 1
     elif float(base) == 2.0:
         if isinstance(x, CountedFloat):
+            cnt.note("const base 2 -> log2")
             cnt.LOG2 += 1
     elif float(base) == 10.0:
         if isinstance(x, CountedFloat):
+            cnt.note("const base 10 -> log10")
             cnt.LOG10 += 1
     else:
         if isinstance(x, CountedFloat):
+            cnt.note("const base -> log(x) * 1/log(base)")
             cnt.LOG += 1
             cnt.MUL += 1
     if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
@@ -359,9 +373,9 @@ def math_hypot(*coordinates: float) -> float | CountedFloat:
     result = original_math_hypot(*coordinates)
     n = len(coordinates)
     try:
-        cnt: FlopCounts = _TLS.flop_counts
+        cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt: FlopCounts = _create_thread_state()
+        cnt: CountsTarget = _create_thread_state()
     if n == 1:
         cnt.ABS += 1
     elif n == 2:
@@ -516,9 +530,9 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
         return result
     n = len(p_seq)
     try:
-        cnt: FlopCounts = _TLS.flop_counts
+        cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
-        cnt: FlopCounts = _create_thread_state()
+        cnt: CountsTarget = _create_thread_state()
     cnt.SUB += n
     cnt.MUL += n
     cnt.ADD += n - 1
@@ -581,6 +595,70 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
 
 
 # -------------------------------------------------------------------------
+#  replacements for what cannot be counted
+# -------------------------------------------------------------------------
+# The math functions that meet CountedFloat values without counting them, mapped to what each such
+# call costs the count.  Kept in step with the coverage table in the math-patching docs: the
+# not-instrumented functions hand back plain floats, which stops counting downstream, while
+# isclose is the one predicate whose uncounted work is real arithmetic rather than a
+# classification.  Their replacements only report -- the results are the originals', untouched.
+_BREAKS_CONTAGION = "uncounted; result is a plain float"
+_UNCOUNTED_MATH: dict[str, str] = {
+    "remainder": _BREAKS_CONTAGION,
+    "frexp": _BREAKS_CONTAGION,
+    "ldexp": _BREAKS_CONTAGION,
+    "modf": _BREAKS_CONTAGION,
+    "gamma": _BREAKS_CONTAGION,
+    "lgamma": _BREAKS_CONTAGION,
+    "erf": _BREAKS_CONTAGION,
+    "erfc": _BREAKS_CONTAGION,
+    "nextafter": _BREAKS_CONTAGION,
+    "ulp": _BREAKS_CONTAGION,
+    "isclose": "uncounted; performs real arithmetic",
+}
+
+# Delegation targets of the replacements below.  Captured when they are installed — a replacement
+# can only be executing at or after that capture — and, like the counting replacements' originals,
+# never cleared: a call already executing a replacement must still find the function to delegate
+# to, even if the last reporting thread finishes meanwhile.
+_uncounted_originals: dict[str, Callable[..., object]] = {}
+
+
+def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object]:
+    """Build the report-and-delegate replacement for one uninstrumented math function.
+
+    Args:
+        name: Name of the math function to replace.
+        consequence: What the missing count costs, for the reported line.
+
+    Returns:
+        A replacement that reports the call while the calling thread is reporting, and otherwise
+        behaves exactly like the function it replaces.
+    """
+
+    def replacement(*args: object, **kwargs: object) -> object:
+        # the thread's reporting state is tested first: it settles the question for every thread
+        # that is not reporting -- one that never counted, runs at level OFF, or is paused (paused
+        # operations are deliberately uncounted, so they are not warned about either) -- without
+        # walking the arguments.  Keyword values are scanned too: math.isclose takes its
+        # tolerances by keyword, and a CountedFloat there is as unseen by the count as one in a
+        # positional slot.
+        if thread_is_reporting() and any(isinstance(arg, CountedFloat) for arg in (*args, *kwargs.values())):
+            warn_uncounted_call(name, consequence)
+        return _uncounted_originals[name](*args, **kwargs)
+
+    return replacement
+
+
+# Kept out of _PATCHES deliberately: these are installed only while some thread is reporting (see
+# apply_uncounted_math_patches), so a run at the default verbosity leaves these functions exactly
+# as it found them rather than routing every call through a replacement that has nothing to say.
+_UNCOUNTED_PATCHES: dict[str, Callable[..., object]] = {
+    name: _make_uncounted_wrapper(name, consequence) for name, consequence in _UNCOUNTED_MATH.items()
+}
+
+
+# -------------------------------------------------------------------------
 #  applying / removing the patches
 # -------------------------------------------------------------------------
 _PATCHES: dict[str, object] = {
@@ -629,6 +707,11 @@ _saved_originals: dict[str, object] = {}
 # (guarded by _patch_lock: concurrent first-entries must not double-capture or interleave
 #  capture with patch application)
 _active_context_count = 0
+
+# number of threads currently reporting; the reporting replacements are installed on the 0->1
+# transition and removed on the 1->0 one, so they exist only while someone is listening
+_reporting_thread_count = 0
+
 _patch_lock = threading.Lock()
 
 
@@ -714,3 +797,31 @@ def remove_math_patches() -> None:
             for name, saved in _saved_originals.items():
                 setattr(math, name, saved)
             _saved_originals.clear()
+
+
+def apply_uncounted_math_patches() -> None:
+    """Install the reporting replacements (refcounted; see module docstring).
+
+    Called when a thread starts reporting.  The replacements stay installed until the last such
+    thread stops, which is always inside the with-block of the context that made it report — so
+    this patch set's lifetime is strictly nested inside the counting replacements'.
+    """
+    global _reporting_thread_count
+    with _patch_lock:
+        _reporting_thread_count += 1
+        if _reporting_thread_count == 1:
+            for name, replacement in _UNCOUNTED_PATCHES.items():
+                _uncounted_originals[name] = getattr(math, name)
+                setattr(math, name, replacement)
+
+
+def remove_uncounted_math_patches() -> None:
+    """Undo apply_uncounted_math_patches; restored once the last reporting thread stops."""
+    global _reporting_thread_count
+    with _patch_lock:
+        if _reporting_thread_count == 0:
+            return  # nothing is installed, so there is nothing to undo
+        _reporting_thread_count -= 1
+        if _reporting_thread_count == 0:
+            for name, original in _uncounted_originals.items():
+                setattr(math, name, original)

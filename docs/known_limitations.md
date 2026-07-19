@@ -29,7 +29,10 @@ counted region.
   helpers (`remainder`, `frexp`, `ldexp`, `modf`, `nextafter`, `ulp`); see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) for
   the full per-function status and the
-  [FLOP types reference](flop_types.md) for per-operation counting rules
+  [FLOP types reference](flop_types.md) for per-operation counting rules. A
+  counting context can be asked to report such calls as it meets them, so a
+  count that is quietly missing them says so — see
+  [watching what gets counted](counting_flops.md#watching-what-gets-counted)
 - operator-level fused multiply-add is not modeled: `a*b + c` counts as separate
   MUL + ADD, but a compiled port on any modern target (x86 FMA3, ARMv8) commonly
   fuses it into a single FMA instruction with a single rounding, so flop counts

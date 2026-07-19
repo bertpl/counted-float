@@ -8,9 +8,27 @@ access:
   - ``flop_counts_inactive`` : a sink that absorbs increments while counting is paused
 
 ``flop_counts`` is an alias pointing at one of the two, and increments always go through
-the alias.  Because the alias always points at a valid FlopCounts object, an increment is
+the alias.  Because the alias always points at a valid counts object, an increment is
 one unconditional statement — ``_TLS.flop_counts.<FIELD> += 1`` — whether counting is
 paused or not; pause() and resume() just repoint the alias.
+
+A verbose thread points the alias at a third kind of target: a stand-in that logs each
+increment on its way into ``flop_counts_active`` (see the verbosity subpackage).  It is
+selected by the same repointing, so verbose counting costs the counting sites nothing —
+at level OFF the alias points at the plain counts, exactly as it would without the
+feature.  Only the level itself (``verbosity``) is kept per thread; the stand-in is built
+when a target is chosen, which happens only when one changes.
+
+Two invariants follow from the alias having three possible targets, and both are pinned by
+tests:
+
+  - "is this thread counting?" is derived from the alias in two places only — ``is_active()``
+    and its stateless counterpart ``thread_is_reporting()`` — and everything needing the answer
+    calls one of them.  The comparison is against ``flop_counts_inactive``; re-deriving it
+    against ``flop_counts_active`` answers wrongly for a thread whose increments are routed
+    through a logging target;
+  - reading counts back goes to ``flop_counts_active`` directly, never through the alias,
+    whose target is only ever a counts-shaped object to write through.
 
 Two kinds of code interact with this state:
 
@@ -53,6 +71,13 @@ import threading
 
 from counted_float._core.models import FlopCounts
 
+from .verbosity import FlopCountsWithLogging, Verbosity
+
+# What the ``flop_counts`` alias may point at: the thread's plain counts (active or the paused
+# sink), or the logging stand-in a verbose thread writes through.  Counting sites treat the
+# target as an opaque counts-shaped object, so which one is installed never reaches them.
+CountsTarget = FlopCounts | FlopCountsWithLogging
+
 # A bare threading.local() rather than a subclass: CPython resolves attribute access on
 # exact threading.local instances through a fast C-level code path, while instances of
 # subclasses fall back to a slower generic lookup.  The difference is a few ns per
@@ -60,18 +85,37 @@ from counted_float._core.models import FlopCounts
 _TLS = threading.local()
 
 
-def _create_thread_state() -> FlopCounts:
+def _create_thread_state() -> CountsTarget:
     """Create the calling thread's counting state; returns the fresh ``flop_counts`` alias target.
 
     Only called when the calling thread has no state yet: from the facade's ``_ensure()``
-    and from hot-path ``except AttributeError`` handlers.  Returning the active counts
-    object lets such a handler initialize the state and still count the triggering
-    operation in a single statement.  Threads start with counting unpaused.
+    and from hot-path ``except AttributeError`` handlers.  Returning the alias target lets
+    such a handler initialize the state and still count the triggering operation in a
+    single statement.  Threads start with counting unpaused and verbosity off.
     """
     _TLS.flop_counts_active = FlopCounts()
     _TLS.flop_counts_inactive = FlopCounts()
-    _TLS.flop_counts = _TLS.flop_counts_active
+    _TLS.verbosity = Verbosity.OFF
+    _TLS.flop_counts = ThreadLocalFlopCounter.counts_target_for_verbosity()
     return _TLS.flop_counts
+
+
+def thread_is_reporting() -> bool:
+    """Return whether the calling thread should report uncountable operations right now.
+
+    True while the thread's verbosity is not OFF *and* its counting is not paused: paused
+    operations are deliberately uncounted, so reporting them as "could not be counted" would be
+    noise.  The pause test mirrors `ThreadLocalFlopCounter.is_active()` — against the inactive
+    sink, the comparison that stays correct with a logging target installed.
+
+    Unlike the facade, this never initializes thread state: it is called from the replacements
+    that surface uncountable `math.*` calls, which any thread in the process may hit, and a
+    thread that never counted holds no state — and should not acquire any just for being asked.
+    """
+    if getattr(_TLS, "verbosity", Verbosity.OFF) is Verbosity.OFF:
+        return False
+    # verbosity is only ever set on fully created thread state, so both aliases exist here
+    return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
 
 class ThreadLocalFlopCounter:
@@ -79,8 +123,8 @@ class ThreadLocalFlopCounter:
 
     Every method operates on the calling thread's state only.  All methods here are
     cold-path (see module docstring): they prioritize clarity, going through ``_ensure()``
-    plus plain statements.  The ``incr_*`` methods exist for unit tests only; production
-    counting sites inline their increments instead.
+    plus plain statements.  Deliberately, there is no increment API here at all —
+    production counting sites inline their increments instead.
 
     The facade itself is stateless — all state lives on the thread-local ``_TLS`` — so
     this single module-level instance is safe to share across threads.
@@ -97,22 +141,44 @@ class ThreadLocalFlopCounter:
         except AttributeError:
             _create_thread_state()
 
+    @staticmethod
+    def counts_target_for_verbosity() -> CountsTarget:
+        """Return the object this thread's increments should go to while it is counting.
+
+        At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a
+        FlopCountsWithLogging wrapping those same counts, which logs each increment before
+        applying it.
+
+        A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
+        context entry or exit, a pause, a resume, a reset — never per counted flop.
+        """
+        if _TLS.verbosity is not Verbosity.INFO:
+            return _TLS.flop_counts_active
+        return FlopCountsWithLogging(_TLS.flop_counts_active)
+
     def pause(self) -> None:
         self._ensure()
         _TLS.flop_counts = _TLS.flop_counts_inactive
 
     def resume(self) -> None:
         self._ensure()
-        _TLS.flop_counts = _TLS.flop_counts_active
+        _TLS.flop_counts = self.counts_target_for_verbosity()
 
     def reset(self) -> None:
         self._ensure()
         _TLS.flop_counts_active.reset()
-        _TLS.flop_counts = _TLS.flop_counts_active  # reset also resumes
+        _TLS.flop_counts = self.counts_target_for_verbosity()  # reset also resumes
 
     def is_active(self) -> bool:
+        """Return whether the calling thread is counting, i.e. not paused.
+
+        The single place that derives this from the alias.  Anything else needing the answer
+        calls this rather than comparing targets again: the comparison is against the *inactive*
+        counts, and re-deriving it against the active ones would answer wrongly for a thread
+        whose increments are routed through a logging target.
+        """
         self._ensure()
-        return _TLS.flop_counts is _TLS.flop_counts_active
+        return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
     def flop_counts(self) -> FlopCounts:
         self._ensure()
@@ -131,160 +197,29 @@ class ThreadLocalFlopCounter:
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
 
     # -------------------------------------------------------------------------
-    #  Incrementing counts  (unit tests only -- production counting sites inline
-    #  their increments, see module docstring)
+    #  Verbosity API
     # -------------------------------------------------------------------------
-    def incr_abs(self) -> None:
+    def verbosity(self) -> Verbosity:
+        """Return the calling thread's current verbosity level."""
         self._ensure()
-        _TLS.flop_counts.ABS += 1
+        return _TLS.verbosity
 
-    def incr_minus(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.MINUS += 1
+    def set_verbosity(self, level: Verbosity) -> Verbosity:
+        """Set the calling thread's verbosity level.
 
-    def incr_copysign(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.COPYSIGN += 1
+        Args:
+            level: Level to switch this thread to.
 
-    def incr_comp(self) -> None:
+        Returns:
+            The level that was replaced, so the caller can restore it — which is how nested
+            counting contexts give the innermost one's level precedence.
+        """
         self._ensure()
-        _TLS.flop_counts.COMP += 1
-
-    def incr_rnd(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.RND += 1
-
-    def incr_f2i(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.F2I += 1
-
-    def incr_i2f(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.I2F += 1
-
-    def incr_add(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ADD += 1
-
-    def incr_sub(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.SUB += 1
-
-    def incr_mul(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.MUL += 1
-
-    def incr_div(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.DIV += 1
-
-    def incr_fma(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.FMA += 1
-
-    def incr_sqrt(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.SQRT += 1
-
-    def incr_cbrt(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.CBRT += 1
-
-    def incr_exp(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.EXP += 1
-
-    def incr_exp2(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.EXP2 += 1
-
-    def incr_exp10(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.EXP10 += 1
-
-    def incr_log(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.LOG += 1
-
-    def incr_log2(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.LOG2 += 1
-
-    def incr_log10(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.LOG10 += 1
-
-    def incr_pow(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.POW += 1
-
-    def incr_sin(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.SIN += 1
-
-    def incr_cos(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.COS += 1
-
-    def incr_tan(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.TAN += 1
-
-    def incr_asin(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ASIN += 1
-
-    def incr_acos(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ACOS += 1
-
-    def incr_atan(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ATAN += 1
-
-    def incr_atan2(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ATAN2 += 1
-
-    def incr_hypot(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.HYPOT += 1
-
-    def incr_expm1(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.EXPM1 += 1
-
-    def incr_log1p(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.LOG1P += 1
-
-    def incr_fmod(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.FMOD += 1
-
-    def incr_sinh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.SINH += 1
-
-    def incr_cosh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.COSH += 1
-
-    def incr_tanh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.TANH += 1
-
-    def incr_asinh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ASINH += 1
-
-    def incr_acosh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ACOSH += 1
-
-    def incr_atanh(self) -> None:
-        self._ensure()
-        _TLS.flop_counts.ATANH += 1
+        previous: Verbosity = _TLS.verbosity
+        _TLS.verbosity = level
+        if self.is_active():
+            _TLS.flop_counts = self.counts_target_for_verbosity()  # paused threads pick it up on resume()
+        return previous
 
 
 # --- module-level instance through which cold paths access the calling thread's counter ---
