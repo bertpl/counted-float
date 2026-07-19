@@ -21,7 +21,7 @@ def test_generated_docs_blocks_match_committed_content():
     result = subprocess.run(  # noqa: S603 -- fixed, repo-local command
         [sys.executable, str(GENERATOR), "--check"],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         cwd=REPO_ROOT,
         check=False,  # the return code is the assertion
     )

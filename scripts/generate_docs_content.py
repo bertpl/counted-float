@@ -129,7 +129,7 @@ def capture_show_data_ansi() -> str:
             "from counted_float._core._cli_main import main; main()",
         ],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=True,
         env=_capture_env(SHOW_DATA_CAPTURE_COLUMNS),
     )
@@ -141,7 +141,7 @@ def capture_snippet_stderr_ansi(snippet: Path) -> str:
     result = subprocess.run(
         [sys.executable, str(snippet)],
         capture_output=True,
-        text=True,
+        encoding="utf-8",
         check=True,
         cwd=snippet.parent,  # so the logged locations show the bare snippet file name
         env=_capture_env(100),
@@ -153,7 +153,14 @@ def _capture_env(columns: int) -> dict[str, str]:
     """Environment that makes rich emit truecolor ANSI at a fixed width without a real TTY."""
     import os
 
-    return os.environ | {"COLUMNS": str(columns), "FORCE_COLOR": "1", "COLORTERM": "truecolor"}
+    # PYTHONUTF8 keeps the child's stdout/stderr UTF-8 on Windows, whose default locale
+    # encoding cannot represent the tree's box-drawing characters
+    return os.environ | {
+        "COLUMNS": str(columns),
+        "FORCE_COLOR": "1",
+        "COLORTERM": "truecolor",
+        "PYTHONUTF8": "1",
+    }
 
 
 # ==================================================================================================
@@ -270,7 +277,7 @@ def generate_builtin_data_table() -> str:
 
 def _snippet_source(name: str) -> str:
     """The committed snippet's source, as the docs' input code block."""
-    return f"```python\n{(SNIPPETS_DIR / name).read_text().rstrip()}\n```"
+    return f"```python\n{(SNIPPETS_DIR / name).read_text(encoding='utf-8').rstrip()}\n```"
 
 
 def generate_snippet_verbosity_info() -> str:
@@ -361,10 +368,17 @@ def regenerate_text_blocks() -> dict[Path, str]:
     by_file: dict[Path, dict[str, str]] = {}
     for name, (file_path, generator) in TEXT_BLOCKS.items():
         by_file.setdefault(file_path, {})[name] = generator()
+    # CRLF-checkout normalization (Windows CI): blocks are generated with \n, so the
+    # comparison and the rewrite both happen in \n space regardless of what git checked out
     return {
-        file_path: rewrite_marked_blocks(file_path.read_text(), file_path, replacements)
+        file_path: rewrite_marked_blocks(_read_lf(file_path), file_path, replacements)
         for file_path, replacements in by_file.items()
     }
+
+
+def _read_lf(file_path: Path) -> str:
+    r"""Read a text file as UTF-8 with line endings normalized to \n."""
+    return file_path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
 # ==================================================================================================
@@ -386,7 +400,7 @@ def render_ansi_to_image(ansi_text: str, columns: int, out_path: Path) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         ansi_file = Path(tmp) / "capture.ansi"
         raw_png = Path(tmp) / "raw.png"
-        ansi_file.write_text(ansi_text)
+        ansi_file.write_text(ansi_text, encoding="utf-8")
         subprocess.run(
             [
                 "termshot",
@@ -456,7 +470,7 @@ def main() -> int:
     if args.check:
         stale = False
         for file_path, intended in regenerated.items():
-            current = file_path.read_text()
+            current = _read_lf(file_path)
             if current != intended:
                 stale = True
                 diff = difflib.unified_diff(
@@ -474,8 +488,8 @@ def main() -> int:
         return 0
 
     for file_path, intended in regenerated.items():
-        if file_path.read_text() != intended:
-            file_path.write_text(intended)
+        if _read_lf(file_path) != intended:
+            file_path.write_text(intended, encoding="utf-8", newline="\n")
             print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
 
     if not args.text_only:
