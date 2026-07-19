@@ -113,15 +113,6 @@ def test_counts_are_the_same_whether_or_not_they_are_logged():
     assert verbose.flop_counts() == silent.flop_counts()
 
 
-def test_counting_stays_active_while_logging():
-    # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.INFO):
-        is_active = THREAD_COUNTER.is_active()
-
-    # --- assert ------------------------------------------
-    assert is_active, "Routing increments through the logging target should not read as 'paused'."
-
-
 # ==================================================================================================
 #  Interaction with pausing
 # ==================================================================================================

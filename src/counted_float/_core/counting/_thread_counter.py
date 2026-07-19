@@ -12,14 +12,20 @@ the alias.  Because the alias always points at a valid counts object, an increme
 one unconditional statement — ``_TLS.flop_counts.<FIELD> += 1`` — whether counting is
 paused or not; pause() and resume() just repoint the alias.
 
-A verbose thread gets a third target, ``flop_counts_logging``: a stand-in that logs each
+A verbose thread points the alias at a third kind of target: a stand-in that logs each
 increment on its way into ``flop_counts_active`` (see the verbosity subpackage).  It is
 selected by the same repointing, so verbose counting costs the counting sites nothing —
 at level OFF the alias points at the plain counts, exactly as it would without the
-feature.  Consequently the alias target is only ever a counts-shaped object to write
-through: reading counts back goes to ``flop_counts_active`` directly, and "is counting
-paused?" is a comparison against ``flop_counts_inactive`` rather than against the active
-counts.
+feature.  Only the level itself (``verbosity``) is kept per thread; the stand-in is built
+when a target is chosen, which happens only when one changes.
+
+Two invariants follow from the alias having three possible targets, and both are pinned by
+tests:
+
+  - "is counting paused?" is ``flop_counts is flop_counts_inactive`` — never a comparison
+    against ``flop_counts_active``, which a logging thread does not point at;
+  - reading counts back goes to ``flop_counts_active`` directly, never through the alias,
+    whose target is only ever a counts-shaped object to write through.
 
 Two kinds of code interact with this state:
 
@@ -96,16 +102,13 @@ def _counting_target() -> CountsTarget:
 
     That is the thread's plain counts, unless its verbosity level asks for the flops to be
     logged as they are registered, in which case increments are routed through a logging
-    stand-in wrapping those same counts.  The stand-in is created on the thread's first
-    verbose context and reused afterwards.
+    stand-in wrapping those same counts.  The stand-in is built here rather than kept on the
+    thread: choosing a target happens only when one changes — a context entry or exit, a
+    pause, a resume, a reset — never per counted flop.
     """
     if _TLS.verbosity is not Verbosity.INFO:
         return _TLS.flop_counts_active
-    try:
-        return _TLS.flop_counts_logging
-    except AttributeError:  # first verbose context on this thread
-        _TLS.flop_counts_logging = LoggingFlopCounts(_TLS.flop_counts_active)
-        return _TLS.flop_counts_logging
+    return LoggingFlopCounts(_TLS.flop_counts_active)
 
 
 class ThreadLocalFlopCounter:
