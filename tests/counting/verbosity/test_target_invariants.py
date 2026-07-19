@@ -12,6 +12,9 @@ from counted_float import FlopCounts, Verbosity
 from counted_float._core.counting._thread_counter import _TLS
 
 
+# ==================================================================================================
+#  Which target increments go to, per (level, paused)
+# ==================================================================================================
 @pytest.mark.parametrize(
     ("level", "paused", "counted", "logged"),
     [
@@ -39,3 +42,37 @@ def test_increment_target(thread_counter, logged_lines, level, paused, counted, 
     assert thread_counter.flop_counts() == (FlopCounts(ADD=1) if counted else FlopCounts())
 
     assert len(logged_lines()) == (1 if logged else 0)
+
+
+# ==================================================================================================
+#  Changing the level while paused
+# ==================================================================================================
+def test_setting_verbosity_while_paused_does_not_resume(thread_counter, logged_lines):
+    # --- arrange -----------------------------------------
+    thread_counter.pause()
+
+    # --- act ---------------------------------------------
+    thread_counter.set_verbosity(Verbosity.INFO)
+    thread_counter.incr_add()
+
+    # --- assert ------------------------------------------
+    # the level lands, but the alias stays on the sink: switching it here would resume a thread
+    # that asked to be paused
+    assert _TLS.flop_counts is _TLS.flop_counts_inactive
+    assert not thread_counter.is_active()
+    assert thread_counter.flop_counts() == FlopCounts()
+    assert logged_lines() == []
+
+
+def test_resuming_picks_up_a_level_set_while_paused(thread_counter, logged_lines):
+    # --- arrange -----------------------------------------
+    thread_counter.pause()
+    thread_counter.set_verbosity(Verbosity.INFO)
+
+    # --- act ---------------------------------------------
+    thread_counter.resume()
+    thread_counter.incr_add()
+
+    # --- assert ------------------------------------------
+    assert thread_counter.flop_counts() == FlopCounts(ADD=1)
+    assert len(logged_lines()) == 1

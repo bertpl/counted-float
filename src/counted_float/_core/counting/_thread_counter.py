@@ -22,8 +22,10 @@ when a target is chosen, which happens only when one changes.
 Two invariants follow from the alias having three possible targets, and both are pinned by
 tests:
 
-  - "is counting paused?" is ``flop_counts is flop_counts_inactive`` — never a comparison
-    against ``flop_counts_active``, which a logging thread does not point at;
+  - "is this thread counting?" is derived from the alias in exactly one place, ``is_active()``,
+    and everything needing the answer calls it.  The comparison is against
+    ``flop_counts_inactive``; re-deriving it against ``flop_counts_active`` answers wrongly for
+    a thread whose increments are routed through a logging target;
   - reading counts back goes to ``flop_counts_active`` directly, never through the alias,
     whose target is only ever a counts-shaped object to write through.
 
@@ -149,6 +151,13 @@ class ThreadLocalFlopCounter:
         _TLS.flop_counts = self.counts_target_for_verbosity()  # reset also resumes
 
     def is_active(self) -> bool:
+        """Return whether the calling thread is counting, i.e. not paused.
+
+        The single place that derives this from the alias.  Anything else needing the answer
+        calls this rather than comparing targets again: the comparison is against the *inactive*
+        counts, and re-deriving it against the active ones would answer wrongly for a thread
+        whose increments are routed through a logging target.
+        """
         self._ensure()
         return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
@@ -189,8 +198,8 @@ class ThreadLocalFlopCounter:
         self._ensure()
         previous: Verbosity = _TLS.verbosity
         _TLS.verbosity = level
-        if _TLS.flop_counts is not _TLS.flop_counts_inactive:
-            _TLS.flop_counts = self.counts_target_for_verbosity()  # paused threads pick the new target up on resume()
+        if self.is_active():
+            _TLS.flop_counts = self.counts_target_for_verbosity()  # paused threads pick it up on resume()
         return previous
 
     # -------------------------------------------------------------------------
