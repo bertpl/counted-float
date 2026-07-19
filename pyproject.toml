@@ -183,6 +183,8 @@ runtime-evaluated-base-classes = ["pydantic.BaseModel", "counted_float._core.mod
 "src/counted_float/_core/counting/_math_patching.py" = ["PLW0603"]
 # maintainer tooling, not the shipped library: not a package (INP001), subprocess is fine (S)
 "scripts/**" = ["INP001", "S"]
+# docs example snippets, embedded verbatim into the docs: a docstring would pollute the example
+"scripts/docs_snippets/*" = ["INP001", "D100"]
 ".github/scripts/**" = ["INP001", "S"]
 
 [tool.ty.src]

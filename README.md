@@ -23,7 +23,9 @@ feasible or desirable.
 
 Flop weights are computed using a highly curated dataset spanning a wide range of modern CPUs:
 
+<!-- BEGIN generated: source-counts -->
 - 21 benchmarks, 16 spec sheets, 12 third party measurements (Agner Fog, uops.info)
+<!-- END generated: source-counts -->
 - covering x86 (Intel, AMD) and ARM (Apple, AWS, Azure) architectures
 
 **Full documentation: [counted-float.readthedocs.io](https://counted-float.readthedocs.io/)**

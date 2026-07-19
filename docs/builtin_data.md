@@ -54,27 +54,30 @@ Running `counted_float show-data` (see the
 tree, alongside the weights each entry and each aggregation level resolves
 to:
 
-![counted_float show-data output](images/show_data.svg)
+![counted_float show-data output](images/show_data.webp)
 
 The colored bands are the interior (aggregate) nodes — one shade per level of
 the [key hierarchy](#key-anatomy) — while the plain rows are the individual
-data sources; `/` marks a weight that is absent and could not be imputed. The
-same collection in tabular form:
+data sources; `/` marks a weight that is absent and could not be imputed (the
+trailing flop-type columns are cut from the screenshot; run the command for
+the full matrix). The same collection in tabular form:
 
+<!-- BEGIN generated: builtin-data-table -->
 | ISA | µarch family | Entries |
 |---|---|---|
 | arm | `v8_x` | benchmarks: `apple_m1_github_actions`, `apple_m3_max_mbp16`, `apple_m3_mba15`, `aws_graviton_2_neoverse_n1_ec2_m6g_large`, `aws_graviton_3_neoverse_v1_ec2_m7g_large` — specs: `arm_cortex_a76`, `arm_cortex_x1`, `arm_neoverse_n1`, `arm_neoverse_v1` |
 | arm | `v9_0` | benchmarks: `aws_graviton_4_neoverse_v2_ec2_m8g_large`, `azure_cobalt_100_neoverse_n2_github_actions` — specs: `arm_cortex_x2`, `arm_cortex_x3`, `arm_neoverse_n2`, `arm_neoverse_v2` |
 | arm | `v9_2` | benchmarks: `apple_m4_pro_mbp16`, `aws_graviton_5_neoverse_v3_ec2_m9g_large` — specs: `arm_cortex_x4`, `arm_cortex_x925`, `arm_neoverse_v3` |
 | x86 | `amd.2017_zen1` | benchmarks: `amd_epyc_7571_ec2_m5a_xlarge` — other: `analysis_uops_info_zen1+` |
-| x86 | `amd.2020_zen3` | benchmarks: `amd_epyc_7r13_ec2_m6a_xlarge` — other: `analysis_agner_fog_r7_5800x`, `analysis_uops_info_zen3` |
+| x86 | `amd.2020_zen3` | benchmarks: `amd_epyc_7763_windows_github_actions`, `amd_epyc_7r13_ec2_m6a_xlarge` — other: `analysis_agner_fog_r7_5800x`, `analysis_uops_info_zen3` |
 | x86 | `amd.2022_zen4` | benchmarks: `amd_epyc_9r14_ec2_m7a_large` — other: `analysis_agner_fog_r9_7900x`, `analysis_uops_info_zen4`, `specs_amd` |
 | x86 | `amd.2024_zen5` | benchmarks: `amd_epyc_9r45_ec2_m8a_large` — other: `analysis_agner_fog_r7_9800x3d`, `specs_amd` |
 | x86 | `intel.2017_coffee_lake_gen_8` | benchmarks: `intel_i7_8550U_windows`, `intel_i7_8700B_macos_github_actions` — other: `analysis_agner_fog_coffee_lake`, `analysis_uops_info_coffee_lake` |
 | x86 | `intel.2019_sunny_cove_gen_10` | benchmarks: `intel_xeon_8375c_ice_lake_ec2_m6i_xlarge` — other: `analysis_agner_fog_ice_lake`, `analysis_uops_info_ice_lake`, `analysis_uops_info_tiger_lake` |
 | x86 | `intel.2021_golden_cove_gen_12` | benchmarks: `intel_xeon_8488c_sapphire_rapids_ec2_m7i_xlarge` — other: `analysis_uops_info_alder_lake_p`, `specs_intel` |
 | x86 | `intel.2022_raptor_cove_gen_13_14` | benchmarks: `intel_xeon_8559c_emerald_rapids_ec2_i7i_xlarge` — other: `specs_intel` |
-| x86 | `intel.2023_redwood_cove_ultra_1` | benchmarks: `intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge` — other: `specs_intel` |
+| x86 | `intel.2023_redwood_cove_ultra_1` | benchmarks: `intel_xeon_6973p_granite_rapids_linux_github_actions`, `intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge` — other: `specs_intel` |
+<!-- END generated: builtin-data-table -->
 
 See [CPU architecture scope](cpu_architectures_scope.md) for why these CPUs
 and no others.

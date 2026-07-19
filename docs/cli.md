@@ -48,6 +48,7 @@ Options:
 |---|---|
 | `--key-filter TEXT` | Show only the sources whose key contains `TEXT` — e.g. `--key-filter arm` for the ARM subtree, or `--key-filter benchmarks` for measured sources only. Defaults to showing everything. `--key_filter` is accepted as well. |
 
+<!-- BEGIN generated: cli-show-data-slice -->
 ```
 [~] counted_float show-data
                                                                              MINUS       ABS      COMP       ADD       SUB  COPYSIGN       MUL       FMA       RND       F2I       I2F  …
@@ -61,8 +62,9 @@ ALL                                                                           0.
  │  │  │  ├─aws_graviton_2_neoverse_n1_ec2_m6g_large                          0.46      1.47      0.40      1.00      1.00      1.80      1.39      1.86      2.00        /         /   …
  │  │  │  └─aws_graviton_3_neoverse_v1_ec2_m7g_large                          0.51      1.00      0.10      1.00      1.00      1.99      1.50      2.00      1.99        /         /   …
  │  │  └─specs                                                                1.00      1.00      1.00      1.00      1.00        /       1.50      2.00      1.50      1.73      2.12  …
-         ⋮   (remaining ARM specs, the full x86 subtree, and 27 more flop-type columns omitted)
+         ⋮   (remaining ARM specs, the full x86 subtree, and 34 more flop-type columns omitted)
 ```
+<!-- END generated: cli-show-data-slice -->
 
 ## Test performance of `CountedFloat` vs `float`
 
