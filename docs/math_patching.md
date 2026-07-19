@@ -82,6 +82,11 @@ to them — but they are uncounted all the same. `math.isclose` is the one where
 that matters: it performs real arithmetic (a difference, absolute values, and a
 scaled tolerance comparison) and none of it is counted.
 
+Rather than checking this table against your code by hand, you can have a counting
+context report these calls as it meets them — the not-instrumented set and
+`math.isclose`, each reported once per call site. See
+[watching what gets counted](counting_flops.md#watching-what-gets-counted).
+
 `math.fma(x, y, z)` exists only from Python 3.13 on, and is patched exactly where
 it exists — on older interpreters there is no such function to call, and a
 multiply-add written as `a*b + c` counts MUL + ADD there as everywhere else. It is

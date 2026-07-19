@@ -245,6 +245,97 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
 counts.total_count()         # 2
 ```
 
+### Watching what gets counted
+
+A flop counting context can also report as it goes, instead of only counting. Two
+levels:
+
+- **`Verbosity.INFO`** — reports every flop it counts.
+- **`Verbosity.WARNING`** — reports the operations it could *not* count.
+
+Both write to `stderr`, and `INFO` includes the `WARNING` lines.
+
+**Example 5**: _verbose counting_
+
+```python
+import math
+from counted_float import CountedFloat, FlopCountingContext, Verbosity
+
+cf = CountedFloat(1.73)
+
+with FlopCountingContext(verbosity=Verbosity.INFO) as ctx:
+    _ = cf * cf
+    _ = cf**2
+    _ = math.log(cf, 2)
+```
+
+writes to `stderr`:
+
+```text
+INFO  MUL         +1                                               my_algo.py:7
+INFO  MUL         +1     const exponent -> square-and-multiply     my_algo.py:8
+INFO  LOG2        +1     const base 2 -> log2                      my_algo.py:9
+```
+
+Every line names the flop type, how many of them that one statement registered,
+the rationale where the library applied a rule you did not write out (here:
+`cf**2` strength-reduces to a multiply, and a constant base 2 makes `log` a
+`log2`), and the line of *your* code that triggered it — never the library
+internals that did the counting.
+
+This is the tool for answering "why is this count 14 and not 12?" on a small
+snippet. Three things worth knowing:
+
+- **The level applies to the whole thread while the block is open.** A context
+  opened inside a verbose one takes over until it exits, whatever level it asks
+  for — so a plain `FlopCountingContext()` is how you mute a noisy stretch.
+- **Paused flops are not logged**, for the same reason they are not counted.
+- **One line per counted flop, with no deduplication.** A loop doing a million
+  operations logs a million lines: `INFO` is a microscope for small snippets, not
+  a profiler for a whole run.
+
+**Example 6**: _reporting what could not be counted_
+
+```python
+import math
+from counted_float import CountedFloat, FlopCountingContext, Verbosity
+
+cf = CountedFloat(2.5)
+
+with FlopCountingContext(verbosity=Verbosity.WARNING) as ctx:
+    for _ in range(1000):
+        _ = math.remainder(cf, 2.0)
+    _ = math.isclose(cf, 2.5)
+```
+
+writes:
+
+```text
+WARN  remainder          uncounted; result is a plain float        my_algo.py:8
+WARN  isclose            uncounted; performs real arithmetic       my_algo.py:9
+```
+
+`WARNING` is for the opposite question: not "why is this count 14?" but "is this
+count missing something?". It reports calls that met a `CountedFloat` and could
+not be counted — the
+[not-instrumented `math` functions](math_patching.md#coverage-of-the-math-module),
+whose plain-`float` results also stop counting downstream, plus `math.isclose`,
+the one predicate that does real arithmetic. The pure classifiers (`isnan`,
+`isinf`, `isfinite`) compute nothing, so they are not reported. Unlike `INFO`,
+each call site is reported only once — the thousand-iteration loop above reports
+once, and so does a second run in the same process, exactly as Python's own
+warnings behave. That is what keeps this level usable on a full run.
+
+!!! warning "What `WARNING` can and cannot see"
+
+    It reports operations the library can observe but not count. It is **not** a
+    guarantee that the total is complete: a runtime value that entered your
+    algorithm as a plain `float` rather than a `CountedFloat` is, by design,
+    indistinguishable from a deliberate constant, so the operations on it are
+    silently uncounted and nothing warns. Keeping runtime values in
+    `CountedFloat` throughout is what makes a count trustworthy; this level only
+    catches the boundaries that are visible.
+
 ## Performance overhead
 
 Counting adds overhead in two forms, measured on an Apple M3 Max (see the

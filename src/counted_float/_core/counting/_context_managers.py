@@ -7,8 +7,14 @@ import threading
 from types import TracebackType
 from typing import Self
 
-from counted_float._core.counting._math_patching import apply_math_patches, remove_math_patches
+from counted_float._core.counting._math_patching import (
+    apply_math_patches,
+    apply_uncounted_math_patches,
+    remove_math_patches,
+    remove_uncounted_math_patches,
+)
 from counted_float._core.counting._thread_counter import THREAD_COUNTER
+from counted_float._core.counting.verbosity import Verbosity
 from counted_float._core.models import FlopCounts
 
 _CROSS_THREAD_MESSAGE = (
@@ -29,6 +35,9 @@ class FlopCountingContext:
     a cross-thread call would silently read or pause the *caller's* thread state).  To measure a
     multi-threaded computation, open a separate context per worker thread and sum the results.
 
+    Pass a `verbosity` level to have the context report each flop as it is registered, instead of
+    only totalling them (see Verbosity).
+
     LIMITATIONS:
         - not _all_ floating-point operations are counted, see the docs for more details.
     """
@@ -36,7 +45,18 @@ class FlopCountingContext:
     # -------------------------------------------------------------------------
     #  Constructor
     # -------------------------------------------------------------------------
-    def __init__(self) -> None:
+    def __init__(self, verbosity: Verbosity = Verbosity.OFF) -> None:
+        """Create a counting context.
+
+        Args:
+            verbosity: What to report about the flops registered while this context's with-block
+                is open.  The level applies to the whole thread, so a context opened inside this
+                one takes over until it exits, whatever level it asks for.
+        """
+        # Verbosity requested by this context, and the thread level it replaced while open
+        self.__verbosity: Verbosity = verbosity
+        self.__replaced_verbosity: Verbosity = Verbosity.OFF
+
         # Active/inactive flag  (toggled by __enter__ and __exit__ + by pause() and resume() methods)
         # When inactive:
         #   - current count == self.__cnt_subtotal
@@ -130,6 +150,31 @@ class FlopCountingContext:
         if self.__owner_ident is not None and threading.get_ident() != self.__owner_ident:
             raise RuntimeError(_CROSS_THREAD_MESSAGE)
 
+    def __enter_reporting_state(self) -> None:
+        """Switch the thread to this context's verbosity level, and start reporting if it was not.
+
+        The replacements that surface uncountable `math.*` calls exist only while some thread is
+        reporting, so a context that takes its thread from silent to reporting is what installs
+        them.
+        """
+        self.__replaced_verbosity = THREAD_COUNTER.set_verbosity(self.__verbosity)
+        if self.__starts_reporting():
+            apply_uncounted_math_patches()
+
+    def __leave_reporting_state(self) -> None:
+        """Restore the level this context replaced, and stop reporting if it started."""
+        if self.__starts_reporting():
+            remove_uncounted_math_patches()
+        THREAD_COUNTER.set_verbosity(self.__replaced_verbosity)
+
+    def __starts_reporting(self) -> bool:
+        """Whether this context is the one taking its thread from silent to reporting.
+
+        The same question answered in reverse on the way out, which is why entering and leaving
+        share it: the pair of levels involved is the same either way.
+        """
+        return self.__replaced_verbosity is Verbosity.OFF and self.__verbosity is not Verbosity.OFF
+
     def __activate(self) -> None:
         """Start attributing the thread's counts to this context, preserving any earlier subtotal."""
         if not self.__active:
@@ -157,6 +202,10 @@ class FlopCountingContext:
         apply_math_patches()
         self.__depth += 1
         if self.__depth == 1:
+            # only the outermost entry switches the level, and only the matching exit restores it:
+            # re-entering this same context would otherwise overwrite the replaced level with its
+            # own, leaving the final exit to restore that instead of the level from before the block
+            self.__enter_reporting_state()
             self.__activate()
         return self
 
@@ -170,6 +219,7 @@ class FlopCountingContext:
         self.__depth -= 1
         if self.__depth == 0:
             self.__deactivate()
+            self.__leave_reporting_state()
             self.__owner_ident = None
         remove_math_patches()
 

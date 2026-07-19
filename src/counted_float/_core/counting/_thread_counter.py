@@ -8,9 +8,26 @@ access:
   - ``flop_counts_inactive`` : a sink that absorbs increments while counting is paused
 
 ``flop_counts`` is an alias pointing at one of the two, and increments always go through
-the alias.  Because the alias always points at a valid FlopCounts object, an increment is
+the alias.  Because the alias always points at a valid counts object, an increment is
 one unconditional statement — ``_TLS.flop_counts.<FIELD> += 1`` — whether counting is
 paused or not; pause() and resume() just repoint the alias.
+
+A verbose thread points the alias at a third kind of target: a stand-in that logs each
+increment on its way into ``flop_counts_active`` (see the verbosity subpackage).  It is
+selected by the same repointing, so verbose counting costs the counting sites nothing —
+at level OFF the alias points at the plain counts, exactly as it would without the
+feature.  Only the level itself (``verbosity``) is kept per thread; the stand-in is built
+when a target is chosen, which happens only when one changes.
+
+Two invariants follow from the alias having three possible targets, and both are pinned by
+tests:
+
+  - "is this thread counting?" is derived from the alias in exactly one place, ``is_active()``,
+    and everything needing the answer calls it.  The comparison is against
+    ``flop_counts_inactive``; re-deriving it against ``flop_counts_active`` answers wrongly for
+    a thread whose increments are routed through a logging target;
+  - reading counts back goes to ``flop_counts_active`` directly, never through the alias,
+    whose target is only ever a counts-shaped object to write through.
 
 Two kinds of code interact with this state:
 
@@ -53,6 +70,13 @@ import threading
 
 from counted_float._core.models import FlopCounts
 
+from .verbosity import FlopCountsWithLogging, Verbosity
+
+# What the ``flop_counts`` alias may point at: the thread's plain counts (active or the paused
+# sink), or the logging stand-in a verbose thread writes through.  Counting sites treat the
+# target as an opaque counts-shaped object, so which one is installed never reaches them.
+CountsTarget = FlopCounts | FlopCountsWithLogging
+
 # A bare threading.local() rather than a subclass: CPython resolves attribute access on
 # exact threading.local instances through a fast C-level code path, while instances of
 # subclasses fall back to a slower generic lookup.  The difference is a few ns per
@@ -60,17 +84,18 @@ from counted_float._core.models import FlopCounts
 _TLS = threading.local()
 
 
-def _create_thread_state() -> FlopCounts:
+def _create_thread_state() -> CountsTarget:
     """Create the calling thread's counting state; returns the fresh ``flop_counts`` alias target.
 
     Only called when the calling thread has no state yet: from the facade's ``_ensure()``
-    and from hot-path ``except AttributeError`` handlers.  Returning the active counts
-    object lets such a handler initialize the state and still count the triggering
-    operation in a single statement.  Threads start with counting unpaused.
+    and from hot-path ``except AttributeError`` handlers.  Returning the alias target lets
+    such a handler initialize the state and still count the triggering operation in a
+    single statement.  Threads start with counting unpaused and verbosity off.
     """
     _TLS.flop_counts_active = FlopCounts()
     _TLS.flop_counts_inactive = FlopCounts()
-    _TLS.flop_counts = _TLS.flop_counts_active
+    _TLS.verbosity = Verbosity.OFF
+    _TLS.flop_counts = ThreadLocalFlopCounter.counts_target_for_verbosity()
     return _TLS.flop_counts
 
 
@@ -97,22 +122,44 @@ class ThreadLocalFlopCounter:
         except AttributeError:
             _create_thread_state()
 
+    @staticmethod
+    def counts_target_for_verbosity() -> CountsTarget:
+        """Return the object this thread's increments should go to while it is counting.
+
+        At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a
+        FlopCountsWithLogging wrapping those same counts, which logs each increment before
+        applying it.
+
+        A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
+        context entry or exit, a pause, a resume, a reset — never per counted flop.
+        """
+        if _TLS.verbosity is not Verbosity.INFO:
+            return _TLS.flop_counts_active
+        return FlopCountsWithLogging(_TLS.flop_counts_active)
+
     def pause(self) -> None:
         self._ensure()
         _TLS.flop_counts = _TLS.flop_counts_inactive
 
     def resume(self) -> None:
         self._ensure()
-        _TLS.flop_counts = _TLS.flop_counts_active
+        _TLS.flop_counts = self.counts_target_for_verbosity()
 
     def reset(self) -> None:
         self._ensure()
         _TLS.flop_counts_active.reset()
-        _TLS.flop_counts = _TLS.flop_counts_active  # reset also resumes
+        _TLS.flop_counts = self.counts_target_for_verbosity()  # reset also resumes
 
     def is_active(self) -> bool:
+        """Return whether the calling thread is counting, i.e. not paused.
+
+        The single place that derives this from the alias.  Anything else needing the answer
+        calls this rather than comparing targets again: the comparison is against the *inactive*
+        counts, and re-deriving it against the active ones would answer wrongly for a thread
+        whose increments are routed through a logging target.
+        """
         self._ensure()
-        return _TLS.flop_counts is _TLS.flop_counts_active
+        return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
     def flop_counts(self) -> FlopCounts:
         self._ensure()
@@ -129,6 +176,31 @@ class ThreadLocalFlopCounter:
             self._ensure()
             return getattr(_TLS.flop_counts_active, item)
         raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{item}'")
+
+    # -------------------------------------------------------------------------
+    #  Verbosity API
+    # -------------------------------------------------------------------------
+    def verbosity(self) -> Verbosity:
+        """Return the calling thread's current verbosity level."""
+        self._ensure()
+        return _TLS.verbosity
+
+    def set_verbosity(self, level: Verbosity) -> Verbosity:
+        """Set the calling thread's verbosity level.
+
+        Args:
+            level: Level to switch this thread to.
+
+        Returns:
+            The level that was replaced, so the caller can restore it — which is how nested
+            counting contexts give the innermost one's level precedence.
+        """
+        self._ensure()
+        previous: Verbosity = _TLS.verbosity
+        _TLS.verbosity = level
+        if self.is_active():
+            _TLS.flop_counts = self.counts_target_for_verbosity()  # paused threads pick it up on resume()
+        return previous
 
     # -------------------------------------------------------------------------
     #  Incrementing counts  (unit tests only -- production counting sites inline
