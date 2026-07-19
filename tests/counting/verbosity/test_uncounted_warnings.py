@@ -280,6 +280,34 @@ def test_a_silent_context_nested_in_a_reporting_one_suspends_reporting(logged_li
     assert "gamma" in line, "The silent inner context should have suspended reporting entirely."
 
 
+def test_reporting_refcount_survives_concurrent_context_churn():
+    # --- arrange -----------------------------------------
+    # the reporting analog of the counting patches' churn test: its refcount shares the lock but
+    # is its own counter, so it gets its own hammer
+    gamma_before = math.gamma
+    x = CountedFloat(2.5)
+    n_threads = 8
+    barrier = threading.Barrier(n_threads)
+
+    def churn() -> None:
+        barrier.wait()
+        for _ in range(200):
+            with FlopCountingContext(verbosity=Verbosity.WARNING):
+                _ = math.gamma(x)  # exercise the replacement itself while patches churn
+
+    # --- act ---------------------------------------------
+    threads = [threading.Thread(target=churn) for _ in range(n_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # --- assert ------------------------------------------
+    assert math.gamma is gamma_before, "after the last reporting context closed, math.gamma must be restored"
+    assert _math_patching._reporting_thread_count == 0
+    assert _math_patching._active_context_count == 0
+
+
 def test_replacements_delegate_to_what_they_displaced():
     # --- arrange -----------------------------------------
     # the same property the counting replacements' snapshot carries: a replacement must delegate

@@ -1,8 +1,9 @@
 import math
+import threading
 
 import pytest
 
-from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
+from counted_float import CountedFloat, FlopCountingContext, FlopCounts, PauseFlopCounting, Verbosity
 from counted_float._core.counting._thread_counter import THREAD_COUNTER
 
 
@@ -188,3 +189,40 @@ def test_re_entering_one_context_keeps_its_level():
     assert level_nested == Verbosity.INFO
     assert level_outer == Verbosity.INFO
     assert level_after == Verbosity.OFF, "Re-entry must not leak the level past the outermost exit."
+
+
+# ==================================================================================================
+#  Threads
+# ==================================================================================================
+def test_concurrent_contexts_count_exactly_and_log_only_the_verbose_threads(logged_lines):
+    # --- arrange -----------------------------------------
+    # the logging target forwards every increment through Python-level attribute hooks into a
+    # writer shared by the whole process, so concurrently logging threads must neither corrupt
+    # each other's counts nor log each other's flops; the OFF threads pin that a neighbour's
+    # level does not leak into theirs
+    n_threads = 4
+    barrier = threading.Barrier(n_threads)
+    results: dict[int, FlopCounts] = {}
+
+    def worker(idx: int) -> None:
+        n_adds = 50 * (idx + 1)
+        level = Verbosity.INFO if idx % 2 == 0 else Verbosity.OFF
+        with FlopCountingContext(verbosity=level) as ctx:
+            barrier.wait()  # maximize overlap between the workers
+            x = CountedFloat(1.0)
+            for _ in range(n_adds):
+                x = x + 1.0
+        results[idx] = ctx.flop_counts()
+
+    # --- act ---------------------------------------------
+    threads = [threading.Thread(target=worker, args=(idx,)) for idx in range(n_threads)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    # --- assert ------------------------------------------
+    for idx in range(n_threads):
+        assert results[idx] == FlopCounts(ADD=50 * (idx + 1)), f"thread {idx} must report exactly its own op mix"
+    n_logged_expected = sum(50 * (idx + 1) for idx in range(n_threads) if idx % 2 == 0)
+    assert len(logged_lines()) == n_logged_expected, "exactly the INFO threads' flops must be logged, once each"
