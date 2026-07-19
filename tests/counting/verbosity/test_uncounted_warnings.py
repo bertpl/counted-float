@@ -3,7 +3,7 @@ import threading
 
 import pytest
 
-from counted_float import CountedFloat, FlopCountingContext, Verbosity
+from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
 from counted_float._core.counting import _math_patching
 
 UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
@@ -28,6 +28,18 @@ def test_every_uncounted_math_function_is_reported(logged_lines, function_name):
     # --- assert ------------------------------------------
     (line,) = logged_lines()
     assert line.split()[:2] == ["WARN", function_name]
+
+
+def test_a_counted_value_in_a_keyword_argument_is_reported(logged_lines):
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        _ = math.isclose(2.0, 2.5, rel_tol=CountedFloat(0.1))
+
+    # --- assert ------------------------------------------
+    (line,) = logged_lines()
+    assert line.split()[:2] == ["WARN", "isclose"], (
+        "A CountedFloat tolerance is as unseen by the count as a positional operand."
+    )
 
 
 def test_a_call_without_counted_values_is_not_reported(logged_lines):
@@ -80,6 +92,20 @@ def test_off_reports_nothing(logged_lines):
 
     # --- assert ------------------------------------------
     assert logged_lines() == []
+
+
+def test_a_call_while_paused_is_not_reported(logged_lines):
+    # --- arrange -----------------------------------------
+    x = CountedFloat(2.5)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING), PauseFlopCounting():
+        _ = math.erf(x)
+
+    # --- assert ------------------------------------------
+    assert logged_lines() == [], (
+        "Paused operations are deliberately uncounted, so an uncountable one is nothing to warn about."
+    )
 
 
 def test_warning_does_not_log_counted_flops(logged_lines):

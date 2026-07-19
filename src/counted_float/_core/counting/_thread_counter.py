@@ -22,10 +22,11 @@ when a target is chosen, which happens only when one changes.
 Two invariants follow from the alias having three possible targets, and both are pinned by
 tests:
 
-  - "is this thread counting?" is derived from the alias in exactly one place, ``is_active()``,
-    and everything needing the answer calls it.  The comparison is against
-    ``flop_counts_inactive``; re-deriving it against ``flop_counts_active`` answers wrongly for
-    a thread whose increments are routed through a logging target;
+  - "is this thread counting?" is derived from the alias in two places only — ``is_active()``
+    and its stateless counterpart ``thread_is_reporting()`` — and everything needing the answer
+    calls one of them.  The comparison is against ``flop_counts_inactive``; re-deriving it
+    against ``flop_counts_active`` answers wrongly for a thread whose increments are routed
+    through a logging target;
   - reading counts back goes to ``flop_counts_active`` directly, never through the alias,
     whose target is only ever a counts-shaped object to write through.
 
@@ -97,6 +98,24 @@ def _create_thread_state() -> CountsTarget:
     _TLS.verbosity = Verbosity.OFF
     _TLS.flop_counts = ThreadLocalFlopCounter.counts_target_for_verbosity()
     return _TLS.flop_counts
+
+
+def thread_is_reporting() -> bool:
+    """Return whether the calling thread should report uncountable operations right now.
+
+    True while the thread's verbosity is not OFF *and* its counting is not paused: paused
+    operations are deliberately uncounted, so reporting them as "could not be counted" would be
+    noise.  The pause test mirrors `ThreadLocalFlopCounter.is_active()` — against the inactive
+    sink, the comparison that stays correct with a logging target installed.
+
+    Unlike the facade, this never initializes thread state: it is called from the replacements
+    that surface uncountable `math.*` calls, which any thread in the process may hit, and a
+    thread that never counted holds no state — and should not acquire any just for being asked.
+    """
+    if getattr(_TLS, "verbosity", Verbosity.OFF) is Verbosity.OFF:
+        return False
+    # verbosity is only ever set on fully created thread state, so both aliases exist here
+    return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
 
 class ThreadLocalFlopCounter:

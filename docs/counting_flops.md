@@ -324,7 +324,10 @@ the one predicate that does real arithmetic. The pure classifiers (`isnan`,
 `isinf`, `isfinite`) compute nothing, so they are not reported. Unlike `INFO`,
 each call site is reported only once — the thousand-iteration loop above reports
 once, and so does a second run in the same process, exactly as Python's own
-warnings behave. That is what keeps this level usable on a full run.
+warnings behave. That is what keeps this level usable on a full run. And like
+`INFO` lines, these reports respect pausing: an uncountable call made while
+counting is paused is not reported, for the same reason nothing else is counted
+there either.
 
 !!! warning "What `WARNING` can and cannot see"
 

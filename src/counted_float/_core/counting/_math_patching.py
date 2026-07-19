@@ -34,8 +34,8 @@ import threading
 from typing import TYPE_CHECKING
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
-from ._thread_counter import _TLS, _create_thread_state
-from .verbosity import Verbosity, warn_uncounted_call
+from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
+from .verbosity import warn_uncounted_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -617,10 +617,11 @@ _UNCOUNTED_MATH: dict[str, str] = {
     "isclose": "uncounted; performs real arithmetic",
 }
 
-# Delegation targets of the replacements below, captured when they are installed and, like the
-# counting replacements' originals, never cleared: a call already executing a replacement must
-# still find the function to delegate to, even if the last reporting thread finishes meanwhile.
-_uncounted_originals: dict[str, Callable[..., object]] = {name: getattr(math, name) for name in _UNCOUNTED_MATH}
+# Delegation targets of the replacements below.  Captured when they are installed — a replacement
+# can only be executing at or after that capture — and, like the counting replacements' originals,
+# never cleared: a call already executing a replacement must still find the function to delegate
+# to, even if the last reporting thread finishes meanwhile.
+_uncounted_originals: dict[str, Callable[..., object]] = {}
 
 
 def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object]:
@@ -636,12 +637,13 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
     """
 
     def replacement(*args: object, **kwargs: object) -> object:
-        # the thread's level is tested first: it is a single attribute lookup, and it settles the
-        # question for every thread that is not reporting -- including one that has never counted
-        # and so holds no verbosity state at all -- without walking the arguments
-        if getattr(_TLS, "verbosity", Verbosity.OFF) is not Verbosity.OFF and any(
-            isinstance(arg, CountedFloat) for arg in args
-        ):
+        # the thread's reporting state is tested first: it settles the question for every thread
+        # that is not reporting -- one that never counted, runs at level OFF, or is paused (paused
+        # operations are deliberately uncounted, so they are not warned about either) -- without
+        # walking the arguments.  Keyword values are scanned too: math.isclose takes its
+        # tolerances by keyword, and a CountedFloat there is as unseen by the count as one in a
+        # positional slot.
+        if thread_is_reporting() and any(isinstance(arg, CountedFloat) for arg in (*args, *kwargs.values())):
             warn_uncounted_call(name, consequence)
         return _uncounted_originals[name](*args, **kwargs)
 
