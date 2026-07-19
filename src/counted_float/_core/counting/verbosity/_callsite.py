@@ -19,9 +19,11 @@ def resolve_callsite() -> str:
     microscope for small snippets, where a full path is noise.
 
     Returns:
-        ``file.py:lineno``, or ``<unknown>`` when every frame on the stack belongs to this
-        package — which happens when counted code is driven from a C-level caller that has no
-        Python frame of its own.
+        ``file.py:lineno``, or ``<unknown>`` when no frame outside this package is on the stack.
+        The fallback is there to make the walk fail-safe — there is always a string to report —
+        rather than to describe a situation callers will meet: the entry module (``__main__``,
+        pytest, a notebook) is always a frame outside the package, so the only realistic way in
+        is the package driving counted code itself, e.g. in its own tests.
     """
     frame = sys._getframe(1)  # noqa: SLF001 -- the documented way to walk the Python stack
     while frame is not None:

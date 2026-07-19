@@ -38,7 +38,8 @@ def test_resolve_callsite_skips_frames_inside_the_package():
 
 def test_resolve_callsite_without_any_user_frame(monkeypatch):
     # --- arrange -----------------------------------------
-    # counted code driven from a C-level caller leaves no Python frame to attribute it to
+    # the walk only gives up when no frame outside the package is left, which a caller of the
+    # library never produces -- simulated here by taking the stack away entirely
     monkeypatch.setattr(sys, "_getframe", lambda _depth: None)
 
     # --- act ---------------------------------------------

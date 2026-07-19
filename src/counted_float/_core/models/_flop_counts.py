@@ -103,7 +103,7 @@ class FlopCounts:
 
     # --- increment-target contract -----------------------
     def note(self, rationale: str) -> None:
-        """No-op counterpart of `LoggingFlopCounts.note()`: the rationale is dropped.
+        """No-op counterpart of `FlopCountsWithLogging.note()`: the rationale is dropped.
 
         Counting sites explain their less obvious decisions unconditionally, so plain counts have
         to accept a rationale too — they simply have nowhere to render it.

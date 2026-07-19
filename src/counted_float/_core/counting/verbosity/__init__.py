@@ -1,2 +1,2 @@
-from ._logging_flop_counts import LoggingFlopCounts
+from ._flop_counts_with_logging import FlopCountsWithLogging
 from ._verbosity import Verbosity

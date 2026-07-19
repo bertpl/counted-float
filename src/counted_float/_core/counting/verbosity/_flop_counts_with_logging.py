@@ -12,9 +12,9 @@ if TYPE_CHECKING:
 
 
 # =================================================================================================
-#  LoggingFlopCounts
+#  FlopCountsWithLogging
 # =================================================================================================
-class LoggingFlopCounts:
+class FlopCountsWithLogging:
     """Counts object that logs each flop registered on it, then forwards it to the real counts.
 
     While a thread counts verbosely, its increments are sent here instead of straight into its own

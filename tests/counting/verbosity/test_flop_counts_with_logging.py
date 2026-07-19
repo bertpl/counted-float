@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float import FlopCounts
-from counted_float._core.counting.verbosity import LoggingFlopCounts
+from counted_float._core.counting.verbosity import FlopCountsWithLogging
 
 
 @pytest.fixture
@@ -10,8 +10,8 @@ def counts() -> FlopCounts:
 
 
 @pytest.fixture
-def target(counts) -> LoggingFlopCounts:
-    return LoggingFlopCounts(counts)
+def target(counts) -> FlopCountsWithLogging:
+    return FlopCountsWithLogging(counts)
 
 
 # ==================================================================================================
@@ -75,7 +75,7 @@ def test_the_logged_line_reports_the_incrementing_location(target, logged_lines)
 
     # --- assert ------------------------------------------
     (line,) = logged_lines()
-    assert "test_logging_flop_counts.py:" in line
+    assert "test_flop_counts_with_logging.py:" in line
 
 
 # ==================================================================================================
@@ -111,4 +111,4 @@ def test_lines_without_a_note_carry_no_rationale(target, logged_lines):
     (line,) = logged_lines()
     level, flop_type, count, location = line.split()
     assert (level, flop_type, count) == ("INFO", "ADD", "+1")
-    assert location.startswith("test_logging_flop_counts.py:")
+    assert location.startswith("test_flop_counts_with_logging.py:")

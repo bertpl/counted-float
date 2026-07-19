@@ -68,12 +68,12 @@ import threading
 
 from counted_float._core.models import FlopCounts
 
-from .verbosity import LoggingFlopCounts, Verbosity
+from .verbosity import FlopCountsWithLogging, Verbosity
 
 # What the ``flop_counts`` alias may point at: the thread's plain counts (active or the paused
 # sink), or the logging stand-in a verbose thread writes through.  Counting sites treat the
 # target as an opaque counts-shaped object, so which one is installed never reaches them.
-CountsTarget = FlopCounts | LoggingFlopCounts
+CountsTarget = FlopCounts | FlopCountsWithLogging
 
 # A bare threading.local() rather than a subclass: CPython resolves attribute access on
 # exact threading.local instances through a fast C-level code path, while instances of
@@ -100,7 +100,7 @@ def _create_thread_state() -> CountsTarget:
 def _counting_target() -> CountsTarget:
     """Return the object this thread's increments should go to while it is counting.
 
-    At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a LoggingFlopCounts
+    At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a FlopCountsWithLogging
     wrapping those same counts, which logs each increment before applying it.
 
     A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
@@ -108,7 +108,7 @@ def _counting_target() -> CountsTarget:
     """
     if _TLS.verbosity is not Verbosity.INFO:
         return _TLS.flop_counts_active
-    return LoggingFlopCounts(_TLS.flop_counts_active)
+    return FlopCountsWithLogging(_TLS.flop_counts_active)
 
 
 class ThreadLocalFlopCounter:
