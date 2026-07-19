@@ -26,14 +26,14 @@ from counted_float._core.counting._thread_counter import _TLS
         (Verbosity.INFO, True, False, False),
     ],
 )
-def test_increment_target(thread_counter, logged_lines, level, paused, counted, logged):
+def test_increment_target(thread_counter, logged_lines, incr_flop, level, paused, counted, logged):
     # --- arrange -----------------------------------------
     thread_counter.set_verbosity(level)
     if paused:
         thread_counter.pause()
 
     # --- act ---------------------------------------------
-    thread_counter.incr_add()
+    incr_flop("ADD")
 
     # --- assert ------------------------------------------
     # the alias points at the sink exactly while paused
@@ -49,13 +49,13 @@ def test_increment_target(thread_counter, logged_lines, level, paused, counted, 
 # ==================================================================================================
 #  Changing the level while paused
 # ==================================================================================================
-def test_setting_verbosity_while_paused_does_not_resume(thread_counter, logged_lines):
+def test_setting_verbosity_while_paused_does_not_resume(thread_counter, logged_lines, incr_flop):
     # --- arrange -----------------------------------------
     thread_counter.pause()
 
     # --- act ---------------------------------------------
     thread_counter.set_verbosity(Verbosity.INFO)
-    thread_counter.incr_add()
+    incr_flop("ADD")
 
     # --- assert ------------------------------------------
     # the level lands, but the alias stays on the sink: switching it here would resume a thread
@@ -66,14 +66,14 @@ def test_setting_verbosity_while_paused_does_not_resume(thread_counter, logged_l
     assert logged_lines() == []
 
 
-def test_resuming_picks_up_a_level_set_while_paused(thread_counter, logged_lines):
+def test_resuming_picks_up_a_level_set_while_paused(thread_counter, logged_lines, incr_flop):
     # --- arrange -----------------------------------------
     thread_counter.pause()
     thread_counter.set_verbosity(Verbosity.INFO)
 
     # --- act ---------------------------------------------
     thread_counter.resume()
-    thread_counter.incr_add()
+    incr_flop("ADD")
 
     # --- assert ------------------------------------------
     assert thread_counter.flop_counts() == FlopCounts(ADD=1)

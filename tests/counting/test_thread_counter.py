@@ -10,7 +10,7 @@ from counted_float._core.models import FlopCounts
 # ==================================================================================================
 #  Facade behavior
 # ==================================================================================================
-def test_thread_counter_fixture(thread_counter):
+def test_thread_counter_fixture(thread_counter, incr_flop):
     # --- assert 1 ----------------------------------------
 
     # check correct type and instance
@@ -22,7 +22,7 @@ def test_thread_counter_fixture(thread_counter):
     assert thread_counter.is_active(), "The thread_counter fixture should be active."
 
     # --- act ---------------------------------------------
-    thread_counter.incr_div()
+    incr_flop("DIV")
 
     # --- assert 2 ----------------------------------------
     assert thread_counter.flop_counts().total_count() == 1
@@ -30,10 +30,10 @@ def test_thread_counter_fixture(thread_counter):
     assert THREAD_COUNTER.flop_counts() == thread_counter.flop_counts()
 
 
-def test_thread_counter_total_count(thread_counter):
+def test_thread_counter_total_count(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
-    thread_counter.incr_add()
-    thread_counter.incr_mul()
+    incr_flop("ADD")
+    incr_flop("MUL")
 
     # --- act ---------------------------------------------
     total_count = thread_counter.total_count()
@@ -42,10 +42,10 @@ def test_thread_counter_total_count(thread_counter):
     assert total_count == thread_counter.flop_counts().total_count()
 
 
-def test_thread_counter_count_attributes(thread_counter):
+def test_thread_counter_count_attributes(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
-    thread_counter.incr_add()
-    thread_counter.incr_mul()
+    incr_flop("ADD")
+    incr_flop("MUL")
 
     # --- act & assert ------------------------------------
     assert thread_counter.ADD == 1, "ADD count is incorrect"
@@ -60,11 +60,11 @@ def test_thread_counter_unknown_attribute_raises(thread_counter):
         _ = thread_counter.NOT_A_FLOP_TYPE
 
 
-def test_thread_counter_counts(thread_counter):
+def test_thread_counter_counts(thread_counter, incr_flop):
     # --- act ---------------------------------------------
-    thread_counter.incr_add()
-    thread_counter.incr_add()
-    thread_counter.incr_mul()
+    incr_flop("ADD")
+    incr_flop("ADD")
+    incr_flop("MUL")
 
     # --- assert ------------------------------------------
     assert thread_counter.flop_counts().total_count() == 3
@@ -72,10 +72,10 @@ def test_thread_counter_counts(thread_counter):
     assert thread_counter.flop_counts().MUL == 1
 
 
-def test_thread_counter_reset(thread_counter):
+def test_thread_counter_reset(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
-    thread_counter.incr_add()
-    thread_counter.incr_mul()
+    incr_flop("ADD")
+    incr_flop("MUL")
     thread_counter.pause()
 
     # --- act ---------------------------------------------
@@ -86,9 +86,9 @@ def test_thread_counter_reset(thread_counter):
     assert thread_counter.flop_counts() == FlopCounts(), "After reset, the thread counter should be zero."
 
 
-def test_thread_counter_pause_resume(thread_counter):
+def test_thread_counter_pause_resume(thread_counter, incr_flop):
     # --- act 1 -------------------------------------------
-    thread_counter.incr_mul()
+    incr_flop("MUL")
     thread_counter.pause()
 
     # --- assert 1 ----------------------------------------
@@ -97,9 +97,9 @@ def test_thread_counter_pause_resume(thread_counter):
     assert not thread_counter.is_active()
 
     # --- act 2 -------------------------------------------
-    thread_counter.incr_sqrt()
+    incr_flop("SQRT")
     thread_counter.resume()
-    thread_counter.incr_div()
+    incr_flop("DIV")
 
     # --- assert 2 ----------------------------------------
     assert thread_counter.flop_counts().total_count() == 2
@@ -109,14 +109,14 @@ def test_thread_counter_pause_resume(thread_counter):
 
     # --- act 3 -------------------------------------------
     thread_counter.resume()  # again
-    thread_counter.incr_div()
+    incr_flop("DIV")
     thread_counter.pause()
-    thread_counter.incr_rnd()
+    incr_flop("RND")
     thread_counter.pause()
-    thread_counter.incr_rnd()
+    incr_flop("RND")
     thread_counter.resume()
     thread_counter.resume()
-    thread_counter.incr_exp2()
+    incr_flop("EXP2")
 
     # --- assert 3 ----------------------------------------
     assert thread_counter.flop_counts().total_count() == 4
@@ -126,35 +126,31 @@ def test_thread_counter_pause_resume(thread_counter):
     assert thread_counter.is_active()
 
 
-def test_thread_counter_all_incr_methods(thread_counter):
-    # --- arrange -----------------------------------------
-    incr_methods = [name for name in dir(ThreadLocalFlopCounter) if name.startswith("incr_")]
-
+def test_every_count_field_is_reachable(thread_counter, incr_flop):
     # --- act ---------------------------------------------
-    for name in incr_methods:
-        getattr(thread_counter, name)()
+    for field in FlopCounts.field_names():
+        incr_flop(field)
 
     # --- assert ------------------------------------------
-    # each incr_* method increments exactly one field, and no two share a field
+    # each increment lands in its own field, and the read path reports every one of them
     counts = thread_counter.flop_counts()
-    assert counts.total_count() == len(incr_methods)
-    for name in incr_methods:
-        field = name.removeprefix("incr_").upper()
-        assert getattr(counts, field) == 1, f"{name} should increment {field} by exactly 1"
+    assert counts.total_count() == len(FlopCounts.field_names())
+    for field in FlopCounts.field_names():
+        assert getattr(counts, field) == 1, f"incrementing {field} should raise exactly that count to 1"
 
 
 # ==================================================================================================
 #  Pause-swap invariant
 # ==================================================================================================
-def test_pause_swap_keeps_live_untouched(thread_counter):
+def test_pause_swap_keeps_live_untouched(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
-    thread_counter.incr_add()
+    incr_flop("ADD")
     snapshot = thread_counter.flop_counts()
 
     # --- act ---------------------------------------------
     thread_counter.pause()
     for _ in range(5):
-        thread_counter.incr_mul()  # lands in the discard sink
+        incr_flop("MUL")  # lands in the discard sink
 
     # --- assert ------------------------------------------
     # live counts unchanged during pause; the discard sink never leaks into flop_counts()
@@ -184,10 +180,10 @@ def test_set_verbosity_returns_the_replaced_level(thread_counter):
     assert replaced_by_off == Verbosity.INFO
 
 
-def test_counting_through_the_logging_target_still_counts(thread_counter, capsys):
+def test_counting_through_the_logging_target_still_counts(thread_counter, capsys, incr_flop):
     # --- act ---------------------------------------------
     thread_counter.set_verbosity(Verbosity.INFO)
-    thread_counter.incr_add()
+    incr_flop("ADD")
 
     # --- assert ------------------------------------------
     assert thread_counter.is_active(), "A logging target is not a paused one."
@@ -195,16 +191,16 @@ def test_counting_through_the_logging_target_still_counts(thread_counter, capsys
     assert "ADD" in capsys.readouterr().err
 
 
-def test_pause_and_resume_keep_the_logging_target(thread_counter, capsys):
+def test_pause_and_resume_keep_the_logging_target(thread_counter, capsys, incr_flop):
     # --- arrange -----------------------------------------
     thread_counter.set_verbosity(Verbosity.INFO)
 
     # --- act ---------------------------------------------
     thread_counter.pause()
-    thread_counter.incr_mul()  # lands in the discard sink, so there is nothing to log
+    incr_flop("MUL")  # lands in the discard sink, so there is nothing to log
     paused_output = capsys.readouterr().err
     thread_counter.resume()
-    thread_counter.incr_mul()
+    incr_flop("MUL")
     resumed_output = capsys.readouterr().err
 
     # --- assert ------------------------------------------
@@ -213,14 +209,14 @@ def test_pause_and_resume_keep_the_logging_target(thread_counter, capsys):
     assert thread_counter.flop_counts() == FlopCounts(MUL=1)
 
 
-def test_reset_resumes_into_the_logging_target(thread_counter, capsys):
+def test_reset_resumes_into_the_logging_target(thread_counter, capsys, incr_flop):
     # --- arrange -----------------------------------------
     thread_counter.set_verbosity(Verbosity.INFO)
     thread_counter.pause()
 
     # --- act ---------------------------------------------
     thread_counter.reset()  # reset also resumes
-    thread_counter.incr_add()
+    incr_flop("ADD")
 
     # --- assert ------------------------------------------
     assert thread_counter.is_active()
@@ -230,13 +226,13 @@ def test_reset_resumes_into_the_logging_target(thread_counter, capsys):
 # ==================================================================================================
 #  Per-thread semantics
 # ==================================================================================================
-def test_lazy_init_on_fresh_thread(thread_counter):
+def test_lazy_init_on_fresh_thread(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
     result: dict[str, FlopCounts | bool] = {}
 
     def worker() -> None:
         # very first counter access on this thread: nothing pre-touched
-        THREAD_COUNTER.incr_add()
+        incr_flop("ADD")
         result["counts"] = THREAD_COUNTER.flop_counts()
         result["active"] = THREAD_COUNTER.is_active()
 
@@ -251,14 +247,14 @@ def test_lazy_init_on_fresh_thread(thread_counter):
     assert result["active"] is True, "threads start unpaused"
 
 
-def test_threads_have_isolated_counts(thread_counter):
+def test_threads_have_isolated_counts(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
-    thread_counter.incr_add()  # main thread: 1 ADD
+    incr_flop("ADD")  # main thread: 1 ADD
     observed: dict[str, FlopCounts] = {}
 
     def worker() -> None:
         for _ in range(3):
-            THREAD_COUNTER.incr_mul()
+            incr_flop("MUL")
         observed["worker"] = THREAD_COUNTER.flop_counts()
 
     # --- act ---------------------------------------------
@@ -271,20 +267,20 @@ def test_threads_have_isolated_counts(thread_counter):
     assert thread_counter.flop_counts() == FlopCounts(ADD=1), "main thread must not see the worker's counts"
 
 
-def test_pause_is_per_thread(thread_counter):
+def test_pause_is_per_thread(thread_counter, incr_flop):
     # --- arrange -----------------------------------------
     thread_counter.pause()  # pause the main thread only
     observed: dict[str, FlopCounts] = {}
 
     def worker() -> None:
-        THREAD_COUNTER.incr_mul()
+        incr_flop("MUL")
         observed["worker"] = THREAD_COUNTER.flop_counts()
 
     # --- act ---------------------------------------------
     t = threading.Thread(target=worker)
     t.start()
     t.join()
-    thread_counter.incr_add()  # main thread is paused: not counted
+    incr_flop("ADD")  # main thread is paused: not counted
 
     # --- assert ------------------------------------------
     assert observed["worker"] == FlopCounts(MUL=1), "a paused main thread must not pause other threads"
