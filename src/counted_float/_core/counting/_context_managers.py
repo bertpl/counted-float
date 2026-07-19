@@ -172,6 +172,9 @@ class FlopCountingContext:
         apply_math_patches()
         self.__depth += 1
         if self.__depth == 1:
+            # only the outermost entry switches the level, and only the matching exit restores it:
+            # re-entering this same context would otherwise overwrite the replaced level with its
+            # own, leaving the final exit to restore that instead of the level from before the block
             self.__replaced_verbosity = THREAD_COUNTER.set_verbosity(self.__verbosity)
             self.__activate()
         return self

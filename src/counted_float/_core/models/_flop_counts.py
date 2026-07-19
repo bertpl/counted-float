@@ -103,16 +103,14 @@ class FlopCounts:
 
     # --- increment-target contract -----------------------
     def note(self, rationale: str) -> None:
-        """Discard a rationale for the next flop counted here.
+        """No-op counterpart of `LoggingFlopCounts.note()`: the rationale is dropped.
 
-        Counting sites explain their less obvious counting decisions unconditionally, and only a
-        target that renders those explanations (the logging target a verbose counting context
-        installs in place of these counts) does anything with them.
+        Counting sites explain their less obvious decisions unconditionally, so plain counts have
+        to accept a rationale too — they simply have nowhere to render it.
 
         Args:
-            rationale: Short explanation of the counting rule being applied; ignored here.  Keep
-                it a constant string — counting sites build it on every call, including the runs
-                (like this one) that end up discarding it.
+            rationale: Why the next flop is counted the way it is; unused here.  Keep it a
+                constant string: every call builds one, including the calls that discard it.
         """
 
     # --- other -------------------------------------------

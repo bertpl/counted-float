@@ -182,7 +182,9 @@ def test_re_entering_one_context_keeps_its_level():
         with ctx:
             level_nested = THREAD_COUNTER.verbosity()
         level_outer = THREAD_COUNTER.verbosity()
+    level_after = THREAD_COUNTER.verbosity()
 
     # --- assert ------------------------------------------
     assert level_nested == Verbosity.INFO
     assert level_outer == Verbosity.INFO
+    assert level_after == Verbosity.OFF, "Re-entry must not leak the level past the outermost exit."

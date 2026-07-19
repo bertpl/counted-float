@@ -15,16 +15,17 @@ if TYPE_CHECKING:
 #  LoggingFlopCounts
 # =================================================================================================
 class LoggingFlopCounts:
-    """Increment target that logs each registered flop before forwarding it to the real counts.
+    """Counts object that logs each flop registered on it, then forwards it to the real counts.
 
-    While a thread's counting is verbose, this stands in for that thread's plain FlopCounts in the
-    alias slot pause() and resume() already swap.  Writing a count field logs the increment it
-    carries and then applies it to the wrapped counts, so counting sites keep executing exactly the
-    same ``<target>.<FIELD> += 1`` statement they execute when verbosity is off -- which is what
-    makes verbosity free at level OFF: no counting site tests a verbosity flag of its own.
+    While a thread counts verbosely, its increments are sent here instead of straight into its own
+    FlopCounts -- the same redirection ``pause()`` uses to send them into a discard sink instead.
+    Writing a count field logs the increment and then applies it to the wrapped counts, so counting
+    sites keep executing the same ``<target>.<FIELD> += 1`` statement they execute when verbosity
+    is off.  That is what makes verbosity free at level OFF: no counting site tests a flag of its
+    own.
 
-    Only the increment path is proxied.  Reading counts back goes to the wrapped FlopCounts
-    directly, as the thread counter's read path does.
+    Only writes are handled here.  Reading counts back goes to the wrapped FlopCounts directly, as
+    the thread counter's read path does.
     """
 
     __slots__ = ("_counts", "_pending_rationale", "_writer")

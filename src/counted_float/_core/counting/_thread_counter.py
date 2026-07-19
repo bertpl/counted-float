@@ -98,13 +98,13 @@ def _create_thread_state() -> CountsTarget:
 
 
 def _counting_target() -> CountsTarget:
-    """Return what increments go to while the calling thread's counting is not paused.
+    """Return the object this thread's increments should go to while it is counting.
 
-    That is the thread's plain counts, unless its verbosity level asks for the flops to be
-    logged as they are registered, in which case increments are routed through a logging
-    stand-in wrapping those same counts.  The stand-in is built here rather than kept on the
-    thread: choosing a target happens only when one changes — a context entry or exit, a
-    pause, a resume, a reset — never per counted flop.
+    At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a LoggingFlopCounts
+    wrapping those same counts, which logs each increment before applying it.
+
+    A fresh wrapper is built per call, which is cheap: this runs when the target changes — a
+    context entry or exit, a pause, a resume, a reset — never per counted flop.
     """
     if _TLS.verbosity is not Verbosity.INFO:
         return _TLS.flop_counts_active
