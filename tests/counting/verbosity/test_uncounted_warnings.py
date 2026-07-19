@@ -204,6 +204,38 @@ def test_a_thread_that_never_counted_reports_nothing(logged_lines):
     assert logged_lines() == []
 
 
+def test_reporting_survives_another_reporting_thread_finishing(logged_lines):
+    # --- arrange -----------------------------------------
+    # the replacements are installed while *any* thread reports, so one reporting thread
+    # finishing must leave them in place for another that is still reporting
+    x = CountedFloat(2.5)
+    original_erf = math.erf
+    worker_is_reporting = threading.Event()
+    worker_may_finish = threading.Event()
+
+    def worker() -> None:
+        with FlopCountingContext(verbosity=Verbosity.WARNING):
+            worker_is_reporting.set()
+            assert worker_may_finish.wait(timeout=5)
+            _ = math.erf(x)  # called after the other reporting thread has come and gone
+
+    # --- act ---------------------------------------------
+    thread = threading.Thread(target=worker)
+    thread.start()
+    assert worker_is_reporting.wait(timeout=5)
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        pass  # a second reporting thread comes and goes
+    still_installed = math.erf is _math_patching._UNCOUNTED_PATCHES["erf"]
+    worker_may_finish.set()
+    thread.join()
+
+    # --- assert ------------------------------------------
+    assert still_installed, "The worker was still reporting, so the replacements must stay installed."
+    (line,) = logged_lines()
+    assert line.split()[:2] == ["WARN", "erf"]
+    assert math.erf is original_erf, "The last reporting thread finishing restores the original."
+
+
 # ==================================================================================================
 #  Patch lifecycle — installed only while a thread is reporting
 # ==================================================================================================
