@@ -1,6 +1,7 @@
 """The marked-block rewriting engine must fail loudly on any malformed marker structure."""
 
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
@@ -8,6 +9,9 @@ import pytest
 _GENERATOR = Path(__file__).resolve().parent.parent.parent / "scripts" / "generate_docs_content.py"
 _spec = importlib.util.spec_from_file_location("generate_docs_content", _GENERATOR)
 generate_docs_content = importlib.util.module_from_spec(_spec)
+# registered before executing: dataclass field resolution looks the defining module up in
+# sys.modules, which a bare module_from_spec import would leave absent
+sys.modules[_spec.name] = generate_docs_content
 _spec.loader.exec_module(generate_docs_content)
 
 rewrite_marked_blocks = generate_docs_content.rewrite_marked_blocks

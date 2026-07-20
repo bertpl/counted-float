@@ -8,10 +8,16 @@ code changes. Two kinds of content are generated:
     regions are rewritten; surrounding prose is never touched. A test regenerates them and fails
     on any diff with the committed content, so forgetting to run this after a data change fails
     the suite rather than shipping stale docs (same shape as the precomputed-weights generator).
-  - **images** — terminal screenshots (`show-data`, the verbosity examples), captured as ANSI
-    from the real library output and rendered to WebP. Excluded from the drift test: they only
-    regenerate byte-identically on the machine that produced them. Refreshed by this script as
-    part of the same run, or skipped with `--text-only`.
+  - **terminal captures** — the raw ANSI each screenshot is rendered from, committed under
+    `scripts/docs_captures/` and checked exactly like the text blocks. This is what puts the
+    images under drift control: an image is a pure function of its capture plus the pinned
+    rendering tools, and the capture is plain library output with no renderer involved, so it
+    stays comparable on any machine. Committing it also makes an image change reviewable — a
+    WebP is opaque in a diff, its capture is not.
+  - **images** — the WebP screenshots (`show-data`, the verbosity examples), rendered from
+    exactly the capture text committed next to them. Not compared byte-wise, since that would
+    only ever hold on the machine that rendered them. Refreshed by this script as part of the
+    same run, or skipped with `--text-only`.
 
 Image tooling (regen machine only, never a runtime or CI dependency):
   - `termshot` (pinned: 0.6.1) renders a raw ANSI capture to PNG.
@@ -27,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import dataclasses
 import difflib
 import io
 import re
@@ -34,6 +41,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -50,6 +58,7 @@ if TYPE_CHECKING:
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SNIPPETS_DIR = Path(__file__).resolve().parent / "docs_snippets"
+CAPTURES_DIR = Path(__file__).resolve().parent / "docs_captures"
 IMAGES_DIR = REPO_ROOT / "docs" / "images"
 
 TERMSHOT_PINNED_VERSION = "0.6.1"
@@ -63,6 +72,20 @@ CLI_SLICE_LAST_COLUMN = "I2F"
 
 _MARKER_RE = re.compile(r"<!-- (BEGIN|END) generated: ([a-z0-9-]+) -->")
 _ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
+
+
+@dataclasses.dataclass(frozen=True)
+class ImageCapture:
+    """One screenshot's terminal capture: how to produce it, and how wide to render it.
+
+    Attributes:
+        capture: Produces the raw ANSI, exactly as committed and as rendered.
+        render_columns: Terminal width to render that ANSI at, derived from the capture itself so
+            the two cannot fall out of step.
+    """
+
+    capture: Callable[[], str]
+    render_columns: Callable[[str], int]
 
 
 # ==================================================================================================
@@ -434,67 +457,116 @@ def render_ansi_to_image(ansi_text: str, columns: int, out_path: Path) -> None:
         )
 
 
-def regenerate_show_data_image() -> Path:
-    """Regenerate the show-data screenshot: full tree rows, leading columns, ellipsis-cropped."""
+def _capture_show_data_cropped() -> str:
+    """The show-data capture as rendered: full tree rows, leading columns, ellipsis-cropped."""
     ansi = capture_show_data_ansi()
-    cropped = "\n".join(crop_ansi_line(line, SHOW_DATA_IMAGE_CROP_COLUMNS) for line in ansi.splitlines())
-    out = IMAGES_DIR / "show_data.webp"
-    render_ansi_to_image(cropped, SHOW_DATA_IMAGE_CROP_COLUMNS + 4, out)
-    return out
+    return "\n".join(crop_ansi_line(line, SHOW_DATA_IMAGE_CROP_COLUMNS) for line in ansi.splitlines())
 
 
-def regenerate_verbosity_images() -> list[Path]:
-    """Regenerate one output screenshot per verbosity docs snippet."""
-    outputs: list[Path] = []
-    for snippet in sorted(SNIPPETS_DIR.glob("verbosity_*.py")):
-        ansi = capture_snippet_stderr_ansi(snippet)
-        columns = max(len(strip_ansi(line)) for line in ansi.splitlines()) + 2
-        out = IMAGES_DIR / f"{snippet.stem}.webp"
-        render_ansi_to_image(ansi, columns, out)
-        outputs.append(out)
-    return outputs
+def _widest_visible_line(ansi_text: str) -> int:
+    """Render width for a capture whose lines set their own: the longest one, plus a margin."""
+    return max(len(strip_ansi(line)) for line in ansi_text.splitlines()) + 2
+
+
+# Every committed screenshot, by name: how its terminal capture is produced, and how wide to render
+# it. The captures themselves are committed text (see CAPTURES_DIR) and drift-tested; the images are
+# rendered from exactly that text, so checking the capture is what keeps the images honest.
+IMAGE_CAPTURES: dict[str, ImageCapture] = {
+    "show_data": ImageCapture(_capture_show_data_cropped, lambda _ansi: SHOW_DATA_IMAGE_CROP_COLUMNS + 4),
+} | {
+    snippet.stem: ImageCapture(partial(capture_snippet_stderr_ansi, snippet), _widest_visible_line)
+    for snippet in sorted(SNIPPETS_DIR.glob("verbosity_*.py"))
+}
+
+
+def regenerate_captures() -> dict[Path, str]:
+    """Re-capture every screenshot's terminal output; returns the intended content per capture file.
+
+    Pure text and free of any rendering tool, so this is part of the checked (and CI-verified)
+    content rather than of the image step.
+    """
+    return {CAPTURES_DIR / f"{name}.ansi": spec.capture() for name, spec in IMAGE_CAPTURES.items()}
+
+
+def render_images(captures: dict[Path, str]) -> list[Path]:
+    """Render each capture to its committed screenshot.
+
+    Args:
+        captures: The freshly generated capture content, keyed by capture file path — the images
+            are rendered from this rather than re-captured, so an image can never disagree with
+            the capture committed next to it.
+
+    Returns:
+        The written image paths.
+    """
+    _require_image_tools()
+    written: list[Path] = []
+    for capture_path, ansi in captures.items():
+        name = capture_path.stem
+        out = IMAGES_DIR / f"{name}.webp"
+        render_ansi_to_image(ansi, IMAGE_CAPTURES[name].render_columns(ansi), out)
+        written.append(out)
+    return written
 
 
 # ==================================================================================================
 #  Entry point
 # ==================================================================================================
+def _report_stale(file_path: Path, current: str, intended: str) -> None:
+    """Write a readable diff of one stale file to stderr.
+
+    ANSI captures are compared byte-exact but *shown* with their escapes stripped: a diff of raw
+    escape sequences is unreadable, and what a reader needs to see is which output changed.
+    """
+    readable = strip_ansi if file_path.suffix == ".ansi" else (lambda text: text)
+    sys.stderr.write(
+        "\n".join(
+            difflib.unified_diff(
+                readable(current).splitlines(),
+                readable(intended).splitlines(),
+                lineterm="",
+                n=1,
+                fromfile=f"{file_path.name} (committed)",
+                tofile=f"{file_path.name} (regenerated)",
+            )
+        )
+        + "\n"
+    )
+
+
 def main() -> int:
-    """Regenerate docs content; `--check` verifies the text blocks instead of writing anything."""
+    """Regenerate docs content; `--check` verifies it instead of writing anything."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true", help="fail on stale text blocks, write nothing")
-    parser.add_argument("--text-only", action="store_true", help="skip image regeneration")
+    parser.add_argument("--check", action="store_true", help="fail on stale generated content, write nothing")
+    parser.add_argument("--text-only", action="store_true", help="skip rendering the images")
     args = parser.parse_args()
 
-    regenerated = regenerate_text_blocks()
+    captures = regenerate_captures()
+    regenerated = regenerate_text_blocks() | captures
 
     if args.check:
-        stale = False
-        for file_path, intended in regenerated.items():
-            current = _read_lf(file_path)
-            if current != intended:
-                stale = True
-                diff = difflib.unified_diff(
-                    current.splitlines(),
-                    intended.splitlines(),
-                    lineterm="",
-                    n=1,
-                    fromfile=f"{file_path.name} (committed)",
-                    tofile=f"{file_path.name} (regenerated)",
-                )
-                sys.stderr.write("\n".join(diff) + "\n")
+        stale = [path for path, intended in regenerated.items() if _read_lf(path) != intended]
+        for path in stale:
+            _report_stale(path, _read_lf(path), regenerated[path])
         if stale:
             sys.stderr.write("stale generated docs content -- run `make regen-docs`\n")
             return 1
         return 0
 
+    captures_changed = False
     for file_path, intended in regenerated.items():
-        if _read_lf(file_path) != intended:
+        if not file_path.exists() or _read_lf(file_path) != intended:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_text(intended, encoding="utf-8", newline="\n")
+            captures_changed |= file_path.suffix == ".ansi"
             print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
 
-    if not args.text_only:
-        _require_image_tools()
-        for image in [regenerate_show_data_image(), *regenerate_verbosity_images()]:
+    if args.text_only:
+        if captures_changed:
+            # the images are rendered from the captures, so stale-vs-capture is now possible
+            print("captures changed -- re-run without --text-only to refresh the screenshots")
+    else:
+        for image in render_images(captures):
             print(f"rendered {image.relative_to(REPO_ROOT)}")
     return 0
 
