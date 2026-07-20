@@ -41,6 +41,12 @@ nav:
       - Built-in data: builtin_data.md
       - Methodology: analysis_methodology.md
       - CPU architecture scope: cpu_architectures_scope.md
+      - Benchmark kernel machine code:
+          - Overview: kernel_asm/index.md
+          - EXP: kernel_asm/exp.md
+          - HYPOT_XARG: kernel_asm/hypot_xarg.md
+          - LOG: kernel_asm/log.md
+          - SQRT: kernel_asm/sqrt.md
   - Changelog: changelog.md
 
 plugins:
@@ -57,6 +63,7 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight:
       anchor_linenums: true
+  - pymdownx.details
   - pymdownx.superfences
   - tables
 
