@@ -324,14 +324,16 @@ class FlopWeightsTreeView:
                     # no special styling
                     console.print(line, highlight=False)
                 else:
-                    # highlight as bold and with a colored background; the foreground is pinned
-                    # to black rather than left to the terminal default, which on dark themes is
-                    # a light gray that is barely legible on these bright bars
+                    # highlight as bold and with a colored background.  The two bright bars pin a
+                    # dark gray foreground instead of leaving it to the terminal default, which on
+                    # dark themes is a light gray they leave barely legible (on the green one it
+                    # all but disappears).  The darker bars keep the default, which reads fine on
+                    # them either way.
                     style_tag = [
-                        "[bold black on #888888]",  # indent 0
-                        "[bold black on #7777dd]",  # indent 1
-                        "[bold black on #77dd77]",  # indent 2
-                        "[bold black on #ee7777]",  # indent 3
+                        "[bold on #888888]",  # indent 0
+                        "[bold on #7777dd]",  # indent 1
+                        "[bold #333333 on #77dd77]",  # indent 2
+                        "[bold #333333 on #ee7777]",  # indent 3
                         "[bold italic]",  # indent 4+
                     ][min(indent, 4)]
                     line = line[: 3 * indent] + style_tag + line[3 * indent :] + "[/]"
