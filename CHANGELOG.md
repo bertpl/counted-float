@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - free-threaded Python builds (3.14t) are now officially supported and CI-tested; the `numba` extra needs numba 0.65 or newer there
 - `FlopCountingContext(verbosity=...)` can log every flop as it is counted, with the source line that triggered it and why it was counted that way
 - verbosity level `WARNING` reports the operations that could not be counted at all, once per call site, so a quietly incomplete count says so
+- the docs now show, per benchmarked flop cost, the machine code the measurement isolates, with a verdict on whether it measures exactly the intended operation
 
 ### Changed
 
