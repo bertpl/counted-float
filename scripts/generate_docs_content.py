@@ -63,6 +63,15 @@ IMAGES_DIR = REPO_ROOT / "docs" / "images"
 
 TERMSHOT_PINNED_VERSION = "0.6.1"
 
+# Terminal captures are byte-exact ANSI, which is comparable across POSIX platforms but not against
+# Windows: rich decides its color support there through the Windows console API rather than the
+# COLORTERM / FORCE_COLOR environment this script sets, so the same output carries different escape
+# sequences. Windows therefore neither checks nor rewrites the captures -- rewriting would ping-pong
+# the committed bytes against every other platform. Nothing is lost in coverage: the *visible* text
+# is what drifts with the data, and it is checked everywhere through the text blocks (the show-data
+# docs slice is that same capture with its escapes stripped).
+CAPTURES_ARE_COMPARABLE = sys.platform != "win32"
+
 # Rendering geometry. The show-data capture is taken wide enough that show() emits one single
 # column block (instead of wrapping into stacked blocks), then cropped to the leading columns.
 SHOW_DATA_CAPTURE_COLUMNS = 460
@@ -541,7 +550,7 @@ def main() -> int:
     parser.add_argument("--text-only", action="store_true", help="skip rendering the images")
     args = parser.parse_args()
 
-    captures = regenerate_captures()
+    captures = regenerate_captures() if CAPTURES_ARE_COMPARABLE else {}
     regenerated = regenerate_text_blocks() | captures
 
     if args.check:
@@ -561,7 +570,9 @@ def main() -> int:
             captures_changed |= file_path.suffix == ".ansi"
             print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
 
-    if args.text_only:
+    if not CAPTURES_ARE_COMPARABLE:
+        print("captures and screenshots skipped on this platform -- see CAPTURES_ARE_COMPARABLE")
+    elif args.text_only:
         if captures_changed:
             # the images are rendered from the captures, so stale-vs-capture is now possible
             print("captures changed -- re-run without --text-only to refresh the screenshots")
