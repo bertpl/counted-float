@@ -7,6 +7,7 @@ are committed as ARM64 machine code and need numba to compile — so it skips ev
 guards the listings on the regen machine rather than in CI.
 """
 
+import os
 import platform
 import subprocess
 import sys
@@ -21,8 +22,10 @@ GENERATOR = REPO_ROOT / "scripts" / "generate_kernel_asm_docs.py"
 
 
 @pytest.mark.skipif(
-    platform.machine() != "arm64" or not is_numba_installed(),
-    reason="listings are ARM64 machine code and need numba to regenerate",
+    platform.machine() != "arm64" or not is_numba_installed() or os.environ.get("CI") is not None,
+    reason="listings are ARM64 machine code, need numba to regenerate, and are pinned to the "
+    "regen machine's toolchain -- CI's macos runners are arm64 too, but their LLVM/numba may "
+    "legitimately generate different code",
 )
 def test_kernel_asm_listings_match_committed_content():
     """Fails when a kernel compiles differently and `make regen-kernel-asm` was not re-run."""
