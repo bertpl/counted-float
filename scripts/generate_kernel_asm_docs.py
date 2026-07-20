@@ -70,25 +70,40 @@ def native_function_body(asm: str) -> list[str]:
 
 
 def innermost_loops(body: list[str]) -> list[list[str]]:
-    """Every innermost loop in `body`: label through backward branch, no label in between.
+    """Every innermost loop region in `body`, from the backward branches' spans.
+
+    A loop candidate is the span from a backward branch's target label through the branch line.
+    Two reductions turn the candidates into presentable regions:
+
+    - a candidate that strictly contains another candidate is an outer loop and is dropped;
+    - candidates that overlap are merged into one region -- branchy kernels compile to rotated
+      loops whose cycle closes through forward branches and fallthrough (e.g. the cbrt kernel's
+      sign/NaN handling), yielding several overlapping backward spans that are really one loop.
 
     Returns:
-        The loop blocks in source order, each a list of raw ASM lines starting with the loop
-        label and ending with the branch back to it.
+        The loop regions in source order, each a list of raw ASM lines.
     """
     label_positions = {match.group(1): i for i, line in enumerate(body) if (match := _LABEL_RE.match(line))}
-    loops: list[list[str]] = []
+    spans: list[tuple[int, int]] = []
     for i, line in enumerate(body):
         match = _BRANCH_TO_LABEL_RE.match(line.rstrip())
         if not match:
             continue
         target = label_positions.get(match.group(1))
-        if target is None or target >= i:
-            continue  # forward branch, not a loop
-        block = body[target : i + 1]
-        if not any(_LABEL_RE.match(inner) for inner in block[1:]):
-            loops.append(block)
-    return loops
+        if target is not None and target < i:
+            spans.append((target, i))
+    spans = [
+        span
+        for span in spans
+        if not any(other != span and span[0] <= other[0] and other[1] <= span[1] for other in spans)
+    ]
+    merged: list[tuple[int, int]] = []
+    for start, end in sorted(spans):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    return [body[start : end + 1] for start, end in merged]
 
 
 def canonicalize_loop(block: list[str]) -> list[str]:
@@ -188,12 +203,55 @@ KIND_LIBM = "Library calls (libm)"
 KIND_ARITY = "Arity-scaled algorithms"
 KINDS: list[str] = [KIND_HARDWARE, KIND_LIBM, KIND_ARITY]
 
-# The exemplar pages, spanning the distinct kernel shapes: a bare arithmetic instruction (SQRT),
-# a libm call (LOG), a chained-base pair (EXP), and an arity-scaled pair (HYPOT_XARG).
+# One page per benchmarked flop cost; the kernel pairs mirror the subtractions in
+# FlopsBenchmarkSuite.run()'s estimated_flop_latencies. COMP's true subtrahend is the average of
+# the ADD and SUB single-op kernels; its page diffs against f_add and explains the average.
 PAGES: list[KernelAsmPage] = [
+    # --- hardware instructions -------------------
+    KernelAsmPage("abs", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_abs"),
+    KernelAsmPage("add", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_add"),
+    KernelAsmPage("comp", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_lte_addsub"),
+    KernelAsmPage("copysign", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_copysign"),
+    KernelAsmPage("div", kind=KIND_HARDWARE, base_kernel="f_div", extended_kernel="f_div_div"),
+    KernelAsmPage("fma", kind=KIND_HARDWARE, base_kernel="f_fma", extended_kernel="f_fma_fma"),
+    KernelAsmPage("minus", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_minus"),
+    KernelAsmPage("mul", kind=KIND_HARDWARE, base_kernel="f_mul", extended_kernel="f_mul_mul"),
+    KernelAsmPage("rnd", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_round"),
     KernelAsmPage("sqrt", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_sqrt"),
-    KernelAsmPage("log", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log"),
+    KernelAsmPage("sub", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_sub"),
+    # --- library calls ---------------------------
+    KernelAsmPage("acos", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_acos"),
+    KernelAsmPage("acosh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_acosh"),
+    KernelAsmPage("asin", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_asin"),
+    KernelAsmPage("asinh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_asinh"),
+    KernelAsmPage("atan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan"),
+    KernelAsmPage("atan2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan2"),
+    KernelAsmPage("atanh", kind=KIND_LIBM, base_kernel="f_add_halfsin", extended_kernel="f_add_halfsin_atanh"),
+    KernelAsmPage("cbrt", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cbrt"),
+    KernelAsmPage("cos", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cos"),
+    KernelAsmPage("cosh", kind=KIND_LIBM, base_kernel="f_add_acosh", extended_kernel="f_add_acosh_cosh"),
+    KernelAsmPage("erf", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erf"),
+    KernelAsmPage("erfc", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erfc"),
     KernelAsmPage("exp", kind=KIND_LIBM, base_kernel="f_add_log", extended_kernel="f_add_log_exp"),
+    KernelAsmPage("exp2", kind=KIND_LIBM, base_kernel="f_add_log2", extended_kernel="f_add_log2_exp2"),
+    KernelAsmPage("exp10", kind=KIND_LIBM, base_kernel="f_add_log10", extended_kernel="f_add_log10_exp10"),
+    KernelAsmPage("expm1", kind=KIND_LIBM, base_kernel="f_add_log1p", extended_kernel="f_add_log1p_expm1"),
+    KernelAsmPage("fmod", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_fmod"),
+    KernelAsmPage("gamma", kind=KIND_LIBM, base_kernel="f_add_gammabase", extended_kernel="f_add_gammabase_gamma"),
+    KernelAsmPage("hypot", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_hypot"),
+    KernelAsmPage("lgamma", kind=KIND_LIBM, base_kernel="f_add_gammabase", extended_kernel="f_add_gammabase_lgamma"),
+    KernelAsmPage("log", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log"),
+    KernelAsmPage("log1p", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log1p"),
+    KernelAsmPage("log2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log2"),
+    KernelAsmPage("log10", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log10"),
+    KernelAsmPage("pow", kind=KIND_LIBM, base_kernel="f_pow", extended_kernel="f_pow_pow"),
+    KernelAsmPage("sin", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_sin"),
+    KernelAsmPage("sinh", kind=KIND_LIBM, base_kernel="f_add_asinh", extended_kernel="f_add_asinh_sinh"),
+    KernelAsmPage("tan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tan"),
+    KernelAsmPage("tanh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tanh"),
+    # --- arity-scaled algorithms -----------------
+    KernelAsmPage("dist", kind=KIND_ARITY, base_kernel="f_add", extended_kernel="f_add_dist2"),
+    KernelAsmPage("dist_xarg", kind=KIND_ARITY, base_kernel="f_add_dist2", extended_kernel="f_add_dist8"),
     KernelAsmPage(
         "hypot_xarg", kind=KIND_ARITY, base_kernel="f_add_hypot_scaled2", extended_kernel="f_add_hypot_scaled8"
     ),

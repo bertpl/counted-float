@@ -43,6 +43,21 @@ __ZN7cpython8testfuncE:
 """
 
 
+def test_kernel_pages_cover_every_benchmarked_flop_type():
+    # --- arrange -----------------------------------------
+    from counted_float._core.models import FlopType
+
+    # F2I / I2F have no benchmark kernels (their weights come from spec sheets and third-party
+    # tables only), so they are the only FlopTypes without a machine-code page
+    expected = {flop_type.name.lower() for flop_type in FlopType} - {"f2i", "i2f"}
+
+    # --- act ---------------------------------------------
+    page_names = {page.doc_name for page in generate_kernel_asm_docs.PAGES}
+
+    # --- assert ------------------------------------------
+    assert page_names == expected
+
+
 def test_native_function_body_excludes_the_cpython_wrapper():
     # --- act ---------------------------------------------
     body = native_function_body(_ASM)
@@ -62,6 +77,33 @@ def test_innermost_loops_finds_only_the_label_free_backward_branch_block():
     assert [loop[0] for loop in loops] == ["LBB0_2:"]
     assert loops[0][-1] == "\tb.ne\tLBB0_2"
     assert len(loops[0]) == 5
+
+
+def test_innermost_loops_merges_overlapping_spans_of_a_rotated_loop():
+    # --- arrange -----------------------------------------
+    # a rotated loop (cbrt-like shape): two backward branches whose spans overlap without
+    # nesting -- one cycle, so one merged region is expected
+    body = [
+        "LBB0_3:",
+        "\tsubs\tx21, x21, #1",
+        "\tb.le\tLBB0_11",
+        "LBB0_5:",
+        "\tblr\tx24",
+        "LBB0_6:",
+        "\tstr\td0, [x27], #8",
+        "\tb.eq\tLBB0_3",
+        "LBB0_7:",
+        "\tfadd\td0, d0, d1",
+        "\tb.ge\tLBB0_5",
+    ]
+
+    # --- act ---------------------------------------------
+    loops = innermost_loops(body)
+
+    # --- assert ------------------------------------------
+    assert len(loops) == 1
+    assert loops[0][0] == "LBB0_3:"
+    assert loops[0][-1] == "\tb.ge\tLBB0_5"
 
 
 def test_canonicalize_loop_renames_registers_and_labels_by_first_appearance():

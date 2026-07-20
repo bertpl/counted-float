@@ -5,7 +5,7 @@ algorithm: the latency difference between its 8-coordinate and 2-coordinate form
 `f_add_hypot_scaled8` and `f_add_hypot_scaled2` — divided by the 6 extra coordinates. Exemplar of
 an **arity-scaled pair**: the two sides are not "same loop ± one instruction" but the same
 algorithm at two sizes, so the diff is expected to be large — what must hold is that every added
-line belongs to the six extra coordinates and their scaling, and nothing shared changed shape.
+line belongs to the six extra coordinates and their scaling, and nothing shared changed shape. Why the slope is measured on a hand-rolled overflow-safe port is covered in the [benchmark design rationale](../analysis_methodology.md#16-benchmark-design-rationale).
 
 ## Inner-loop diff
 
@@ -99,7 +99,7 @@ line belongs to the six extra coordinates and their scaling, and nothing shared 
 
 <!-- BEGIN generated: kernel-asm-hypot-xarg-structure -->
 - `f_add_hypot_scaled2` -- 2 innermost loop(s): 22 instructions, 21 instructions
-- `f_add_hypot_scaled8` -- 1 innermost loop(s): 64 instructions
+- `f_add_hypot_scaled8` -- 2 innermost loop(s): 67 instructions, 64 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -763,7 +763,6 @@ amount of work -- see the discussion below.
    the next iteration's first coordinate — more coordinates means a proportionally longer chain,
    which is precisely what a per-coordinate latency slope should measure.
 3. *Loop-structure symmetry*: neither kernel unrolls (the bodies are large enough that LLVM
-   leaves them alone). `f_add_hypot_scaled2` compiles to two variants of its loop with an
-   identical floating-point sequence, differing only in address computation (the same wraparound
-   handling the `csel` performs in the 8-coordinate kernel); the diff shows the variant that
-   best matches the 8-coordinate loop.
+   leaves them alone). Each kernel compiles to two variants of its loop with an identical
+   floating-point sequence, differing only in address computation (index-wraparound handling);
+   the diff shows the best-matching pair of variants.

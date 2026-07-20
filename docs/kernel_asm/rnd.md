@@ -1,33 +1,33 @@
-# SQRT
+# RND
 
-The `SQRT` cost is the latency difference between a kernel chaining `sqrt(tmp + x[i])` and one
-chaining only `tmp + x[i]` — kernels `f_add_sqrt` and `f_add`. Exemplar of a **bare arithmetic
-instruction**: on ARM64, `math.sqrt` compiles to a single `fsqrt` instruction, not a library call.
+The `RND` cost is the latency difference between a kernel chaining `np.round(tmp + x[i])` and one
+chaining only `tmp + x[i]` — kernels `f_add_round` and `f_add`. On ARM64 this compiles to
+a single `frintx` rounding instruction, not a library call.
 
-What Python code counts into `SQRT` is described in
-[FLOP types](../flop_types.md#flop-sqrt).
+What Python code counts into `RND` is described in
+[FLOP types](../flop_types.md#flop-rnd).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-sqrt-diff -->
+<!-- BEGIN generated: kernel-asm-rnd-diff -->
 ```diff
 --- f_add
-+++ f_add_sqrt
++++ f_add_round
   .L0:
   ldr  %d0, [%x0], #8
   fadd  %d1, %d1, %d0
-+ fsqrt  %d1, %d1
++ frintx  %d1, %d1
   str  %d1, [%x1], #8
   subs  %x2, %x2, #1
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-sqrt-diff -->
+<!-- END generated: kernel-asm-rnd-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-sqrt-structure -->
+<!-- BEGIN generated: kernel-asm-rnd-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_sqrt` -- 1 innermost loop(s): 7 instructions
+- `f_add_round` -- 1 innermost loop(s): 7 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -113,8 +113,9 @@ amount of work -- see the discussion below.
       ret
     ```
 
-??? note "Full ASM listing: `f_add_sqrt`"
+??? note "Full ASM listing: `f_add_round`"
     ```asm
+      .cfi_startproc
       cmp  x2, #1
       b.lt  LBB0_6
       cmp  x3, #1
@@ -134,33 +135,26 @@ amount of work -- see the discussion below.
     LBB0_4:
       ldr  d2, [x11], #8
       fadd  d1, d1, d2
-      fsqrt  d1, d1
+      frintx  d1, d1
       str  d1, [x12], #8
       subs  x10, x10, #1
       b.ne  LBB0_4
       subs  x2, x2, #1
-      b.gt  LBB0_3
+      b.hi  LBB0_3
     LBB0_6:
       str  xzr, [x0]
       mov  w0, #0
       ret
+      .cfi_endproc
     ```
-<!-- END generated: kernel-asm-sqrt-structure -->
+<!-- END generated: kernel-asm-rnd-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one `fsqrt`.**
+**The subtraction isolates exactly one `frintx`.**
 
-1. *Intended instruction, and nothing else*: the diff is the single line `+ fsqrt %d1, %d1` —
-   loads, stores and loop control are identical on both sides.
-2. *In the dependency chain*: `fsqrt` reads and writes `%d1`, the accumulator that feeds the next
-   iteration's `fadd`, so each iteration waits for the full add→sqrt latency.
-3. *Loop-structure symmetry*: **not symmetric, deliberately surfaced.** `f_add` compiles to an
-   8×-unrolled main loop plus a scalar remainder (the diff shows the remainder), while
-   `f_add_sqrt` compiles to a single scalar loop. This does not invalidate the measurement: both
-   loops serialize through the `%d1` chain, so per-iteration latency is the chained operations'
-   latency regardless of unrolling — the unrolled body performs 8 chained iterations' work and
-   takes 8 chained iterations' time. But `f_add` is the subtrahend of most derived costs, so a
-   toolchain change that alters this unrolling decision *without* preserving the latency-bound
-   property would shift the whole weight table — this asymmetry is the primary thing to re-check
-   on regeneration.
+1. *Intended instruction, and nothing else*: the diff adds the single line `+ frintx …` —
+   loads, stores and loop control are otherwise identical.
+2. *In the dependency chain*: `frintx` reads and writes the accumulator that feeds the next
+   iteration's `fadd`, so each iteration waits for the full chain.
+3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×, `f_add_round` does not; the diff shows `f_add`'s scalar remainder. As there, both sides stay latency-bound through the accumulator chain, so the subtraction holds.

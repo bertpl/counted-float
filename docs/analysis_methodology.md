@@ -60,6 +60,35 @@ measure the inherent floating-point capabilities of a CPU.  Therefore we should 
 For all aforementioned classes of CPUs, L1 (data) cache is at least 32KB in size.  Hence, we should limit any benchmark
 to work with a maximum of 4K double precision values.
 
+## 1.6. Benchmark design rationale
+
+What each benchmark actually executes is governed by a few principles:
+
+1. **Measure the real call when possible.** Where numba can compile the operation Python
+   actually executes — libm's `sin`, `log`, the 2-argument `hypot`, ... — the benchmark measures
+   that call directly: no re-implementation, no modeling. The
+   [machine-code listings](kernel_asm/index.md) show, per weight, that this is what happens.
+2. **Hand-roll only when there is no alternative.** numba cannot compile n-ary `math.hypot` or
+   `math.dist` at all, so their kernels port the algorithm instead — that is the only reason a
+   port exists.
+3. **`dist` and n-ary `hypot` are priced as the overflow-safe scaled algorithm — a deliberate
+   departure from the compiled-port lens.** Elsewhere the model asks what an optimizing compiler
+   would emit for your code (hence e.g. strength-reduced `POW` for constant exponents), and that
+   compiler would emit naive sum-of-squares here. Pricing that instead was rejected for two
+   reasons. *Semantics*: `math.dist` and `math.hypot` are named calls whose contract includes
+   overflow safety — scaling every coordinate by the largest magnitude before squaring — and a
+   user reaching for them rather than writing `sqrt(dx*dx + dy*dy)` plausibly wants exactly
+   that, so the naive price would model a different function than the one invoked. *Coherence*:
+   the 2-argument base is libm's `hypot`, which **is** scaled — grafting a naive per-coordinate
+   slope onto a scaled base would produce a cost curve where a 3-argument call can price below
+   the 2-argument one, collapsing the "one algorithm, base plus linear slope" model. Pricing the
+   scaled flavor at every arity keeps one algorithm and one monotone linear model, matching the
+   call's semantics. (A user who writes the naive formula out by hand gets the naive decomposed
+   price — the compiled-port lens still applies to their code.)
+4. **Validate the port where it overlaps something measurable.** The scaled arity-2 hypot kernel
+   reproduces libm's 2-argument `hypot` cost to within ~10%, which is what justifies deriving a
+   base from libm and a slope from the port on one line.
+
 
 # 2. Sources
 

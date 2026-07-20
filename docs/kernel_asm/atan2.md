@@ -1,36 +1,41 @@
-# LOG
+# ATAN2
 
-The `LOG` cost is the latency difference between a kernel chaining `log(tmp + x[i])` and one
-chaining only `tmp + x[i]` — kernels `f_add_log` and `f_add`. Exemplar of a **libm call**: unlike
-`sqrt`, the natural logarithm has no hardware instruction on ARM64, so the loop contains an actual
-call into the math library.
+The `ATAN2` cost is the latency difference between a kernel chaining
+`atan2(tmp + x[i], x[i])` and one chaining only `tmp + x[i]` — kernels `f_add_atan2` and
+`f_add`. A libm call with two arguments: the chained value and the freshly loaded element.
 
-What Python code counts into `LOG` is described in
-[FLOP types](../flop_types.md#flop-log).
+What Python code counts into `ATAN2` is described in
+[FLOP types](../flop_types.md#flop-atan2).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-log-diff -->
+<!-- BEGIN generated: kernel-asm-atan2-diff -->
 ```diff
 --- f_add
-+++ f_add_log
++++ f_add_atan2
   .L0:
-  ldr  %d0, [%x0], #8
+- ldr  %d0, [%x0], #8
++ ldur  %d0, [%x0, #-8]
   fadd  %d1, %d1, %d0
 - str  %d1, [%x1], #8
 - subs  %x2, %x2, #1
 + blr  %x1
-+ str  %d1, [%x2], #8
-+ subs  %x3, %x3, #1
++ stur  %d1, [%x2, #-8]
++ add  %x3, %x3, #2
++ ldr  %d0, [%x0], #16
++ fadd  %d1, %d1, %d0
++ blr  %x1
++ str  %d1, [%x2], #16
++ cmp  %x4, %x3
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-log-diff -->
+<!-- END generated: kernel-asm-atan2-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-log-structure -->
+<!-- BEGIN generated: kernel-asm-atan2-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_log` -- 1 innermost loop(s): 7 instructions
+- `f_add_atan2` -- 2 innermost loop(s): 14 instructions, 12 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -116,7 +121,7 @@ amount of work -- see the discussion below.
       ret
     ```
 
-??? note "Full ASM listing: `f_add_log`"
+??? note "Full ASM listing: `f_add_atan2`"
     ```asm
       stp  d9, d8, [sp, #-112]!
       stp  x28, x27, [sp, #16]
@@ -127,37 +132,57 @@ amount of work -- see the discussion below.
       stp  x29, x30, [sp, #96]
       mov  x19, x0
       cmp  x2, #1
-      b.lt  LBB0_6
+      b.lt  LBB0_10
       mov  x20, x3
       cmp  x3, #1
-      b.lt  LBB0_6
+      b.lt  LBB0_10
       mov  x21, x2
       ldr  x22, [sp, #168]
       ldr  x23, [sp, #112]
+      and  x24, x20, #0x7ffffffffffffffe
       mov  x8, #22377
       movk  x8, #35604, lsl #16
       movk  x8, #48906, lsl #32
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _log@GOTPAGE
+      adrp  x25, _atan2@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _log@GOTPAGEOFF]
+      ldr  x25, [x25, _atan2@GOTPAGEOFF]
+      b  LBB0_6
     LBB0_3:
-      mov  x25, x20
-      mov  x26, x23
-      mov  x27, x22
+      mov  x26, #0
       mov.16b  v0, v8
     LBB0_4:
-      ldr  d1, [x26], #8
+      ldr  d1, [x23, x26, lsl #3]
       fadd  d0, d0, d1
-      blr  x24
-      str  d0, [x27], #8
-      subs  x25, x25, #1
-      b.ne  LBB0_4
+      blr  x25
+      str  d0, [x22, x26, lsl #3]
+    LBB0_5:
       subs  x21, x21, #1
-      b.gt  LBB0_3
+      b.le  LBB0_10
     LBB0_6:
+      cmp  x20, #1
+      b.eq  LBB0_3
+      mov  x26, #0
+      add  x27, x22, #8
+      add  x28, x23, #8
+      mov.16b  v0, v8
+    LBB0_8:
+      ldur  d1, [x28, #-8]
+      fadd  d0, d0, d1
+      blr  x25
+      stur  d0, [x27, #-8]
+      add  x26, x26, #2
+      ldr  d1, [x28], #16
+      fadd  d0, d0, d1
+      blr  x25
+      str  d0, [x27], #16
+      cmp  x24, x26
+      b.ne  LBB0_8
+      tbnz  w20, #0, LBB0_4
+      b  LBB0_5
+    LBB0_10:
       str  xzr, [x19]
       mov  w0, #0
       ldp  x29, x30, [sp, #96]
@@ -170,21 +195,18 @@ amount of work -- see the discussion below.
       ret
       .loh AdrpLdrGot  Lloh0, Lloh1
     ```
-<!-- END generated: kernel-asm-log-structure -->
+<!-- END generated: kernel-asm-atan2-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one call to libm's `log`.**
+**The subtraction isolates exactly one call to libm's `atan2` per element.**
 
-1. *Intended call, and nothing else*: the one structural addition is `+ blr %x1` — an indirect
-   call through a register that holds the `log` address (loaded once, outside the loop). The
-   `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the
-   [index page](index.md) — the call-target register occupies one canonical slot, renumbering
-   the registers after it; the instructions themselves are identical.
-2. *In the dependency chain*: the accumulator flows through the call — `fadd` produces the
-   argument, the call returns the result the next iteration's `fadd` consumes (both in the ARM64
-   float argument/return register), so each iteration pays the full add→log latency.
-3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×,
-   `f_add_log` (whose loop body contains a call) does not; the diff shows `f_add`'s scalar
-   remainder. As there, both sides stay latency-bound through the accumulator chain, so the
-   subtraction holds.
+1. *Intended call, and nothing else*: the structural addition is one `blr` per element — the
+   `atan2` call through a preloaded call-target register. The remaining `-`/`+` pairs are
+   addressing differences between the two unrolling shapes (see point 3), not extra work.
+2. *In the dependency chain*: `fadd` produces the first argument, the call's return value feeds
+   the next iteration's `fadd`; the second argument is the freshly loaded element, off the
+   chain.
+3. *Loop-structure symmetry*: **not symmetric** — `f_add` unrolls 8×, and `f_add_atan2`
+   compiles 2×-unrolled (one call per element either way). As on the [SQRT page](sqrt.md), both
+   sides stay latency-bound through the accumulator, so the subtraction holds.

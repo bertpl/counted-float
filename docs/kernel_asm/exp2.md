@@ -1,19 +1,19 @@
-# EXP
+# EXP2
 
-The `EXP` cost is the latency difference between a kernel chaining `exp(log(tmp + x[i]))` and one
-chaining `log(tmp + x[i])` — kernels `f_add_log_exp` and `f_add_log`. Exemplar of a **chained-base
-pair**: `exp` grows without bound, so a plain `exp` chain would overflow; instead `log` bounds the
-argument, and the `log`-only kernel is subtracted so its cost cancels.
+The `EXP2` cost is the latency difference between a kernel chaining
+`exp2(log2(tmp + x[i]))` and one chaining `log2(tmp + x[i])` — kernels `f_add_log2_exp2`
+and `f_add_log2`. Chained-base pair: `log2` bounds the argument (mirroring the
+[EXP](exp.md) construction), and the `log2`-only kernel is subtracted so its cost cancels.
 
-What Python code counts into `EXP` is described in
-[FLOP types](../flop_types.md#flop-exp).
+What Python code counts into `EXP2` is described in
+[FLOP types](../flop_types.md#flop-exp2).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-exp-diff -->
+<!-- BEGIN generated: kernel-asm-exp2-diff -->
 ```diff
---- f_add_log
-+++ f_add_log_exp
+--- f_add_log2
++++ f_add_log2_exp2
   .L0:
   ldr  %d0, [%x0], #8
   fadd  %d1, %d1, %d0
@@ -25,20 +25,20 @@ What Python code counts into `EXP` is described in
 + subs  %x4, %x4, #1
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-exp-diff -->
+<!-- END generated: kernel-asm-exp2-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-exp-structure -->
-- `f_add_log` -- 1 innermost loop(s): 7 instructions
-- `f_add_log_exp` -- 1 innermost loop(s): 8 instructions
+<!-- BEGIN generated: kernel-asm-exp2-structure -->
+- `f_add_log2` -- 1 innermost loop(s): 7 instructions
+- `f_add_log2_exp2` -- 1 innermost loop(s): 8 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
 timed loop). Listing lengths reflect the compiler's unrolling choices, not the kernels'
 amount of work -- see the discussion below.
 
-??? note "Full ASM listing: `f_add_log`"
+??? note "Full ASM listing: `f_add_log2`"
     ```asm
       stp  d9, d8, [sp, #-112]!
       stp  x28, x27, [sp, #16]
@@ -62,9 +62,9 @@ amount of work -- see the discussion below.
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _log@GOTPAGE
+      adrp  x24, _log2@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _log@GOTPAGEOFF]
+      ldr  x24, [x24, _log2@GOTPAGEOFF]
     LBB0_3:
       mov  x25, x20
       mov  x26, x23
@@ -93,7 +93,7 @@ amount of work -- see the discussion below.
       .loh AdrpLdrGot  Lloh0, Lloh1
     ```
 
-??? note "Full ASM listing: `f_add_log_exp`"
+??? note "Full ASM listing: `f_add_log2_exp2`"
     ```asm
       stp  d9, d8, [sp, #-112]!
       stp  x28, x27, [sp, #16]
@@ -117,13 +117,13 @@ amount of work -- see the discussion below.
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _log@GOTPAGE
+      adrp  x24, _log2@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _log@GOTPAGEOFF]
+      ldr  x24, [x24, _log2@GOTPAGEOFF]
     Lloh2:
-      adrp  x25, _exp@GOTPAGE
+      adrp  x25, _exp2@GOTPAGE
     Lloh3:
-      ldr  x25, [x25, _exp@GOTPAGEOFF]
+      ldr  x25, [x25, _exp2@GOTPAGEOFF]
     LBB0_3:
       mov  x26, x20
       mov  x27, x23
@@ -153,18 +153,14 @@ amount of work -- see the discussion below.
       .loh AdrpLdrGot  Lloh2, Lloh3
       .loh AdrpLdrGot  Lloh0, Lloh1
     ```
-<!-- END generated: kernel-asm-exp-structure -->
+<!-- END generated: kernel-asm-exp2-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one call to libm's `exp`.**
+**The subtraction isolates exactly one call to libm's `exp2`.**
 
-1. *Intended call, and nothing else*: the one structural addition is the second `blr` —
-   `f_add_log`'s loop contains one indirect libm call (`log`), `f_add_log_exp`'s contains two
-   (`log`, then `exp`), each through its own preloaded call-target register. The remaining
-   `-`/`+` pairs are the canonical-index shift described on the [index page](index.md).
-2. *In the dependency chain*: the calls are back-to-back on the accumulator — `log`'s return
-   value is `exp`'s argument, whose return value feeds the next iteration's `fadd` — so each
-   iteration pays the full add→log→exp latency and the subtraction leaves exactly the `exp` leg.
-3. *Loop-structure symmetry*: **symmetric.** Both kernels compile to a single scalar loop (7 vs 8
-   instructions) — this is the cleanest of the exemplar shapes, since neither side unrolls.
+1. *Intended call, and nothing else*: the one structural addition is the extra `blr` — the call
+   into `exp2`, through its own preloaded call-target register. The `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the [index page](index.md); the instructions themselves are identical.
+2. *In the dependency chain*: the calls are back-to-back on the accumulator — `log2`'s return value is `exp2`'s argument — so the subtraction leaves exactly the `exp2` leg.
+3. *Loop-structure symmetry*: **symmetric.** Both kernels compile to a single scalar loop —
+   neither side unrolls, so the subtraction cancels everything but the added call.
