@@ -52,10 +52,16 @@ repos:
     hooks:
       - id: check-yaml
       - id: check-toml
+      # the committed terminal captures are byte-exact ANSI: their column padding IS content, and
+      # a hygiene rewrite of it would silently invalidate every screenshot rendered from them
       - id: end-of-file-fixer
+        exclude: ^scripts/docs_captures/
       - id: trailing-whitespace
+        exclude: ^scripts/docs_captures/
       - id: check-added-large-files
-        args: [--maxkb=512]
+        # 1024 rather than 512: the regenerated show-data docs screenshot is a ~500KB WebP that
+        # grows with the dataset; anything else this large is still worth the deliberate bump
+        args: [--maxkb=1024]
       - id: check-merge-conflict
       - id: check-case-conflict
       - id: debug-statements

@@ -257,25 +257,24 @@ Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
 **Example 5**: _verbose counting_
 
+<!-- BEGIN generated: snippet-verbosity-info -->
 ```python
 import math
+
 from counted_float import CountedFloat, FlopCountingContext, Verbosity
 
 cf = CountedFloat(1.73)
 
-with FlopCountingContext(verbosity=Verbosity.INFO) as ctx:
+with FlopCountingContext(verbosity=Verbosity.INFO):
     _ = cf * cf
     _ = cf**2
     _ = math.log(cf, 2)
 ```
+<!-- END generated: snippet-verbosity-info -->
 
 writes to `stderr`:
 
-```text
-INFO  MUL         +1                                               my_algo.py:7
-INFO  MUL         +1     const exponent -> square-and-multiply     my_algo.py:8
-INFO  LOG2        +1     const base 2 -> log2                      my_algo.py:9
-```
+![INFO verbosity output](images/verbosity_info.webp)
 
 Every line names the flop type, how many of them that one statement registered,
 the rationale where the library applied a rule you did not write out (here:
@@ -296,24 +295,24 @@ snippet. Three things worth knowing:
 
 **Example 6**: _reporting what could not be counted_
 
+<!-- BEGIN generated: snippet-verbosity-warning -->
 ```python
 import math
+
 from counted_float import CountedFloat, FlopCountingContext, Verbosity
 
 cf = CountedFloat(2.5)
 
-with FlopCountingContext(verbosity=Verbosity.WARNING) as ctx:
+with FlopCountingContext(verbosity=Verbosity.WARNING):
     for _ in range(1000):
         _ = math.remainder(cf, 2.0)
     _ = math.isclose(cf, 2.5)
 ```
+<!-- END generated: snippet-verbosity-warning -->
 
 writes:
 
-```text
-WARN  remainder          uncounted; result is a plain float        my_algo.py:8
-WARN  isclose            uncounted; performs real arithmetic       my_algo.py:9
-```
+![WARNING verbosity output](images/verbosity_warning.webp)
 
 `WARNING` is for the opposite question: not "why is this count 14?" but "is this
 count missing something?". It reports calls that met a `CountedFloat` and could
@@ -338,6 +337,33 @@ there either.
     silently uncounted and nothing warns. Keeping runtime values in
     `CountedFloat` throughout is what makes a count trustworthy; this level only
     catches the boundaries that are visible.
+
+**Example 7**: _both sides in one stream_
+
+`INFO` includes the `WARNING` lines, so a single run shows what was counted and
+what was lost, interleaved in the order it happened:
+
+<!-- BEGIN generated: snippet-verbosity-mixed -->
+```python
+import math
+
+from counted_float import CountedFloat, FlopCountingContext, Verbosity
+
+x = CountedFloat(0.6)
+
+with FlopCountingContext(verbosity=Verbosity.INFO):
+    _ = 1.0 - x * math.erf(x)
+```
+<!-- END generated: snippet-verbosity-mixed -->
+
+writes:
+
+![mixed INFO and WARNING verbosity output](images/verbosity_mixed.webp)
+
+The `erf` result comes back as a plain `float` — the yellow line reports that
+loss — while the multiply and subtract around it still involve `x` and are
+counted as usual. Only the flops *inside* `erf` went missing, and the output
+says so.
 
 ## Performance overhead
 

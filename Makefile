@@ -13,6 +13,7 @@ help:
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
 	@echo '  precompute-weights            Regenerate the shipped consensus flop weights from the built-in source data.'
+	@echo '  regen-docs                    Regenerate the dataset-derived docs content (marked text blocks + screenshots).'
 	@echo ''
 	@echo '  release       		            Release a version: make release VERSION=X.Y.Z (validates, bumps, tags, pushes).'
 	@echo ''
@@ -40,6 +41,9 @@ format-single-file:
 
 precompute-weights:
 	uv run python scripts/generate_precomputed_weights.py
+
+regen-docs:
+	uv run python scripts/generate_docs_content.py
 
 release:
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)

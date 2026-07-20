@@ -5,6 +5,9 @@
 If the package is installed with the optional `numba` dependency, it provides
 the ability to micro-benchmark floating point operations as follows:
 
+The run below is a frozen example, captured on an Apple M3 Max; your own
+numbers will differ.
+
 ```
 >>> from counted_float.benchmarking import run_flops_benchmark
 >>> results = run_flops_benchmark()
@@ -94,7 +97,8 @@ for which you want to estimate the floating-point operation count.
 
 Micro-benchmarking of a bisection algorithm using
 `counted_float benchmark-counted-float` (see the
-[CLI reference](cli.md)) teaches us this:
+[CLI reference](cli.md)) teaches us this — again a frozen example, captured on
+an Apple M3 Max with counted-float 1.7.0:
 
 ```
 ------------------------------------------------------------------------------------------------------------------------
