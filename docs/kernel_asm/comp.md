@@ -1,33 +1,39 @@
-# SQRT
+# COMP
 
-The `SQRT` cost is the latency difference between a kernel chaining `sqrt(tmp + x[i])` and one
-chaining only `tmp + x[i]` — kernels `f_add_sqrt` and `f_add`. Exemplar of a **bare arithmetic
-instruction**: on ARM64, `math.sqrt` compiles to a single `fsqrt` instruction, not a library call.
+The `COMP` cost prices a floating-point compare. Its kernel, `f_lte_addsub`, chains
+`tmp = tmp - x[i]` **or** `tmp = tmp + x[i]` depending on `tmp >= x[i]` — a compare steering
+between an add and a subtract. Since add and subtract cost the same but are not free, the
+subtrahend is the *average* of the single-`ADD` and single-`SUB` kernels' latencies; the diff
+below shows `f_add` (the `SUB` kernel differs from it by one opcode only).
 
-What Python code counts into `SQRT` is described in
-[FLOP types](../flop_types.md#flop-sqrt).
+What Python code counts into `COMP` is described in
+[FLOP types](../flop_types.md#flop-comp).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-sqrt-diff -->
+<!-- BEGIN generated: kernel-asm-comp-diff -->
 ```diff
 --- f_add
-+++ f_add_sqrt
++++ f_lte_addsub
   .L0:
   ldr  %d0, [%x0], #8
-  fadd  %d1, %d1, %d0
-+ fsqrt  %d1, %d1
-  str  %d1, [%x1], #8
+- fadd  %d1, %d1, %d0
+- str  %d1, [%x1], #8
++ fneg  %d1, %d0
++ fcmp  %d2, %d0
++ fcsel  %d0, %d1, %d0, ge
++ fadd  %d2, %d2, %d0
++ str  %d2, [%x1], #8
   subs  %x2, %x2, #1
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-sqrt-diff -->
+<!-- END generated: kernel-asm-comp-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-sqrt-structure -->
+<!-- BEGIN generated: kernel-asm-comp-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_sqrt` -- 1 innermost loop(s): 7 instructions
+- `f_lte_addsub` -- 1 innermost loop(s): 9 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -113,7 +119,7 @@ amount of work -- see the discussion below.
       ret
     ```
 
-??? note "Full ASM listing: `f_add_sqrt`"
+??? note "Full ASM listing: `f_lte_addsub`"
     ```asm
       cmp  x2, #1
       b.lt  LBB0_6
@@ -133,8 +139,10 @@ amount of work -- see the discussion below.
       mov.16b  v1, v0
     LBB0_4:
       ldr  d2, [x11], #8
+      fneg  d3, d2
+      fcmp  d1, d2
+      fcsel  d2, d3, d2, ge
       fadd  d1, d1, d2
-      fsqrt  d1, d1
       str  d1, [x12], #8
       subs  x10, x10, #1
       b.ne  LBB0_4
@@ -145,22 +153,20 @@ amount of work -- see the discussion below.
       mov  w0, #0
       ret
     ```
-<!-- END generated: kernel-asm-sqrt-structure -->
+<!-- END generated: kernel-asm-comp-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one `fsqrt`.**
+**The subtraction isolates the compare-and-select machinery — `fcmp` + `fcsel` (+ an
+input-side `fneg`).**
 
-1. *Intended instruction, and nothing else*: the diff is the single line `+ fsqrt %d1, %d1` —
-   loads, stores and loop control are identical on both sides.
-2. *In the dependency chain*: `fsqrt` reads and writes `%d1`, the accumulator that feeds the next
-   iteration's `fadd`, so each iteration waits for the full add→sqrt latency.
-3. *Loop-structure symmetry*: **not symmetric, deliberately surfaced.** `f_add` compiles to an
-   8×-unrolled main loop plus a scalar remainder (the diff shows the remainder), while
-   `f_add_sqrt` compiles to a single scalar loop. This does not invalidate the measurement: both
-   loops serialize through the `%d1` chain, so per-iteration latency is the chained operations'
-   latency regardless of unrolling — the unrolled body performs 8 chained iterations' work and
-   takes 8 chained iterations' time. But `f_add` is the subtrahend of most derived costs, so a
-   toolchain change that alters this unrolling decision *without* preserving the latency-bound
-   property would shift the whole weight table — this asymmetry is the primary thing to re-check
-   on regeneration.
+1. *What the diff shows*: LLVM compiled the source-level branch **branchless** — instead of two
+   loop bodies, it negates the element up front (`fneg`), compares (`fcmp`), selects the operand
+   (`fcsel`), and always adds. Subtracting the add/sub average therefore leaves
+   `fcmp` + `fcsel` + `fneg` as the priced work — a faithful stand-in for what float-comparison
+   control flow costs in optimized code.
+2. *In the dependency chain*: `fcmp` reads the accumulator, `fcsel` waits on the flags, and the
+   `fadd` waits on `fcsel`, so compare and select sit squarely in the serialized chain. The
+   `fneg` runs on the freshly loaded element, off the chain, overlapping earlier work.
+3. *Loop-structure symmetry*: `f_add` unrolls 8×, the branchy kernel does not; as on the
+   [SQRT page](sqrt.md), both sides remain latency-bound so the subtraction holds.

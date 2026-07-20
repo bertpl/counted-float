@@ -43,10 +43,49 @@ nav:
       - CPU architecture scope: cpu_architectures_scope.md
       - Benchmark kernel machine code:
           - Overview: kernel_asm/index.md
+          - ABS: kernel_asm/abs.md
+          - ACOS: kernel_asm/acos.md
+          - ACOSH: kernel_asm/acosh.md
+          - ADD: kernel_asm/add.md
+          - ASIN: kernel_asm/asin.md
+          - ASINH: kernel_asm/asinh.md
+          - ATAN: kernel_asm/atan.md
+          - ATAN2: kernel_asm/atan2.md
+          - ATANH: kernel_asm/atanh.md
+          - CBRT: kernel_asm/cbrt.md
+          - COMP: kernel_asm/comp.md
+          - COPYSIGN: kernel_asm/copysign.md
+          - COS: kernel_asm/cos.md
+          - COSH: kernel_asm/cosh.md
+          - DIST: kernel_asm/dist.md
+          - DIST_XARG: kernel_asm/dist_xarg.md
+          - DIV: kernel_asm/div.md
+          - ERF: kernel_asm/erf.md
+          - ERFC: kernel_asm/erfc.md
           - EXP: kernel_asm/exp.md
+          - EXP2: kernel_asm/exp2.md
+          - EXP10: kernel_asm/exp10.md
+          - EXPM1: kernel_asm/expm1.md
+          - FMA: kernel_asm/fma.md
+          - FMOD: kernel_asm/fmod.md
+          - GAMMA: kernel_asm/gamma.md
+          - HYPOT: kernel_asm/hypot.md
           - HYPOT_XARG: kernel_asm/hypot_xarg.md
+          - LGAMMA: kernel_asm/lgamma.md
           - LOG: kernel_asm/log.md
+          - LOG1P: kernel_asm/log1p.md
+          - LOG2: kernel_asm/log2.md
+          - LOG10: kernel_asm/log10.md
+          - MINUS: kernel_asm/minus.md
+          - MUL: kernel_asm/mul.md
+          - POW: kernel_asm/pow.md
+          - RND: kernel_asm/rnd.md
+          - SIN: kernel_asm/sin.md
+          - SINH: kernel_asm/sinh.md
           - SQRT: kernel_asm/sqrt.md
+          - SUB: kernel_asm/sub.md
+          - TAN: kernel_asm/tan.md
+          - TANH: kernel_asm/tanh.md
   - Changelog: changelog.md
 
 plugins:
@@ -59,6 +98,7 @@ hooks:
 
 markdown_extensions:
   - admonition
+  - attr_list
   - toc:
       permalink: true
   - pymdownx.highlight:

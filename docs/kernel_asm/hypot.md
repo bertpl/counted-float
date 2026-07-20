@@ -1,19 +1,18 @@
-# LOG
+# HYPOT
 
-The `LOG` cost is the latency difference between a kernel chaining `log(tmp + x[i])` and one
-chaining only `tmp + x[i]` — kernels `f_add_log` and `f_add`. Exemplar of a **libm call**: unlike
-`sqrt`, the natural logarithm has no hardware instruction on ARM64, so the loop contains an actual
-call into the math library.
+The `HYPOT` cost is the latency difference between a kernel chaining `math.hypot(tmp + x[i])` and
+one chaining only `tmp + x[i]` — kernels `f_add_hypot` and `f_add`. Like most libm-backed functions,
+`math.hypot` compiles to a call into the math library. This is the two-argument libm form (the per-extra-coordinate slope of the n-ary form is priced separately as `HYPOT_XARG`).
 
-What Python code counts into `LOG` is described in
-[FLOP types](../flop_types.md#flop-log).
+What Python code counts into `HYPOT` is described in
+[FLOP types](../flop_types.md#flop-hypot). Why the 2-argument form is measured on the real libm call while the n-ary slope is hand-rolled is covered in the [benchmark design rationale](../analysis_methodology.md#16-benchmark-design-rationale).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-log-diff -->
+<!-- BEGIN generated: kernel-asm-hypot-diff -->
 ```diff
 --- f_add
-+++ f_add_log
++++ f_add_hypot
   .L0:
   ldr  %d0, [%x0], #8
   fadd  %d1, %d1, %d0
@@ -24,13 +23,13 @@ What Python code counts into `LOG` is described in
 + subs  %x3, %x3, #1
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-log-diff -->
+<!-- END generated: kernel-asm-hypot-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-log-structure -->
+<!-- BEGIN generated: kernel-asm-hypot-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_log` -- 1 innermost loop(s): 7 instructions
+- `f_add_hypot` -- 1 innermost loop(s): 7 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -116,8 +115,9 @@ amount of work -- see the discussion below.
       ret
     ```
 
-??? note "Full ASM listing: `f_add_log`"
+??? note "Full ASM listing: `f_add_hypot`"
     ```asm
+      .cfi_startproc
       stp  d9, d8, [sp, #-112]!
       stp  x28, x27, [sp, #16]
       stp  x26, x25, [sp, #32]
@@ -125,6 +125,21 @@ amount of work -- see the discussion below.
       stp  x22, x21, [sp, #64]
       stp  x20, x19, [sp, #80]
       stp  x29, x30, [sp, #96]
+      .cfi_def_cfa_offset 112
+      .cfi_offset w30, -8
+      .cfi_offset w29, -16
+      .cfi_offset w19, -24
+      .cfi_offset w20, -32
+      .cfi_offset w21, -40
+      .cfi_offset w22, -48
+      .cfi_offset w23, -56
+      .cfi_offset w24, -64
+      .cfi_offset w25, -72
+      .cfi_offset w26, -80
+      .cfi_offset w27, -88
+      .cfi_offset w28, -96
+      .cfi_offset b8, -104
+      .cfi_offset b9, -112
       mov  x19, x0
       cmp  x2, #1
       b.lt  LBB0_6
@@ -140,9 +155,9 @@ amount of work -- see the discussion below.
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _log@GOTPAGE
+      adrp  x24, _hypot@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _log@GOTPAGEOFF]
+      ldr  x24, [x24, _hypot@GOTPAGEOFF]
     LBB0_3:
       mov  x25, x20
       mov  x26, x23
@@ -156,7 +171,7 @@ amount of work -- see the discussion below.
       subs  x25, x25, #1
       b.ne  LBB0_4
       subs  x21, x21, #1
-      b.gt  LBB0_3
+      b.hi  LBB0_3
     LBB0_6:
       str  xzr, [x19]
       mov  w0, #0
@@ -169,22 +184,17 @@ amount of work -- see the discussion below.
       ldp  d9, d8, [sp], #112
       ret
       .loh AdrpLdrGot  Lloh0, Lloh1
+      .cfi_endproc
     ```
-<!-- END generated: kernel-asm-log-structure -->
+<!-- END generated: kernel-asm-hypot-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one call to libm's `log`.**
+**The subtraction isolates exactly one call to libm's `hypot`.**
 
 1. *Intended call, and nothing else*: the one structural addition is `+ blr %x1` — an indirect
-   call through a register that holds the `log` address (loaded once, outside the loop). The
-   `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the
-   [index page](index.md) — the call-target register occupies one canonical slot, renumbering
-   the registers after it; the instructions themselves are identical.
+   call through a register that holds the `hypot` address (loaded once, outside
+   the loop). The `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the [index page](index.md); the instructions themselves are identical.
 2. *In the dependency chain*: the accumulator flows through the call — `fadd` produces the
-   argument, the call returns the result the next iteration's `fadd` consumes (both in the ARM64
-   float argument/return register), so each iteration pays the full add→log latency.
-3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×,
-   `f_add_log` (whose loop body contains a call) does not; the diff shows `f_add`'s scalar
-   remainder. As there, both sides stay latency-bound through the accumulator chain, so the
-   subtraction holds.
+   argument, the call returns the result the next iteration's `fadd` consumes. The second argument is the freshly loaded element, off the chain.
+3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×, `f_add_hypot` does not; the diff shows `f_add`'s scalar remainder. As there, both sides stay latency-bound through the accumulator chain, so the subtraction holds.

@@ -1,19 +1,18 @@
-# LOG
+# ATAN
 
-The `LOG` cost is the latency difference between a kernel chaining `log(tmp + x[i])` and one
-chaining only `tmp + x[i]` — kernels `f_add_log` and `f_add`. Exemplar of a **libm call**: unlike
-`sqrt`, the natural logarithm has no hardware instruction on ARM64, so the loop contains an actual
-call into the math library.
+The `ATAN` cost is the latency difference between a kernel chaining `math.atan(tmp + x[i])` and
+one chaining only `tmp + x[i]` — kernels `f_add_atan` and `f_add`. Like most libm-backed functions,
+`math.atan` compiles to a call into the math library.
 
-What Python code counts into `LOG` is described in
-[FLOP types](../flop_types.md#flop-log).
+What Python code counts into `ATAN` is described in
+[FLOP types](../flop_types.md#flop-atan).
 
 ## Inner-loop diff
 
-<!-- BEGIN generated: kernel-asm-log-diff -->
+<!-- BEGIN generated: kernel-asm-atan-diff -->
 ```diff
 --- f_add
-+++ f_add_log
++++ f_add_atan
   .L0:
   ldr  %d0, [%x0], #8
   fadd  %d1, %d1, %d0
@@ -24,13 +23,13 @@ What Python code counts into `LOG` is described in
 + subs  %x3, %x3, #1
   b.ne  .L0
 ```
-<!-- END generated: kernel-asm-log-diff -->
+<!-- END generated: kernel-asm-atan-diff -->
 
 ## Loop structure
 
-<!-- BEGIN generated: kernel-asm-log-structure -->
+<!-- BEGIN generated: kernel-asm-atan-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_log` -- 1 innermost loop(s): 7 instructions
+- `f_add_atan` -- 1 innermost loop(s): 7 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -116,7 +115,7 @@ amount of work -- see the discussion below.
       ret
     ```
 
-??? note "Full ASM listing: `f_add_log`"
+??? note "Full ASM listing: `f_add_atan`"
     ```asm
       stp  d9, d8, [sp, #-112]!
       stp  x28, x27, [sp, #16]
@@ -140,9 +139,9 @@ amount of work -- see the discussion below.
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _log@GOTPAGE
+      adrp  x24, _atan@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _log@GOTPAGEOFF]
+      ldr  x24, [x24, _atan@GOTPAGEOFF]
     LBB0_3:
       mov  x25, x20
       mov  x26, x23
@@ -170,21 +169,15 @@ amount of work -- see the discussion below.
       ret
       .loh AdrpLdrGot  Lloh0, Lloh1
     ```
-<!-- END generated: kernel-asm-log-structure -->
+<!-- END generated: kernel-asm-atan-structure -->
 
 ## Discussion
 
-**The subtraction isolates exactly one call to libm's `log`.**
+**The subtraction isolates exactly one call to libm's `atan`.**
 
 1. *Intended call, and nothing else*: the one structural addition is `+ blr %x1` — an indirect
-   call through a register that holds the `log` address (loaded once, outside the loop). The
-   `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the
-   [index page](index.md) — the call-target register occupies one canonical slot, renumbering
-   the registers after it; the instructions themselves are identical.
+   call through a register that holds the `atan` address (loaded once, outside
+   the loop). The `-`/`+` pairs on the `str`/`subs` lines are the canonical-index shift described on the [index page](index.md); the instructions themselves are identical.
 2. *In the dependency chain*: the accumulator flows through the call — `fadd` produces the
-   argument, the call returns the result the next iteration's `fadd` consumes (both in the ARM64
-   float argument/return register), so each iteration pays the full add→log latency.
-3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×,
-   `f_add_log` (whose loop body contains a call) does not; the diff shows `f_add`'s scalar
-   remainder. As there, both sides stay latency-bound through the accumulator chain, so the
-   subtraction holds.
+   argument, the call returns the result the next iteration's `fadd` consumes.
+3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls 8×, `f_add_atan` does not; the diff shows `f_add`'s scalar remainder. As there, both sides stay latency-bound through the accumulator chain, so the subtraction holds.

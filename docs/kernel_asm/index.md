@@ -21,15 +21,54 @@ Each page closes with a short discussion walking through what the listings show:
 <!-- BEGIN generated: kernel-asm-page-list -->
 **Hardware instructions**
 
+- [ABS](abs.md)
+- [ADD](add.md)
+- [COMP](comp.md)
+- [COPYSIGN](copysign.md)
+- [DIV](div.md)
+- [FMA](fma.md)
+- [MINUS](minus.md)
+- [MUL](mul.md)
+- [RND](rnd.md)
 - [SQRT](sqrt.md)
+- [SUB](sub.md)
 
 **Library calls (libm)**
 
+- [ACOS](acos.md)
+- [ACOSH](acosh.md)
+- [ASIN](asin.md)
+- [ASINH](asinh.md)
+- [ATAN](atan.md)
+- [ATAN2](atan2.md)
+- [ATANH](atanh.md)
+- [CBRT](cbrt.md)
+- [COS](cos.md)
+- [COSH](cosh.md)
+- [ERF](erf.md)
+- [ERFC](erfc.md)
 - [EXP](exp.md)
+- [EXP10](exp10.md)
+- [EXP2](exp2.md)
+- [EXPM1](expm1.md)
+- [FMOD](fmod.md)
+- [GAMMA](gamma.md)
+- [HYPOT](hypot.md)
+- [LGAMMA](lgamma.md)
 - [LOG](log.md)
+- [LOG10](log10.md)
+- [LOG1P](log1p.md)
+- [LOG2](log2.md)
+- [POW](pow.md)
+- [SIN](sin.md)
+- [SINH](sinh.md)
+- [TAN](tan.md)
+- [TANH](tanh.md)
 
 **Arity-scaled algorithms**
 
+- [DIST](dist.md)
+- [DIST_XARG](dist_xarg.md)
 - [HYPOT_XARG](hypot_xarg.md)
 <!-- END generated: kernel-asm-page-list -->
 
