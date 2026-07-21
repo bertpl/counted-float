@@ -60,6 +60,7 @@ Each page closes with a short discussion walking through what the listings show:
 - [LOG1P](log1p.md)
 - [LOG2](log2.md)
 - [POW](pow.md)
+- [REMAINDER](remainder.md)
 - [SIN](sin.md)
 - [SINH](sinh.md)
 - [TAN](tan.md)

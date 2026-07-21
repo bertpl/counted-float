@@ -56,6 +56,7 @@ class FlopType(StrEnum):
     EXPM1 = "EXPM1"
     LOG1P = "LOG1P"
     FMOD = "FMOD"
+    REMAINDER = "REMAINDER"
     SINH = "SINH"
     COSH = "COSH"
     TANH = "TANH"
@@ -132,6 +133,7 @@ _LABELS: dict[FlopType, str] = {
     FlopType.EXPM1: "expm1(x)",
     FlopType.LOG1P: "log1p(x)",
     FlopType.FMOD: "fmod(x,y)",
+    FlopType.REMAINDER: "remainder(x,y)",
     FlopType.SINH: "sinh(x)",
     FlopType.COSH: "cosh(x)",
     FlopType.TANH: "tanh(x)",

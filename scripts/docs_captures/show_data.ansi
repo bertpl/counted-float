@@ -90,94 +90,94 @@
           └─[1;3mother                                                             0.50      0.50      1.50      1.00      1.00        /       2.00      2.00      4.00      3.50      2.50      7.[0m[0m[2m …[0m
              └─specs_intel                                                    0.50      0.50      1.50      1.00      1.00        /       2.00      2.00      4.00      3.50      2.50      7.[0m[2m …[0m
 
-[1m                                                                              DIST DIST_XARG       ERF      ERFC     GAMMAHYPOT_XARG    LGAMMA[0m
-[1;48;2;136;136;136mALL                                                                             /         /         /         /         /         /         / [0m
- ├─[1;48;2;119;119;221marm                                                                          /         /         /         /         /         /         / [0m
- │  ├─[1;38;2;51;51;51;48;2;119;221;119mv8_x                                                                      /         /         /         /         /         /         / [0m
- │  │  ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         / [0m
- │  │  │  ├─apple_m1_github_actions                                             /         /         /         /         /         /         / 
- │  │  │  ├─apple_m3_max_mbp16                                                  /         /         /         /         /         /         / 
- │  │  │  ├─apple_m3_mba15                                                      /         /         /         /         /         /         / 
- │  │  │  ├─aws_graviton_2_neoverse_n1_ec2_m6g_large                            /         /         /         /         /         /         / 
- │  │  │  └─aws_graviton_3_neoverse_v1_ec2_m7g_large                            /         /         /         /         /         /         / 
- │  │  └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         / [0m
- │  │     ├─arm_cortex_a76                                                      /         /         /         /         /         /         / 
- │  │     ├─arm_cortex_x1                                                       /         /         /         /         /         /         / 
- │  │     ├─arm_neoverse_n1                                                     /         /         /         /         /         /         / 
- │  │     └─arm_neoverse_v1                                                     /         /         /         /         /         /         / 
- │  ├─[1;38;2;51;51;51;48;2;119;221;119mv9_0                                                                      /         /         /         /         /         /         / [0m
- │  │  ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         / [0m
- │  │  │  ├─aws_graviton_4_neoverse_v2_ec2_m8g_large                            /         /         /         /         /         /         / 
- │  │  │  └─azure_cobalt_100_neoverse_n2_github_actions                         /         /         /         /         /         /         / 
- │  │  └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         / [0m
- │  │     ├─arm_cortex_x2                                                       /         /         /         /         /         /         / 
- │  │     ├─arm_cortex_x3                                                       /         /         /         /         /         /         / 
- │  │     ├─arm_neoverse_n2                                                     /         /         /         /         /         /         / 
- │  │     └─arm_neoverse_v2                                                     /         /         /         /         /         /         / 
- │  └─[1;38;2;51;51;51;48;2;119;221;119mv9_2                                                                      /         /         /         /         /         /         / [0m
- │     ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         / [0m
- │     │  ├─apple_m4_pro_mbp16                                                  /         /         /         /         /         /         / 
- │     │  └─aws_graviton_5_neoverse_v3_ec2_m9g_large                            /         /         /         /         /         /         / 
- │     └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         / [0m
- │        ├─arm_cortex_x4                                                       /         /         /         /         /         /         / 
- │        ├─arm_cortex_x925                                                     /         /         /         /         /         /         / 
- │        └─arm_neoverse_v3                                                     /         /         /         /         /         /         / 
- └─[1;48;2;119;119;221mx86                                                                          /         /         /         /         /         /         / [0m
-    ├─[1;38;2;51;51;51;48;2;119;221;119mamd                                                                       /         /         /         /         /         /         / [0m
-    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2017_zen1                                                              /         /         /         /         /         /         / [0m
-    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-    │  │  │  └─amd_epyc_7571_ec2_m5a_xlarge                                     /         /         /         /         /         /         / 
-    │  │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-    │  │     └─analysis_uops_info_zen1+                                         /         /         /         /         /         /         / 
-    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2020_zen3                                                              /         /         /         /         /         /         / [0m
-    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-    │  │  │  ├─amd_epyc_7763_windows_github_actions                             /         /         /         /         /         /         / 
-    │  │  │  └─amd_epyc_7r13_ec2_m6a_xlarge                                     /         /         /         /         /         /         / 
-    │  │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-    │  │     ├─analysis_agner_fog_r7_5800x                                      /         /         /         /         /         /         / 
-    │  │     └─analysis_uops_info_zen3                                          /         /         /         /         /         /         / 
-    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2022_zen4                                                              /         /         /         /         /         /         / [0m
-    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-    │  │  │  └─amd_epyc_9r14_ec2_m7a_large                                      /         /         /         /         /         /         / 
-    │  │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-    │  │     ├─analysis_agner_fog_r9_7900x                                      /         /         /         /         /         /         / 
-    │  │     ├─analysis_uops_info_zen4                                          /         /         /         /         /         /         / 
-    │  │     └─specs_amd                                                        /         /         /         /         /         /         / 
-    │  └─[1;38;2;51;51;51;48;2;238;119;119m2024_zen5                                                              /         /         /         /         /         /         / [0m
-    │     ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-    │     │  └─amd_epyc_9r45_ec2_m8a_large                                      /         /         /         /         /         /         / 
-    │     └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-    │        ├─analysis_agner_fog_r7_9800x3d                                    /         /         /         /         /         /         / 
-    │        └─specs_amd                                                        /         /         /         /         /         /         / 
-    └─[1;38;2;51;51;51;48;2;119;221;119mintel                                                                     /         /         /         /         /         /         / [0m
-       ├─[1;38;2;51;51;51;48;2;238;119;119m2017_coffee_lake_gen_8                                                 /         /         /         /         /         /         / [0m
-       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-       │  │  ├─intel_i7_8550U_windows                                           /         /         /         /         /         /         / 
-       │  │  └─intel_i7_8700B_macos_github_actions                              /         /         /         /         /         /         / 
-       │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-       │     ├─analysis_agner_fog_coffee_lake                                   /         /         /         /         /         /         / 
-       │     └─analysis_uops_info_coffee_lake                                   /         /         /         /         /         /         / 
-       ├─[1;38;2;51;51;51;48;2;238;119;119m2019_sunny_cove_gen_10                                                 /         /         /         /         /         /         / [0m
-       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-       │  │  └─intel_xeon_8375c_ice_lake_ec2_m6i_xlarge                         /         /         /         /         /         /         / 
-       │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-       │     ├─analysis_agner_fog_ice_lake                                      /         /         /         /         /         /         / 
-       │     ├─analysis_uops_info_ice_lake                                      /         /         /         /         /         /         / 
-       │     └─analysis_uops_info_tiger_lake                                    /         /         /         /         /         /         / 
-       ├─[1;38;2;51;51;51;48;2;238;119;119m2021_golden_cove_gen_12                                                /         /         /         /         /         /         / [0m
-       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-       │  │  └─intel_xeon_8488c_sapphire_rapids_ec2_m7i_xlarge                  /         /         /         /         /         /         / 
-       │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-       │     ├─analysis_uops_info_alder_lake_p                                  /         /         /         /         /         /         / 
-       │     └─specs_intel                                                      /         /         /         /         /         /         / 
-       ├─[1;38;2;51;51;51;48;2;238;119;119m2022_raptor_cove_gen_13_14                                             /         /         /         /         /         /         / [0m
-       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-       │  │  └─intel_xeon_8559c_emerald_rapids_ec2_i7i_xlarge                   /         /         /         /         /         /         / 
-       │  └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-       │     └─specs_intel                                                      /         /         /         /         /         /         / 
-       └─[1;38;2;51;51;51;48;2;238;119;119m2023_redwood_cove_ultra_1                                              /         /         /         /         /         /         / [0m
-          ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         / [0m
-          │  ├─intel_xeon_6973p_granite_rapids_linux_github_actions             /         /         /         /         /         /         / 
-          │  └─intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge                   /         /         /         /         /         /         / 
-          └─[1;3mother                                                               /         /         /         /         /         /         / [0m
-             └─specs_intel                                                      /         /         /         /         /         /         / 
+[1m                                                                              DIST DIST_XARG       ERF      ERFC     GAMMAHYPOT_XARG    LGAMMA REMAINDER[0m
+[1;48;2;136;136;136mALL                                                                             /         /         /         /         /         /         /         / [0m
+ ├─[1;48;2;119;119;221marm                                                                          /         /         /         /         /         /         /         / [0m
+ │  ├─[1;38;2;51;51;51;48;2;119;221;119mv8_x                                                                      /         /         /         /         /         /         /         / [0m
+ │  │  ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         /         / [0m
+ │  │  │  ├─apple_m1_github_actions                                             /         /         /         /         /         /         /         / 
+ │  │  │  ├─apple_m3_max_mbp16                                                  /         /         /         /         /         /         /         / 
+ │  │  │  ├─apple_m3_mba15                                                      /         /         /         /         /         /         /         / 
+ │  │  │  ├─aws_graviton_2_neoverse_n1_ec2_m6g_large                            /         /         /         /         /         /         /         / 
+ │  │  │  └─aws_graviton_3_neoverse_v1_ec2_m7g_large                            /         /         /         /         /         /         /         / 
+ │  │  └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         /         / [0m
+ │  │     ├─arm_cortex_a76                                                      /         /         /         /         /         /         /         / 
+ │  │     ├─arm_cortex_x1                                                       /         /         /         /         /         /         /         / 
+ │  │     ├─arm_neoverse_n1                                                     /         /         /         /         /         /         /         / 
+ │  │     └─arm_neoverse_v1                                                     /         /         /         /         /         /         /         / 
+ │  ├─[1;38;2;51;51;51;48;2;119;221;119mv9_0                                                                      /         /         /         /         /         /         /         / [0m
+ │  │  ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         /         / [0m
+ │  │  │  ├─aws_graviton_4_neoverse_v2_ec2_m8g_large                            /         /         /         /         /         /         /         / 
+ │  │  │  └─azure_cobalt_100_neoverse_n2_github_actions                         /         /         /         /         /         /         /         / 
+ │  │  └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         /         / [0m
+ │  │     ├─arm_cortex_x2                                                       /         /         /         /         /         /         /         / 
+ │  │     ├─arm_cortex_x3                                                       /         /         /         /         /         /         /         / 
+ │  │     ├─arm_neoverse_n2                                                     /         /         /         /         /         /         /         / 
+ │  │     └─arm_neoverse_v2                                                     /         /         /         /         /         /         /         / 
+ │  └─[1;38;2;51;51;51;48;2;119;221;119mv9_2                                                                      /         /         /         /         /         /         /         / [0m
+ │     ├─[1;38;2;51;51;51;48;2;238;119;119mbenchmarks                                                             /         /         /         /         /         /         /         / [0m
+ │     │  ├─apple_m4_pro_mbp16                                                  /         /         /         /         /         /         /         / 
+ │     │  └─aws_graviton_5_neoverse_v3_ec2_m9g_large                            /         /         /         /         /         /         /         / 
+ │     └─[1;38;2;51;51;51;48;2;238;119;119mspecs                                                                  /         /         /         /         /         /         /         / [0m
+ │        ├─arm_cortex_x4                                                       /         /         /         /         /         /         /         / 
+ │        ├─arm_cortex_x925                                                     /         /         /         /         /         /         /         / 
+ │        └─arm_neoverse_v3                                                     /         /         /         /         /         /         /         / 
+ └─[1;48;2;119;119;221mx86                                                                          /         /         /         /         /         /         /         / [0m
+    ├─[1;38;2;51;51;51;48;2;119;221;119mamd                                                                       /         /         /         /         /         /         /         / [0m
+    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2017_zen1                                                              /         /         /         /         /         /         /         / [0m
+    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+    │  │  │  └─amd_epyc_7571_ec2_m5a_xlarge                                     /         /         /         /         /         /         /         / 
+    │  │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+    │  │     └─analysis_uops_info_zen1+                                         /         /         /         /         /         /         /         / 
+    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2020_zen3                                                              /         /         /         /         /         /         /         / [0m
+    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+    │  │  │  ├─amd_epyc_7763_windows_github_actions                             /         /         /         /         /         /         /         / 
+    │  │  │  └─amd_epyc_7r13_ec2_m6a_xlarge                                     /         /         /         /         /         /         /         / 
+    │  │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+    │  │     ├─analysis_agner_fog_r7_5800x                                      /         /         /         /         /         /         /         / 
+    │  │     └─analysis_uops_info_zen3                                          /         /         /         /         /         /         /         / 
+    │  ├─[1;38;2;51;51;51;48;2;238;119;119m2022_zen4                                                              /         /         /         /         /         /         /         / [0m
+    │  │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+    │  │  │  └─amd_epyc_9r14_ec2_m7a_large                                      /         /         /         /         /         /         /         / 
+    │  │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+    │  │     ├─analysis_agner_fog_r9_7900x                                      /         /         /         /         /         /         /         / 
+    │  │     ├─analysis_uops_info_zen4                                          /         /         /         /         /         /         /         / 
+    │  │     └─specs_amd                                                        /         /         /         /         /         /         /         / 
+    │  └─[1;38;2;51;51;51;48;2;238;119;119m2024_zen5                                                              /         /         /         /         /         /         /         / [0m
+    │     ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+    │     │  └─amd_epyc_9r45_ec2_m8a_large                                      /         /         /         /         /         /         /         / 
+    │     └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+    │        ├─analysis_agner_fog_r7_9800x3d                                    /         /         /         /         /         /         /         / 
+    │        └─specs_amd                                                        /         /         /         /         /         /         /         / 
+    └─[1;38;2;51;51;51;48;2;119;221;119mintel                                                                     /         /         /         /         /         /         /         / [0m
+       ├─[1;38;2;51;51;51;48;2;238;119;119m2017_coffee_lake_gen_8                                                 /         /         /         /         /         /         /         / [0m
+       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+       │  │  ├─intel_i7_8550U_windows                                           /         /         /         /         /         /         /         / 
+       │  │  └─intel_i7_8700B_macos_github_actions                              /         /         /         /         /         /         /         / 
+       │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+       │     ├─analysis_agner_fog_coffee_lake                                   /         /         /         /         /         /         /         / 
+       │     └─analysis_uops_info_coffee_lake                                   /         /         /         /         /         /         /         / 
+       ├─[1;38;2;51;51;51;48;2;238;119;119m2019_sunny_cove_gen_10                                                 /         /         /         /         /         /         /         / [0m
+       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+       │  │  └─intel_xeon_8375c_ice_lake_ec2_m6i_xlarge                         /         /         /         /         /         /         /         / 
+       │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+       │     ├─analysis_agner_fog_ice_lake                                      /         /         /         /         /         /         /         / 
+       │     ├─analysis_uops_info_ice_lake                                      /         /         /         /         /         /         /         / 
+       │     └─analysis_uops_info_tiger_lake                                    /         /         /         /         /         /         /         / 
+       ├─[1;38;2;51;51;51;48;2;238;119;119m2021_golden_cove_gen_12                                                /         /         /         /         /         /         /         / [0m
+       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+       │  │  └─intel_xeon_8488c_sapphire_rapids_ec2_m7i_xlarge                  /         /         /         /         /         /         /         / 
+       │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+       │     ├─analysis_uops_info_alder_lake_p                                  /         /         /         /         /         /         /         / 
+       │     └─specs_intel                                                      /         /         /         /         /         /         /         / 
+       ├─[1;38;2;51;51;51;48;2;238;119;119m2022_raptor_cove_gen_13_14                                             /         /         /         /         /         /         /         / [0m
+       │  ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+       │  │  └─intel_xeon_8559c_emerald_rapids_ec2_i7i_xlarge                   /         /         /         /         /         /         /         / 
+       │  └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+       │     └─specs_intel                                                      /         /         /         /         /         /         /         / 
+       └─[1;38;2;51;51;51;48;2;238;119;119m2023_redwood_cove_ultra_1                                              /         /         /         /         /         /         /         / [0m
+          ├─[1;3mbenchmarks                                                          /         /         /         /         /         /         /         / [0m
+          │  ├─intel_xeon_6973p_granite_rapids_linux_github_actions             /         /         /         /         /         /         /         / 
+          │  └─intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge                   /         /         /         /         /         /         /         / 
+          └─[1;3mother                                                               /         /         /         /         /         /         /         / [0m
+             └─specs_intel                                                      /         /         /         /         /         /         /         / 

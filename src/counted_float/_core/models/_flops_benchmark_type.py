@@ -38,6 +38,7 @@ class FlopsBenchmarkType(StrEnum):
     ADD_LOG1P = "add_log1p"
     ADD_LOG1P_EXPM1 = "add_log1p_expm1"
     ADD_FMOD = "add_fmod"
+    ADD_REMAINDER = "add_remainder"
     ADD_TANH = "add_tanh"
     ADD_ASINH = "add_asinh"
     ADD_ASINH_SINH = "add_asinh_sinh"

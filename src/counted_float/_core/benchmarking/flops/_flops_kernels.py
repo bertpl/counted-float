@@ -5,11 +5,24 @@ walks the input array in a dependent chain, so the measurement reflects operatio
 than the CPU's ability to overlap independent work.
 """
 
+import ctypes
+import ctypes.util
 import math
+import sys
 
 import numpy as np
 
 from counted_float._core.compatibility import numba
+
+# numba has no math.remainder, so the remainder kernel calls libm directly through ctypes --
+# numba compiles a ctypes function into a plain indirect call (same loop shape as the other
+# libm-backed kernels, plus one integer-side pointer reload per iteration), and without numba
+# the ctypes function is just as callable from the pure-Python fallback path.  On Windows the
+# C99 math functions live in the UCRT rather than a separate libm.
+_libm = ctypes.CDLL("ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m"))
+c_remainder = _libm.remainder
+c_remainder.restype = ctypes.c_double
+c_remainder.argtypes = [ctypes.c_double, ctypes.c_double]
 
 
 @numba.njit(parallel=False)
@@ -374,6 +387,17 @@ def f_add_fmod(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, o
         tmp = math.e
         for i in range(n):
             tmp = np.fmod(tmp + in_f[i], in_f[i])
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_remainder(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # libm remainder via ctypes (see module header); the positive divisor range avoids the
+    # remainder(x, 0) domain error, mirroring the fmod kernel
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            tmp = c_remainder(tmp + in_f[i], in_f[i])
             out_f[i] = tmp
 
 

@@ -53,6 +53,7 @@ class FlopCounts:
     EXPM1: int = 0
     LOG1P: int = 0
     FMOD: int = 0
+    REMAINDER: int = 0
     SINH: int = 0
     COSH: int = 0
     TANH: int = 0

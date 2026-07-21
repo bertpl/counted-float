@@ -60,6 +60,28 @@ def test_suite_measures_the_arity_flop_types():
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
+def test_remainder_kernel_matches_math_remainder():
+    """The ctypes-bound libm call must compute exactly what math.remainder computes.
+
+    numba has no math.remainder, so the kernel calls libm through ctypes -- this pins that the
+    bound symbol is the right function (IEEE remainder, not fmod).
+    """
+    # --- arrange -----------------------------------------
+    n = 50
+    in_f = np.exp(np.linspace(np.log(1e-16), np.log(1e16), n))
+    out_f, out_i = np.zeros(n), np.zeros(n, dtype=int)
+
+    # --- act ---------------------------------------------
+    kernels.f_add_remainder(1, n, in_f, out_f, out_i)
+
+    # --- assert ------------------------------------------
+    tmp = math.e
+    for i in range(n):
+        tmp = math.remainder(tmp + in_f[i], in_f[i])
+        assert out_f[i] == tmp
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
 @pytest.mark.parametrize("kernel", [kernels.f_add_gammabase_gamma, kernels.f_add_gammabase_lgamma])
 def test_gamma_kernels_never_overflow_even_on_a_wild_input_range(kernel):
     """The sin bound must keep the gamma/lgamma chain finite regardless of the input magnitudes.

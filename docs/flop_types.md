@@ -44,6 +44,7 @@ find:
 | `math.dist(p, q)` | n `SUB` + n `MUL` + (n−1) `ADD` + `SQRT` *(decomposed)* | patch | — | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
+| `math.sumprod(p, q)` (3.12+) | *(uncounted)* | — | — | no |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
 
 - **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.

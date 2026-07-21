@@ -62,6 +62,7 @@ of data sources and methodology, and
     FlopType.GAMMA      [gamma(x)]      :       nan
     FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
     FlopType.LGAMMA     [lgamma(x)]     :       nan
+    FlopType.REMAINDER  [remainder(x,y)]:       nan
 }
 ```
 <!-- END generated: flop-weights-active -->
@@ -173,6 +174,7 @@ from counted_float.config import get_default_consensus_flop_weights
     FlopType.GAMMA      [gamma(x)]      :       nan
     FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
     FlopType.LGAMMA     [lgamma(x)]     :       nan
+    FlopType.REMAINDER  [remainder(x,y)]:       nan
 }
 ```
 <!-- END generated: flop-weights-consensus-raw -->
@@ -246,6 +248,7 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.GAMMA      [gamma(x)]      :       nan
     FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
     FlopType.LGAMMA     [lgamma(x)]     :       nan
+    FlopType.REMAINDER  [remainder(x,y)]:       nan
 }
 ```
 <!-- END generated: flop-weights-arm -->

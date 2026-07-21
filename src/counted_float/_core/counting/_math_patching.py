@@ -616,6 +616,9 @@ _UNCOUNTED_MATH: dict[str, str] = {
     "ulp": _BREAKS_CONTAGION,
     "isclose": "uncounted; performs real arithmetic",
 }
+# math.sumprod exists from Python 3.12; on older interpreters there is no call to report on
+if hasattr(math, "sumprod"):
+    _UNCOUNTED_MATH["sumprod"] = _BREAKS_CONTAGION
 
 # Delegation targets of the replacements below.  Captured when they are installed — a replacement
 # can only be executing at or after that capture — and, like the counting replacements' originals,
@@ -650,11 +653,40 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
     return replacement
 
 
+def _make_uncounted_sumprod_wrapper(name: str, consequence: str) -> Callable[..., object]:
+    """Build the report-and-delegate replacement for math.sumprod.
+
+    sumprod takes two *iterables*, so the CountedFloat scan must look at their elements rather
+    than at the arguments themselves. While the thread is reporting, both iterables are
+    materialized first (consuming a one-shot iterator twice would otherwise hand the original
+    empty sequences) and the delegation uses the materialized lists; outside reporting the call
+    passes through untouched.
+    """
+
+    def replacement(*args: object, **kwargs: object) -> object:
+        if not thread_is_reporting():
+            return _uncounted_originals[name](*args, **kwargs)
+        materialized = [
+            list(arg)  # ty: ignore[invalid-argument-type] -- sumprod's positional args are iterables
+            for arg in args
+        ]
+        if any(isinstance(value, CountedFloat) for seq in materialized for value in seq):
+            warn_uncounted_call(name, consequence)
+        return _uncounted_originals[name](*materialized, **kwargs)
+
+    return replacement
+
+
 # Kept out of _PATCHES deliberately: these are installed only while some thread is reporting (see
 # apply_uncounted_math_patches), so a run at the default verbosity leaves these functions exactly
 # as it found them rather than routing every call through a replacement that has nothing to say.
 _UNCOUNTED_PATCHES: dict[str, Callable[..., object]] = {
-    name: _make_uncounted_wrapper(name, consequence) for name, consequence in _UNCOUNTED_MATH.items()
+    name: (
+        _make_uncounted_sumprod_wrapper(name, consequence)
+        if name == "sumprod"
+        else _make_uncounted_wrapper(name, consequence)
+    )
+    for name, consequence in _UNCOUNTED_MATH.items()
 }
 
 
