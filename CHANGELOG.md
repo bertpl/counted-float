@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `show-data` group headers are now legible on every terminal theme; the docs' screenshots and data-derived content are now regenerated from live output and drift-tested
+- verbosity level `WARNING` now also reports uncounted `math.sumprod` calls (Python 3.12+), which were previously missed entirely
 
 ### Security
 

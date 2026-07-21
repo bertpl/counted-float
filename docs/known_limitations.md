@@ -25,8 +25,9 @@ counted region.
 ## Other limitations
 
 - a few Python built-in math operations remain uncounted — the special
-  functions (`gamma`, `lgamma`, `erf`, `erfc`) and the float-representation
-  helpers (`remainder`, `frexp`, `ldexp`, `modf`, `nextafter`, `ulp`); see the
+  functions (`gamma`, `lgamma`, `erf`, `erfc`), `remainder`, `sumprod`
+  (Python 3.12+), and the float-representation helpers (`frexp`, `ldexp`,
+  `modf`, `nextafter`, `ulp`); see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) for
   the full per-function status and the
   [FLOP types reference](flop_types.md) for per-operation counting rules. A

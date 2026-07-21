@@ -79,6 +79,7 @@ nav:
           - MINUS: kernel_asm/minus.md
           - MUL: kernel_asm/mul.md
           - POW: kernel_asm/pow.md
+          - REMAINDER: kernel_asm/remainder.md
           - RND: kernel_asm/rnd.md
           - SIN: kernel_asm/sin.md
           - SINH: kernel_asm/sinh.md

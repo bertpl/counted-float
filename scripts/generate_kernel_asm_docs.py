@@ -168,13 +168,15 @@ def compile_kernel(kernel_name: str) -> CompiledKernel:
 
 
 def _stabilize_symbols(line: str) -> str:
-    """Strip the per-process address suffix from numba's constant symbols.
+    """Strip the per-process address suffix from numba's generated symbols.
 
-    Kernels with an error path (e.g. the scaled hypot/dist kernels' zero-maximum guard) reference
-    constants numba names `_.const.<name>.<address>`; the address changes every process, which
-    would make the committed listings flap on every regen.
+    Two symbol families carry a per-process address that would make the committed listings flap
+    on every regen: the constants of kernels with an error path (`_.const.<name>.<address>`, e.g.
+    the scaled hypot/dist kernels' zero-maximum guard) and the dynamic globals holding a ctypes
+    function pointer (`_numba.dynamic.globals.<hex address>`, the remainder kernel).
     """
-    return re.sub(r"(_\.const\.\w+)\.\d+", r"\1.<addr>", line)
+    line = re.sub(r"(_\.const\.\w+)\.\d+", r"\1.<addr>", line)
+    return re.sub(r"(_numba\.dynamic\.globals)\.[0-9a-f]+", r"\1.<addr>", line)
 
 
 # ==================================================================================================
@@ -245,6 +247,7 @@ PAGES: list[KernelAsmPage] = [
     KernelAsmPage("log2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log2"),
     KernelAsmPage("log10", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log10"),
     KernelAsmPage("pow", kind=KIND_LIBM, base_kernel="f_pow", extended_kernel="f_pow_pow"),
+    KernelAsmPage("remainder", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_remainder"),
     KernelAsmPage("sin", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_sin"),
     KernelAsmPage("sinh", kind=KIND_LIBM, base_kernel="f_add_asinh", extended_kernel="f_add_asinh_sinh"),
     KernelAsmPage("tan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tan"),

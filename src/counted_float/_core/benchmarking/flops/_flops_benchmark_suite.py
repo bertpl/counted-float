@@ -152,6 +152,7 @@ class FlopsBenchmarkSuite:
             FlopType.LOG1P: q10s[FBT.ADD_LOG1P] - q10s[FBT.ADD],
             FlopType.EXPM1: q10s[FBT.ADD_LOG1P_EXPM1] - q10s[FBT.ADD_LOG1P],
             FlopType.FMOD: q10s[FBT.ADD_FMOD] - q10s[FBT.ADD],
+            FlopType.REMAINDER: q10s[FBT.ADD_REMAINDER] - q10s[FBT.ADD],
             FlopType.TANH: q10s[FBT.ADD_TANH] - q10s[FBT.ADD],
             FlopType.ASINH: q10s[FBT.ADD_ASINH] - q10s[FBT.ADD],
             FlopType.SINH: q10s[FBT.ADD_ASINH_SINH] - q10s[FBT.ADD_ASINH],
@@ -256,6 +257,11 @@ class FlopsBenchmarkSuite:
                     ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
                 ),
                 (FBT.ADD_FMOD, kernels.f_add_fmod, ArrayGenerator.log_range(min_value=1e-16, max_value=1e16)),
+                (
+                    FBT.ADD_REMAINDER,
+                    kernels.f_add_remainder,
+                    ArrayGenerator.log_range(min_value=1e-16, max_value=1e16),
+                ),
                 # tanh saturates to +/-1 via a cheap early-return for |arg| > ~20, so (unlike the
                 # periodic sin/cos/tan) keep inputs small to measure its real, exp-based cost
                 (FBT.ADD_TANH, kernels.f_add_tanh, ArrayGenerator.lin_range(min_value=-5.0, max_value=5.0)),

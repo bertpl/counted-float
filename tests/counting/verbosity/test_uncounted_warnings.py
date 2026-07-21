@@ -10,6 +10,8 @@ UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
 
 # what each of them needs after its first (counted) argument
 EXTRA_ARGUMENTS = {"remainder": (2.0,), "ldexp": (2,), "nextafter": (3.0,), "isclose": (2.5,)}
+# functions whose counted value hides inside an iterable argument rather than being one
+FULL_ARGUMENTS = {"sumprod": ([CountedFloat(2.5)], [2.0])}
 
 
 # ==================================================================================================
@@ -18,7 +20,7 @@ EXTRA_ARGUMENTS = {"remainder": (2.0,), "ldexp": (2,), "nextafter": (3.0,), "isc
 @pytest.mark.parametrize("function_name", UNCOUNTED_FUNCTION_NAMES)
 def test_every_uncounted_math_function_is_reported(logged_lines, function_name):
     # --- arrange -----------------------------------------
-    arguments = (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ()))
+    arguments = FULL_ARGUMENTS.get(function_name, (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ())))
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
@@ -40,6 +42,22 @@ def test_a_counted_value_in_a_keyword_argument_is_reported(logged_lines):
     assert line.split()[:2] == ["WARN", "isclose"], (
         "A CountedFloat tolerance is as unseen by the count as a positional operand."
     )
+
+
+@pytest.mark.skipif(not hasattr(math, "sumprod"), reason="math.sumprod exists from Python 3.12")
+def test_sumprod_with_one_shot_iterators_is_reported_and_computes_correctly(logged_lines):
+    # --- arrange -----------------------------------------
+    p = (CountedFloat(v) for v in (1.0, 2.0))  # generators: the wrapper must not consume them twice
+    q = (v for v in (3.0, 4.0))
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        result = math.sumprod(p, q)
+
+    # --- assert ------------------------------------------
+    (line,) = logged_lines()
+    assert line.split()[:2] == ["WARN", "sumprod"]
+    assert result == 11.0
 
 
 def test_a_call_without_counted_values_is_not_reported(logged_lines):

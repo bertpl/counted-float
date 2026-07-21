@@ -16,6 +16,7 @@ _PENDING_DATA = {
     FlopType.LGAMMA,
     FlopType.ERF,
     FlopType.ERFC,
+    FlopType.REMAINDER,
 }
 
 
