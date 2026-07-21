@@ -1,4 +1,4 @@
-# Benchmark kernel machine code
+# Benchmark machine code
 
 Every benchmarked flop weight is a measured latency *difference* between two compiled kernels: a
 kernel containing the operation of interest, minus a kernel identical except for that operation.
@@ -92,4 +92,5 @@ Each page closes with a short discussion walking through what the listings show:
   discussions call this out where it happens.
 
 The listings are regenerated from the compiled kernels and committed; the prose discussions are
-written against them.
+written against them. The rules governing *what* each kernel pair measures — real call, port,
+or fallback — are stated in [Cost-model principles](../cost_model.md).

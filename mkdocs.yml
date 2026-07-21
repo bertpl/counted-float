@@ -41,7 +41,8 @@ nav:
       - Built-in data: builtin_data.md
       - Methodology: analysis_methodology.md
       - CPU architecture scope: cpu_architectures_scope.md
-      - Benchmark kernel machine code:
+      - Cost-model principles: cost_model.md
+      - Benchmark machine code:
           - Overview: kernel_asm/index.md
           - ABS: kernel_asm/abs.md
           - ACOS: kernel_asm/acos.md
@@ -87,6 +88,7 @@ nav:
           - SUB: kernel_asm/sub.md
           - TAN: kernel_asm/tan.md
           - TANH: kernel_asm/tanh.md
+      - Glossary: glossary.md
   - Changelog: changelog.md
 
 plugins:

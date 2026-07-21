@@ -11,6 +11,9 @@ find:
 - Python operations that are counted for this flop type
 - Python operations that are *not* counted for this flop type
 
+The rules deciding *how* each type is priced (compiled-port lens, real-call lens, and the
+documented fallback) are stated in [Cost-model principles](cost_model.md).
+
 ## Coverage at a glance
 
 | Python operation | Counts as | Mechanism | Weight source | Stays `CountedFloat`? |

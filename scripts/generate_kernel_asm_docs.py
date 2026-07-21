@@ -191,19 +191,28 @@ class KernelAsmPage:
         kind: The overview page's grouping bucket the flop cost belongs to.
         base_kernel: The subtracted kernel (diff "before" side).
         extended_kernel: The kernel carrying the extra operation (diff "after" side).
+        rationale: Cost-model table note for grey-zone cases -- filled only where the pricing
+            choice needs defending beyond the kind's default rule.
+        range_sensitive: True where the benchmark's input range is load-bearing for the
+            weight's validity (a why-comment in the benchmark source marks these); the
+            cost-model table then lists rule 4 alongside the kind's default rule.
     """
 
     doc_name: str
     kind: str
     base_kernel: str
     extended_kernel: str
+    rationale: str = ""
+    range_sensitive: bool = False
 
 
-# The overview page's grouping buckets, in display order.
+# The overview page's grouping buckets, in display order, and the cost-model rule each one
+# defaults to (see docs/cost_model.md for the rules' statements).
 KIND_HARDWARE = "Hardware instructions"
 KIND_LIBM = "Library calls (libm)"
 KIND_ARITY = "Arity-scaled algorithms"
 KINDS: list[str] = [KIND_HARDWARE, KIND_LIBM, KIND_ARITY]
+RULE_BY_KIND: dict[str, str] = {KIND_HARDWARE: "1", KIND_LIBM: "2", KIND_ARITY: "2"}
 
 # One page per benchmarked flop cost; the kernel pairs mirror the subtractions in
 # FlopsBenchmarkSuite.run()'s estimated_flop_latencies. COMP's true subtrahend is the average of
@@ -212,7 +221,16 @@ PAGES: list[KernelAsmPage] = [
     # --- hardware instructions -------------------
     KernelAsmPage("abs", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_abs"),
     KernelAsmPage("add", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_add"),
-    KernelAsmPage("comp", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_lte_addsub"),
+    KernelAsmPage(
+        "comp",
+        kind=KIND_HARDWARE,
+        base_kernel="f_add",
+        extended_kernel="f_lte_addsub",
+        rationale=(
+            "the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices "
+            "compare-and-select machinery, matching what float comparisons cost in optimized code"
+        ),
+    ),
     KernelAsmPage("copysign", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_copysign"),
     KernelAsmPage("div", kind=KIND_HARDWARE, base_kernel="f_div", extended_kernel="f_div_div"),
     KernelAsmPage("fma", kind=KIND_HARDWARE, base_kernel="f_fma", extended_kernel="f_fma_fma"),
@@ -223,40 +241,108 @@ PAGES: list[KernelAsmPage] = [
     KernelAsmPage("sub", kind=KIND_HARDWARE, base_kernel="f_add", extended_kernel="f_add_sub"),
     # --- library calls ---------------------------
     KernelAsmPage("acos", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_acos"),
-    KernelAsmPage("acosh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_acosh"),
+    KernelAsmPage("acosh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_acosh", range_sensitive=True),
     KernelAsmPage("asin", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_asin"),
     KernelAsmPage("asinh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_asinh"),
     KernelAsmPage("atan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan"),
     KernelAsmPage("atan2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan2"),
     KernelAsmPage("atanh", kind=KIND_LIBM, base_kernel="f_add_halfsin", extended_kernel="f_add_halfsin_atanh"),
-    KernelAsmPage("cbrt", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cbrt"),
+    KernelAsmPage(
+        "cbrt",
+        kind=KIND_LIBM,
+        base_kernel="f_add",
+        extended_kernel="f_add_cbrt",
+        rationale=(
+            "a known deviation from rule 2.2: measured through numba's `np.cbrt`, whose NaN/sign handling "
+            "around the libm call is included in the weight (CPython's `math.cbrt` calls libm directly)"
+        ),
+    ),
     KernelAsmPage("cos", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cos"),
     KernelAsmPage("cosh", kind=KIND_LIBM, base_kernel="f_add_acosh", extended_kernel="f_add_acosh_cosh"),
-    KernelAsmPage("erf", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erf"),
-    KernelAsmPage("erfc", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erfc"),
+    KernelAsmPage("erf", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erf", range_sensitive=True),
+    KernelAsmPage("erfc", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erfc", range_sensitive=True),
     KernelAsmPage("exp", kind=KIND_LIBM, base_kernel="f_add_log", extended_kernel="f_add_log_exp"),
-    KernelAsmPage("exp2", kind=KIND_LIBM, base_kernel="f_add_log2", extended_kernel="f_add_log2_exp2"),
-    KernelAsmPage("exp10", kind=KIND_LIBM, base_kernel="f_add_log10", extended_kernel="f_add_log10_exp10"),
+    KernelAsmPage(
+        "exp2",
+        kind=KIND_LIBM,
+        base_kernel="f_add_log2",
+        extended_kernel="f_add_log2_exp2",
+        rationale=(
+            "`2 ** x` strength-reduces here because a standard-C port emits C99 `exp2`; the weight is measured on the "
+            "real `exp2` call"
+        ),
+    ),
+    KernelAsmPage(
+        "exp10",
+        kind=KIND_LIBM,
+        base_kernel="f_add_log10",
+        extended_kernel="f_add_log10_exp10",
+        rationale=(
+            "`10 ** x` cannot strength-reduce to an `exp10` call -- `exp10` is not standard C -- so a port emits "
+            "`pow(10, x)`, and that is exactly what the weight measures"
+        ),
+    ),
     KernelAsmPage("expm1", kind=KIND_LIBM, base_kernel="f_add_log1p", extended_kernel="f_add_log1p_expm1"),
-    KernelAsmPage("fmod", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_fmod"),
+    KernelAsmPage("fmod", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_fmod", range_sensitive=True),
     KernelAsmPage("gamma", kind=KIND_LIBM, base_kernel="f_add_gammabase", extended_kernel="f_add_gammabase_gamma"),
-    KernelAsmPage("hypot", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_hypot"),
+    KernelAsmPage(
+        "hypot",
+        kind=KIND_LIBM,
+        base_kernel="f_add",
+        extended_kernel="f_add_hypot",
+        rationale=(
+            "the 2-argument base weight is the real libm call; the hand-rolled scaled kernels only supply the per- "
+            "extra-coordinate slope, validated against this base (within ~10%)"
+        ),
+    ),
     KernelAsmPage("lgamma", kind=KIND_LIBM, base_kernel="f_add_gammabase", extended_kernel="f_add_gammabase_lgamma"),
     KernelAsmPage("log", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log"),
     KernelAsmPage("log1p", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log1p"),
     KernelAsmPage("log2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log2"),
     KernelAsmPage("log10", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_log10"),
     KernelAsmPage("pow", kind=KIND_LIBM, base_kernel="f_pow", extended_kernel="f_pow_pow"),
-    KernelAsmPage("remainder", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_remainder"),
+    KernelAsmPage(
+        "remainder",
+        kind=KIND_LIBM,
+        base_kernel="f_add",
+        extended_kernel="f_add_remainder",
+        rationale=(
+            "numba has no `math.remainder`, so the kernel calls libm through a ctypes binding -- still the bare call "
+            "CPython executes"
+        ),
+        range_sensitive=True,
+    ),
     KernelAsmPage("sin", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_sin"),
     KernelAsmPage("sinh", kind=KIND_LIBM, base_kernel="f_add_asinh", extended_kernel="f_add_asinh_sinh"),
     KernelAsmPage("tan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tan"),
-    KernelAsmPage("tanh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tanh"),
+    KernelAsmPage("tanh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tanh", range_sensitive=True),
     # --- arity-scaled algorithms -----------------
-    KernelAsmPage("dist", kind=KIND_ARITY, base_kernel="f_add", extended_kernel="f_add_dist2"),
-    KernelAsmPage("dist_xarg", kind=KIND_ARITY, base_kernel="f_add_dist2", extended_kernel="f_add_dist8"),
     KernelAsmPage(
-        "hypot_xarg", kind=KIND_ARITY, base_kernel="f_add_hypot_scaled2", extended_kernel="f_add_hypot_scaled8"
+        "dist",
+        kind=KIND_ARITY,
+        base_kernel="f_add",
+        extended_kernel="f_add_dist2",
+        rationale=(
+            "hand-rolled overflow-safe port (no libm `dist` exists); prices the scaled algorithm `math.dist` executes, "
+            "not a naive sum of squares"
+        ),
+    ),
+    KernelAsmPage(
+        "dist_xarg",
+        kind=KIND_ARITY,
+        base_kernel="f_add_dist2",
+        extended_kernel="f_add_dist8",
+        rationale="per-extra-coordinate slope of the same overflow-safe port as `DIST`",
+    ),
+    KernelAsmPage(
+        "hypot_xarg",
+        kind=KIND_ARITY,
+        base_kernel="f_add_hypot_scaled2",
+        extended_kernel="f_add_hypot_scaled8",
+        rationale=(
+            "hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); deterministic per-coordinate cost, "
+            "so rule 2 applies to the port"
+        ),
     ),
 ]
 
@@ -330,6 +416,32 @@ def render_page_list_block() -> str:
     return "\n".join(lines).rstrip()
 
 
+def render_cost_model_table() -> str:
+    """The per-FlopType pricing table on the cost-model page, derived from the page registry.
+
+    F2I and I2F close the table as static rows: they are the only FlopTypes without a benchmark
+    kernel (spec-sheet and third-party sources price them), so the registry cannot supply them.
+    """
+    rows = [
+        "| Flop type | Weight measured as | Rule | Notes |",
+        "|---|---|---|---|",
+    ]
+    for page in sorted(PAGES, key=lambda entry: entry.doc_name):
+        name_cell = f"[`{page.doc_name.upper()}`](kernel_asm/{page.doc_name}.md)"
+        measured_cell = f"`{page.extended_kernel}` − `{page.base_kernel}`"
+        rule_cell = RULE_BY_KIND[page.kind] + (", 4" if page.range_sensitive else "")
+        rows.append(f"| {name_cell} | {measured_cell} | {rule_cell} | {page.rationale} |")
+    rows.append(
+        "| `F2I` | *(no benchmark kernel — priced from spec sheets and third-party tables)* | 1 | "
+        "float→int conversion instruction of the port |"
+    )
+    rows.append(
+        "| `I2F` | *(no benchmark kernel — priced from spec sheets and third-party tables)* | 1 | "
+        "int→float conversion instruction of the port |"
+    )
+    return "\n".join(rows)
+
+
 def regenerate_pages() -> dict[Path, str]:
     """Regenerate every page's marked blocks; returns the intended full content per page file."""
     kernel_cache: dict[str, CompiledKernel] = {}
@@ -355,6 +467,10 @@ def regenerate_pages() -> dict[Path, str]:
     index_path = KERNEL_ASM_DOCS_DIR / "index.md"
     regenerated[index_path] = rewrite_marked_blocks(
         _read_lf(index_path), index_path, {"kernel-asm-page-list": render_page_list_block()}
+    )
+    cost_model_path = REPO_ROOT / "docs" / "cost_model.md"
+    regenerated[cost_model_path] = rewrite_marked_blocks(
+        _read_lf(cost_model_path), cost_model_path, {"cost-model-flop-type-table": render_cost_model_table()}
     )
     return regenerated
 
