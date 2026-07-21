@@ -160,8 +160,9 @@ amount of work -- see the discussion below.
 
 ## Discussion
 
-**The subtraction isolates one call to libm's `pow` with the base fixed at 10 — there is no
-`exp10` in libm, and `10 ** x` lowers to `pow(10.0, x)`.**
+**The subtraction isolates one call to libm's `pow` with the base fixed at 10 — `exp10` is
+not standard C (some libms carry it as an extension; macOS's does not), so `10 ** x` lowers
+to `pow(10.0, x)`.**
 
 1. *What the diff shows*: the additions are the `pow` call plus its argument setup — a register
    move and `fmov %d1, #10.0` materializing the constant base each iteration. Both setup

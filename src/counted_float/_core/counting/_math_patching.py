@@ -567,11 +567,12 @@ def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | Coun
 def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
     """Patch math.fsum: stdlib contract (Shewchuk exact summation), counted as (n-1) ADD.
 
-    Counts the mathematical reduction, knowingly under-counting fsum's compensation machinery
-    (a semantics-preserving compiled port would emit compensated summation at ~3-4 flops per
-    element). The compensation multiplier would be a speculative constant; a prototype that
-    wants compensation costed can write Kahan out in operators and have it counted exactly.
-    The value is computed by the original, so fsum's exactness is untouched.
+    Counts the mathematical reduction, knowingly under-counting fsum's compensation machinery:
+    the exact-summation partials grow and shrink with the data, so the real cost has no per-call
+    constant to price -- the input-dependent-cost fallback in the cost-model docs
+    (docs/cost_model.md). A prototype that wants compensation costed can write Kahan out in
+    operators and have it counted exactly. The value is computed by the original, so fsum's
+    exactness is untouched.
     """
     values = list(seq)
     result = original_math_fsum(values)
