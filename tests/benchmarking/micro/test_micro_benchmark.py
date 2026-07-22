@@ -117,7 +117,7 @@ def test_run_many_shrinks_n_executions_when_the_cost_jumps(fake_clock):
 
 
 def test_run_many_flat_runtime_respects_the_cap(fake_clock):
-    """A runtime that stays flat as n_executions grows (dead-code-eliminated kernel) drives
+    """A runtime that stays flat as n_executions grows (dead-code-eliminated probe) drives
     unbounded growth, which must stop at MAX_N_EXECUTIONS."""
 
     # --- arrange -----------------------------------------
@@ -138,7 +138,7 @@ def test_run_many_flat_runtime_respects_the_cap(fake_clock):
 
 
 def test_run_many_survives_runs_measuring_zero_elapsed_time(fake_clock):
-    """Every run measuring exactly 0 ns (dead-code-eliminated kernel on a coarse-resolution clock)
+    """Every run measuring exactly 0 ns (dead-code-eliminated probe on a coarse-resolution clock)
     must still produce a result and a report, not a ZeroDivisionError."""
     # --- arrange -----------------------------------------
     benchmark = ClockAdvancingBenchmark(fake_clock, nsecs_per_execution=0)

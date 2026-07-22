@@ -38,7 +38,7 @@ For most processors, two instruction latency figures can typically be obtained (
 - **(reciprocal) throughput**: time needed per instruction with maximal throughput for independent similar operations
 
 We focus on **execution latency**. Reciprocal throughput is only realized when many
-*independent* same-type operations are in flight; the iterative numerical kernels this package
+*independent* same-type operations are in flight; the iterative numerical algorithms this package
 targets (root finders, ODE steps, ...) are **dependent chains** — each step consumes the previous
 result (§1.2) — so the cost actually paid per operation is the full end-to-end latency, not the
 pipelined throughput. Code with enough independent parallelism to reach throughput would be

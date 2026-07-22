@@ -93,7 +93,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `abs(x)` and `math.fabs(x)` where `x` is a
   `CountedFloat` (both map to the same `FABS`/`ANDPD` instruction)
 - **Not counted:** `numpy.abs`, `numpy.fabs`, complex abs, abs on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `ABS` weight](kernel_asm/abs.md)
+- **Weight measurement:** [the machine code behind the `ABS` weight](machine_code/abs.md)
 
 ## FlopType.MINUS (`-x`) { #flop-minus }
 
@@ -102,7 +102,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `XORPD`
 - **Counted Python operations:** Unary minus (`-x`) for `CountedFloat`
 - **Not counted:** Negation on non-CountedFloat, numpy negation
-- **Weight measurement:** [the machine code behind the `MINUS` weight](kernel_asm/minus.md)
+- **Weight measurement:** [the machine code behind the `MINUS` weight](machine_code/minus.md)
 
 ## FlopType.COPYSIGN (`copysign(x,y)`) { #flop-copysign }
 
@@ -116,7 +116,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   architecture — which is why it is measured as its own benchmarked flop type rather than
   assumed equal to ABS. Its weight comes from benchmarks only (like the libm functions);
   vendor latency tables have no row for it.
-- **Weight measurement:** [the machine code behind the `COPYSIGN` weight](kernel_asm/copysign.md)
+- **Weight measurement:** [the machine code behind the `COPYSIGN` weight](machine_code/copysign.md)
 
 ## FlopType.COMP (`x<=y`, `x>y`, `x==y`, `x==0.0`, ...) { #flop-comp }
 
@@ -126,7 +126,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and
   `min(x,y)`, `max(x,y)` for `CountedFloat`
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons
-- **Weight measurement:** [the machine code behind the `COMP` weight](kernel_asm/comp.md)
+- **Weight measurement:** [the machine code behind the `COMP` weight](machine_code/comp.md)
 
 ## FlopType.RND (`round`) { #flop-rnd }
 
@@ -138,7 +138,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   with nonzero `n` (`MUL + RND + DIV`) and the floor of `x // y` / `x % y` /
   `divmod`
 - **Not counted:** `numpy.round`, rounding on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `RND` weight](kernel_asm/rnd.md)
+- **Weight measurement:** [the machine code behind the `RND` weight](machine_code/rnd.md)
 
 ## FlopType.F2I (`float->int`) { #flop-f2i }
 
@@ -169,7 +169,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `ADDSD`
 - **Counted Python operations:** `x + y` or `y + x` for `CountedFloat`
 - **Not counted:** Addition on non-CountedFloat, numpy addition
-- **Weight measurement:** [the machine code behind the `ADD` weight](kernel_asm/add.md)
+- **Weight measurement:** [the machine code behind the `ADD` weight](machine_code/add.md)
 
 ## FlopType.SUB (`x-y`) { #flop-sub }
 
@@ -178,7 +178,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `SUBSD`
 - **Counted Python operations:** `x - y` or `y - x` for `CountedFloat`
 - **Not counted:** Subtraction on non-CountedFloat, numpy subtraction
-- **Weight measurement:** [the machine code behind the `SUB` weight](kernel_asm/sub.md)
+- **Weight measurement:** [the machine code behind the `SUB` weight](machine_code/sub.md)
 
 ## FlopType.MUL (`x*y`) { #flop-mul }
 
@@ -187,7 +187,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `MULSD`
 - **Counted Python operations:** `x * y` or `y * x` for `CountedFloat`
 - **Not counted:** Multiplication on non-CountedFloat, numpy multiplication
-- **Weight measurement:** [the machine code behind the `MUL` weight](kernel_asm/mul.md)
+- **Weight measurement:** [the machine code behind the `MUL` weight](machine_code/mul.md)
 
 ## FlopType.DIV (`x/y`) { #flop-div }
 
@@ -200,7 +200,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   to `x / c`, so a compiled port applies the reciprocal fold. `x / 1.0` counts
   nothing at all (it folds away entirely, mirroring `x ** 1`)
 - **Not counted:** Division on non-CountedFloat, numpy division
-- **Weight measurement:** [the machine code behind the `DIV` weight](kernel_asm/div.md)
+- **Weight measurement:** [the machine code behind the `DIV` weight](machine_code/div.md)
 
 ## FlopType.FMA (`x*y+z`) { #flop-fma }
 
@@ -218,7 +218,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Not counted:** `math.fma` on plain floats only; `a*b + c` written with
   operators, which counts MUL + ADD because the interpreter cannot observe the
   fusion (see [Known limitations](known_limitations.md))
-- **Weight measurement:** [the machine code behind the `FMA` weight](kernel_asm/fma.md)
+- **Weight measurement:** [the machine code behind the `FMA` weight](machine_code/fma.md)
 
 ## FlopType.SQRT (`sqrt(x)`) { #flop-sqrt }
 
@@ -227,7 +227,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `SQRTSD`
 - **Counted Python operations:** `math.sqrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.sqrt`, sqrt on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `SQRT` weight](kernel_asm/sqrt.md)
+- **Weight measurement:** [the machine code behind the `SQRT` weight](machine_code/sqrt.md)
 
 ## FlopType.CBRT (`cbrt(x)`) { #flop-cbrt }
 
@@ -236,7 +236,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.cbrt(x)` for `CountedFloat`
 - **Not counted:** `numpy.cbrt`, cbrt on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `CBRT` weight](kernel_asm/cbrt.md)
+- **Weight measurement:** [the machine code behind the `CBRT` weight](machine_code/cbrt.md)
 
 ## FlopType.EXP (`e^x`) { #flop-exp }
 
@@ -246,7 +246,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.exp(x)` for `CountedFloat`
 - **Not counted:** `math.exp(x)` on non-CountedFloat, `numpy.exp`,
   `math.expm1`, `math.e ** x`
-- **Weight measurement:** [the machine code behind the `EXP` weight](kernel_asm/exp.md)
+- **Weight measurement:** [the machine code behind the `EXP` weight](machine_code/exp.md)
 
 ## FlopType.EXP2 (`2^x`) { #flop-exp2 }
 
@@ -256,7 +256,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `2 ** x`, `pow(2, x)` or `math.exp2(x)` for
   `CountedFloat`
 - **Not counted:** `exp2` on non-CountedFloat, `numpy.exp2`
-- **Weight measurement:** [the machine code behind the `EXP2` weight](kernel_asm/exp2.md)
+- **Weight measurement:** [the machine code behind the `EXP2` weight](machine_code/exp2.md)
 
 ## FlopType.EXP10 (`10^x`) { #flop-exp10 }
 
@@ -265,7 +265,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `10 ** x`, `pow(10, x)` for `CountedFloat`
 - **Not counted:** `10 ** x` on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `EXP10` weight](kernel_asm/exp10.md)
+- **Weight measurement:** [the machine code behind the `EXP10` weight](machine_code/exp10.md)
 
 ## FlopType.LOG (`log(x)`) { #flop-log }
 
@@ -277,7 +277,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   convention (constant base 2/10 -> LOG2/LOG10; other constant base ->
   LOG+MUL; CountedFloat base -> LOG per counted operand + DIV)
 - **Not counted:** `numpy.log`, log on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `LOG` weight](kernel_asm/log.md)
+- **Weight measurement:** [the machine code behind the `LOG` weight](machine_code/log.md)
 
 ## FlopType.LOG2 (`log2(x)`) { #flop-log2 }
 
@@ -287,7 +287,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.log2(x)` for `CountedFloat`;
   `math.log(x, 2)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log2`, log2 on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `LOG2` weight](kernel_asm/log2.md)
+- **Weight measurement:** [the machine code behind the `LOG2` weight](machine_code/log2.md)
 
 ## FlopType.LOG10 (`log10(x)`) { #flop-log10 }
 
@@ -297,7 +297,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.log10(x)` for `CountedFloat`;
   `math.log(x, 10)` (int base) for `CountedFloat`
 - **Not counted:** `numpy.log10`, log10 on non-CountedFloat
-- **Weight measurement:** [the machine code behind the `LOG10` weight](kernel_asm/log10.md)
+- **Weight measurement:** [the machine code behind the `LOG10` weight](machine_code/log10.md)
 
 ## FlopType.POW (`x^y`) { #flop-pow }
 
@@ -309,7 +309,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   counting-model page): `x**0.5` -> SQRT, `x**-1` -> DIV, integer exponents
   2 <= |n| <= 16 -> their multiply chain, base 2/10 -> EXP2/EXP10
 - **Not counted:** `pow` on non-CountedFloat, `numpy.pow`
-- **Weight measurement:** [the machine code behind the `POW` weight](kernel_asm/pow.md)
+- **Weight measurement:** [the machine code behind the `POW` weight](machine_code/pow.md)
 
 ## FlopType.SIN (`sin(x)`) { #flop-sin }
 
@@ -318,7 +318,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.sin(x)` for `CountedFloat`
 - **Not counted:** `sin` on non-CountedFloat, `numpy.sin`
-- **Weight measurement:** [the machine code behind the `SIN` weight](kernel_asm/sin.md)
+- **Weight measurement:** [the machine code behind the `SIN` weight](machine_code/sin.md)
 
 ## FlopType.COS (`cos(x)`) { #flop-cos }
 
@@ -327,7 +327,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.cos(x)` for `CountedFloat`
 - **Not counted:** `cos` on non-CountedFloat, `numpy.cos`
-- **Weight measurement:** [the machine code behind the `COS` weight](kernel_asm/cos.md)
+- **Weight measurement:** [the machine code behind the `COS` weight](machine_code/cos.md)
 
 ## FlopType.TAN (`tan(x)`) { #flop-tan }
 
@@ -336,7 +336,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.tan(x)` for `CountedFloat`
 - **Not counted:** `tan` on non-CountedFloat, `numpy.tan`
-- **Weight measurement:** [the machine code behind the `TAN` weight](kernel_asm/tan.md)
+- **Weight measurement:** [the machine code behind the `TAN` weight](machine_code/tan.md)
 
 ## FlopType.ASIN (`asin(x)`) { #flop-asin }
 
@@ -345,7 +345,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.asin(x)` for `CountedFloat`
 - **Not counted:** `asin` on non-CountedFloat, `numpy.arcsin`
-- **Weight measurement:** [the machine code behind the `ASIN` weight](kernel_asm/asin.md)
+- **Weight measurement:** [the machine code behind the `ASIN` weight](machine_code/asin.md)
 
 ## FlopType.ACOS (`acos(x)`) { #flop-acos }
 
@@ -354,7 +354,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.acos(x)` for `CountedFloat`
 - **Not counted:** `acos` on non-CountedFloat, `numpy.arccos`
-- **Weight measurement:** [the machine code behind the `ACOS` weight](kernel_asm/acos.md)
+- **Weight measurement:** [the machine code behind the `ACOS` weight](machine_code/acos.md)
 
 ## FlopType.ATAN (`atan(x)`) { #flop-atan }
 
@@ -363,7 +363,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.atan(x)` for `CountedFloat`
 - **Not counted:** `atan` on non-CountedFloat, `numpy.arctan`
-- **Weight measurement:** [the machine code behind the `ATAN` weight](kernel_asm/atan.md)
+- **Weight measurement:** [the machine code behind the `ATAN` weight](machine_code/atan.md)
 
 ## FlopType.ATAN2 (`atan2(y, x)`) { #flop-atan2 }
 
@@ -373,7 +373,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.atan2(y, x)` for `CountedFloat` —
   counted when *either* operand is a `CountedFloat`
 - **Not counted:** `atan2` on plain floats only, `numpy.arctan2`
-- **Weight measurement:** [the machine code behind the `ATAN2` weight](kernel_asm/atan2.md)
+- **Weight measurement:** [the machine code behind the `ATAN2` weight](machine_code/atan2.md)
 
 ## FlopType.HYPOT (`hypot(x, y)`) { #flop-hypot }
 
@@ -387,7 +387,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   accepts any number of coordinates, but an n-D call still counts a single
   `HYPOT` — under-counting vs. the n·MUL + (n−1)·ADD + SQRT a port would
   execute. Decompose manually if n-D `hypot` cost matters.
-- **Weight measurement:** [the machine code behind the `HYPOT` weight](kernel_asm/hypot.md)
+- **Weight measurement:** [the machine code behind the `HYPOT` weight](machine_code/hypot.md)
 
 ## FlopType.EXPM1 (`expm1(x)`) { #flop-expm1 }
 
@@ -396,7 +396,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.expm1(x)` for `CountedFloat`
 - **Not counted:** `expm1` on non-CountedFloat, `numpy.expm1`, `math.exp(x) - 1`
-- **Weight measurement:** [the machine code behind the `EXPM1` weight](kernel_asm/expm1.md)
+- **Weight measurement:** [the machine code behind the `EXPM1` weight](machine_code/expm1.md)
 
 ## FlopType.LOG1P (`log1p(x)`) { #flop-log1p }
 
@@ -405,7 +405,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.log1p(x)` for `CountedFloat`
 - **Not counted:** `log1p` on non-CountedFloat, `numpy.log1p`, `math.log(1 + x)`
-- **Weight measurement:** [the machine code behind the `LOG1P` weight](kernel_asm/log1p.md)
+- **Weight measurement:** [the machine code behind the `LOG1P` weight](machine_code/log1p.md)
 
 ## FlopType.FMOD (`fmod(x, y)`) { #flop-fmod }
 
@@ -416,7 +416,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   counted when *either* operand is a `CountedFloat` (the C-library truncated
   remainder; distinct from the `%` operator's floored remainder)
 - **Not counted:** `fmod` on plain floats only, `numpy.fmod`
-- **Weight measurement:** [the machine code behind the `FMOD` weight](kernel_asm/fmod.md)
+- **Weight measurement:** [the machine code behind the `FMOD` weight](machine_code/fmod.md)
 
 ## FlopType.SINH (`sinh(x)`) { #flop-sinh }
 
@@ -425,7 +425,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.sinh(x)` for `CountedFloat`
 - **Not counted:** `sinh` on non-CountedFloat, `numpy.sinh`
-- **Weight measurement:** [the machine code behind the `SINH` weight](kernel_asm/sinh.md)
+- **Weight measurement:** [the machine code behind the `SINH` weight](machine_code/sinh.md)
 
 ## FlopType.COSH (`cosh(x)`) { #flop-cosh }
 
@@ -434,7 +434,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.cosh(x)` for `CountedFloat`
 - **Not counted:** `cosh` on non-CountedFloat, `numpy.cosh`
-- **Weight measurement:** [the machine code behind the `COSH` weight](kernel_asm/cosh.md)
+- **Weight measurement:** [the machine code behind the `COSH` weight](machine_code/cosh.md)
 
 ## FlopType.TANH (`tanh(x)`) { #flop-tanh }
 
@@ -443,7 +443,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.tanh(x)` for `CountedFloat`
 - **Not counted:** `tanh` on non-CountedFloat, `numpy.tanh`
-- **Weight measurement:** [the machine code behind the `TANH` weight](kernel_asm/tanh.md)
+- **Weight measurement:** [the machine code behind the `TANH` weight](machine_code/tanh.md)
 
 ## FlopType.ASINH (`asinh(x)`) { #flop-asinh }
 
@@ -452,7 +452,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.asinh(x)` for `CountedFloat`
 - **Not counted:** `asinh` on non-CountedFloat, `numpy.arcsinh`
-- **Weight measurement:** [the machine code behind the `ASINH` weight](kernel_asm/asinh.md)
+- **Weight measurement:** [the machine code behind the `ASINH` weight](machine_code/asinh.md)
 
 ## FlopType.ACOSH (`acosh(x)`) { #flop-acosh }
 
@@ -461,7 +461,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.acosh(x)` for `CountedFloat`
 - **Not counted:** `acosh` on non-CountedFloat, `numpy.arccosh`
-- **Weight measurement:** [the machine code behind the `ACOSH` weight](kernel_asm/acosh.md)
+- **Weight measurement:** [the machine code behind the `ACOSH` weight](machine_code/acosh.md)
 
 ## FlopType.ATANH (`atanh(x)`) { #flop-atanh }
 
@@ -470,4 +470,4 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.atanh(x)` for `CountedFloat`
 - **Not counted:** `atanh` on non-CountedFloat, `numpy.arctanh`
-- **Weight measurement:** [the machine code behind the `ATANH` weight](kernel_asm/atanh.md)
+- **Weight measurement:** [the machine code behind the `ATANH` weight](machine_code/atanh.md)
