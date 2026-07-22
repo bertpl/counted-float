@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the CBRT weight now measures the bare libm call, no longer including numba-specific argument handling
 - `round(x, n)` with a nonzero digit count now counts MUL + RND + DIV (scale, round, unscale) instead of a single RND
 - dividing by a power-of-two constant now counts MUL instead of DIV, matching the exact reciprocal multiplication a compiler emits; dividing by 1.0 now counts nothing, as the division folds away entirely
-- the sin/cos/tan and asinh/acosh benchmarks now draw their inputs from general-case argument ranges, instead of extreme magnitudes that priced a costlier (trig) or cheaper (inverse-hyperbolic) special regime
+- the trig (sin/cos/tan/atan/atan2) and asinh/acosh benchmarks now draw their inputs from general-case argument ranges, instead of extreme magnitudes that priced a costlier or cheaper special regime
 
 ### Deprecated
 

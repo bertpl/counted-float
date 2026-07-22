@@ -250,11 +250,12 @@ class FlopsBenchmarkSuite:
                     probes.f_add_sin_acos,
                     ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0),
                 ),
-                # atan/atan2: cost steps up once |arg| clears ~1 (atan's reciprocal branch) and is
-                # then flat through +/-1e6 (no periodic reduction), so the registered range already
-                # prices the general case -- kept.  hypot: measured flat (+/-2 vs +/-1e6) -- kept
-                (FBT.ADD_ATAN, probes.f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_ATAN2, probes.f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                # atan/atan2: +/-100 keeps most magnitudes above 1 (atan's reciprocal branch,
+                # the general case) while avoiding the huge-argument regime, where glibc's atan
+                # gets ~10% *cheaper* (Apple libm is flat there; atan2 is flat on both) -- and it
+                # keeps the whole trig family on one range.
+                (FBT.ADD_ATAN, probes.f_add_atan, ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0)),
+                (FBT.ADD_ATAN2, probes.f_add_atan2, ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0)),
                 (FBT.ADD_HYPOT, probes.f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (
                     FBT.ADD_HYPOT_SCALED2,
