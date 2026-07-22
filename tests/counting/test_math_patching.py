@@ -412,7 +412,7 @@ def test_degrees_radians_count_one_mul(thread_counter, fname):
 
 
 @pytest.mark.parametrize("n_dims", [1, 2, 3, 5])
-def test_dist_counts_the_naive_euclidean_decomposition(thread_counter, n_dims):
+def test_dist_counts_the_arity_scaled_types(thread_counter, n_dims):
     # --- arrange -----------------------------------------
     p = [CountedFloat(float(i)) for i in range(n_dims)]
     q = [float(2 * i + 1) for i in range(n_dims)]
@@ -422,10 +422,9 @@ def test_dist_counts_the_naive_euclidean_decomposition(thread_counter, n_dims):
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert n_dims == thread_counter.SUB
-    assert n_dims == thread_counter.MUL
-    assert n_dims - 1 == thread_counter.ADD
-    assert thread_counter.SQRT == 1
+    assert thread_counter.DIST == 1
+    assert max(0, n_dims - 2) == thread_counter.DIST_XARG
+    assert thread_counter.total_count() == 1 + max(0, n_dims - 2)
 
 
 def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(thread_counter):
@@ -436,7 +435,7 @@ def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(thread_counte
 
     with pytest.raises(ValueError):  # noqa: PT011 -- stdlib wording ("both points must have the same dimension")
         math.dist([CountedFloat(1.0)], [1.0, 2.0])
-    assert thread_counter.SQRT == 1  # only the successful call above counted anything
+    assert thread_counter.DIST == 1  # only the successful call above counted anything
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 4])
@@ -513,8 +512,8 @@ def test_copysign_counts_its_own_flop_type(thread_counter):
     [
         (1, {"ABS": 1}),  # |x|: a port emits fabs
         (2, {"HYPOT": 1}),  # the libm hypot(x, y) call, as benchmarked
-        (3, {"MUL": 3, "ADD": 2, "SQRT": 1}),  # no n-ary hypot in C: a port writes the loop
-        (5, {"MUL": 5, "ADD": 4, "SQRT": 1}),
+        (3, {"HYPOT": 1, "HYPOT_XARG": 1}),  # base cost + measured per-extra-coordinate slope
+        (5, {"HYPOT": 1, "HYPOT_XARG": 3}),
     ],
 )
 def test_hypot_counts_per_arity(thread_counter, n_args, expected):

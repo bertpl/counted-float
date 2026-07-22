@@ -357,16 +357,12 @@ def math_atan2(y: float, x: float) -> float | CountedFloat:
 def math_hypot(*coordinates: float) -> float | CountedFloat:
     """Patch math.hypot: stdlib contract (n-ary since Python 3.8), counted per arity.
 
-    Each arity models the code a compiled port would emit — the same port-fidelity rule as
-    math_dist's naive decomposition:
-      - 2 coordinates  -> HYPOT: the libm hypot(x, y) call the source explicitly made (and what
-                          the HYPOT weight is benchmarked from)
-      - 3+ coordinates -> n MUL + (n-1) ADD + SQRT: C has no n-ary hypot, so a port writes the
-                          loop
+    Counted as the real overflow-safe algorithm the call executes, at every arity:
+      - 2+ coordinates -> HYPOT + (n-2) HYPOT_XARG: the benchmarked 2-argument base cost plus
+                          the measured per-extra-coordinate slope of the scaled algorithm
       - 1 coordinate   -> ABS: it computes |x|, and a port emits fabs
-    Accepted asymmetry, deliberate: 2-D dist counts SUB + naive norm while hypot(dx, dy) counts
-    a single HYPOT — different prices for the same mathematics, because they model different
-    emitted code.
+    A 2-argument call counts exactly one HYPOT, unchanged from when that was the only
+    benchmarked form.
     """
     if not any(isinstance(c, CountedFloat) for c in coordinates):
         return original_math_hypot(*coordinates)
@@ -378,12 +374,10 @@ def math_hypot(*coordinates: float) -> float | CountedFloat:
         cnt: CountsTarget = _create_thread_state()
     if n == 1:
         cnt.ABS += 1
-    elif n == 2:
-        cnt.HYPOT += 1
     else:
-        cnt.MUL += n
-        cnt.ADD += n - 1
-        cnt.SQRT += 1
+        cnt.HYPOT += 1
+        if n > 2:
+            cnt.HYPOT_XARG += n - 2
     return float.__new__(CountedFloat, result)
 
 
@@ -515,12 +509,13 @@ def math_radians(x: float) -> float | CountedFloat:
 
 
 def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
-    """Patch math.dist: stdlib contract, counted as the naive Euclidean loop a port would write.
+    """Patch math.dist: stdlib contract, counted as the overflow-safe algorithm it executes.
 
-    Counted as n SUB + n MUL + (n-1) ADD + SQRT for n-dimensional inputs — deliberately not
-    routed through HYPOT: a compiled port of n-dimensional distance is a loop plus sqrt, not a
-    hypot call. Iterator inputs are materialized up front (the stdlib accepts them too), so the
-    coordinates can be inspected after computing the result.
+    Counted as DIST + (n-2) DIST_XARG for n-dimensional inputs: the benchmarked 2-D base cost
+    (which carries the per-coordinate subtractions in its offset) plus the measured
+    per-extra-coordinate slope. 1-D inputs count the base cost alone. Iterator inputs are
+    materialized up front (the stdlib accepts them too), so the coordinates can be inspected
+    after computing the result.
     """
     p_seq = list(p)
     q_seq = list(q)
@@ -533,10 +528,9 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
         cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
         cnt: CountsTarget = _create_thread_state()
-    cnt.SUB += n
-    cnt.MUL += n
-    cnt.ADD += n - 1
-    cnt.SQRT += 1
+    cnt.DIST += 1
+    if n > 2:
+        cnt.DIST_XARG += n - 2
     return float.__new__(CountedFloat, result)
 
 
