@@ -5,20 +5,6 @@ import pytest
 from counted_float._core.counting.config._defaults import get_builtin_flop_weights, get_default_consensus_flop_weights
 from counted_float._core.models import FlopType, FlopWeights
 
-# these flop types are measured by the benchmark suite but have no weight in any shipped source
-# yet (their probes postdate the current dataset), so they are legitimately missing from the
-# default consensus until the dataset is re-collected
-_PENDING_DATA = {
-    FlopType.HYPOT_XARG,
-    FlopType.DIST,
-    FlopType.DIST_XARG,
-    FlopType.GAMMA,
-    FlopType.LGAMMA,
-    FlopType.ERF,
-    FlopType.ERFC,
-    FlopType.REMAINDER,
-}
-
 
 @pytest.mark.parametrize("rounding_mode", [None, "nearest_int", "10%"])
 def test_default_flop_weights(rounding_mode: None | str):
@@ -28,9 +14,8 @@ def test_default_flop_weights(rounding_mode: None | str):
     # --- assert ------------------------------------------
     assert isinstance(flop_weights, FlopWeights)
     assert all(isinstance(v, int | float) for v in flop_weights.weights.values())
-    established = [w for ft, w in flop_weights.weights.items() if ft not in _PENDING_DATA]
-    assert not any(math.isnan(w) for w in established)
-    assert all(math.isnan(flop_weights.weights[ft]) for ft in _PENDING_DATA), "expected pending types missing"
+    # the re-collected dataset ships a real weight for every measured flop type
+    assert not any(math.isnan(w) for w in flop_weights.weights.values())
 
 
 @pytest.mark.parametrize("rounding_mode", ["nearest_int", "10%"])

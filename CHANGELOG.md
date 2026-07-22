@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `round(x, n)` with a nonzero digit count now counts MUL + RND + DIV (scale, round, unscale) instead of a single RND
 - dividing by a power-of-two constant now counts MUL instead of DIV, matching the exact reciprocal multiplication a compiler emits; dividing by 1.0 now counts nothing, as the division folds away entirely
 - the trig (sin/cos/tan/atan/atan2) and asinh/acosh benchmarks now draw their inputs from general-case argument ranges, instead of extreme magnitudes that priced a costlier or cheaper special regime
+- re-collected the built-in flop-weight dataset across all automatically reachable CPUs (12 EC2 instance types and 5 CI runners), shipping real weights for every measured flop type — including the new hypot/dist arity, special-function and remainder types
 
 ### Deprecated
 
