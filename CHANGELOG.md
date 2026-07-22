@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `math.sumprod` on counted values now computes the same extended-precision result as on plain floats, and no longer silently miscounts it as a naive multiply-add chain
 - `show-data` group headers are now legible on every terminal theme; the docs' screenshots and data-derived content are now regenerated from live output and drift-tested
 - verbosity level `WARNING` now also reports uncounted `math.sumprod` calls (Python 3.12+), which were previously missed entirely
 

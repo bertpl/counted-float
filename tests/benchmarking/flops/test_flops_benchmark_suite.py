@@ -29,7 +29,7 @@ def test_flops_benchmarking_suite_run():
 
     # --- act ---------------------------------------------
     result = suite.run(
-        array_size=10,
+        array_size=16,
         t_slice_target_ms=0.1,
         n_rounds_measure=5,
         n_rounds_warmup=1,
@@ -40,9 +40,18 @@ def test_flops_benchmarking_suite_run():
     assert isinstance(result, FlopsBenchmarkResults)
 
 
+def test_flops_benchmarking_suite_rejects_too_small_arrays():
+    # --- arrange -----------------------------------------
+    suite = FlopsBenchmarkSuite()
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="array_size"):
+        suite.get_flops_benchmarking_suite(size=FlopsBenchmarkSuite.MIN_ARRAY_SIZE - 1)
+
+
 @pytest.mark.skipif(not is_numba_installed(), reason="arity-slope values need real numba timings, not the shim")
 def test_suite_measures_the_arity_flop_types():
-    """The hypot/dist arity probes feed HYPOT_XARG / DIST / DIST_XARG with sane, ordered latencies."""
+    """The arity probe pairs feed the base + per-extra-element flop types with sane, ordered latencies."""
     # --- arrange -----------------------------------------
     suite = FlopsBenchmarkSuite()
 
@@ -51,12 +60,14 @@ def test_suite_measures_the_arity_flop_types():
     efl = result.estimated_flop_latencies
 
     # --- assert ------------------------------------------
-    for flop_type in (FlopType.HYPOT_XARG, FlopType.DIST, FlopType.DIST_XARG):
+    for flop_type in (FlopType.HYPOT_XARG, FlopType.DIST, FlopType.DIST_XARG, FlopType.SUMPROD, FlopType.SUMPROD_XELEM):
         assert math.isfinite(efl[flop_type]), flop_type
         assert efl[flop_type] > 0, flop_type
     # an extra coordinate is far cheaper than a whole 2-arg call (its squares overlap the sqrt path)
     assert efl[FlopType.HYPOT_XARG] < efl[FlopType.HYPOT]
     assert efl[FlopType.DIST_XARG] < efl[FlopType.DIST]
+    # an extra element is at most the 2-element base (which carries the close-out on top)
+    assert efl[FlopType.SUMPROD_XELEM] < efl[FlopType.SUMPROD]
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
@@ -101,6 +112,36 @@ def test_cbrt_probe_matches_math_cbrt():
     tmp = math.e
     for i in range(n):
         tmp = math.cbrt(tmp + in_f[i])
+        assert out_f[i] == tmp
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.skipif(not hasattr(math, "sumprod"), reason="the reference value needs math.sumprod (Python 3.12+)")
+@pytest.mark.parametrize("arity", [2, 8])
+def test_sumprod_probes_match_math_sumprod(arity: int):
+    """The ported TripleLength accumulation must compute exactly what math.sumprod computes.
+
+    Bit-exact equality is what pins the port as faithful: any deviation -- a dropped error term,
+    a reassociated sum, a non-fused multiply-add -- shows up as a differing last bit on inputs
+    like these. The reference feeds plain floats (math.sumprod's compensated path is gated on
+    exact floats, so numpy scalars would reroute it to the naive object path).
+    """
+    # --- arrange -----------------------------------------
+    n = 50
+    rng = np.random.default_rng(3)
+    in_f = rng.uniform(-1.0, 1.0, n)
+    out_f, out_i = np.zeros(n), np.zeros(n, dtype=int)
+    probe = {2: probes.f_add_sumprod2, 8: probes.f_add_sumprod8}[arity]
+
+    # --- act ---------------------------------------------
+    probe(1, n, in_f, out_f, out_i)
+
+    # --- assert ------------------------------------------
+    tmp = math.e
+    for i in range(n):
+        p = [tmp + float(in_f[i])] + [float(in_f[i - k]) for k in range(2, 2 * arity, 2)]
+        q = [float(in_f[i - k]) for k in range(1, 2 * arity, 2)]
+        tmp = math.sumprod(p, q)
         assert out_f[i] == tmp
 
 
@@ -162,6 +203,26 @@ def test_fma_probes_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmar
     # --- assert ------------------------------------------
     assert _FUSED.search(asm), "multiply-add did not fuse: this probe measures MUL + ADD, not FMA"
     assert not _UNFUSED_MUL_ADD.search(asm), "an unfused multiply or add survived in an FMA probe"
+
+
+@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.parametrize("benchmark_type", [FlopsBenchmarkType.ADD_SUMPROD2, FlopsBenchmarkType.ADD_SUMPROD8])
+def test_sumprod_probes_emit_fused_error_terms(benchmark_type: FlopsBenchmarkType):
+    """The sumprod probes' per-element error term must compile to a fused multiply-add.
+
+    The term is emitted through the llvm.fma intrinsic rather than fastmath contraction (LLVM
+    CSEs the error term's multiply with the product's and never contracts it), so this pins that
+    the intrinsic really lowers to a fused instruction. Unfused multiplies and adds legitimately
+    remain: the compensated sums are real adds by construction.
+    """
+    # --- arrange -----------------------------------------
+    benchmark = FlopsBenchmarkSuite.get_flops_benchmarking_suite(size=100)[benchmark_type]
+
+    # --- act ---------------------------------------------
+    asm = _probe_assembly(benchmark)
+
+    # --- assert ------------------------------------------
+    assert _FUSED.search(asm), "the error term did not fuse: the probe is not the TripleLength algorithm"
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")

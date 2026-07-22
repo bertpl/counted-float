@@ -124,6 +124,8 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`SINH`](machine_code/sinh.md) | `f_add_asinh_sinh` − `f_add_asinh` | 2, 4 |  |
 | [`SQRT`](machine_code/sqrt.md) | `f_add_sqrt` − `f_add` | 1 |  |
 | [`SUB`](machine_code/sub.md) | `f_add_sub` − `f_add` | 1 |  |
+| [`SUMPROD`](machine_code/sumprod.md) | `f_add_sumprod2` − `f_add` | 2 | faithful port of CPython's extended-precision (TripleLength) accumulation, error terms emitted through the llvm.fma intrinsic; the 2-element base includes the close-out |
+| [`SUMPROD_XELEM`](machine_code/sumprod_xelem.md) | `f_add_sumprod8` − `f_add_sumprod2` | 2 | per-extra-element slope of the same TripleLength port as `SUMPROD` |
 | [`TAN`](machine_code/tan.md) | `f_add_tan` − `f_add` | 2, 4 |  |
 | [`TANH`](machine_code/tanh.md) | `f_add_tanh` − `f_add` | 2, 4 |  |
 | `F2I` | *(no benchmark probe — priced from spec sheets and third-party tables)* | 1 | float→int conversion instruction of the port |

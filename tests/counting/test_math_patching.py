@@ -536,6 +536,54 @@ def test_hypot_counts_per_arity(thread_counter, n_args, expected):
 
 
 # =================================================================================================
+#  Patched math functions - sumprod (unboxed delegation, deliberately uncounted)
+# =================================================================================================
+needs_sumprod = pytest.mark.skipif(not hasattr(math, "sumprod"), reason="math.sumprod exists from Python 3.12")
+
+
+@needs_sumprod
+@pytest.mark.parametrize("counted_side", ["p", "q"])
+def test_sumprod_computes_the_extended_precision_result_for_counted_inputs(thread_counter, counted_side):
+    # --- arrange -----------------------------------------
+    # a cancellation case only the compensated exact-float path gets right: naive accumulation
+    # absorbs the 1.0 into 1e100 and returns 0.0 -- which is exactly what an unboxing failure
+    # (rerouting to the generic object path) would produce here
+    values = [1e100, 1.0, -1e100]
+    ones = [1.0, 1.0, 1.0]
+    p = [CountedFloat(v) for v in values] if counted_side == "p" else values
+    q = [CountedFloat(v) for v in ones] if counted_side == "q" else ones
+
+    # --- act ---------------------------------------------
+    result = math.sumprod(p, q)
+
+    # --- assert ------------------------------------------
+    assert result == 1.0
+    assert type(result) is float, "the result deliberately breaks contagion"
+    assert thread_counter.total_count() == 0, "sumprod is reported at WARNING verbosity, never counted"
+
+
+@needs_sumprod
+def test_sumprod_accepts_one_shot_iterators(thread_counter):
+    # --- act ---------------------------------------------
+    result = math.sumprod((CountedFloat(v) for v in (1.0, 2.0)), (v for v in (3.0, 4.0)))
+
+    # --- assert ------------------------------------------
+    assert result == 11.0
+    assert thread_counter.total_count() == 0
+
+
+@needs_sumprod
+def test_sumprod_without_counted_values_keeps_stdlib_behavior(thread_counter):
+    # --- act ---------------------------------------------
+    result = math.sumprod([2, 3], [4, 5])
+
+    # --- assert ------------------------------------------
+    assert result == 23
+    assert isinstance(result, int)  # int-exactness of the original is preserved
+    assert thread_counter.total_count() == 0
+
+
+# =================================================================================================
 #  Playing nice with third-party math patches
 # =================================================================================================
 def test_third_party_math_patches_are_delegated_through_and_restored():

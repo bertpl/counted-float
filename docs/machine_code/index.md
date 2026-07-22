@@ -71,6 +71,8 @@ Each page closes with a short discussion walking through what the listings show:
 - [DIST](dist.md)
 - [DIST_XARG](dist_xarg.md)
 - [HYPOT_XARG](hypot_xarg.md)
+- [SUMPROD](sumprod.md)
+- [SUMPROD_XELEM](sumprod_xelem.md)
 <!-- END generated: machine-code-page-list -->
 
 ## How to read the listings

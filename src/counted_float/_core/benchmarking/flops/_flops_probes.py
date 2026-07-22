@@ -12,6 +12,7 @@ import numpy as np
 from counted_float._core.compatibility import numba
 
 from ._libm_bindings import libm_cbrt, libm_remainder
+from ._sumprod_port import tl_fma, tl_to_d
 
 # the two probes that measure through a ctypes binding rather than a numba-compiled call --
 # see _libm_bindings for the mechanism and the admission criterion
@@ -353,6 +354,43 @@ def f_add_dist8(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, 
             t = c7 * inv
             s += t * t
             tmp = m * math.sqrt(s)
+            out_f[i] = tmp
+
+
+# The sumprod probes below are a faithful port of CPython's extended-precision math.sumprod
+# accumulation -- see _sumprod_port for the algorithm, the inlined helpers, and the fma
+# mechanism.  The dependency runs through the first element's product; the accumulator starts
+# from a runtime zero (in_f[i] * 0.0) rather than literal 0.0, so LLVM cannot constant-fold the
+# first element's compensated arithmetic the way CPython's runtime zeros never would.
+# Differencing the arity-2 and arity-8 forms yields the per-extra-element slope; offsets reach
+# i - 15, valid for any n >= 16 (far below the suite's ~1000).
+@numba.njit(parallel=False)
+def f_add_sumprod2(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            zero = in_f[i] * 0.0
+            hi, lo, tiny = tl_fma(tmp + in_f[i], in_f[i - 1], zero, zero, zero)
+            hi, lo, tiny = tl_fma(in_f[i - 2], in_f[i - 3], hi, lo, tiny)
+            tmp = tl_to_d(hi, lo, tiny)
+            out_f[i] = tmp
+
+
+@numba.njit(parallel=False)
+def f_add_sumprod8(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    for _ in range(n_executions):
+        tmp = math.e
+        for i in range(n):
+            zero = in_f[i] * 0.0
+            hi, lo, tiny = tl_fma(tmp + in_f[i], in_f[i - 1], zero, zero, zero)
+            hi, lo, tiny = tl_fma(in_f[i - 2], in_f[i - 3], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 4], in_f[i - 5], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 6], in_f[i - 7], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 8], in_f[i - 9], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 10], in_f[i - 11], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 12], in_f[i - 13], hi, lo, tiny)
+            hi, lo, tiny = tl_fma(in_f[i - 14], in_f[i - 15], hi, lo, tiny)
+            tmp = tl_to_d(hi, lo, tiny)
             out_f[i] = tmp
 
 

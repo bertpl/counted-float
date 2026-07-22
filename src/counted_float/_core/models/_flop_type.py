@@ -65,6 +65,8 @@ class FlopType(StrEnum):
     ATANH = "ATANH"
     DIST = "DIST"
     DIST_XARG = "DIST_XARG"
+    SUMPROD = "SUMPROD"
+    SUMPROD_XELEM = "SUMPROD_XELEM"
     GAMMA = "GAMMA"
     LGAMMA = "LGAMMA"
     ERF = "ERF"
@@ -76,8 +78,12 @@ class FlopType(StrEnum):
         return _LABELS[self]
 
     def long_name(self) -> str:
-        """Return a display string combining the stable name and the human-readable label."""
-        return f"FlopType.{self.name:<9}  [{self.label}]"
+        """Return a display string combining the stable name and the human-readable label.
+
+        The name column is padded to the longest member name, so long_name() rows align when
+        printed beneath each other regardless of which members appear.
+        """
+        return f"FlopType.{self.name:<{_NAME_PAD}}  [{self.label}]"
 
     @classmethod
     def from_serialized_key(cls, key: str) -> FlopType:
@@ -92,6 +98,10 @@ class FlopType(StrEnum):
             return cls[key]
         except KeyError:
             raise ValueError(f"unrecognized flop-type key {key!r}: not a FlopType name") from None
+
+
+# the name-column width of long_name(), derived so no member can overflow it
+_NAME_PAD = max(len(member.name) for member in FlopType)
 
 
 # =================================================================================================
@@ -142,6 +152,8 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ATANH: "atanh(x)",
     FlopType.DIST: "dist(p,q)",
     FlopType.DIST_XARG: "dist(+arg)",
+    FlopType.SUMPROD: "sumprod(p,q)",
+    FlopType.SUMPROD_XELEM: "sumprod(+elem)",
     FlopType.GAMMA: "gamma(x)",
     FlopType.LGAMMA: "lgamma(x)",
     FlopType.ERF: "erf(x)",

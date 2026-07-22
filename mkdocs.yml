@@ -86,6 +86,8 @@ nav:
           - SINH: machine_code/sinh.md
           - SQRT: machine_code/sqrt.md
           - SUB: machine_code/sub.md
+          - SUMPROD: machine_code/sumprod.md
+          - SUMPROD_XELEM: machine_code/sumprod_xelem.md
           - TAN: machine_code/tan.md
           - TANH: machine_code/tanh.md
       - Glossary: glossary.md

@@ -149,6 +149,10 @@ class FlopsBenchmarkSuite:
             # dist carries its own 2-D offset (it counts a subtraction per coordinate that hypot does not)
             FlopType.DIST: q10s[FBT.ADD_DIST2] - q10s[FBT.ADD],
             FlopType.DIST_XARG: (q10s[FBT.ADD_DIST8] - q10s[FBT.ADD_DIST2]) / 6,
+            # sumprod mirrors the arity scheme: the 2-element base includes the close-out, and the
+            # arity-8 minus arity-2 gap over the 6 extra elements isolates the per-element slope
+            FlopType.SUMPROD: q10s[FBT.ADD_SUMPROD2] - q10s[FBT.ADD],
+            FlopType.SUMPROD_XELEM: (q10s[FBT.ADD_SUMPROD8] - q10s[FBT.ADD_SUMPROD2]) / 6,
             FlopType.LOG1P: q10s[FBT.ADD_LOG1P] - q10s[FBT.ADD],
             FlopType.EXPM1: q10s[FBT.ADD_LOG1P_EXPM1] - q10s[FBT.ADD_LOG1P],
             FlopType.FMOD: q10s[FBT.ADD_FMOD] - q10s[FBT.ADD],
@@ -199,9 +203,24 @@ class FlopsBenchmarkSuite:
         floor = cls.MIN_LATENCY_ADD_FRACTION * max(latencies[FlopType.ADD], sys.float_info.min)
         return {flop_type: max(latency, floor) for flop_type, latency in latencies.items()}
 
+    # The arity probes read a window of elements behind the current index via negative offsets
+    # (the widest, the arity-8 sumprod form, reaches 15 back), so arrays below this size would
+    # index out of bounds -- an IndexError in pure Python, a silent out-of-bounds read under
+    # numba's default unchecked indexing.
+    MIN_ARRAY_SIZE = 16
+
     @staticmethod
     def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:
-        """Returns a benchmark for each FlopsBenchmarkType, of requested array size."""
+        """Returns a benchmark for each FlopsBenchmarkType, of requested array size.
+
+        Raises:
+            ValueError: If `size` is below MIN_ARRAY_SIZE (the arity probes' look-behind window).
+        """
+        if size < FlopsBenchmarkSuite.MIN_ARRAY_SIZE:
+            raise ValueError(
+                f"array_size must be >= {FlopsBenchmarkSuite.MIN_ARRAY_SIZE}: the arity probes read up to "
+                f"{FlopsBenchmarkSuite.MIN_ARRAY_SIZE - 1} elements behind the current index"
+            )
         # --- assemble the registry -----------------------
         return {
             key: FlopsMicroBenchmark(name=str(key), size=size, f=f, array_init=array_init)
@@ -269,6 +288,11 @@ class FlopsBenchmarkSuite:
                 ),
                 (FBT.ADD_DIST2, probes.f_add_dist2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_DIST8, probes.f_add_dist8, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                # sumprod: compensated mul/add/fma arithmetic has no input-dependent regimes, so the
+                # range is not load-bearing; +/-1 keeps the fed-back chain bounded (it grows by at
+                # most the number of elements per iteration)
+                (FBT.ADD_SUMPROD2, probes.f_add_sumprod2, ArrayGenerator.lin_range(min_value=-1.0, max_value=1.0)),
+                (FBT.ADD_SUMPROD8, probes.f_add_sumprod8, ArrayGenerator.lin_range(min_value=-1.0, max_value=1.0)),
                 (FBT.ADD_LOG1P, probes.f_add_log1p, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (
                     FBT.ADD_LOG1P_EXPM1,
