@@ -154,9 +154,10 @@ estimates rather than expected latencies. The current model prices a
 decomposed operation identically to its hand-written expansion and does not
 model the overlap; how much of that internal parallelism a weight *should*
 capture is a modeling choice, not a law of the counting model.
-(`math.dist` and n-ary `math.hypot` are the counterexamples: their
-arity-scaled weights are measured on the real algorithm, internal overlap
-included.) Counts themselves are unaffected; this nuance
+(`math.dist`, n-ary `math.hypot` and `math.sumprod` are the counterexamples:
+their arity-scaled weights are measured on the real algorithm, internal
+overlap included — most starkly `sumprod`, whose ~24-instruction compensated
+per-element sequence prices at a few ADDs because its lanes overlap.) Counts themselves are unaffected; this nuance
 applies only to the weighted totals.
 
 Weights are also **normalized**: every cost is expressed relative to the ADD

@@ -536,7 +536,7 @@ def test_hypot_counts_per_arity(thread_counter, n_args, expected):
 
 
 # =================================================================================================
-#  Patched math functions - sumprod (unboxed delegation, deliberately uncounted)
+#  Patched math functions - sumprod (unboxed delegation, arity-scaled counting)
 # =================================================================================================
 needs_sumprod = pytest.mark.skipif(not hasattr(math, "sumprod"), reason="math.sumprod exists from Python 3.12")
 
@@ -557,19 +557,37 @@ def test_sumprod_computes_the_extended_precision_result_for_counted_inputs(threa
     result = math.sumprod(p, q)
 
     # --- assert ------------------------------------------
-    assert result == 1.0
-    assert type(result) is float, "the result deliberately breaks contagion"
-    assert thread_counter.total_count() == 0, "sumprod is reported at WARNING verbosity, never counted"
+    assert float(result) == 1.0
+    assert isinstance(result, CountedFloat)
 
 
 @needs_sumprod
-def test_sumprod_accepts_one_shot_iterators(thread_counter):
+@pytest.mark.parametrize(("n_elements", "expected_xelem"), [(1, 0), (2, 0), (3, 1), (8, 6)])
+def test_sumprod_counts_the_arity_scaled_types(thread_counter, n_elements, expected_xelem):
+    # --- arrange -----------------------------------------
+    p = [CountedFloat(float(i + 1)) for i in range(n_elements)]
+    q = [float(2 * i + 1) for i in range(n_elements)]
+
     # --- act ---------------------------------------------
-    result = math.sumprod((CountedFloat(v) for v in (1.0, 2.0)), (v for v in (3.0, 4.0)))
+    result = math.sumprod(p, q)
 
     # --- assert ------------------------------------------
-    assert result == 11.0
-    assert thread_counter.total_count() == 0
+    assert isinstance(result, CountedFloat)
+    assert thread_counter.SUMPROD == 1
+    assert expected_xelem == thread_counter.SUMPROD_XELEM
+    assert thread_counter.total_count() == 1 + expected_xelem
+
+
+@needs_sumprod
+def test_sumprod_accepts_one_shot_iterators_and_mismatched_lengths_raise(thread_counter):
+    # --- act / assert ------------------------------------
+    result = math.sumprod((CountedFloat(v) for v in (1.0, 2.0)), (v for v in (3.0, 4.0)))
+    assert float(result) == 11.0
+    assert isinstance(result, CountedFloat)
+
+    with pytest.raises(ValueError):  # noqa: PT011 -- stdlib wording ("inputs are not the same length")
+        math.sumprod([CountedFloat(1.0)], [1.0, 2.0])
+    assert thread_counter.SUMPROD == 1  # only the successful call above counted anything
 
 
 @needs_sumprod

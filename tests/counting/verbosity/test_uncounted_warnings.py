@@ -43,19 +43,17 @@ def test_a_counted_value_in_a_keyword_argument_is_reported(logged_lines):
 
 
 @pytest.mark.skipif(not hasattr(math, "sumprod"), reason="math.sumprod exists from Python 3.12")
-def test_sumprod_with_one_shot_iterators_is_reported_and_computes_correctly(logged_lines):
-    # --- arrange -----------------------------------------
-    p = (CountedFloat(v) for v in (1.0, 2.0))  # generators: the wrapper must not consume them twice
-    q = (v for v in (3.0, 4.0))
-
+def test_sumprod_is_counted_not_reported(logged_lines):
+    # sumprod graduated from the uncounted list: at WARNING verbosity (which stays silent about
+    # counted flops) a counted sumprod call must produce no report at all
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING):
-        result = math.sumprod(p, q)
+    with FlopCountingContext(verbosity=Verbosity.WARNING) as ctx:
+        result = math.sumprod((CountedFloat(v) for v in (1.0, 2.0)), (v for v in (3.0, 4.0)))
 
     # --- assert ------------------------------------------
-    (line,) = logged_lines()
-    assert line.split()[:2] == ["WARN", "sumprod"]
-    assert result == 11.0
+    assert logged_lines() == []
+    assert float(result) == 11.0
+    assert ctx.flop_counts().SUMPROD == 1
 
 
 def test_a_call_without_counted_values_is_not_reported(logged_lines):

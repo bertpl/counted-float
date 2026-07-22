@@ -52,7 +52,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` | patch | benchmarked | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
-| `math.sumprod(p, q)` (3.12+) | *(uncounted; delegated on plain floats so the extended-precision algorithm runs)* | patch | — | no |
+| `math.sumprod(p, q)` (3.12+) | `SUMPROD` + (n−2) `SUMPROD_XELEM` | patch | benchmarked | yes |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
 
 - **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.
@@ -426,6 +426,37 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   `math.dist` call: an n-dimensional call counts `DIST` + (n−2) `DIST_XARG`
 - **Not counted:** 1- and 2-dimensional calls (they cost the base `DIST` alone)
 - **Weight measurement:** [the machine code behind the `DIST_XARG` weight](machine_code/dist_xarg.md)
+
+## FlopType.SUMPROD (`sumprod(p,q)`) { #flop-sumprod }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.sumprod(p, q)` (Python 3.12+) for
+  `CountedFloat` — counted once per call when *any* element is a
+  `CountedFloat`; elements beyond the second each add a
+  [`SUMPROD_XELEM`](#flop-sumprod-xelem)
+- **Not counted:** `sumprod` on plain floats only, `numpy.dot` and friends
+- **Note:** the 2-element base price (close-out included) of the
+  extended-precision (TripleLength) accumulation `math.sumprod` executes;
+  counted inputs are unboxed to plain floats before delegating, so the
+  exact-float production algorithm runs — a `CountedFloat` element would
+  otherwise silently reroute the call to a naive object path
+- **Weight measurement:** [the machine code behind the `SUMPROD` weight](machine_code/sumprod.md)
+
+## FlopType.SUMPROD_XELEM (`sumprod(p,q)`, 3+ elements) { #flop-sumprod-xelem }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** one per element beyond the second of a
+  `math.sumprod` call: an n-element call counts `SUMPROD` + (n−2)
+  `SUMPROD_XELEM`
+- **Not counted:** 1- and 2-element calls (they cost the base `SUMPROD` alone)
+- **Note:** far below the per-element cost a decomposed compensation chain
+  would suggest — the algorithm's lanes overlap, and the measured slope
+  captures that overlap
+- **Weight measurement:** [the machine code behind the `SUMPROD_XELEM` weight](machine_code/sumprod_xelem.md)
 
 ## FlopType.EXPM1 (`expm1(x)`) { #flop-expm1 }
 

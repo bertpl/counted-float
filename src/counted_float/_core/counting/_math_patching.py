@@ -654,26 +654,34 @@ def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
 
 
 def math_sumprod(p: Iterable[float], q: Iterable[float], /) -> object:
-    """Patch math.sumprod: unbox counted values so the extended-precision path runs; uncounted.
+    """Patch math.sumprod: stdlib contract, counted as the extended-precision algorithm it runs.
 
-    CPython's compensated (TripleLength) accumulation is gated on exact-float elements, so a
-    CountedFloat anywhere in the inputs silently reroutes the whole call to the generic object
-    path -- computing the *naive* sum of products. Unboxing to plain floats before delegating
-    restores the production algorithm and its extended-precision result. The result is
-    deliberately a plain float and nothing is counted: sumprod's cost cannot be expressed in
-    the decomposed flop types (its compensation has real instruction-level parallelism), so
-    the call is reported as uncounted at WARNING verbosity instead. Both iterables are
-    materialized up front (the stdlib accepts one-shot iterators too) so the elements can be
-    inspected.
+    CPython's compensated (TripleLength) accumulation is gated on exact-float elements, so
+    counted inputs are unboxed to plain floats before delegating -- a CountedFloat anywhere in
+    the inputs would silently reroute the whole call to the generic object path, computing the
+    *naive* sum of products. Counted as SUMPROD + (n-2) SUMPROD_XELEM for n-element inputs:
+    the benchmarked 2-element base (close-out included) plus the measured per-extra-element
+    slope; a 1-element call counts the base alone. Both iterables are materialized up front
+    (the stdlib accepts one-shot iterators too), and inputs without any CountedFloat are
+    delegated to the original wholesale (preserving its int-exactness and fast paths).
     """
     p_values = list(p)
     q_values = list(q)
-    if any(isinstance(v, CountedFloat) for v in (*p_values, *q_values)):
-        if thread_is_reporting():
-            warn_uncounted_call("sumprod", _BREAKS_CONTAGION)
-        p_values = [float(v) if isinstance(v, CountedFloat) else v for v in p_values]
-        q_values = [float(v) if isinstance(v, CountedFloat) else v for v in q_values]
-    return original_math_sumprod(p_values, q_values)
+    if not any(isinstance(v, CountedFloat) for v in (*p_values, *q_values)):
+        return original_math_sumprod(p_values, q_values)
+    p_plain = [float(v) if isinstance(v, CountedFloat) else v for v in p_values]
+    q_plain = [float(v) if isinstance(v, CountedFloat) else v for v in q_values]
+    # computed first: raises per stdlib contract (unequal lengths, non-numbers) before counting
+    result = original_math_sumprod(p_plain, q_plain)
+    n = len(p_values)
+    try:
+        cnt: CountsTarget = _TLS.flop_counts
+    except AttributeError:  # first counted op on this thread
+        cnt: CountsTarget = _create_thread_state()
+    cnt.SUMPROD += 1
+    if n > 2:
+        cnt.SUMPROD_XELEM += n - 2
+    return float.__new__(CountedFloat, result)
 
 
 def math_copysign(x: float, y: float) -> float | CountedFloat:
@@ -739,8 +747,6 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
 # Kept out of _PATCHES deliberately: these are installed only while some thread is reporting (see
 # apply_uncounted_math_patches), so a run at the default verbosity leaves these functions exactly
 # as it found them rather than routing every call through a replacement that has nothing to say.
-# math.sumprod is not among them: unboxing its counted elements matters for the computed *value*,
-# so its replacement lives in _PATCHES and is installed whenever counting is (see math_sumprod).
 _UNCOUNTED_PATCHES: dict[str, Callable[..., object]] = {
     name: _make_uncounted_wrapper(name, consequence) for name, consequence in _UNCOUNTED_MATH.items()
 }
