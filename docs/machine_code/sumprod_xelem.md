@@ -9,6 +9,9 @@ every added line belongs to the six extra elements, and nothing shared changed s
 probes port CPython's compensated (TripleLength) accumulation, error terms emitted through
 the `llvm.fma` intrinsic — see the [SUMPROD page](sumprod.md) for the algorithm.
 
+What Python code counts into `SUMPROD_XELEM` is described in
+[FLOP types](../flop_types.md#flop-sumprod-xelem).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-sumprod-xelem-diff -->

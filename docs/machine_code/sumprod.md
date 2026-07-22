@@ -12,6 +12,9 @@ The compensated sequence has real instruction-level parallelism (only the hi-lan
 accumulation is serial), which is why the cost is measured on the whole algorithm rather than
 decomposed into a per-operation chain — see [Cost-model principles](../cost_model.md).
 
+What Python code counts into `SUMPROD` is described in
+[FLOP types](../flop_types.md#flop-sumprod).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-sumprod-diff -->
