@@ -40,13 +40,13 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.sin`/`cos`/`tan(x)` | `SIN`, `COS`, `TAN` | patch | benchmarked | yes |
 | `math.asin`/`acos`/`atan(x)` | `ASIN`, `ACOS`, `ATAN` | patch | benchmarked | yes |
 | `math.atan2(y, x)` | `ATAN2` | patch | benchmarked | yes |
-| `math.hypot(x, y)` | `HYPOT` (2 args; 3+ decompose to n MUL + (n−1) ADD + SQRT, 1 to ABS) | patch | benchmarked | yes |
+| `math.hypot(x, y, ...)` | `HYPOT` + (n−2) `HYPOT_XARG` (1 arg → `ABS`) | patch | benchmarked | yes |
 | `math.expm1(x)`, `math.log1p(x)` | `EXPM1`, `LOG1P` | patch | benchmarked | yes |
 | `math.fmod(x, y)` | `FMOD` | patch | benchmarked | yes |
 | `math.sinh`/`cosh`/`tanh(x)`, `asinh`/`acosh`/`atanh(x)` | `SINH`, `COSH`, `TANH`, `ASINH`, `ACOSH`, `ATANH` | patch | benchmarked | yes |
 | `math.copysign(x, y)` | `COPYSIGN` | patch | benchmarked | yes |
 | `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
-| `math.dist(p, q)` | n `SUB` + n `MUL` + (n−1) `ADD` + `SQRT` *(decomposed)* | patch | — | yes |
+| `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` | patch | benchmarked | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
 | `math.sumprod(p, q)` (3.12+) | *(uncounted)* | — | — | no |
@@ -375,19 +375,54 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Not counted:** `atan2` on plain floats only, `numpy.arctan2`
 - **Weight measurement:** [the machine code behind the `ATAN2` weight](machine_code/atan2.md)
 
-## FlopType.HYPOT (`hypot(x, y)`) { #flop-hypot }
+## FlopType.HYPOT (`hypot(x, y, ...)`) { #flop-hypot }
 
 - Relevant CPU instructions
     - **ARM:** (software)
     - **x86:** (software)
-- **Counted Python operations:** `math.hypot(x, y, ...)` for `CountedFloat` —
-  counted once when *any* coordinate is a `CountedFloat`
+- **Counted Python operations:** `math.hypot(...)` for `CountedFloat` — counted
+  once per call when *any* coordinate is a `CountedFloat`; coordinates beyond
+  the second each add a [`HYPOT_XARG`](#flop-hypot-xarg), and a 1-argument call
+  counts `ABS` instead (it computes `|x|`)
 - **Not counted:** `hypot` on plain floats only, `numpy.hypot`
-- **Arity assumption:** `HYPOT` is modeled as a 2D primitive. `math.hypot`
-  accepts any number of coordinates, but an n-D call still counts a single
-  `HYPOT` — under-counting vs. the n·MUL + (n−1)·ADD + SQRT a port would
-  execute. Decompose manually if n-D `hypot` cost matters.
 - **Weight measurement:** [the machine code behind the `HYPOT` weight](machine_code/hypot.md)
+
+## FlopType.HYPOT_XARG (`hypot(x, y, z, ...)`) { #flop-hypot-xarg }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** one per coordinate beyond the second of a
+  `math.hypot` call: an n-ary call counts `HYPOT` + (n−2) `HYPOT_XARG`
+- **Not counted:** 2-argument calls (they cost the base `HYPOT` alone)
+- **Note:** the per-extra-coordinate slope of the overflow-safe scaled
+  algorithm `math.hypot` executes — far cheaper than a whole extra call, since
+  the extra coordinate's squares overlap the shared scaling and `sqrt`
+- **Weight measurement:** [the machine code behind the `HYPOT_XARG` weight](machine_code/hypot_xarg.md)
+
+## FlopType.DIST (`dist(p, q)`) { #flop-dist }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.dist(p, q)` for `CountedFloat` — counted
+  once per call when *any* coordinate is a `CountedFloat`; coordinates beyond
+  the second each add a [`DIST_XARG`](#flop-dist-xarg)
+- **Not counted:** `dist` on plain floats only, numpy norms/distances
+- **Note:** the 2-D base price of the overflow-safe algorithm `math.dist`
+  executes; it sits above `HYPOT` by the per-coordinate subtraction work its
+  offset carries
+- **Weight measurement:** [the machine code behind the `DIST` weight](machine_code/dist.md)
+
+## FlopType.DIST_XARG (`dist(p, q)`, 3+ dimensions) { #flop-dist-xarg }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** one per dimension beyond the second of a
+  `math.dist` call: an n-dimensional call counts `DIST` + (n−2) `DIST_XARG`
+- **Not counted:** 1- and 2-dimensional calls (they cost the base `DIST` alone)
+- **Weight measurement:** [the machine code behind the `DIST_XARG` weight](machine_code/dist_xarg.md)
 
 ## FlopType.EXPM1 (`expm1(x)`) { #flop-expm1 }
 

@@ -134,8 +134,8 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 
 Some Python operations have no `FlopType` of their own and count as a composition of the
 types above (see [FLOP types](flop_types.md#coverage-at-a-glance) for the full operation
-table). Most follow rule 1 at the operation level; the last two entries are **known
-deviations** from the rule that governs them, stated here explicitly:
+table). Most follow rule 1 at the operation level; `math.fsum` and `round(x, n)` carry
+rule 3's documented gaps:
 
 - `x // y` → DIV + RND, `x % y` / `divmod` → DIV + RND + MUL + SUB — the floored-division
   sequences a port emits.
@@ -147,10 +147,6 @@ deviations** from the rule that governs them, stated here explicitly:
 - `math.degrees` / `math.radians` → MUL, `math.prod` → one MUL per chained multiply.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
-- `math.dist` → n SUB + n MUL + (n−1) ADD + SQRT. *Known deviation from rule 2: the
-  counting uses this naive decomposition even though the `DIST`/`DIST_XARG` weights
-  measuring the real overflow-safe algorithm are already benchmarked — the two layers
-  currently disagree.*
-- `math.hypot` with 3+ arguments → n MUL + (n−1) ADD + SQRT. *Known deviation from rule 2,
-  same situation as `math.dist`: the `HYPOT`/`HYPOT_XARG` weights exist, the counting does
-  not use them yet.* (The 2-argument form counts `HYPOT` and follows rule 2.)
+`math.dist` and n-ary `math.hypot` are *not* decompositions: they count the dedicated
+`DIST` + (n−2) `DIST_XARG` and `HYPOT` + (n−2) `HYPOT_XARG` types, measured on the real
+overflow-safe algorithm the calls execute (rule 2).

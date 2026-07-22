@@ -7,6 +7,9 @@ construction as [HYPOT_XARG](hypot_xarg.md): the two sides are the same algorith
 so the diff is expected to be large — what must hold is that every added line belongs to the six
 extra coordinates, and nothing shared changed shape. Why the slope is measured on a hand-rolled overflow-safe port is covered in the [benchmark design rationale](../analysis_methodology.md#16-benchmark-design-rationale).
 
+What Python code counts into `DIST_XARG` is described in
+[FLOP types](../flop_types.md#flop-dist-xarg).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-dist-xarg-diff -->

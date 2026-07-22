@@ -7,6 +7,9 @@ an **arity-scaled pair**: the two sides are not "same loop ± one instruction" b
 algorithm at two sizes, so the diff is expected to be large — what must hold is that every added
 line belongs to the six extra coordinates and their scaling, and nothing shared changed shape. Why the slope is measured on a hand-rolled overflow-safe port is covered in the [benchmark design rationale](../analysis_methodology.md#16-benchmark-design-rationale).
 
+What Python code counts into `HYPOT_XARG` is described in
+[FLOP types](../flop_types.md#flop-hypot-xarg).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-hypot-xarg-diff -->

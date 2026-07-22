@@ -147,14 +147,16 @@ weighted total prices every operation as if it waited for the previous one to
 finish. That is a good match for dependency-chained code — recursive filters
 and scalar iterations, the kind of algorithm this library exists for, where
 each step needs the previous step's result. For code with instruction-level
-parallelism (independent multiplies in a wide expression, the coordinate
-subtractions inside `math.dist`, an n-ary `math.hypot`), real hardware
-overlaps work that the weighted sum prices sequentially — read weighted
-totals for such structures as upper-ish estimates rather than expected
-latencies. The current model prices a function identically to its
-hand-written expansion and does not model the overlap; how much of that
-internal parallelism a weight *should* capture is a modeling choice, not a
-law of the counting model. Counts themselves are unaffected; this nuance
+parallelism (independent multiplies in a wide expression, a hand-written
+sum of squares), real hardware overlaps work that the weighted sum prices
+sequentially — read weighted totals for such structures as upper-ish
+estimates rather than expected latencies. The current model prices a
+decomposed operation identically to its hand-written expansion and does not
+model the overlap; how much of that internal parallelism a weight *should*
+capture is a modeling choice, not a law of the counting model.
+(`math.dist` and n-ary `math.hypot` are the counterexamples: their
+arity-scaled weights are measured on the real algorithm, internal overlap
+included.) Counts themselves are unaffected; this nuance
 applies only to the weighted totals.
 
 Weights are also **normalized**: every cost is expressed relative to the ADD

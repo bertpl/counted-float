@@ -8,6 +8,9 @@ dimensionality. The probe hand-rolls the scaled algorithm a faithful `math.dist`
 executes: per-coordinate deltas, scaling by the largest magnitude so no square overflows, then
 `sqrt` and rescale. Why the overflow-safe flavor is the one being priced is covered in the [benchmark design rationale](../analysis_methodology.md#16-benchmark-design-rationale).
 
+What Python code counts into `DIST` is described in
+[FLOP types](../flop_types.md#flop-dist).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-dist-diff -->
