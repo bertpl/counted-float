@@ -89,7 +89,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`ATAN`](kernel_asm/atan.md) | `f_add_atan` − `f_add` | 2, 4 |  |
 | [`ATAN2`](kernel_asm/atan2.md) | `f_add_atan2` − `f_add` | 2, 4 |  |
 | [`ATANH`](kernel_asm/atanh.md) | `f_add_halfsin_atanh` − `f_add_halfsin` | 2 |  |
-| [`CBRT`](kernel_asm/cbrt.md) | `f_add_cbrt` − `f_add` | 2 | numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, so the kernel calls libm through a ctypes binding -- the bare call CPython executes |
+| [`CBRT`](kernel_asm/cbrt.md) | `f_add_cbrt` − `f_add` | 2 | numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, so the probe calls libm through a ctypes binding -- the bare call CPython executes |
 | [`COMP`](kernel_asm/comp.md) | `f_lte_addsub` − `f_add` | 1 | the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices compare-and-select machinery, matching what float comparisons cost in optimized code |
 | [`COPYSIGN`](kernel_asm/copysign.md) | `f_add_copysign` − `f_add` | 1 |  |
 | [`COS`](kernel_asm/cos.md) | `f_add_cos` − `f_add` | 2, 4 |  |

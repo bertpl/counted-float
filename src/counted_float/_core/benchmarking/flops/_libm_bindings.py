@@ -1,11 +1,11 @@
-"""ctypes bindings to the C math library, for the benchmark kernels that need the bare call.
+"""ctypes bindings to the C math library, for the benchmark probes that need the bare call.
 
 numba compiles a ctypes function into a plain indirect call -- the same loop shape as the
-libm-backed kernels it compiles directly, plus one integer-side pointer reload per iteration --
+libm-backed probes it compiles directly, plus one integer-side pointer reload per iteration --
 and without numba the ctypes function is just as callable from the pure-Python fallback path.
 On Windows the C99 math functions live in the UCRT rather than a separate libm.
 
-Admission criterion -- a kernel goes through a ctypes binding only where numba's own route to
+Admission criterion -- a probe goes through a ctypes binding only where numba's own route to
 the function either does not exist (`math.remainder` has no numba implementation) or inserts
 wrapper code around the libm call that CPython's own call never executes (`np.cbrt` adds
 NaN/sign handling; CPython's `math.cbrt` calls libm directly).  Everywhere else the

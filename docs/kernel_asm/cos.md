@@ -2,7 +2,7 @@
 
 The `COS` cost is the latency difference between a kernel chaining `math.cos(tmp + x[i])` and
 one chaining only `tmp + x[i]` — kernels `f_add_cos` and `f_add`. Like most libm-backed functions,
-`math.cos` compiles to a call into the math library. The kernel's moderate input range targets the general-case cost: tiny arguments would skip argument reduction and underprice the call, huge ones would price the expensive large-argument reduction instead.
+`math.cos` compiles to a call into the math library. The probe's moderate input range targets the general-case cost: tiny arguments would skip argument reduction and underprice the call, huge ones would price the expensive large-argument reduction instead.
 
 What Python code counts into `COS` is described in
 [FLOP types](../flop_types.md#flop-cos).

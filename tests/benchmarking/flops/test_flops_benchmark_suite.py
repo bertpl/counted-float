@@ -85,7 +85,7 @@ def test_remainder_kernel_matches_math_remainder():
 def test_cbrt_kernel_matches_math_cbrt():
     """The ctypes-bound libm call must compute exactly what math.cbrt computes.
 
-    The kernel calls libm through ctypes rather than through numba's np.cbrt, whose NaN/sign
+    The probe calls libm through ctypes rather than through numba's np.cbrt, whose NaN/sign
     wrapper CPython's math.cbrt never executes -- this pins that the bound symbol is the right
     function, negative arguments included.
     """

@@ -1,11 +1,11 @@
 # CBRT
 
-The `CBRT` cost is the latency difference between a kernel chaining `cbrt(tmp + x[i])` and
-one chaining only `tmp + x[i]` — kernels `f_add_cbrt` and `f_add`. A libm call with one
+The `CBRT` cost is the latency difference between a probe chaining `cbrt(tmp + x[i])` and
+one chaining only `tmp + x[i]` — probes `f_add_cbrt` and `f_add`. A libm call with one
 wrinkle: numba's own route (`np.cbrt`) wraps the libm call in a NaN check and
-negative-argument handling that CPython's `math.cbrt` never executes, so the kernel calls
+negative-argument handling that CPython's `math.cbrt` never executes, so the probe calls
 libm's `cbrt` through a ctypes binding instead — the bare call CPython executes, compiling to
-the same indirect-call loop shape as the [REMAINDER](remainder.md) kernel.
+the same indirect-call loop shape as the [REMAINDER](remainder.md) probe.
 
 What Python code counts into `CBRT` is described in
 [FLOP types](../flop_types.md#flop-cbrt).
@@ -200,11 +200,11 @@ amount of work -- see the discussion below.
 
 1. *Intended call, and nothing else*: the structural additions are the `blr` — the `cbrt`
    call — plus one integer load per iteration re-fetching the call-target pointer from the
-   ctypes closure (the libm kernels numba compiles directly keep their target in a register;
+   ctypes closure (the libm probes numba compiles directly keep their target in a register;
    the ctypes route reloads it). That load is a stride-0 L1 hit on the integer side. The
    remaining `-`/`+` pairs are the canonical-index shift described on the
    [index page](index.md). No NaN check and no sign branches: numba's `np.cbrt` would add
-   those around the call, which is exactly why the kernel binds libm directly — CPython's
+   those around the call, which is exactly why the probe binds libm directly — CPython's
    `math.cbrt` executes the bare call.
 2. *In the dependency chain*: the accumulator flows through the call — `fadd` produces the
    argument, the call returns the result the next iteration's `fadd` consumes. The pointer

@@ -13,7 +13,7 @@ from counted_float._core.compatibility import numba
 
 from ._libm_bindings import libm_cbrt, libm_remainder
 
-# the two kernels that measure through a ctypes binding rather than a numba-compiled call --
+# the two probes that measure through a ctypes binding rather than a numba-compiled call --
 # see _libm_bindings for the mechanism and the admission criterion
 c_cbrt = libm_cbrt()
 c_remainder = libm_remainder()

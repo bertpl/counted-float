@@ -254,7 +254,7 @@ PAGES: list[KernelAsmPage] = [
         extended_kernel="f_add_cbrt",
         rationale=(
             "numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, "
-            "so the kernel calls libm through a ctypes binding -- the bare call CPython executes"
+            "so the probe calls libm through a ctypes binding -- the bare call CPython executes"
         ),
     ),
     KernelAsmPage("cos", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cos", range_sensitive=True),
