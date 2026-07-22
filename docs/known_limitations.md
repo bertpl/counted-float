@@ -3,7 +3,7 @@
 ## numpy counting is an explicit non-goal
 
 The counting model prices scalar code as a compiled port would execute it;
-array operations are bulk kernels outside that model, and no part of numpy's
+array operations are bulk vectorized routines outside that model, and no part of numpy's
 semantics is adopted. Concretely:
 
 - `np.float64` scalars work and count correctly on **either** side of an

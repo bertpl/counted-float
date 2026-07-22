@@ -30,7 +30,7 @@ class MicroBenchmark(ABC):
     """
 
     MAX_N_EXECUTIONS_FACTOR = 10  # never adjust n_executions by more than this factor (up or down)
-    MAX_N_EXECUTIONS = 10**12  # absolute cap; unbounded growth (e.g. when a jit-compiled kernel is
+    MAX_N_EXECUTIONS = 10**12  # absolute cap; unbounded growth (e.g. when a jit-compiled probe is
     #                            dead-code-eliminated and runtime stays flat) would overflow int64
 
     def __init__(self, name: str, single_execution: str = "execution") -> None:

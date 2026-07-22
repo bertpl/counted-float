@@ -182,7 +182,7 @@ def test_runner_runs_every_benchmark_exactly_once_per_round(fake_benchmarks):
 
 def test_runner_shuffles_order_between_rounds():
     # --- arrange -----------------------------------------
-    # many kernels so identical order across all rounds is vanishingly unlikely
+    # many probes so identical order across all rounds is vanishingly unlikely
     shared_log: list[tuple[str, int]] = []
     names = [f"k{i}" for i in range(10)]
     benchmarks = {name: FakeBenchmark(name, shared_log) for name in names}

@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
-from counted_float._core.benchmarking.flops import _flops_kernels as kernels
+from counted_float._core.benchmarking.flops import _flops_probes as probes
 from counted_float._core.compatibility import is_numba_installed
 from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType, FlopType, FlopWeights
 
@@ -42,7 +42,7 @@ def test_flops_benchmarking_suite_run():
 
 @pytest.mark.skipif(not is_numba_installed(), reason="arity-slope values need real numba timings, not the shim")
 def test_suite_measures_the_arity_flop_types():
-    """The hypot/dist arity kernels feed HYPOT_XARG / DIST / DIST_XARG with sane, ordered latencies."""
+    """The hypot/dist arity probes feed HYPOT_XARG / DIST / DIST_XARG with sane, ordered latencies."""
     # --- arrange -----------------------------------------
     suite = FlopsBenchmarkSuite()
 
@@ -59,11 +59,11 @@ def test_suite_measures_the_arity_flop_types():
     assert efl[FlopType.DIST_XARG] < efl[FlopType.DIST]
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
-def test_remainder_kernel_matches_math_remainder():
+@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+def test_remainder_probe_matches_math_remainder():
     """The ctypes-bound libm call must compute exactly what math.remainder computes.
 
-    numba has no math.remainder, so the kernel calls libm through ctypes -- this pins that the
+    numba has no math.remainder, so the probe calls libm through ctypes -- this pins that the
     bound symbol is the right function (IEEE remainder, not fmod).
     """
     # --- arrange -----------------------------------------
@@ -72,7 +72,7 @@ def test_remainder_kernel_matches_math_remainder():
     out_f, out_i = np.zeros(n), np.zeros(n, dtype=int)
 
     # --- act ---------------------------------------------
-    kernels.f_add_remainder(1, n, in_f, out_f, out_i)
+    probes.f_add_remainder(1, n, in_f, out_f, out_i)
 
     # --- assert ------------------------------------------
     tmp = math.e
@@ -81,8 +81,8 @@ def test_remainder_kernel_matches_math_remainder():
         assert out_f[i] == tmp
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
-def test_cbrt_kernel_matches_math_cbrt():
+@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+def test_cbrt_probe_matches_math_cbrt():
     """The ctypes-bound libm call must compute exactly what math.cbrt computes.
 
     The probe calls libm through ctypes rather than through numba's np.cbrt, whose NaN/sign
@@ -95,7 +95,7 @@ def test_cbrt_kernel_matches_math_cbrt():
     out_f, out_i = np.zeros(n), np.zeros(n, dtype=int)
 
     # --- act ---------------------------------------------
-    kernels.f_add_cbrt(1, n, in_f, out_f, out_i)
+    probes.f_add_cbrt(1, n, in_f, out_f, out_i)
 
     # --- assert ------------------------------------------
     tmp = math.e
@@ -104,9 +104,9 @@ def test_cbrt_kernel_matches_math_cbrt():
         assert out_f[i] == tmp
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="kernel execution needs real numba, not the shim")
-@pytest.mark.parametrize("kernel", [kernels.f_add_gammabase_gamma, kernels.f_add_gammabase_lgamma])
-def test_gamma_kernels_never_overflow_even_on_a_wild_input_range(kernel):
+@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.parametrize("probe", [probes.f_add_gammabase_gamma, probes.f_add_gammabase_lgamma])
+def test_gamma_probes_never_overflow_even_on_a_wild_input_range(probe):
     """The sin bound must keep the gamma/lgamma chain finite regardless of the input magnitudes.
 
     gamma/lgamma outputs grow without bound, so a naive `f(tmp + x)` chain overflows into a run-ending
@@ -119,23 +119,23 @@ def test_gamma_kernels_never_overflow_even_on_a_wild_input_range(kernel):
     out_f, out_i = np.zeros(2000), np.zeros(2000, dtype=int)
 
     # --- act ---------------------------------------------
-    kernel(50, 2000, in_f, out_f, out_i)
+    probe(50, 2000, in_f, out_f, out_i)
 
     # --- assert ------------------------------------------
     assert np.all(np.isfinite(out_f))
 
 
 # =================================================================================================
-#  FMA kernel fusion
+#  FMA probe fusion
 # =================================================================================================
 # fused multiply-add mnemonics, and their unfused counterparts, on aarch64 and x86-64
 _FUSED = re.compile(r"\b(fmadd|fmsub|fnmadd|fnmsub|vfmadd\w*|vfmsub\w*)\b", re.IGNORECASE)
 _UNFUSED_MUL_ADD = re.compile(r"\b(fmul|fadd|mulsd|addsd|vmulsd|vaddsd)\b", re.IGNORECASE)
 
 
-def _kernel_assembly(benchmark: FlopsMicroBenchmark) -> str:
-    """Compile a benchmark's kernel and return the assembly emitted for it."""
-    # njit compiles lazily, so run the kernel once to give it a signature to report on
+def _probe_assembly(benchmark: FlopsMicroBenchmark) -> str:
+    """Compile a benchmark's probe and return the assembly emitted for it."""
+    # njit compiles lazily, so run the probe once to give it a signature to report on
     in_f = benchmark.array_init.new_array(benchmark.size)
     benchmark.f(1, benchmark.size, in_f, np.zeros(benchmark.size), np.zeros(benchmark.size, dtype=int))
     return "\n".join(benchmark.f.inspect_asm().values())
@@ -143,25 +143,25 @@ def _kernel_assembly(benchmark: FlopsMicroBenchmark) -> str:
 
 @pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
 @pytest.mark.parametrize("benchmark_type", [FlopsBenchmarkType.FMA, FlopsBenchmarkType.FMA_FMA])
-def test_fma_kernels_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmarkType):
-    """Each multiply-add in the FMA kernels must collapse into one fused instruction, leaving none behind.
+def test_fma_probes_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmarkType):
+    """Each multiply-add in the FMA probes must collapse into one fused instruction, leaving none behind.
 
     This is what makes the FMA latency estimate falsifiable. A toolchain that stopped contracting would
     leave the pair measuring a separate multiply and add while still reporting the difference as an FMA
     latency, and nothing else in the suite would notice.
 
-    Instruction counts are deliberately not asserted: LLVM's unroll factor differs per kernel and across
+    Instruction counts are deliberately not asserted: LLVM's unroll factor differs per probe and across
     versions, so a count pins a heuristic rather than the property that matters.
     """
     # --- arrange -----------------------------------------
     benchmark = FlopsBenchmarkSuite.get_flops_benchmarking_suite(size=100)[benchmark_type]
 
     # --- act ---------------------------------------------
-    asm = _kernel_assembly(benchmark)
+    asm = _probe_assembly(benchmark)
 
     # --- assert ------------------------------------------
-    assert _FUSED.search(asm), "multiply-add did not fuse: this kernel measures MUL + ADD, not FMA"
-    assert not _UNFUSED_MUL_ADD.search(asm), "an unfused multiply or add survived in an FMA kernel"
+    assert _FUSED.search(asm), "multiply-add did not fuse: this probe measures MUL + ADD, not FMA"
+    assert not _UNFUSED_MUL_ADD.search(asm), "an unfused multiply or add survived in an FMA probe"
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
@@ -169,13 +169,13 @@ def test_fma_kernels_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchma
     "benchmark_type",
     [FlopsBenchmarkType.ADD, FlopsBenchmarkType.ADD_ADD, FlopsBenchmarkType.MUL, FlopsBenchmarkType.MUL_MUL],
 )
-def test_contraction_is_scoped_to_the_fma_kernels(benchmark_type: FlopsBenchmarkType):
-    """No other kernel may fuse: the ADD and MUL pairs have to measure the operation they are named for."""
+def test_contraction_is_scoped_to_the_fma_probes(benchmark_type: FlopsBenchmarkType):
+    """No other probe may fuse: the ADD and MUL pairs have to measure the operation they are named for."""
     # --- arrange -----------------------------------------
     benchmark = FlopsBenchmarkSuite.get_flops_benchmarking_suite(size=100)[benchmark_type]
 
     # --- act ---------------------------------------------
-    asm = _kernel_assembly(benchmark)
+    asm = _probe_assembly(benchmark)
 
     # --- assert ------------------------------------------
     assert not _FUSED.search(asm)

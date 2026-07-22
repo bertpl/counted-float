@@ -14,7 +14,7 @@ help:
 	@echo ''
 	@echo '  precompute-weights            Regenerate the shipped consensus flop weights from the built-in source data.'
 	@echo '  regen-docs                    Regenerate the dataset-derived docs content (marked text blocks + screenshots).'
-	@echo '  regen-kernel-asm              Regenerate the benchmark-kernel machine-code listings (ARM64 machine only).'
+	@echo '  regen-machine-code            Regenerate the benchmark-probe machine-code listings (ARM64 machine only).'
 	@echo ''
 	@echo '  release       		            Release a version: make release VERSION=X.Y.Z (validates, bumps, tags, pushes).'
 	@echo ''
@@ -46,8 +46,8 @@ precompute-weights:
 regen-docs:
 	uv run python scripts/generate_docs_content.py
 
-regen-kernel-asm:
-	uv run --all-extras python scripts/generate_kernel_asm_docs.py
+regen-machine-code:
+	uv run --all-extras python scripts/generate_machine_code_docs.py
 
 release:
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)

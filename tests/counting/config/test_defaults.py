@@ -6,7 +6,7 @@ from counted_float._core.counting.config._defaults import get_builtin_flop_weigh
 from counted_float._core.models import FlopType, FlopWeights
 
 # these flop types are measured by the benchmark suite but have no weight in any shipped source
-# yet (their kernels postdate the current dataset), so they are legitimately missing from the
+# yet (their probes postdate the current dataset), so they are legitimately missing from the
 # default consensus until the dataset is re-collected
 _PENDING_DATA = {
     FlopType.HYPOT_XARG,

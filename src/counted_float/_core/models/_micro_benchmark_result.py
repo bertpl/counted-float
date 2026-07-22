@@ -35,7 +35,7 @@ class Quantiles(JsonReprModel):
         """' ± X.X%' to append after the median, or '' when the median is zero.
 
         The uncertainty is half the inter-quartile range as a percentage of the median. A zero
-        median arises when most runs measure zero elapsed time (e.g. a dead-code-eliminated kernel
+        median arises when most runs measure zero elapsed time (e.g. a dead-code-eliminated probe
         on a coarse-resolution clock); no percentage of it is meaningful, so the suffix — separator
         included, which is why the method owns the '±' — is omitted entirely.
         """

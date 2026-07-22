@@ -43,7 +43,7 @@ class BenchmarkFloat(MicroBenchmark):
             a = -1e50
             b = 1e50
             # NOTE: fa/fb are never read (the loop re-evaluates fmid instead); they are kept
-            #       on purpose so the kernel mimics a realistic bisection workload
+            #       on purpose so the probe mimics a realistic bisection workload
             fa = _zero_function(a)
             fb = _zero_function(b)
             while b - a > 1e-15:
@@ -73,7 +73,7 @@ class BenchmarkCountedFloat(MicroBenchmark):
             a = CountedFloat(-1e50)
             b = CountedFloat(1e50)
             # NOTE: fa/fb are never read (the loop re-evaluates fmid instead); they are kept
-            #       on purpose so the kernel mimics a realistic bisection workload
+            #       on purpose so the probe mimics a realistic bisection workload
             fa = _zero_function(a)
             fb = _zero_function(b)
             while b - a > 1e-15:
