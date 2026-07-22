@@ -10,8 +10,6 @@ UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
 
 # what each of them needs after its first (counted) argument
 EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,), "isclose": (2.5,)}
-# functions whose counted value hides inside an iterable argument rather than being one
-FULL_ARGUMENTS = {"sumprod": ([CountedFloat(2.5)], [2.0])}
 
 
 # ==================================================================================================
@@ -20,7 +18,7 @@ FULL_ARGUMENTS = {"sumprod": ([CountedFloat(2.5)], [2.0])}
 @pytest.mark.parametrize("function_name", UNCOUNTED_FUNCTION_NAMES)
 def test_every_uncounted_math_function_is_reported(logged_lines, function_name):
     # --- arrange -----------------------------------------
-    arguments = FULL_ARGUMENTS.get(function_name, (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ())))
+    arguments = (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ()))
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):

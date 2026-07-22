@@ -339,6 +339,23 @@ PAGES: list[MachineCodePage] = [
         rationale="per-extra-coordinate slope of the same overflow-safe port as `DIST`",
     ),
     MachineCodePage(
+        "sumprod",
+        kind=KIND_ARITY,
+        base_probe="f_add",
+        extended_probe="f_add_sumprod2",
+        rationale=(
+            "faithful port of CPython's extended-precision (TripleLength) accumulation, error terms emitted "
+            "through the llvm.fma intrinsic; the 2-element base includes the close-out"
+        ),
+    ),
+    MachineCodePage(
+        "sumprod_xelem",
+        kind=KIND_ARITY,
+        base_probe="f_add_sumprod2",
+        extended_probe="f_add_sumprod8",
+        rationale="per-extra-element slope of the same TripleLength port as `SUMPROD`",
+    ),
+    MachineCodePage(
         "hypot_xarg",
         kind=KIND_ARITY,
         base_probe="f_add_hypot_scaled2",

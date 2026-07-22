@@ -27,7 +27,9 @@ counted region.
 - a few Python built-in math operations remain uncounted — the
   float-representation helpers (`frexp`, `ldexp`, `modf`, `nextafter`,
   `ulp`), which manipulate rather than compute, and `sumprod`
-  (Python 3.12+); see the
+  (Python 3.12+), whose counted inputs are unboxed so its
+  extended-precision algorithm runs (the result is exact but plain and
+  uncounted); see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) for
   the full per-function status and the
   [FLOP types reference](flop_types.md) for per-operation counting rules. A

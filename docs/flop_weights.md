@@ -63,6 +63,8 @@ of data sources and methodology, and
     FlopType.ERF        [erf(x)]        :  50.00000
     FlopType.TANH       [tanh(x)]       :  50.00000
     FlopType.GAMMA      [gamma(x)]      :  55.00000
+    FlopType.SUMPROD    [sumprod(p,q)]  :       nan
+    FlopType.SUMPROD_XELEM  [sumprod(+elem)]:       nan
 }
 ```
 <!-- END generated: flop-weights-active -->
@@ -175,6 +177,8 @@ from counted_float.config import get_default_consensus_flop_weights
     FlopType.TANH       [tanh(x)]       :  47.83127
     FlopType.ERF        [erf(x)]        :  48.01378
     FlopType.GAMMA      [gamma(x)]      :  56.40641
+    FlopType.SUMPROD    [sumprod(p,q)]  :       nan
+    FlopType.SUMPROD_XELEM  [sumprod(+elem)]:       nan
 }
 ```
 <!-- END generated: flop-weights-consensus-raw -->
@@ -249,6 +253,8 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.TANH       [tanh(x)]       :  45.00000
     FlopType.ERF        [erf(x)]        :  50.00000
     FlopType.GAMMA      [gamma(x)]      :  60.00000
+    FlopType.SUMPROD    [sumprod(p,q)]  :       nan
+    FlopType.SUMPROD_XELEM  [sumprod(+elem)]:       nan
 }
 ```
 <!-- END generated: flop-weights-arm -->

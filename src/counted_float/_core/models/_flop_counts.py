@@ -62,6 +62,8 @@ class FlopCounts:
     ATANH: int = 0
     DIST: int = 0
     DIST_XARG: int = 0
+    SUMPROD: int = 0
+    SUMPROD_XELEM: int = 0
     GAMMA: int = 0
     LGAMMA: int = 0
     ERF: int = 0

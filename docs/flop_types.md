@@ -52,7 +52,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` | patch | benchmarked | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
-| `math.sumprod(p, q)` (3.12+) | *(uncounted)* | — | — | no |
+| `math.sumprod(p, q)` (3.12+) | *(uncounted; delegated on plain floats so the extended-precision algorithm runs)* | patch | — | no |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |
 
 - **Mechanism** — *operator*: a `CountedFloat` dunder, counted everywhere.

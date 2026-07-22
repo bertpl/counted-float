@@ -32,6 +32,7 @@ _SEQUENCE_ARGS = {
     "dist": lambda cf: ([cf, cf], [cf, cf]),
     "prod": lambda cf: ([cf, cf],),
     "fsum": lambda cf: ([cf, cf],),
+    "sumprod": lambda cf: ([cf, cf], [cf, cf]),
 }
 
 

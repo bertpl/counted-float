@@ -35,6 +35,11 @@ class FlopsBenchmarkType(StrEnum):
     # DIST_XARG slope from the pair
     ADD_DIST2 = "add_dist2"
     ADD_DIST8 = "add_dist8"
+    # faithful ports of CPython's extended-precision sumprod loop (TripleLength accumulation,
+    # error terms via hardware fma) at two arities: SUMPROD base weight (incl. the close-out)
+    # from arity 2, SUMPROD_XELEM slope from the pair
+    ADD_SUMPROD2 = "add_sumprod2"
+    ADD_SUMPROD8 = "add_sumprod8"
     ADD_LOG1P = "add_log1p"
     ADD_LOG1P_EXPM1 = "add_log1p_expm1"
     ADD_FMOD = "add_fmod"

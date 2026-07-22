@@ -65,6 +65,8 @@ class FlopType(StrEnum):
     ATANH = "ATANH"
     DIST = "DIST"
     DIST_XARG = "DIST_XARG"
+    SUMPROD = "SUMPROD"
+    SUMPROD_XELEM = "SUMPROD_XELEM"
     GAMMA = "GAMMA"
     LGAMMA = "LGAMMA"
     ERF = "ERF"
@@ -142,6 +144,8 @@ _LABELS: dict[FlopType, str] = {
     FlopType.ATANH: "atanh(x)",
     FlopType.DIST: "dist(p,q)",
     FlopType.DIST_XARG: "dist(+arg)",
+    FlopType.SUMPROD: "sumprod(p,q)",
+    FlopType.SUMPROD_XELEM: "sumprod(+elem)",
     FlopType.GAMMA: "gamma(x)",
     FlopType.LGAMMA: "lgamma(x)",
     FlopType.ERF: "erf(x)",

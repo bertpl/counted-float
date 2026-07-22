@@ -53,6 +53,17 @@ def _math_fma_unavailable(x: float, y: float, z: float) -> float:
     raise NotImplementedError("math.fma requires Python 3.13 or newer")
 
 
+def _math_sumprod_unavailable(p: Iterable[float], q: Iterable[float], /) -> float:
+    """Stand-in for `math.sumprod` on interpreters predating it (below 3.12).
+
+    Never called: the replacement is registered only where `math.sumprod` exists (see
+    _PATCHES). It exists so the `original_math_sumprod` reference is callable on every
+    supported interpreter rather than `None`, which would make the patch's own call sites
+    unsound.
+    """
+    raise NotImplementedError("math.sumprod requires Python 3.12 or newer")
+
+
 # -------------------------------------------------------------------------
 #  original math module functions
 #  (import-time values are only a default; re-captured on every 0->1 patch
@@ -96,6 +107,7 @@ original_math_lgamma = math.lgamma
 original_math_erf = math.erf
 original_math_erfc = math.erfc
 original_math_remainder = math.remainder
+original_math_sumprod = getattr(math, "sumprod", _math_sumprod_unavailable)
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -641,6 +653,29 @@ def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
     return float.__new__(CountedFloat, result)
 
 
+def math_sumprod(p: Iterable[float], q: Iterable[float], /) -> object:
+    """Patch math.sumprod: unbox counted values so the extended-precision path runs; uncounted.
+
+    CPython's compensated (TripleLength) accumulation is gated on exact-float elements, so a
+    CountedFloat anywhere in the inputs silently reroutes the whole call to the generic object
+    path -- computing the *naive* sum of products. Unboxing to plain floats before delegating
+    restores the production algorithm and its extended-precision result. The result is
+    deliberately a plain float and nothing is counted: sumprod's cost cannot be expressed in
+    the decomposed flop types (its compensation has real instruction-level parallelism), so
+    the call is reported as uncounted at WARNING verbosity instead. Both iterables are
+    materialized up front (the stdlib accepts one-shot iterators too) so the elements can be
+    inspected.
+    """
+    p_values = list(p)
+    q_values = list(q)
+    if any(isinstance(v, CountedFloat) for v in (*p_values, *q_values)):
+        if thread_is_reporting():
+            warn_uncounted_call("sumprod", _BREAKS_CONTAGION)
+        p_values = [float(v) if isinstance(v, CountedFloat) else v for v in p_values]
+        q_values = [float(v) if isinstance(v, CountedFloat) else v for v in q_values]
+    return original_math_sumprod(p_values, q_values)
+
+
 def math_copysign(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
         try:
@@ -668,10 +703,6 @@ _UNCOUNTED_MATH: dict[str, str] = {
     "ulp": _BREAKS_CONTAGION,
     "isclose": "uncounted; performs real arithmetic",
 }
-# math.sumprod exists from Python 3.12; on older interpreters there is no call to report on
-if hasattr(math, "sumprod"):
-    _UNCOUNTED_MATH["sumprod"] = _BREAKS_CONTAGION
-
 # Delegation targets of the replacements below.  Captured when they are installed — a replacement
 # can only be executing at or after that capture — and, like the counting replacements' originals,
 # never cleared: a call already executing a replacement must still find the function to delegate
@@ -705,40 +736,13 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
     return replacement
 
 
-def _make_uncounted_sumprod_wrapper(name: str, consequence: str) -> Callable[..., object]:
-    """Build the report-and-delegate replacement for math.sumprod.
-
-    sumprod takes two *iterables*, so the CountedFloat scan must look at their elements rather
-    than at the arguments themselves. While the thread is reporting, both iterables are
-    materialized first (consuming a one-shot iterator twice would otherwise hand the original
-    empty sequences) and the delegation uses the materialized lists; outside reporting the call
-    passes through untouched.
-    """
-
-    def replacement(*args: object, **kwargs: object) -> object:
-        if not thread_is_reporting():
-            return _uncounted_originals[name](*args, **kwargs)
-        materialized = [
-            list(arg)  # ty: ignore[invalid-argument-type] -- sumprod's positional args are iterables
-            for arg in args
-        ]
-        if any(isinstance(value, CountedFloat) for seq in materialized for value in seq):
-            warn_uncounted_call(name, consequence)
-        return _uncounted_originals[name](*materialized, **kwargs)
-
-    return replacement
-
-
 # Kept out of _PATCHES deliberately: these are installed only while some thread is reporting (see
 # apply_uncounted_math_patches), so a run at the default verbosity leaves these functions exactly
 # as it found them rather than routing every call through a replacement that has nothing to say.
+# math.sumprod is not among them: unboxing its counted elements matters for the computed *value*,
+# so its replacement lives in _PATCHES and is installed whenever counting is (see math_sumprod).
 _UNCOUNTED_PATCHES: dict[str, Callable[..., object]] = {
-    name: (
-        _make_uncounted_sumprod_wrapper(name, consequence)
-        if name == "sumprod"
-        else _make_uncounted_wrapper(name, consequence)
-    )
-    for name, consequence in _UNCOUNTED_MATH.items()
+    name: _make_uncounted_wrapper(name, consequence) for name, consequence in _UNCOUNTED_MATH.items()
 }
 
 
@@ -788,6 +792,9 @@ if hasattr(math, "fma"):
     # Python 3.13+ only. Registering conditionally is what keeps every loop over _PATCHES --
     # capture, apply, restore -- free of version checks of its own.
     _PATCHES["fma"] = math_fma
+if hasattr(math, "sumprod"):
+    # Python 3.12+ only; same conditional-registration reasoning as math.fma above.
+    _PATCHES["sumprod"] = math_sumprod
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
 
@@ -820,7 +827,7 @@ def _capture_originals() -> None:
     global original_math_degrees, original_math_radians, original_math_dist
     global original_math_prod, original_math_fsum, original_math_copysign
     global original_math_gamma, original_math_lgamma, original_math_erf, original_math_erfc
-    global original_math_remainder
+    global original_math_remainder, original_math_sumprod
 
     original_math_sqrt = math.sqrt
     original_math_cbrt = math.cbrt
@@ -860,6 +867,7 @@ def _capture_originals() -> None:
     original_math_erf = math.erf
     original_math_erfc = math.erfc
     original_math_remainder = math.remainder
+    original_math_sumprod = getattr(math, "sumprod", _math_sumprod_unavailable)
 
     _saved_originals.clear()
     for name in _PATCHES:
