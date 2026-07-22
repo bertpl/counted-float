@@ -6,6 +6,9 @@ probes `f_add_gammabase_lgamma` and `f_add_gammabase`. Chained-base pair: `lgamm
 output grows without bound, so `1.5 + 0.5 * sin` pins the argument to `[1, 2]` and the
 bounding probe is subtracted so the `sin` call, `fmul` and `fadd` all cancel.
 
+What Python code counts into `LGAMMA` is described in
+[FLOP types](../flop_types.md#flop-lgamma).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-lgamma-diff -->

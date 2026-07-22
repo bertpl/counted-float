@@ -4,6 +4,9 @@ The `ERFC` cost is the latency difference between a probe chaining `math.erfc(tm
 one chaining only `tmp + x[i]` — probes `f_add_erfc` and `f_add`. Like most libm-backed functions,
 `math.erfc` compiles to a call into the math library. The probe's input range keeps the argument below `erfc`'s underflow-to-zero fast path.
 
+What Python code counts into `ERFC` is described in
+[FLOP types](../flop_types.md#flop-erfc).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-erfc-diff -->

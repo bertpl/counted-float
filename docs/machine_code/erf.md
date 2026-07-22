@@ -4,6 +4,9 @@ The `ERF` cost is the latency difference between a probe chaining `math.erf(tmp 
 one chaining only `tmp + x[i]` — probes `f_add_erf` and `f_add`. Like most libm-backed functions,
 `math.erf` compiles to a call into the math library. The probe's input range keeps the argument clear of `erf`'s cheap fast paths at very small and very large magnitudes.
 
+What Python code counts into `ERF` is described in
+[FLOP types](../flop_types.md#flop-erf).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-erf-diff -->

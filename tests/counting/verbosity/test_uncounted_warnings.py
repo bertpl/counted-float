@@ -9,7 +9,7 @@ from counted_float._core.counting import _math_patching
 UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
 
 # what each of them needs after its first (counted) argument
-EXTRA_ARGUMENTS = {"remainder": (2.0,), "ldexp": (2,), "nextafter": (3.0,), "isclose": (2.5,)}
+EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,), "isclose": (2.5,)}
 # functions whose counted value hides inside an iterable argument rather than being one
 FULL_ARGUMENTS = {"sumprod": ([CountedFloat(2.5)], [2.0])}
 
@@ -63,7 +63,7 @@ def test_sumprod_with_one_shot_iterators_is_reported_and_computes_correctly(logg
 def test_a_call_without_counted_values_is_not_reported(logged_lines):
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
-        _ = math.erf(2.5)
+        _ = math.ulp(2.5)
 
     # --- assert ------------------------------------------
     assert logged_lines() == [], "Nothing was counted, but nothing was countable either."
@@ -75,12 +75,12 @@ def test_the_original_result_is_returned(logged_lines):
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
-        gamma = math.gamma(x)
+        ulp = math.ulp(x)
         mantissa, exponent = math.frexp(x)
         close = math.isclose(x, x)
 
     # --- assert ------------------------------------------
-    assert gamma == math.gamma(2.5)
+    assert ulp == math.ulp(2.5)
     assert (mantissa, exponent) == math.frexp(2.5)
     assert close is True
 
@@ -91,7 +91,7 @@ def test_reported_calls_are_not_counted():
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING) as ctx:
-        _ = math.erf(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     assert ctx.flop_counts().total_count() == 0, "Reporting an uncounted call must not invent a count."
@@ -106,7 +106,7 @@ def test_off_reports_nothing(logged_lines):
 
     # --- act ---------------------------------------------
     with FlopCountingContext():
-        _ = math.erf(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     assert logged_lines() == []
@@ -118,7 +118,7 @@ def test_a_call_while_paused_is_not_reported(logged_lines):
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING), PauseFlopCounting():
-        _ = math.erf(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     assert logged_lines() == [], (
@@ -133,7 +133,7 @@ def test_warning_does_not_log_counted_flops(logged_lines):
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         _ = x * x
-        _ = math.erf(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     (line,) = logged_lines()
@@ -147,12 +147,12 @@ def test_info_reports_uncounted_calls_too(logged_lines):
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.INFO):
         _ = x * x
-        _ = math.erf(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     counted, uncounted = logged_lines()
     assert counted.split()[:2] == ["INFO", "MUL"]
-    assert uncounted.split()[:2] == ["WARN", "erf"]
+    assert uncounted.split()[:2] == ["WARN", "ulp"]
 
 
 # ==================================================================================================
@@ -165,7 +165,7 @@ def test_one_call_site_is_reported_once(logged_lines):
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         for _ in range(5):
-            _ = math.erf(x)
+            _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     assert len(logged_lines()) == 1, "A warning in a loop should be reported once, not per iteration."
@@ -177,8 +177,8 @@ def test_each_call_site_is_reported_separately(logged_lines):
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
-        _ = math.erf(x)
-        _ = math.erf(x)
+        _ = math.ulp(x)
+        _ = math.ulp(x)
 
     # --- assert ------------------------------------------
     first, second = logged_lines()
@@ -191,7 +191,7 @@ def test_a_call_site_is_reported_once_per_process(logged_lines):
 
     def run() -> None:
         with FlopCountingContext(verbosity=Verbosity.WARNING):
-            _ = math.erf(x)
+            _ = math.ulp(x)
 
     # --- act ---------------------------------------------
     run()
@@ -213,12 +213,12 @@ def test_a_thread_that_never_counted_reports_nothing(logged_lines):
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
-        worker = threading.Thread(target=lambda: results.append(math.erf(x)))
+        worker = threading.Thread(target=lambda: results.append(math.ulp(x)))
         worker.start()
         worker.join()
 
     # --- assert ------------------------------------------
-    assert results == [math.erf(2.5)]
+    assert results == [math.ulp(2.5)]
     assert logged_lines() == []
 
 
@@ -227,7 +227,7 @@ def test_reporting_survives_another_reporting_thread_finishing(logged_lines):
     # the replacements are installed while *any* thread reports, so one reporting thread
     # finishing must leave them in place for another that is still reporting
     x = CountedFloat(2.5)
-    original_erf = math.erf
+    original_ulp = math.ulp
     worker_is_reporting = threading.Event()
     worker_may_finish = threading.Event()
 
@@ -235,7 +235,7 @@ def test_reporting_survives_another_reporting_thread_finishing(logged_lines):
         with FlopCountingContext(verbosity=Verbosity.WARNING):
             worker_is_reporting.set()
             assert worker_may_finish.wait(timeout=5)
-            _ = math.erf(x)  # called after the other reporting thread has come and gone
+            _ = math.ulp(x)  # called after the other reporting thread has come and gone
 
     # --- act ---------------------------------------------
     thread = threading.Thread(target=worker)
@@ -243,15 +243,15 @@ def test_reporting_survives_another_reporting_thread_finishing(logged_lines):
     assert worker_is_reporting.wait(timeout=5)
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         pass  # a second reporting thread comes and goes
-    still_installed = math.erf is _math_patching._UNCOUNTED_PATCHES["erf"]
+    still_installed = math.ulp is _math_patching._UNCOUNTED_PATCHES["ulp"]
     worker_may_finish.set()
     thread.join()
 
     # --- assert ------------------------------------------
     assert still_installed, "The worker was still reporting, so the replacements must stay installed."
     (line,) = logged_lines()
-    assert line.split()[:2] == ["WARN", "erf"]
-    assert math.erf is original_erf, "The last reporting thread finishing restores the original."
+    assert line.split()[:2] == ["WARN", "ulp"]
+    assert math.ulp is original_ulp, "The last reporting thread finishing restores the original."
 
 
 # ==================================================================================================
@@ -290,19 +290,19 @@ def test_a_silent_context_nested_in_a_reporting_one_suspends_reporting(logged_li
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         with FlopCountingContext():
-            _ = math.erf(x)
-        _ = math.gamma(x)
+            _ = math.ulp(x)
+        _ = math.nextafter(x, 3.0)
 
     # --- assert ------------------------------------------
     (line,) = logged_lines()
-    assert "gamma" in line, "The silent inner context should have suspended reporting entirely."
+    assert "nextafter" in line, "The silent inner context should have suspended reporting entirely."
 
 
 def test_reporting_refcount_survives_concurrent_context_churn():
     # --- arrange -----------------------------------------
     # the reporting analog of the counting patches' churn test: its refcount shares the lock but
     # is its own counter, so it gets its own hammer
-    gamma_before = math.gamma
+    ulp_before = math.ulp
     x = CountedFloat(2.5)
     n_threads = 8
     barrier = threading.Barrier(n_threads)
@@ -311,7 +311,7 @@ def test_reporting_refcount_survives_concurrent_context_churn():
         barrier.wait()
         for _ in range(200):
             with FlopCountingContext(verbosity=Verbosity.WARNING):
-                _ = math.gamma(x)  # exercise the replacement itself while patches churn
+                _ = math.ulp(x)  # exercise the replacement itself while patches churn
 
     # --- act ---------------------------------------------
     threads = [threading.Thread(target=churn) for _ in range(n_threads)]
@@ -321,7 +321,7 @@ def test_reporting_refcount_survives_concurrent_context_churn():
         t.join()
 
     # --- assert ------------------------------------------
-    assert math.gamma is gamma_before, "after the last reporting context closed, math.gamma must be restored"
+    assert math.ulp is ulp_before, "after the last reporting context closed, math.ulp must be restored"
     assert _math_patching._reporting_thread_count == 0
     assert _math_patching._active_context_count == 0
 

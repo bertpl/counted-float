@@ -7,6 +7,9 @@ libm's `remainder` through a ctypes binding — which compiles to the same indir
 shape as the other libm probes. The strictly positive divisor range avoids the
 `remainder(x, 0)` domain error, mirroring the [FMOD](fmod.md) probe.
 
+What Python code counts into `REMAINDER` is described in
+[FLOP types](../flop_types.md#flop-remainder).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-remainder-diff -->
