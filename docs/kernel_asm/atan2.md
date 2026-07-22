@@ -2,7 +2,7 @@
 
 The `ATAN2` cost is the latency difference between a kernel chaining
 `atan2(tmp + x[i], x[i])` and one chaining only `tmp + x[i]` — kernels `f_add_atan2` and
-`f_add`. A libm call with two arguments: the chained value and the freshly loaded element.
+`f_add`. A libm call with two arguments: the chained value and the freshly loaded element. The probe's input range keeps most magnitudes above 1, matching `atan`'s general-case regime; the cost is flat from there through huge arguments.
 
 What Python code counts into `ATAN2` is described in
 [FLOP types](../flop_types.md#flop-atan2).

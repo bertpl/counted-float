@@ -644,14 +644,16 @@ def test_counted_float_counts_ge(thread_counter):
 
 
 @pytest.mark.parametrize(
-    ("ndigits", "expected_n_rnd", "expected_n_f2i"),
+    ("ndigits", "expected_counts"),
     [
-        (None, 0, 1),  # round to int -> F2I
-        (0, 1, 0),  # round to float -> RND
-        (1, 1, 0),  # round to float -> RND
+        (None, {"F2I": 1}),  # round to int -> F2I
+        (0, {"RND": 1}),  # round to nearest integer, return float -> RND
+        (1, {"MUL": 1, "RND": 1, "DIV": 1}),  # scale, round, unscale
+        (2, {"MUL": 1, "RND": 1, "DIV": 1}),
+        (-3, {"MUL": 1, "RND": 1, "DIV": 1}),  # negative digit counts scale the other way
     ],
 )
-def test_counted_float_counts_round(thread_counter, ndigits, expected_n_rnd: int, expected_n_f2i: int):
+def test_counted_float_counts_round(thread_counter, ndigits, expected_counts: dict[str, int]):
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 
@@ -659,9 +661,9 @@ def test_counted_float_counts_round(thread_counter, ndigits, expected_n_rnd: int
     _ = round(cf, ndigits)
 
     # --- assert ------------------------------------------
-    assert thread_counter.total_count() == 1
-    assert expected_n_rnd == thread_counter.RND
-    assert expected_n_f2i == thread_counter.F2I
+    assert thread_counter.total_count() == sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == expected
 
 
 def test_counted_float_counts_floor(thread_counter):
@@ -842,6 +844,53 @@ def test_counted_float_counts_div_int(thread_counter):
     assert thread_counter.total_count() == 5
     assert thread_counter.DIV == 5
     assert thread_counter.I2F == 0
+
+
+@pytest.mark.parametrize(
+    ("divisor", "expected_counts"),
+    [
+        (2.0, {"MUL": 1}),
+        (0.5, {"MUL": 1}),
+        (-8.0, {"MUL": 1}),  # sign carries into the reciprocal; the fold still applies
+        (4, {"MUL": 1}),  # an int and an equal-valued plain float compile identically
+        (1.0, {}),  # folds away entirely, like x ** 1
+        (1, {}),
+        (-1.0, {"MUL": 1}),  # only exact identity folds to nothing; the sign flip keeps its MUL
+        (2.0**-1023, {"MUL": 1}),  # smallest power of two whose reciprocal is finite
+        (2.0**-1024, {"DIV": 1}),  # reciprocal overflows -> fold not value-preserving
+        (3.0, {"DIV": 1}),
+        (0.1, {"DIV": 1}),
+        (6.0, {"DIV": 1}),  # even, but not a power of two
+        (float("inf"), {"DIV": 1}),
+        (float("nan"), {"DIV": 1}),
+    ],
+)
+def test_counted_float_counts_div_by_constant(thread_counter, divisor, expected_counts: dict[str, int]):
+    """x / c with a power-of-two constant c counts the reciprocal multiply a compiler emits."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = cf / divisor
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == expected
+
+
+def test_counted_float_counts_div_by_dynamic_power_of_two_as_div(thread_counter):
+    """The reciprocal fold keys on the divisor being constant: a CountedFloat divisor stays DIV."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = cf / CountedFloat(2.0)  # dynamic divisor, even though its value is a power of two
+    _ = 2.0 / cf  # reflected form: the divisor is the CountedFloat, dynamic as well
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == 2
+    assert thread_counter.DIV == 2
 
 
 def test_counted_float_counts_pow_1(thread_counter):

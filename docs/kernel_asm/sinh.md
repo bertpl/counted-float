@@ -3,8 +3,9 @@
 The `SINH` cost is the latency difference between a kernel chaining
 `sinh(asinh(tmp + x[i]))` and one chaining `asinh(tmp + x[i])` — kernels `f_add_asinh_sinh`
 and `f_add_asinh`. Chained-base pair: `asinh` is `sinh`'s inverse, keeping the chain
-bounded where a bare `sinh` chain would overflow, and the `asinh`-only kernel is subtracted
-so its cost cancels.
+bounded where a bare `sinh` chain would overflow, and the `asinh`-only probe is subtracted
+so its cost cancels. The two probes share their input range, and its moderate magnitude
+keeps the chained `sinh` argument in the general-case regime.
 
 What Python code counts into `SINH` is described in
 [FLOP types](../flop_types.md#flop-sinh).

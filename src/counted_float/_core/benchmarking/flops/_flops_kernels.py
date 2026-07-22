@@ -5,24 +5,18 @@ walks the input array in a dependent chain, so the measurement reflects operatio
 than the CPU's ability to overlap independent work.
 """
 
-import ctypes
-import ctypes.util
 import math
-import sys
 
 import numpy as np
 
 from counted_float._core.compatibility import numba
 
-# numba has no math.remainder, so the remainder kernel calls libm directly through ctypes --
-# numba compiles a ctypes function into a plain indirect call (same loop shape as the other
-# libm-backed kernels, plus one integer-side pointer reload per iteration), and without numba
-# the ctypes function is just as callable from the pure-Python fallback path.  On Windows the
-# C99 math functions live in the UCRT rather than a separate libm.
-_libm = ctypes.CDLL("ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m"))
-c_remainder = _libm.remainder
-c_remainder.restype = ctypes.c_double
-c_remainder.argtypes = [ctypes.c_double, ctypes.c_double]
+from ._libm_bindings import libm_cbrt, libm_remainder
+
+# the two probes that measure through a ctypes binding rather than a numba-compiled call --
+# see _libm_bindings for the mechanism and the admission criterion
+c_cbrt = libm_cbrt()
+c_remainder = libm_remainder()
 
 
 @numba.njit(parallel=False)
@@ -109,10 +103,12 @@ def f_add_sqrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, o
 
 @numba.njit(parallel=False)
 def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
+    # libm cbrt via ctypes (see _libm_bindings): numba's np.cbrt would wrap the call in NaN/sign
+    # handling that CPython's math.cbrt never executes, so the bare call is what gets priced
     for _ in range(n_executions):
         tmp = math.e
         for i in range(n):
-            tmp = np.cbrt(tmp + in_f[i])
+            tmp = c_cbrt(tmp + in_f[i])
             out_f[i] = tmp
 
 
@@ -432,7 +428,8 @@ def f_add_asinh_sinh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndar
 
 @numba.njit(parallel=False)
 def f_add_acosh(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-    # the large positive range keeps the argument >= 1 (acosh's domain)
+    # the positive range keeps the argument >= 1 (acosh's domain); see the suite registration for
+    # why its magnitude is moderate
     for _ in range(n_executions):
         tmp = math.e
         for i in range(n):

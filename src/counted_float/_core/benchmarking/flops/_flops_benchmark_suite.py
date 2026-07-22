@@ -220,6 +220,9 @@ class FlopsBenchmarkSuite:
                 (FBT.ADD_ROUND, kernels.f_add_round, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
                 (FBT.ADD_SQRT, kernels.f_add_sqrt, ArrayGenerator.lin_range(min_value=0.0, max_value=1e16)),
                 (FBT.ADD_CBRT, kernels.f_add_cbrt, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),
+                # log family (and the chained exp partners, which must share the range so the log
+                # cost cancels): measured flat across 2..1000 vs 1e10..1e100, so the range is not
+                # load-bearing -- kept as registered
                 (FBT.ADD_LOG, kernels.f_add_log, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG_EXP, kernels.f_add_log_exp, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
                 (FBT.ADD_LOG2, kernels.f_add_log2, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
@@ -230,11 +233,26 @@ class FlopsBenchmarkSuite:
                     kernels.f_add_log10_exp10,
                     ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
                 ),
-                (FBT.ADD_SIN, kernels.f_add_sin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_COS, kernels.f_add_cos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_TAN, kernels.f_add_tan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_SIN_ASIN, kernels.f_add_sin_asin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
-                (FBT.ADD_SIN_ACOS, kernels.f_add_sin_acos, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
+                # sin/cos/tan: +/-100 targets the flat general-case plateau (+/-16 .. +/-1e4 measured
+                # flat) -- +/-2 would underprice (sub-reduction regime), +/-1e6 would overprice
+                # (huge-argument reduction regime, ~5-7% above the plateau).  The asin/acos chains
+                # share sin's range so the sin cost cancels in their subtraction
+                (FBT.ADD_SIN, kernels.f_add_sin, ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0)),
+                (FBT.ADD_COS, kernels.f_add_cos, ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0)),
+                (FBT.ADD_TAN, kernels.f_add_tan, ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0)),
+                (
+                    FBT.ADD_SIN_ASIN,
+                    kernels.f_add_sin_asin,
+                    ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0),
+                ),
+                (
+                    FBT.ADD_SIN_ACOS,
+                    kernels.f_add_sin_acos,
+                    ArrayGenerator.lin_range(min_value=-100.0, max_value=100.0),
+                ),
+                # atan/atan2: cost steps up once |arg| clears ~1 (atan's reciprocal branch) and is
+                # then flat through +/-1e6 (no periodic reduction), so the registered range already
+                # prices the general case -- kept.  hypot: measured flat (+/-2 vs +/-1e6) -- kept
                 (FBT.ADD_ATAN, kernels.f_add_atan, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_ATAN2, kernels.f_add_atan2, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (FBT.ADD_HYPOT, kernels.f_add_hypot, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
@@ -265,17 +283,23 @@ class FlopsBenchmarkSuite:
                 # tanh saturates to +/-1 via a cheap early-return for |arg| > ~20, so (unlike the
                 # periodic sin/cos/tan) keep inputs small to measure its real, exp-based cost
                 (FBT.ADD_TANH, kernels.f_add_tanh, ArrayGenerator.lin_range(min_value=-5.0, max_value=5.0)),
-                (FBT.ADD_ASINH, kernels.f_add_asinh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                # asinh/acosh: moderate arguments price the general case -- huge arguments
+                # (1e10..1e100) would land in the asymptotic asinh(x) ~ log(2x) shortcut regime,
+                # measured ~35-40% cheaper than the flat 0.5..1e6 plateau.  The sinh/cosh chains
+                # share the range so the asinh/acosh cost cancels in their subtraction (their own
+                # arguments are the moderate asinh/acosh outputs).  acosh's positive range also
+                # keeps its argument >= 1 (acosh's domain)
+                (FBT.ADD_ASINH, kernels.f_add_asinh, ArrayGenerator.lin_range(min_value=0.5, max_value=3.0)),
                 (
                     FBT.ADD_ASINH_SINH,
                     kernels.f_add_asinh_sinh,
-                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                    ArrayGenerator.lin_range(min_value=0.5, max_value=3.0),
                 ),
-                (FBT.ADD_ACOSH, kernels.f_add_acosh, ArrayGenerator.lin_range(min_value=1e10, max_value=1e100)),
+                (FBT.ADD_ACOSH, kernels.f_add_acosh, ArrayGenerator.lin_range(min_value=2.0, max_value=10.0)),
                 (
                     FBT.ADD_ACOSH_COSH,
                     kernels.f_add_acosh_cosh,
-                    ArrayGenerator.lin_range(min_value=1e10, max_value=1e100),
+                    ArrayGenerator.lin_range(min_value=2.0, max_value=10.0),
                 ),
                 (FBT.ADD_HALFSIN, kernels.f_add_halfsin, ArrayGenerator.lin_range(min_value=-1e6, max_value=1e6)),
                 (
@@ -304,6 +328,8 @@ class FlopsBenchmarkSuite:
                 # x>~27), so -- like tanh -- keep the argument small to measure their real, polynomial cost
                 (FBT.ADD_ERF, kernels.f_add_erf, ArrayGenerator.lin_range(min_value=0.5, max_value=2.0)),
                 (FBT.ADD_ERFC, kernels.f_add_erfc, ArrayGenerator.lin_range(min_value=0.5, max_value=2.5)),
+                # pow: measured flat (log 0.5..2 vs log 0.1..10) -- kept; the geomean-1 log range
+                # also keeps the chained tmp ** x bounded
                 (FBT.POW, kernels.f_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.POW_POW, kernels.f_pow_pow, ArrayGenerator.log_range(min_value=0.1, max_value=10.0)),
                 (FBT.SUB, kernels.f_sub, ArrayGenerator.lin_range(min_value=-1e16, max_value=1e16)),

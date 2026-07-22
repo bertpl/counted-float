@@ -3,6 +3,14 @@
 Terms used across the reference pages, defined once. Each entry carries a stable anchor for
 linking.
 
+## Benchmark probe { #benchmark-probe }
+
+One of the small numba-compiled functions the flops benchmark times: a doubly-nested loop
+feeding one combination of operations through a [dependent chain](#dependent-chain). Each
+flop weight is the latency difference between two probes that differ by exactly the
+operation being priced. (GPU and HPC literature would call these compute kernels; *probe*
+avoids the collision with the operating-system sense of the word.)
+
 ## Compiled port { #compiled-port }
 
 The hypothetical result of rewriting the Python code in C and compiling it at ordinary

@@ -3,7 +3,9 @@
 The `COSH` cost is the latency difference between a kernel chaining
 `cosh(acosh(tmp + x[i]))` and one chaining `acosh(tmp + x[i])` — kernels `f_add_acosh_cosh`
 and `f_add_acosh`. Chained-base pair: `acosh` is `cosh`'s inverse for arguments ≥ 1,
-keeping the chain bounded, and the `acosh`-only kernel is subtracted so its cost cancels.
+keeping the chain bounded, and the `acosh`-only probe is subtracted so its cost cancels. The two probes share their
+input range, and its moderate magnitude keeps the chained `cosh` argument in the
+general-case regime.
 
 What Python code counts into `COSH` is described in
 [FLOP types](../flop_types.md#flop-cosh).

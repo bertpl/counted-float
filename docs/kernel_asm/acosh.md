@@ -2,7 +2,7 @@
 
 The `ACOSH` cost is the latency difference between a kernel chaining `math.acosh(tmp + x[i])` and
 one chaining only `tmp + x[i]` — kernels `f_add_acosh` and `f_add`. Like most libm-backed functions,
-`math.acosh` compiles to a call into the math library. The kernel's large positive input range keeps the argument at or above 1, inside `acosh`'s domain.
+`math.acosh` compiles to a call into the math library. The probe's positive input range keeps the argument at or above 1, inside `acosh`'s domain, and its moderate magnitude keeps the measurement out of the cheaper asymptotic large-argument regime.
 
 What Python code counts into `ACOSH` is described in
 [FLOP types](../flop_types.md#flop-acosh).
