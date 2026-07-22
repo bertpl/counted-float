@@ -309,7 +309,7 @@ cf = CountedFloat(2.5)
 
 with FlopCountingContext(verbosity=Verbosity.WARNING):
     for _ in range(1000):
-        _ = math.remainder(cf, 2.0)
+        _ = math.ldexp(cf, 3)
     _ = math.isclose(cf, 2.5)
 ```
 <!-- END generated: snippet-verbosity-warning -->
@@ -356,7 +356,8 @@ from counted_float import CountedFloat, FlopCountingContext, Verbosity
 x = CountedFloat(0.6)
 
 with FlopCountingContext(verbosity=Verbosity.INFO):
-    _ = 1.0 - x * math.erf(x)
+    mantissa, _ = math.frexp(x)
+    _ = 1.0 - x * mantissa
 ```
 <!-- END generated: snippet-verbosity-mixed -->
 
@@ -364,10 +365,10 @@ writes:
 
 ![mixed INFO and WARNING verbosity output](images/verbosity_mixed.webp)
 
-The `erf` result comes back as a plain `float` — the yellow line reports that
-loss — while the multiply and subtract around it still involve `x` and are
-counted as usual. Only the flops *inside* `erf` went missing, and the output
-says so.
+The mantissa `frexp` hands back is a plain `float` — the yellow line reports
+that loss — while the multiply and subtract around it still involve `x` and
+are counted as usual. Anything computed from the plain mantissa alone would go
+missing silently, and the output says so up front.
 
 ## Performance overhead
 
