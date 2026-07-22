@@ -147,6 +147,7 @@ rule 3's documented gaps:
 - `math.degrees` / `math.radians` → MUL, `math.prod` → one MUL per chained multiply.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
+
 `math.dist` and n-ary `math.hypot` are *not* decompositions: they count the dedicated
 `DIST` + (n−2) `DIST_XARG` and `HYPOT` + (n−2) `HYPOT_XARG` types, measured on the real
 overflow-safe algorithm the calls execute (rule 2).
