@@ -2,7 +2,7 @@
 
 The `ATAN` cost is the latency difference between a probe chaining `math.atan(tmp + x[i])` and
 one chaining only `tmp + x[i]` — probes `f_add_atan` and `f_add`. Like most libm-backed functions,
-`math.atan` compiles to a call into the math library. The probe's input range keeps most magnitudes above 1, where `atan` takes its reciprocal branch -- the cost is flat from there through huge arguments, while sub-1 arguments would underprice the call.
+`math.atan` compiles to a call into the math library. The probe's moderate input range keeps most magnitudes above 1 (atan's reciprocal branch, the general case) while staying clear of the huge-argument regime, where some libms take a cheaper shortcut; sub-1 arguments would underprice the call.
 
 What Python code counts into `ATAN` is described in
 [FLOP types](../flop_types.md#flop-atan).

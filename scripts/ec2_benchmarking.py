@@ -64,10 +64,10 @@ def benchmark_script(package_spec: str, python_version: str) -> str:
     )
 
 
-# awk probes emitting a `k=v;k=v` identity line parsed by parse_probe(). The
+# awk commands emitting a `k=v;k=v` CPU-identity line parsed by parse_cpu_id(). The
 # `$1 ~ /^model[[:space:]]*$/` guard matches the `model` line without also
 # matching `model name`.
-PROBE_COMMANDS = {
+CPU_ID_COMMANDS = {
     "x86_64": (
         "awk -F: '"
         "$1 ~ /^vendor_id[[:space:]]*$/{v=$2} "
@@ -94,8 +94,10 @@ class TargetInstance:
     """An EC2 instance type paired with the CPU identity it must have to be benchmarked."""
 
     instance_type: str
-    arch: str  # "arm64" | "x86_64" -- selects the AL2023 AMI and the probe
-    expected: dict[str, str]  # identity fields the probe must return (x86: vendor/family/model; arm: part)
+    arch: str  # "arm64" | "x86_64" -- selects the AL2023 AMI and the CPU-identity command
+    expected: dict[
+        str, str
+    ]  # identity fields the CPU-identity command must return (x86: vendor/family/model; arm: part)
 
 
 # Each target is sized to two physical cores: the benchmark is single-core, so
@@ -104,7 +106,7 @@ class TargetInstance:
 # comparable. Two vCPU sizes map to that, by threading model:
 #   .large  (2 vCPU) -- Graviton (1 thread/core) and zen4/zen5 (SMT-off here)
 #   .xlarge (4 vCPU) -- SMT-2 cores (Intel server + zen1/zen3), 2 vCPU/core
-# Every launch is gated on the identity below, asserted against the probed
+# Every launch is gated on the identity below, asserted against the reported
 # CPUID/MIDR before benchmarking, so a re-backed family can't mislabel data.
 # MIDR part id -> Neoverse core name. py-cpuinfo cannot resolve these newer ARM parts to a
 # brand string, so Graviton results come back with a blank `description`; the backfill in
@@ -303,8 +305,8 @@ def run_ssm_command(cfg: Config, instance_id: str, script: str) -> str:
 # ==================================================================================================
 #  CPU identity gate
 # ==================================================================================================
-def parse_probe(output: str) -> dict[str, str]:
-    """Parse a `k=v;k=v` probe line into a dict."""
+def parse_cpu_id(output: str) -> dict[str, str]:
+    """Parse a `k=v;k=v` CPU-identity line into a dict."""
     fields: dict[str, str] = {}
     for pair in output.strip().split(";"):
         if "=" in pair:
@@ -313,17 +315,17 @@ def parse_probe(output: str) -> dict[str, str]:
     return fields
 
 
-def assert_cpu_identity(target: TargetInstance, probe_output: str) -> dict[str, str]:
-    """Assert the probed CPU matches every expected identity field, or raise.
+def assert_cpu_identity(target: TargetInstance, cpu_id_output: str) -> dict[str, str]:
+    """Assert the reported CPU identity matches every expected field, or raise.
 
     Returns:
-        The parsed probe fields, for logging.
+        The parsed identity fields, for logging.
 
     Raises:
         RuntimeError: On any mismatch or missing field -- the gate that keeps a
             mislabelled instance from producing data.
     """
-    actual = parse_probe(probe_output)
+    actual = parse_cpu_id(cpu_id_output)
     mismatches = [
         f"{key}: expected {value!r}, got {actual.get(key)!r}"
         for key, value in target.expected.items()
@@ -372,8 +374,8 @@ def benchmark_one(cfg: Config, target: TargetInstance) -> RunResult:
         print(f"      instance {instance_id} -- waiting for SSM")
         wait_ssm_online(cfg, instance_id)
 
-        probe = run_ssm_command(cfg, instance_id, PROBE_COMMANDS[target.arch])
-        identity = assert_cpu_identity(target, probe)
+        cpu_id_line = run_ssm_command(cfg, instance_id, CPU_ID_COMMANDS[target.arch])
+        identity = assert_cpu_identity(target, cpu_id_line)
         print(f"      CPU identity OK: {identity}")
 
         print("      running benchmark (install + JIT + measure ~5 min)")

@@ -75,8 +75,8 @@ the full matrix). The same collection in tabular form:
 | x86 | `intel.2017_coffee_lake_gen_8` | benchmarks: `intel_i7_8550U_windows`, `intel_i7_8700B_macos_github_actions` — other: `analysis_agner_fog_coffee_lake`, `analysis_uops_info_coffee_lake` |
 | x86 | `intel.2019_sunny_cove_gen_10` | benchmarks: `intel_xeon_8375c_ice_lake_ec2_m6i_xlarge` — other: `analysis_agner_fog_ice_lake`, `analysis_uops_info_ice_lake`, `analysis_uops_info_tiger_lake` |
 | x86 | `intel.2021_golden_cove_gen_12` | benchmarks: `intel_xeon_8488c_sapphire_rapids_ec2_m7i_xlarge` — other: `analysis_uops_info_alder_lake_p`, `specs_intel` |
-| x86 | `intel.2022_raptor_cove_gen_13_14` | benchmarks: `intel_xeon_8559c_emerald_rapids_ec2_i7i_xlarge` — other: `specs_intel` |
-| x86 | `intel.2023_redwood_cove_ultra_1` | benchmarks: `intel_xeon_6973p_granite_rapids_linux_github_actions`, `intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge` — other: `specs_intel` |
+| x86 | `intel.2022_raptor_cove_gen_13_14` | benchmarks: `intel_xeon_8559c_emerald_rapids_ec2_i7i_xlarge`, `intel_xeon_8573c_emerald_rapids_linux_github_actions` — other: `specs_intel` |
+| x86 | `intel.2023_redwood_cove_ultra_1` | benchmarks: `intel_xeon_6975p_granite_rapids_ec2_m8i_xlarge` — other: `specs_intel` |
 <!-- END generated: builtin-data-table -->
 
 See [CPU architecture scope](cpu_architectures_scope.md) for why these CPUs

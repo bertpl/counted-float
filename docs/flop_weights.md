@@ -28,41 +28,41 @@ of data sources and methodology, and
     FlopType.RND        [round]         :   1.80000
     FlopType.F2I        [float->int]    :   2.00000
     FlopType.I2F        [int->float]    :   2.00000
+    FlopType.DIST_XARG  [dist(+arg)]    :   2.70000
+    FlopType.HYPOT_XARG  [hypot(+arg)]  :   2.70000
     FlopType.DIV        [x/y]           :   5.50000
     FlopType.FMOD       [fmod(x,y)]     :   6.00000
     FlopType.SQRT       [sqrt(x)]       :   7.00000
+    FlopType.REMAINDER  [remainder(x,y)]:  13.00000
     FlopType.EXP2       [2^x]           :  14.00000
     FlopType.EXP        [e^x]           :  16.00000
     FlopType.HYPOT      [hypot(x,y)]    :  18.00000
     FlopType.LOG        [log(x)]        :  18.00000
-    FlopType.COSH       [cosh(x)]       :  20.00000
-    FlopType.SINH       [sinh(x)]       :  20.00000
-    FlopType.ACOSH      [acosh(x)]      :  22.00000
-    FlopType.ASINH      [asinh(x)]      :  22.00000
+    FlopType.DIST       [dist(p,q)]     :  22.00000
     FlopType.EXP10      [10^x]          :  22.00000
     FlopType.LOG2       [log2(x)]       :  22.00000
+    FlopType.COSH       [cosh(x)]       :  24.00000
     FlopType.ACOS       [acos(x)]       :  27.00000
     FlopType.ASIN       [asin(x)]       :  27.00000
     FlopType.ATAN       [atan(x)]       :  27.00000
+    FlopType.LGAMMA     [lgamma(x)]     :  27.00000
     FlopType.LOG10      [log10(x)]      :  27.00000
     FlopType.COS        [cos(x)]        :  30.00000
     FlopType.LOG1P      [log1p(x)]      :  30.00000
     FlopType.SIN        [sin(x)]        :  30.00000
+    FlopType.ACOSH      [acosh(x)]      :  36.00000
+    FlopType.ASINH      [asinh(x)]      :  36.00000
     FlopType.ATAN2      [atan2(y,x)]    :  36.00000
+    FlopType.CBRT       [cbrt(x)]       :  36.00000
     FlopType.EXPM1      [expm1(x)]      :  36.00000
-    FlopType.CBRT       [cbrt(x)]       :  40.00000
+    FlopType.ERFC       [erfc(x)]       :  40.00000
     FlopType.POW        [x^y]           :  40.00000
     FlopType.TAN        [tan(x)]        :  40.00000
     FlopType.ATANH      [atanh(x)]      :  45.00000
+    FlopType.SINH       [sinh(x)]       :  45.00000
+    FlopType.ERF        [erf(x)]        :  50.00000
     FlopType.TANH       [tanh(x)]       :  50.00000
-    FlopType.DIST       [dist(p,q)]     :       nan
-    FlopType.DIST_XARG  [dist(+arg)]    :       nan
-    FlopType.ERF        [erf(x)]        :       nan
-    FlopType.ERFC       [erfc(x)]       :       nan
-    FlopType.GAMMA      [gamma(x)]      :       nan
-    FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
-    FlopType.LGAMMA     [lgamma(x)]     :       nan
-    FlopType.REMAINDER  [remainder(x,y)]:       nan
+    FlopType.GAMMA      [gamma(x)]      :  55.00000
 }
 ```
 <!-- END generated: flop-weights-active -->
@@ -129,52 +129,52 @@ from counted_float.config import get_default_consensus_flop_weights
 >>> get_default_consensus_flop_weights(rounding_mode=None).show()
 
 {
-    FlopType.MINUS      [-x]            :   0.43845
-    FlopType.ABS        [abs(x)]        :   0.70170
-    FlopType.COMP       [x<=y]          :   0.97639
+    FlopType.MINUS      [-x]            :   0.43808
+    FlopType.ABS        [abs(x)]        :   0.70139
+    FlopType.COMP       [x<=y]          :   0.97647
     FlopType.ADD        [x+y]           :   1.00000
-    FlopType.SUB        [x-y]           :   1.00090
-    FlopType.COPYSIGN   [copysign(x,y)] :   1.21621
-    FlopType.MUL        [x*y]           :   1.40122
-    FlopType.FMA        [x*y+z]         :   1.73066
-    FlopType.RND        [round]         :   1.79928
-    FlopType.F2I        [float->int]    :   1.92296
-    FlopType.I2F        [int->float]    :   1.93014
-    FlopType.DIV        [x/y]           :   5.55251
-    FlopType.FMOD       [fmod(x,y)]     :   6.09380
-    FlopType.SQRT       [sqrt(x)]       :   7.10076
-    FlopType.EXP2       [2^x]           :  13.69155
-    FlopType.EXP        [e^x]           :  16.39391
-    FlopType.LOG        [log(x)]        :  18.47650
-    FlopType.HYPOT      [hypot(x,y)]    :  18.59276
-    FlopType.SINH       [sinh(x)]       :  19.76869
-    FlopType.COSH       [cosh(x)]       :  19.97154
-    FlopType.EXP10      [10^x]          :  21.02438
-    FlopType.ACOSH      [acosh(x)]      :  21.03392
-    FlopType.LOG2       [log2(x)]       :  21.27887
-    FlopType.ASINH      [asinh(x)]      :  22.36002
-    FlopType.LOG10      [log10(x)]      :  25.50280
-    FlopType.ATAN       [atan(x)]       :  26.20510
-    FlopType.ACOS       [acos(x)]       :  27.11960
-    FlopType.ASIN       [asin(x)]       :  27.82879
-    FlopType.LOG1P      [log1p(x)]      :  29.26072
-    FlopType.SIN        [sin(x)]        :  29.65810
-    FlopType.COS        [cos(x)]        :  30.49545
-    FlopType.EXPM1      [expm1(x)]      :  36.75747
-    FlopType.ATAN2      [atan2(y,x)]    :  37.56055
-    FlopType.POW        [x^y]           :  39.37132
-    FlopType.CBRT       [cbrt(x)]       :  39.52402
-    FlopType.TAN        [tan(x)]        :  41.86010
-    FlopType.ATANH      [atanh(x)]      :  43.20679
-    FlopType.TANH       [tanh(x)]       :  47.77956
-    FlopType.DIST       [dist(p,q)]     :       nan
-    FlopType.DIST_XARG  [dist(+arg)]    :       nan
-    FlopType.ERF        [erf(x)]        :       nan
-    FlopType.ERFC       [erfc(x)]       :       nan
-    FlopType.GAMMA      [gamma(x)]      :       nan
-    FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
-    FlopType.LGAMMA     [lgamma(x)]     :       nan
-    FlopType.REMAINDER  [remainder(x,y)]:       nan
+    FlopType.SUB        [x-y]           :   1.00101
+    FlopType.COPYSIGN   [copysign(x,y)] :   1.20668
+    FlopType.MUL        [x*y]           :   1.40109
+    FlopType.FMA        [x*y+z]         :   1.72446
+    FlopType.RND        [round]         :   1.79790
+    FlopType.F2I        [float->int]    :   1.92192
+    FlopType.I2F        [int->float]    :   1.92910
+    FlopType.HYPOT_XARG  [hypot(+arg)]  :   2.64488
+    FlopType.DIST_XARG  [dist(+arg)]    :   2.68446
+    FlopType.DIV        [x/y]           :   5.55314
+    FlopType.FMOD       [fmod(x,y)]     :   6.12176
+    FlopType.SQRT       [sqrt(x)]       :   7.10086
+    FlopType.REMAINDER  [remainder(x,y)]:  13.31213
+    FlopType.EXP2       [2^x]           :  13.71889
+    FlopType.EXP        [e^x]           :  16.40822
+    FlopType.LOG        [log(x)]        :  18.50176
+    FlopType.HYPOT      [hypot(x,y)]    :  18.63083
+    FlopType.EXP10      [10^x]          :  21.06590
+    FlopType.LOG2       [log2(x)]       :  21.25532
+    FlopType.DIST       [dist(p,q)]     :  22.52481
+    FlopType.COSH       [cosh(x)]       :  23.82063
+    FlopType.LOG10      [log10(x)]      :  25.52618
+    FlopType.LGAMMA     [lgamma(x)]     :  26.28912
+    FlopType.ACOS       [acos(x)]       :  27.13547
+    FlopType.ATAN       [atan(x)]       :  27.69345
+    FlopType.ASIN       [asin(x)]       :  27.88891
+    FlopType.SIN        [sin(x)]        :  29.20149
+    FlopType.LOG1P      [log1p(x)]      :  29.25856
+    FlopType.COS        [cos(x)]        :  29.99393
+    FlopType.ACOSH      [acosh(x)]      :  34.72153
+    FlopType.ASINH      [asinh(x)]      :  36.31213
+    FlopType.EXPM1      [expm1(x)]      :  36.72830
+    FlopType.CBRT       [cbrt(x)]       :  36.95123
+    FlopType.ATAN2      [atan2(y,x)]    :  37.56775
+    FlopType.POW        [x^y]           :  39.36675
+    FlopType.TAN        [tan(x)]        :  39.88646
+    FlopType.ERFC       [erfc(x)]       :  40.43721
+    FlopType.ATANH      [atanh(x)]      :  43.18809
+    FlopType.SINH       [sinh(x)]       :  46.36347
+    FlopType.TANH       [tanh(x)]       :  47.83127
+    FlopType.ERF        [erf(x)]        :  48.01378
+    FlopType.GAMMA      [gamma(x)]      :  56.40641
 }
 ```
 <!-- END generated: flop-weights-consensus-raw -->
@@ -214,41 +214,41 @@ from counted_float.config import get_builtin_flop_weights
     FlopType.RND        [round]         :   1.60000
     FlopType.COPYSIGN   [copysign(x,y)] :   1.80000
     FlopType.FMA        [x*y+z]         :   2.00000
+    FlopType.DIST_XARG  [dist(+arg)]    :   3.30000
+    FlopType.HYPOT_XARG  [hypot(+arg)]  :   3.30000
     FlopType.DIV        [x/y]           :   6.00000
     FlopType.FMOD       [fmod(x,y)]     :   7.50000
     FlopType.SQRT       [sqrt(x)]       :   7.50000
     FlopType.EXP2       [2^x]           :  15.00000
+    FlopType.REMAINDER  [remainder(x,y)]:  15.00000
     FlopType.EXP        [e^x]           :  18.00000
     FlopType.LOG        [log(x)]        :  18.00000
     FlopType.HYPOT      [hypot(x,y)]    :  20.00000
     FlopType.LOG2       [log2(x)]       :  20.00000
-    FlopType.ACOSH      [acosh(x)]      :  22.00000
-    FlopType.COSH       [cosh(x)]       :  22.00000
     FlopType.EXP10      [10^x]          :  22.00000
-    FlopType.SINH       [sinh(x)]       :  22.00000
-    FlopType.ASINH      [asinh(x)]      :  24.00000
+    FlopType.DIST       [dist(p,q)]     :  24.00000
     FlopType.LOG10      [log10(x)]      :  24.00000
     FlopType.ACOS       [acos(x)]       :  27.00000
+    FlopType.COSH       [cosh(x)]       :  27.00000
+    FlopType.LGAMMA     [lgamma(x)]     :  27.00000
     FlopType.ASIN       [asin(x)]       :  30.00000
     FlopType.ATAN       [atan(x)]       :  30.00000
     FlopType.LOG1P      [log1p(x)]      :  30.00000
     FlopType.SIN        [sin(x)]        :  30.00000
     FlopType.COS        [cos(x)]        :  33.00000
+    FlopType.ACOSH      [acosh(x)]      :  36.00000
+    FlopType.ASINH      [asinh(x)]      :  36.00000
     FlopType.CBRT       [cbrt(x)]       :  36.00000
     FlopType.EXPM1      [expm1(x)]      :  36.00000
     FlopType.ATAN2      [atan2(y,x)]    :  40.00000
+    FlopType.ERFC       [erfc(x)]       :  40.00000
     FlopType.POW        [x^y]           :  40.00000
     FlopType.TAN        [tan(x)]        :  40.00000
     FlopType.ATANH      [atanh(x)]      :  45.00000
+    FlopType.SINH       [sinh(x)]       :  45.00000
     FlopType.TANH       [tanh(x)]       :  45.00000
-    FlopType.DIST       [dist(p,q)]     :       nan
-    FlopType.DIST_XARG  [dist(+arg)]    :       nan
-    FlopType.ERF        [erf(x)]        :       nan
-    FlopType.ERFC       [erfc(x)]       :       nan
-    FlopType.GAMMA      [gamma(x)]      :       nan
-    FlopType.HYPOT_XARG  [hypot(+arg)]  :       nan
-    FlopType.LGAMMA     [lgamma(x)]     :       nan
-    FlopType.REMAINDER  [remainder(x,y)]:       nan
+    FlopType.ERF        [erf(x)]        :  50.00000
+    FlopType.GAMMA      [gamma(x)]      :  60.00000
 }
 ```
 <!-- END generated: flop-weights-arm -->
