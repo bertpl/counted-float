@@ -7,6 +7,9 @@ cheap inverse and its output grows without bound, so `1.5 + 0.5 * sin` pins the 
 to `[1, 2]` (straddling gamma's minimum) and the bounding probe is subtracted so the
 `sin` call, `fmul` and `fadd` all cancel.
 
+What Python code counts into `GAMMA` is described in
+[FLOP types](../flop_types.md#flop-gamma).
+
 ## Inner-loop diff
 
 <!-- BEGIN generated: machine-code-gamma-diff -->

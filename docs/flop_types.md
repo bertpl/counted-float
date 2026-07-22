@@ -43,7 +43,10 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.hypot(x, y, ...)` | `HYPOT` + (n−2) `HYPOT_XARG` (1 arg → `ABS`) | patch | benchmarked | yes |
 | `math.expm1(x)`, `math.log1p(x)` | `EXPM1`, `LOG1P` | patch | benchmarked | yes |
 | `math.fmod(x, y)` | `FMOD` | patch | benchmarked | yes |
+| `math.remainder(x, y)` | `REMAINDER` | patch | benchmarked | yes |
 | `math.sinh`/`cosh`/`tanh(x)`, `asinh`/`acosh`/`atanh(x)` | `SINH`, `COSH`, `TANH`, `ASINH`, `ACOSH`, `ATANH` | patch | benchmarked | yes |
+| `math.gamma`/`lgamma(x)` | `GAMMA`, `LGAMMA` | patch | benchmarked | yes |
+| `math.erf`/`erfc(x)` | `ERF`, `ERFC` | patch | benchmarked | yes |
 | `math.copysign(x, y)` | `COPYSIGN` | patch | benchmarked | yes |
 | `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
 | `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` | patch | benchmarked | yes |
@@ -453,6 +456,19 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Not counted:** `fmod` on plain floats only, `numpy.fmod`
 - **Weight measurement:** [the machine code behind the `FMOD` weight](machine_code/fmod.md)
 
+## FlopType.REMAINDER (`remainder(x, y)`) { #flop-remainder }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.remainder(x, y)` for `CountedFloat` —
+  counted when *either* operand is a `CountedFloat` (the IEEE 754
+  round-to-nearest remainder; distinct from both `math.fmod` and the `%`
+  operator)
+- **Not counted:** `remainder` on plain floats only, `numpy.remainder` (which
+  computes the floored `%` semantics, not this function)
+- **Weight measurement:** [the machine code behind the `REMAINDER` weight](machine_code/remainder.md)
+
 ## FlopType.SINH (`sinh(x)`) { #flop-sinh }
 
 - Relevant CPU instructions
@@ -506,3 +522,39 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.atanh(x)` for `CountedFloat`
 - **Not counted:** `atanh` on non-CountedFloat, `numpy.arctanh`
 - **Weight measurement:** [the machine code behind the `ATANH` weight](machine_code/atanh.md)
+
+## FlopType.GAMMA (`gamma(x)`) { #flop-gamma }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.gamma(x)` for `CountedFloat`
+- **Not counted:** gamma on non-CountedFloat, `scipy.special.gamma`
+- **Weight measurement:** [the machine code behind the `GAMMA` weight](machine_code/gamma.md)
+
+## FlopType.LGAMMA (`lgamma(x)`) { #flop-lgamma }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.lgamma(x)` for `CountedFloat`
+- **Not counted:** lgamma on non-CountedFloat, `scipy.special.gammaln`, `math.log(math.gamma(x))` (which counts GAMMA + LOG)
+- **Weight measurement:** [the machine code behind the `LGAMMA` weight](machine_code/lgamma.md)
+
+## FlopType.ERF (`erf(x)`) { #flop-erf }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.erf(x)` for `CountedFloat`
+- **Not counted:** erf on non-CountedFloat, `scipy.special.erf`
+- **Weight measurement:** [the machine code behind the `ERF` weight](machine_code/erf.md)
+
+## FlopType.ERFC (`erfc(x)`) { #flop-erfc }
+
+- Relevant CPU instructions
+    - **ARM:** (software)
+    - **x86:** (software)
+- **Counted Python operations:** `math.erfc(x)` for `CountedFloat`
+- **Not counted:** erfc on non-CountedFloat, `scipy.special.erfc`, `1 - math.erf(x)` (which counts ERF + SUB)
+- **Weight measurement:** [the machine code behind the `ERFC` weight](machine_code/erfc.md)

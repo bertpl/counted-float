@@ -91,6 +91,11 @@ original_math_dist = math.dist
 original_math_prod = math.prod
 original_math_fsum = math.fsum
 original_math_copysign = math.copysign
+original_math_gamma = math.gamma
+original_math_lgamma = math.lgamma
+original_math_erf = math.erf
+original_math_erfc = math.erfc
+original_math_remainder = math.remainder
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -414,6 +419,17 @@ def math_fmod(x: float, y: float) -> float | CountedFloat:
     return original_math_fmod(x, y)
 
 
+def math_remainder(x: float, y: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        result = original_math_remainder(x, y)  # compute first: remainder(x, 0) raises before anything is counted
+        try:
+            _TLS.flop_counts.REMAINDER += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().REMAINDER += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_remainder(x, y)
+
+
 def math_fabs(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
         try:
@@ -486,6 +502,52 @@ def math_atanh(x: float) -> float | CountedFloat:
             _create_thread_state().ATANH += 1
         return float.__new__(CountedFloat, result)
     return original_math_atanh(x)
+
+
+def math_gamma(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_gamma(
+            x
+        )  # compute first: gamma's poles (0, -1, -2, ...) and overflow raise before counting
+        try:
+            _TLS.flop_counts.GAMMA += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().GAMMA += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_gamma(x)
+
+
+def math_lgamma(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_lgamma(x)  # compute first: lgamma's poles raise before counting
+        try:
+            _TLS.flop_counts.LGAMMA += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().LGAMMA += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_lgamma(x)
+
+
+def math_erf(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_erf(x)
+        try:
+            _TLS.flop_counts.ERF += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().ERF += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_erf(x)
+
+
+def math_erfc(x: float) -> float | CountedFloat:
+    if isinstance(x, CountedFloat):
+        result = original_math_erfc(x)
+        try:
+            _TLS.flop_counts.ERFC += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().ERFC += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_erfc(x)
 
 
 def math_degrees(x: float) -> float | CountedFloat:
@@ -599,14 +661,9 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
 # classification.  Their replacements only report -- the results are the originals', untouched.
 _BREAKS_CONTAGION = "uncounted; result is a plain float"
 _UNCOUNTED_MATH: dict[str, str] = {
-    "remainder": _BREAKS_CONTAGION,
     "frexp": _BREAKS_CONTAGION,
     "ldexp": _BREAKS_CONTAGION,
     "modf": _BREAKS_CONTAGION,
-    "gamma": _BREAKS_CONTAGION,
-    "lgamma": _BREAKS_CONTAGION,
-    "erf": _BREAKS_CONTAGION,
-    "erfc": _BREAKS_CONTAGION,
     "nextafter": _BREAKS_CONTAGION,
     "ulp": _BREAKS_CONTAGION,
     "isclose": "uncounted; performs real arithmetic",
@@ -721,6 +778,11 @@ _PATCHES: dict[str, object] = {
     "prod": math_prod,
     "fsum": math_fsum,
     "copysign": math_copysign,
+    "gamma": math_gamma,
+    "lgamma": math_lgamma,
+    "erf": math_erf,
+    "erfc": math_erfc,
+    "remainder": math_remainder,
 }
 if hasattr(math, "fma"):
     # Python 3.13+ only. Registering conditionally is what keeps every loop over _PATCHES --
@@ -757,6 +819,8 @@ def _capture_originals() -> None:
     global original_math_asinh, original_math_acosh, original_math_atanh
     global original_math_degrees, original_math_radians, original_math_dist
     global original_math_prod, original_math_fsum, original_math_copysign
+    global original_math_gamma, original_math_lgamma, original_math_erf, original_math_erfc
+    global original_math_remainder
 
     original_math_sqrt = math.sqrt
     original_math_cbrt = math.cbrt
@@ -791,6 +855,11 @@ def _capture_originals() -> None:
     original_math_prod = math.prod
     original_math_fsum = math.fsum
     original_math_copysign = math.copysign
+    original_math_gamma = math.gamma
+    original_math_lgamma = math.lgamma
+    original_math_erf = math.erf
+    original_math_erfc = math.erfc
+    original_math_remainder = math.remainder
 
     _saved_originals.clear()
     for name in _PATCHES:

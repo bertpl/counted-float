@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the trig (sin/cos/tan/atan/atan2) and asinh/acosh benchmarks now draw their inputs from general-case argument ranges, instead of extreme magnitudes that priced a costlier or cheaper special regime
 - re-collected the built-in flop-weight dataset across all automatically reachable CPUs (12 EC2 instance types and 5 CI runners), shipping real weights for every measured flop type — including the new hypot/dist arity, special-function and remainder types
 - `math.dist` and 3+-argument `math.hypot` are now counted as per-call + per-extra-coordinate flop types measured on the real overflow-safe algorithm, instead of decomposed flop chains
+- `math.gamma`, `math.lgamma`, `math.erf`, `math.erfc` and `math.remainder` are now counted; the uninstrumented remainder of the `math` module is exactly the float-representation helpers and `sumprod`
 
 ### Deprecated
 

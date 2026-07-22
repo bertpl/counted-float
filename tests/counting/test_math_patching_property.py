@@ -18,7 +18,15 @@ from counted_float import CountedFloat
 from counted_float._core.counting import _math_patching
 
 _PATCHED_NAMES = sorted(_math_patching._PATCHES.keys())
-_ARITY = {"atan2": 2, "hypot": 2, "fmod": 2, "pow": 2, "fma": 3, "copysign": 2}  # others take one operand
+_ARITY = {
+    "atan2": 2,
+    "hypot": 2,
+    "fmod": 2,
+    "pow": 2,
+    "fma": 3,
+    "copysign": 2,
+    "remainder": 2,
+}  # others take one operand
 # the sequence-taking functions get a two-element sequence per argument instead of bare scalars
 _SEQUENCE_ARGS = {
     "dist": lambda cf: ([cf, cf], [cf, cf]),

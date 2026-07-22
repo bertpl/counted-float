@@ -311,6 +311,11 @@ def test_single_arg_math_ops_error_counts_nothing(thread_counter, fname, arg):
         ("log1p", 1, "LOG1P"),
         ("fmod", 2, "FMOD"),
         ("fabs", 1, "ABS"),  # fabs reuses the existing ABS type, not a new one
+        ("gamma", 1, "GAMMA"),
+        ("lgamma", 1, "LGAMMA"),
+        ("erf", 1, "ERF"),
+        ("erfc", 1, "ERFC"),
+        ("remainder", 2, "REMAINDER"),
     ],
 )
 def test_new_math_ops_count_and_are_contagious(thread_counter, fname, n_args, flop_type_name):
@@ -326,7 +331,7 @@ def test_new_math_ops_count_and_are_contagious(thread_counter, fname, n_args, fl
     assert thread_counter.total_count() == 1
 
 
-@pytest.mark.parametrize("fname", ["atan2", "hypot", "fmod"])
+@pytest.mark.parametrize("fname", ["atan2", "hypot", "fmod", "remainder"])
 def test_new_binary_math_ops_count_with_either_operand_counted(thread_counter, fname):
     # counted (and contagious) when EITHER operand is a CountedFloat, like the existing binary ops
     # --- act ---------------------------------------------
