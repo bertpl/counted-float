@@ -67,7 +67,9 @@ deterministic mathematical core, with the gap stated.**
   early returns — e.g. `tanh` beyond ±20, `erf` beyond ±6), so a weight prices the real
   computation rather than a shortcut.
 - **4.3** *(consequence)* — input ranges represent the general-case cost, not a degenerate
-  regime.
+  regime: huge arguments would put `asinh` in its asymptotic log shortcut (about half the
+  general-case cost) and `sin` into its expensive large-argument reduction — extreme
+  magnitudes mis-price in either direction.
 - **4.4** *(practice)* — where a range needs a non-obvious choice, the benchmark source
   carries a comment saying why.
 
