@@ -25,9 +25,9 @@ def _make_fma_single() -> Callable[[float, float, float], float]:
             return math.fma
         return lambda x, y, z: x * y + z
 
-    from llvmlite import ir
-    from numba.core import types
-    from numba.extending import intrinsic
+    from llvmlite import ir  # ty: ignore[unresolved-import] -- ships with the optional numba dependency
+    from numba.core import types  # ty: ignore[unresolved-import] -- numba is an optional dependency
+    from numba.extending import intrinsic  # ty: ignore[unresolved-import] -- numba is an optional dependency
 
     @intrinsic
     def fma_intrinsic(typingctx: object, x: object, y: object, z: object) -> object:

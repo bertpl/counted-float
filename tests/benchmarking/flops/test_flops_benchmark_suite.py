@@ -29,7 +29,7 @@ def test_flops_benchmarking_suite_run():
 
     # --- act ---------------------------------------------
     result = suite.run(
-        array_size=10,
+        array_size=16,
         t_slice_target_ms=0.1,
         n_rounds_measure=5,
         n_rounds_warmup=1,
@@ -38,6 +38,15 @@ def test_flops_benchmarking_suite_run():
 
     # --- assert ------------------------------------------
     assert isinstance(result, FlopsBenchmarkResults)
+
+
+def test_flops_benchmarking_suite_rejects_too_small_arrays():
+    # --- arrange -----------------------------------------
+    suite = FlopsBenchmarkSuite()
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="array_size"):
+        suite.get_flops_benchmarking_suite(size=FlopsBenchmarkSuite.MIN_ARRAY_SIZE - 1)
 
 
 @pytest.mark.skipif(not is_numba_installed(), reason="arity-slope values need real numba timings, not the shim")

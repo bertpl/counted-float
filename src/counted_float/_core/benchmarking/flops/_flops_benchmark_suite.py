@@ -203,9 +203,24 @@ class FlopsBenchmarkSuite:
         floor = cls.MIN_LATENCY_ADD_FRACTION * max(latencies[FlopType.ADD], sys.float_info.min)
         return {flop_type: max(latency, floor) for flop_type, latency in latencies.items()}
 
+    # The arity probes read a window of elements behind the current index via negative offsets
+    # (the widest, the arity-8 sumprod form, reaches 15 back), so arrays below this size would
+    # index out of bounds -- an IndexError in pure Python, a silent out-of-bounds read under
+    # numba's default unchecked indexing.
+    MIN_ARRAY_SIZE = 16
+
     @staticmethod
     def get_flops_benchmarking_suite(size: int) -> dict[FlopsBenchmarkType, FlopsMicroBenchmark]:
-        """Returns a benchmark for each FlopsBenchmarkType, of requested array size."""
+        """Returns a benchmark for each FlopsBenchmarkType, of requested array size.
+
+        Raises:
+            ValueError: If `size` is below MIN_ARRAY_SIZE (the arity probes' look-behind window).
+        """
+        if size < FlopsBenchmarkSuite.MIN_ARRAY_SIZE:
+            raise ValueError(
+                f"array_size must be >= {FlopsBenchmarkSuite.MIN_ARRAY_SIZE}: the arity probes read up to "
+                f"{FlopsBenchmarkSuite.MIN_ARRAY_SIZE - 1} elements behind the current index"
+            )
         # --- assemble the registry -----------------------
         return {
             key: FlopsMicroBenchmark(name=str(key), size=size, f=f, array_init=array_init)
