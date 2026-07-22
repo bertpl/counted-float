@@ -18,7 +18,8 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 
 | Python operation | Counts as | Mechanism | Weight source | Stays `CountedFloat`? |
 |---|---|---|---|---|
-| `x + y`, `x - y`, `x * y`, `x / y` | `ADD`, `SUB`, `MUL`, `DIV` | operator | ISA | yes |
+| `x + y`, `x - y`, `x * y` | `ADD`, `SUB`, `MUL` | operator | ISA | yes |
+| `x / y` | `DIV` (`MUL` for a power-of-two constant divisor — the exact reciprocal fold; nothing for `x / 1.0`) | operator | ISA | yes |
 | `x // y` | `DIV + RND` | operator (decomposed) | ISA | yes |
 | `x % y` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes |
 | `divmod(x, y)` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes (both) |
@@ -26,7 +27,8 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `+x` | *(nothing)* | operator | — | yes |
 | `abs(x)`, `math.fabs(x)` | `ABS` | operator / patch | ISA | yes |
 | `x == y`, `x < y`, …, `min`, `max` | `COMP` | operator | ISA | returns `bool` |
-| `round(x, n)` | `RND` | operator | ISA | yes (float) |
+| `round(x, 0)` | `RND` | operator | ISA | yes (float) |
+| `round(x, n)`, `n != 0` | `MUL + RND + DIV` | operator (decomposed) | ISA | yes (float) |
 | `round(x)`, `int(x)`, `math.floor`/`ceil`/`trunc` | `F2I` | operator | ISA | returns `int` |
 | `CountedFloat(int)` | `I2F` | constructor | ISA | yes |
 | `x ** y`, `math.pow(x, y)` | `POW` (or cheaper via constant strength reduction — MULs, SQRT, DIV, EXP2, EXP10) | operator / patch | benchmarked | yes |
@@ -69,6 +71,15 @@ float→float round (`RND`), not an `F2I`:
 - `x % y` → `DIV + RND + MUL + SUB` — the floored remainder `r = x − y·⌊x/y⌋`.
 - `divmod(x, y)` → `DIV + RND + MUL + SUB` — quotient and remainder share the
   `DIV + RND`, so it costs the same as a lone `%`.
+
+`round(x, n)` with a nonzero digit count decomposes the same way:
+
+- `round(x, n)`, `n != 0` → `MUL + RND + DIV` — scale into the digit position,
+  round, scale back. The unscale is a true divide (the scale factor is a power
+  of ten, whose reciprocal is not exact). Stated gap: CPython itself computes
+  this via correctly-rounded decimal conversion, whose input-dependent cost the
+  port price knowingly omits. `round(x, 0)` needs no scaling and counts a lone
+  `RND`.
 
 Note the `%` operator (floored) is distinct from `math.fmod` (the truncated C
 remainder, which has its own `FlopType.FMOD`). `math.log(x, base)` also
@@ -122,9 +133,10 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - Relevant CPU instructions
     - **ARM:** `FRINT`
     - **x86:** `ROUNDSD`
-- **Counted Python operations:** `round(x, n)` with explicit `n` — including
-  rounding to decimals, e.g. `round(x, 2)` — for `CountedFloat` (returns
-  float)
+- **Counted Python operations:** `round(x, 0)` for `CountedFloat` (returns
+  float), plus the round step inside the decomposed operations — `round(x, n)`
+  with nonzero `n` (`MUL + RND + DIV`) and the floor of `x // y` / `x % y` /
+  `divmod`
 - **Not counted:** `numpy.round`, rounding on non-CountedFloat
 - **Weight measurement:** [the machine code behind the `RND` weight](kernel_asm/rnd.md)
 
@@ -182,7 +194,11 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - Relevant CPU instructions
     - **ARM:** `FDIV`
     - **x86:** `DIVSD`
-- **Counted Python operations:** `x / y` or `y / x` for `CountedFloat`
+- **Counted Python operations:** `x / y` or `y / x` for `CountedFloat` —
+  except division by a power-of-two constant divisor with a finite reciprocal,
+  which counts `MUL`: for exactly those divisors `x * (1/c)` is bit-identical
+  to `x / c`, so a compiled port applies the reciprocal fold. `x / 1.0` counts
+  nothing at all (it folds away entirely, mirroring `x ** 1`)
 - **Not counted:** Division on non-CountedFloat, numpy division
 - **Weight measurement:** [the machine code behind the `DIV` weight](kernel_asm/div.md)
 

@@ -91,7 +91,7 @@ context report these calls as it meets them — the not-instrumented set and
 it exists — on older interpreters there is no such function to call, and a
 multiply-add written as `a*b + c` counts MUL + ADD there as everywhere else. It is
 the one place a fused multiply-add is observable at the Python level, which is why
-it is also the only place one is counted; see [FLOP types](flop_types.md#floptypefma-xyz)
+it is also the only place one is counted; see [FLOP types](flop_types.md#flop-fma)
 for its counting rules and [Known limitations](known_limitations.md) for what
 operator-level fusion still costs.
 

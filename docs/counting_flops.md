@@ -72,6 +72,8 @@ patched `math` functions:
    | `x ** 2` (or `2.0`) | MUL |
    | `x ** n`, integer 2 ≤ \|n\| ≤ 16 | square-and-multiply MULs (`x**3` → 2 MUL, `x**8` → 3 MUL); negative `n` adds one DIV |
    | `x ** -1` | DIV (reciprocal) |
+   | `x / 1.0` | nothing (folds away; result stays `CountedFloat`) |
+   | `x / c`, power-of-two `c` | MUL — `x * (1/c)` is bit-identical exactly there, so a compiler folds it; any other constant divisor stays DIV |
    | `x ** 0.5` / `x ** -0.5` | SQRT / SQRT + DIV |
    | `x ** 0`, `x ** 1` | nothing (folds away; result stays `CountedFloat`) |
    | `x ** c`, other values | POW |

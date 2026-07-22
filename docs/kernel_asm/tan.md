@@ -2,7 +2,7 @@
 
 The `TAN` cost is the latency difference between a kernel chaining `math.tan(tmp + x[i])` and
 one chaining only `tmp + x[i]` — kernels `f_add_tan` and `f_add`. Like most libm-backed functions,
-`math.tan` compiles to a call into the math library.
+`math.tan` compiles to a call into the math library. The kernel's moderate input range targets the general-case cost: tiny arguments would skip argument reduction and underprice the call, huge ones would price the expensive large-argument reduction instead.
 
 What Python code counts into `TAN` is described in
 [FLOP types](../flop_types.md#flop-tan).

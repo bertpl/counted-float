@@ -1,9 +1,11 @@
 # CBRT
 
-The `CBRT` cost is the latency difference between a kernel chaining `np.cbrt(tmp + x[i])` and
-one chaining only `tmp + x[i]` — kernels `f_add_cbrt` and `f_add`. A libm call — with extra
-handling: numba implements `np.cbrt` with its own NaN check and negative-argument handling
-around the `cbrt` call, and that wrapper code is part of what the weight measures.
+The `CBRT` cost is the latency difference between a kernel chaining `cbrt(tmp + x[i])` and
+one chaining only `tmp + x[i]` — kernels `f_add_cbrt` and `f_add`. A libm call with one
+wrinkle: numba's own route (`np.cbrt`) wraps the libm call in a NaN check and
+negative-argument handling that CPython's `math.cbrt` never executes, so the kernel calls
+libm's `cbrt` through a ctypes binding instead — the bare call CPython executes, compiling to
+the same indirect-call loop shape as the [REMAINDER](remainder.md) kernel.
 
 What Python code counts into `CBRT` is described in
 [FLOP types](../flop_types.md#flop-cbrt).
@@ -16,35 +18,15 @@ What Python code counts into `CBRT` is described in
 +++ f_add_cbrt
   .L0:
 - ldr  %d0, [%x0], #8
-- fadd  %d1, %d1, %d0
++ ldr  %x0, [%x1]
++ ldr  %d0, [%x2], #8
+  fadd  %d1, %d1, %d0
 - str  %d1, [%x1], #8
 - subs  %x2, %x2, #1
-- b.ne  .L0
-+ subs  %x0, %x0, #1
-+ b.le  .L1
-+ .L2:
-+ mov  %x1, %x2
-+ mov  %x3, %x4
-+ mov  %x5, %x6
-+ mov.16b  %v0, %v1
-+ b  .L3
-+ .L4:
-+ blr  %x7
-+ .L5:
-+ str  %d0, [%x5], #8
-+ subs  %x1, %x1, #1
-+ b.eq  .L0
-+ .L3:
-+ ldr  %d2, [%x3], #8
-+ fadd  %d0, %d0, %d2
-+ fcmp  %d0, %d0
-+ b.vs  .L6
-+ fcmp  %d0, #0.0
-+ b.ge  .L4
-+ fneg  %d0, %d0
-+ blr  %x7
-+ fneg  %d0, %d0
-+ b  .L5
++ blr  %x0
++ str  %d1, [%x3], #8
++ subs  %x4, %x4, #1
+  b.ne  .L0
 ```
 <!-- END generated: kernel-asm-cbrt-diff -->
 
@@ -52,7 +34,7 @@ What Python code counts into `CBRT` is described in
 
 <!-- BEGIN generated: kernel-asm-cbrt-structure -->
 - `f_add` -- 2 innermost loop(s): 30 instructions, 6 instructions
-- `f_add_cbrt` -- 1 innermost loop(s): 26 instructions
+- `f_add_cbrt` -- 1 innermost loop(s): 8 instructions
 
 The listings below are the complete compiled functions the benchmark times, raw as numba
 emits them (the cpython call wrappers around them are omitted -- they never run inside the
@@ -165,10 +147,10 @@ amount of work -- see the discussion below.
       .cfi_offset b9, -112
       mov  x19, x0
       cmp  x2, #1
-      b.lt  LBB0_11
+      b.lt  LBB0_6
       mov  x20, x3
       cmp  x3, #1
-      b.lt  LBB0_11
+      b.lt  LBB0_6
       mov  x21, x2
       ldr  x22, [sp, #168]
       ldr  x23, [sp, #112]
@@ -178,41 +160,25 @@ amount of work -- see the discussion below.
       movk  x8, #16389, lsl #48
       fmov  d8, x8
     Lloh0:
-      adrp  x24, _cbrt@GOTPAGE
+      adrp  x24, _numba.dynamic.globals.<addr>@GOTPAGE
     Lloh1:
-      ldr  x24, [x24, _cbrt@GOTPAGEOFF]
-      b  LBB0_4
+      ldr  x24, [x24, _numba.dynamic.globals.<addr>@GOTPAGEOFF]
     LBB0_3:
-      subs  x21, x21, #1
-      b.le  LBB0_11
-    LBB0_4:
       mov  x25, x20
       mov  x26, x23
       mov  x27, x22
       mov.16b  v0, v8
-      b  LBB0_7
-    LBB0_5:
-      blr  x24
-    LBB0_6:
-      str  d0, [x27], #8
-      subs  x25, x25, #1
-      b.eq  LBB0_3
-    LBB0_7:
+    LBB0_4:
+      ldr  x8, [x24]
       ldr  d1, [x26], #8
       fadd  d0, d0, d1
-      fcmp  d0, d0
-      b.vs  LBB0_10
-      fcmp  d0, #0.0
-      b.ge  LBB0_5
-      fneg  d0, d0
-      blr  x24
-      fneg  d0, d0
-      b  LBB0_6
-    LBB0_10:
-      mov  x8, #9221120237041090560
-      fmov  d0, x8
-      b  LBB0_6
-    LBB0_11:
+      blr  x8
+      str  d0, [x27], #8
+      subs  x25, x25, #1
+      b.ne  LBB0_4
+      subs  x21, x21, #1
+      b.gt  LBB0_3
+    LBB0_6:
       str  xzr, [x19]
       mov  w0, #0
       ldp  x29, x30, [sp, #96]
@@ -230,18 +196,20 @@ amount of work -- see the discussion below.
 
 ## Discussion
 
-**The subtraction isolates one `cbrt` call plus numba's NaN/sign wrapper around it.**
+**The subtraction isolates exactly one call to libm's `cbrt`.**
 
-1. *What the diff shows*: the loop compiled to a *rotated* form — its cycle closes through
-   forward branches and fallthrough rather than one backward branch, so it appears as a single
-   merged region and the diff aligns almost nothing with `f_add`. Reading the `+` side as a
-   whole: load and `fadd` as usual, then a NaN check (`fcmp %d0, %d0` + `b.vs`), then either a
-   direct `cbrt` call for non-negative arguments or a `fneg` → `cbrt` → `fneg` sequence for
-   negative ones (`cbrt(-x) = -cbrt(x)`). The region also carries the outer loop's reset code,
-   entangled by the rotation. The priced work is therefore call + compare/branch wrapper — a
-   faithful account of what `np.cbrt` costs under numba, slightly more than a bare libm call.
-2. *In the dependency chain*: the NaN check, the sign branches and the call all depend on the
-   accumulator and feed its next value, so the whole wrapper sits in the serialized chain. The
-   kernel's mixed-sign input range exercises both sign paths.
-3. *Loop-structure symmetry*: `f_add` unrolls 8×; the branchy cbrt loop cannot unroll. As on
-   the [SQRT page](sqrt.md), both sides remain latency-bound, so the subtraction holds.
+1. *Intended call, and nothing else*: the structural additions are the `blr` — the `cbrt`
+   call — plus one integer load per iteration re-fetching the call-target pointer from the
+   ctypes closure (the libm kernels numba compiles directly keep their target in a register;
+   the ctypes route reloads it). That load is a stride-0 L1 hit on the integer side. The
+   remaining `-`/`+` pairs are the canonical-index shift described on the
+   [index page](index.md). No NaN check and no sign branches: numba's `np.cbrt` would add
+   those around the call, which is exactly why the kernel binds libm directly — CPython's
+   `math.cbrt` executes the bare call.
+2. *In the dependency chain*: the accumulator flows through the call — `fadd` produces the
+   argument, the call returns the result the next iteration's `fadd` consumes. The pointer
+   reload is integer-side work that runs off the chain, overlapping earlier latency rather
+   than extending it.
+3. *Loop-structure symmetry*: same asymmetry as the [SQRT page](sqrt.md) — `f_add` unrolls
+   8×, `f_add_cbrt` does not; the diff shows `f_add`'s scalar remainder loop. As there, both
+   sides stay latency-bound through the accumulator chain, so the subtraction holds.

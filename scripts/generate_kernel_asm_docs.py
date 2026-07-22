@@ -243,9 +243,9 @@ PAGES: list[KernelAsmPage] = [
     KernelAsmPage("acos", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_acos"),
     KernelAsmPage("acosh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_acosh", range_sensitive=True),
     KernelAsmPage("asin", kind=KIND_LIBM, base_kernel="f_add_sin", extended_kernel="f_add_sin_asin"),
-    KernelAsmPage("asinh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_asinh"),
-    KernelAsmPage("atan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan"),
-    KernelAsmPage("atan2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan2"),
+    KernelAsmPage("asinh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_asinh", range_sensitive=True),
+    KernelAsmPage("atan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan", range_sensitive=True),
+    KernelAsmPage("atan2", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_atan2", range_sensitive=True),
     KernelAsmPage("atanh", kind=KIND_LIBM, base_kernel="f_add_halfsin", extended_kernel="f_add_halfsin_atanh"),
     KernelAsmPage(
         "cbrt",
@@ -253,12 +253,14 @@ PAGES: list[KernelAsmPage] = [
         base_kernel="f_add",
         extended_kernel="f_add_cbrt",
         rationale=(
-            "a known deviation from rule 2.2: measured through numba's `np.cbrt`, whose NaN/sign handling "
-            "around the libm call is included in the weight (CPython's `math.cbrt` calls libm directly)"
+            "numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, "
+            "so the kernel calls libm through a ctypes binding -- the bare call CPython executes"
         ),
     ),
-    KernelAsmPage("cos", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cos"),
-    KernelAsmPage("cosh", kind=KIND_LIBM, base_kernel="f_add_acosh", extended_kernel="f_add_acosh_cosh"),
+    KernelAsmPage("cos", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_cos", range_sensitive=True),
+    KernelAsmPage(
+        "cosh", kind=KIND_LIBM, base_kernel="f_add_acosh", extended_kernel="f_add_acosh_cosh", range_sensitive=True
+    ),
     KernelAsmPage("erf", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erf", range_sensitive=True),
     KernelAsmPage("erfc", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_erfc", range_sensitive=True),
     KernelAsmPage("exp", kind=KIND_LIBM, base_kernel="f_add_log", extended_kernel="f_add_log_exp"),
@@ -312,9 +314,11 @@ PAGES: list[KernelAsmPage] = [
         ),
         range_sensitive=True,
     ),
-    KernelAsmPage("sin", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_sin"),
-    KernelAsmPage("sinh", kind=KIND_LIBM, base_kernel="f_add_asinh", extended_kernel="f_add_asinh_sinh"),
-    KernelAsmPage("tan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tan"),
+    KernelAsmPage("sin", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_sin", range_sensitive=True),
+    KernelAsmPage(
+        "sinh", kind=KIND_LIBM, base_kernel="f_add_asinh", extended_kernel="f_add_asinh_sinh", range_sensitive=True
+    ),
+    KernelAsmPage("tan", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tan", range_sensitive=True),
     KernelAsmPage("tanh", kind=KIND_LIBM, base_kernel="f_add", extended_kernel="f_add_tanh", range_sensitive=True),
     # --- arity-scaled algorithms -----------------
     KernelAsmPage(

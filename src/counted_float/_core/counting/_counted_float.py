@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import operator
+from math import frexp as _frexp  # the raw builtin: math.frexp may later carry a reporting wrapper
 from typing import TYPE_CHECKING, SupportsIndex
 
 from ._thread_counter import _TLS, _create_thread_state
@@ -53,6 +55,33 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
             cnt.DIV += 1
         return
     cnt.POW += 1
+
+
+def count_div_with_constant_divisor(divisor: float) -> None:
+    """Register the flops a compiled port would execute for ``x / divisor`` with a constant divisor.
+
+    Constants are folded by value (an int and an equal-valued plain float compile identically):
+    a divisor of 1 counts nothing (``x / 1.0`` folds away entirely — a compiled port emits no
+    instruction, mirroring ``x ** 1``), and any other power-of-two divisor with a finite
+    reciprocal counts MUL — for exactly those divisors ``x * (1/c)`` is bit-identical to
+    ``x / c``, so a standard-C compiler applies the reciprocal fold at plain ``-O2``. Every
+    other divisor counts DIV.
+    """
+    if divisor == 1.0:
+        return
+    try:
+        cnt: CountsTarget = _TLS.flop_counts
+    except AttributeError:  # first counted op on this thread
+        cnt: CountsTarget = _create_thread_state()
+    mantissa, exponent = _frexp(divisor)
+    # power of two iff the mantissa is exactly +/-0.5; the divisor is then 2**(exponent-1), whose
+    # reciprocal 2**(1-exponent) stays finite iff exponent >= -1022 (below that it overflows and
+    # the fold would not be value-preserving)
+    if mantissa in (0.5, -0.5) and exponent >= -1022:
+        cnt.note("power-of-two constant divisor -> reciprocal multiply")
+        cnt.MUL += 1
+    else:
+        cnt.DIV += 1
 
 
 def count_pow_with_constant_base(base: float) -> None:
@@ -208,20 +237,35 @@ class CountedFloat(float):
     ) -> int | float:
         """Round to n decimal places, i.e. round(x, n).
 
-        n = None -> round to nearest integer and return int
-        n = 0    -> round to nearest integer and return float
-        n > 0    -> round to n decimal places and return float.
+        n = None -> round to nearest integer and return int (F2I)
+        n = 0    -> round to nearest integer and return float (RND)
+        n != 0   -> round to n decimal places and return float: a compiled port scales into
+                    the digit position, rounds, and scales back -- MUL + RND + DIV. The
+                    unscale is a true divide (the scale factor is a power of ten, whose
+                    reciprocal is not exact), so no reciprocal fold applies. Stated gap: the
+                    port price knowingly omits the correctly-rounded decimal machinery
+                    CPython itself runs (David Gay's algorithm), which has no fixed
+                    instruction cost to price.
         """
         if n is None:
             try:
                 _TLS.flop_counts.F2I += 1  # will round and return int
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().F2I += 1
-        else:
+        elif operator.index(n) == 0:
             try:
                 _TLS.flop_counts.RND += 1  # will round and return float
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().RND += 1
+        else:
+            try:
+                cnt: CountsTarget = _TLS.flop_counts
+            except AttributeError:  # first counted op on this thread
+                cnt: CountsTarget = _create_thread_state()
+            cnt.note("nonzero ndigits -> scale, round, unscale")
+            cnt.MUL += 1
+            cnt.RND += 1
+            cnt.DIV += 1
 
         return float.__round__(self, n)
 
@@ -324,18 +368,26 @@ class CountedFloat(float):
         return float.__new__(CountedFloat, result)
 
     def __truediv__(self, other: float) -> CountedFloat:
-        """x/other."""
+        """x/other.
+
+        A constant (non-CountedFloat) divisor enables the folds a compiled port applies — see
+        count_div_with_constant_divisor: a divisor of 1 counts nothing, any other power-of-two
+        constant divisor with a finite reciprocal counts MUL, everything else counts DIV.
+        """
         result = float.__truediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        try:
-            _TLS.flop_counts.DIV += 1
-        except AttributeError:  # first counted op on this thread
-            _create_thread_state().DIV += 1
+        if isinstance(other, CountedFloat):
+            try:
+                _TLS.flop_counts.DIV += 1  # genuinely runtime divisor
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().DIV += 1
+        else:
+            count_div_with_constant_divisor(other)
         return float.__new__(CountedFloat, result)
 
     def __rtruediv__(self, other: float) -> CountedFloat:
-        """other/x."""
+        """other/x. The divisor is this CountedFloat — dynamic, so always DIV (no fold applies)."""
         result = float.__rtruediv__(self, other)
         if result is NotImplemented:
             return NotImplemented

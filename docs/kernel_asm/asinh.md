@@ -2,7 +2,7 @@
 
 The `ASINH` cost is the latency difference between a kernel chaining `math.asinh(tmp + x[i])` and
 one chaining only `tmp + x[i]` — kernels `f_add_asinh` and `f_add`. Like most libm-backed functions,
-`math.asinh` compiles to a call into the math library.
+`math.asinh` compiles to a call into the math library. The kernel's moderate input range targets the general-case cost -- huge arguments would land in `asinh`'s cheaper asymptotic `log`-shortcut regime.
 
 What Python code counts into `ASINH` is described in
 [FLOP types](../flop_types.md#flop-asinh).
