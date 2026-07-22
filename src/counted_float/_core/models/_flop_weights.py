@@ -99,13 +99,16 @@ class FlopWeights(JsonReprModel):
         """Print the weights, cheapest first, with missing ones last."""
         print("{")
         # ordering comes from get_sorted_flop_types() so the two cannot disagree: sorting on the raw
-        # weight here would compare against NaN, scattering the measured weights among the missing
+        # weight here would compare against NaN, scattering the measured weights among the missing.
+        # The label column is padded to the widest long_name (plus the 4-space indent and a
+        # 2-space gap) so no row can push its colon out of line
+        name_pad = 4 + max(len(flop_type.long_name()) for flop_type in FlopType) + 2
         for flop_type in self.get_sorted_flop_types():
             weight = self.weights[flop_type]
             if isinstance(weight, float):
-                print(f"    {flop_type.long_name()}".ljust(40) + f": {weight:9.5f}")
+                print(f"    {flop_type.long_name()}".ljust(name_pad) + f": {weight:9.5f}")
             else:
-                print(f"    {flop_type.long_name()}".ljust(40) + f": {weight:>4}")
+                print(f"    {flop_type.long_name()}".ljust(name_pad) + f": {weight:>4}")
         print("}")
 
     # -------------------------------------------------------------------------

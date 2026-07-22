@@ -3,6 +3,14 @@
 Terms used across the reference pages, defined once. Each entry carries a stable anchor for
 linking.
 
+## Arity { #arity }
+
+The number of arguments — or elements, for functions taking sequences — a call consumes:
+`hypot(x, y, z)` has arity 3, `sumprod` over n-element inputs arity n. The arity-scaled flop
+types price such calls as a fixed base weight plus a measured per-extra-argument slope
+(`HYPOT` + (n−2) `HYPOT_XARG`, and likewise for `dist` and `sumprod`), instead of one weight
+per possible length.
+
 ## Benchmark probe { #benchmark-probe }
 
 One of the small numba-compiled functions the flops benchmark times: a doubly-nested loop
