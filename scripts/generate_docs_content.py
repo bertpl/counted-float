@@ -74,7 +74,7 @@ CAPTURES_ARE_COMPARABLE = sys.platform != "win32"
 
 # Rendering geometry. The show-data capture is taken wide enough that show() emits one single
 # column block (instead of wrapping into stacked blocks), then cropped to the leading columns.
-SHOW_DATA_CAPTURE_COLUMNS = 460
+SHOW_DATA_CAPTURE_COLUMNS = 600
 SHOW_DATA_IMAGE_CROP_COLUMNS = 190
 # The committed cli.md slice keeps the flop-type columns through I2F, matching the docs prose.
 CLI_SLICE_LAST_COLUMN = "I2F"

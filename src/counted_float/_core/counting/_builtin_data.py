@@ -11,6 +11,7 @@ from rich.console import Console
 
 from counted_float._core.models import (
     FlopsBenchmarkResults,
+    FlopType,
     FlopWeights,
     InstructionLatencies,
 )
@@ -285,21 +286,28 @@ class FlopWeightsTreeView:
         console = Console()
         console_width = console.width
         tree_width = 5 + max([len(line) for line in self.lst_tree_str])
-        col_width = 10
         sorted_flop_types = self.lst_flop_weights[0].get_sorted_flop_types()
+        # right-aligned cells carry their own inter-column gap in the padding, so a column must be
+        # at least one character wider than its header not to glue onto its left neighbor
+        col_widths = {flop_type: max(10, len(flop_type.name) + 1) for flop_type in sorted_flop_types}
 
-        n_cols_per_block = max(1, int((console_width - tree_width) / col_width))
-        flop_types_per_block = [
-            sorted_flop_types[i_start : i_start + n_cols_per_block]
-            for i_start in range(0, len(sorted_flop_types), n_cols_per_block)
-        ]
+        # greedy packing: a block takes columns while their cumulative width fits the console
+        # (every block gets at least one column, so a too-narrow console still renders)
+        flop_types_per_block: list[list[FlopType]] = []
+        block_width = 0
+        for flop_type in sorted_flop_types:
+            if not flop_types_per_block or block_width + col_widths[flop_type] > console_width - tree_width:
+                flop_types_per_block.append([])
+                block_width = 0
+            flop_types_per_block[-1].append(flop_type)
+            block_width += col_widths[flop_type]
 
         # --- show data -----------------------------------
         for flop_types in flop_types_per_block:
             # --- legend ---
             legend = " " * tree_width
             for flop_type in flop_types:
-                legend += flop_type.name.rjust(col_width)
+                legend += flop_type.name.rjust(col_widths[flop_type])
             console.print(legend, style="bold")
 
             # --- actual tree view ---
@@ -314,11 +322,11 @@ class FlopWeightsTreeView:
                 for flop_type in flop_types:
                     w = flop_weights.weights[flop_type]
                     if math.isnan(w):
-                        line += "/ ".rjust(col_width)
+                        line += "/ ".rjust(col_widths[flop_type])
                     elif isinstance(w, int):
-                        line += str(w).rjust(col_width)
+                        line += str(w).rjust(col_widths[flop_type])
                     else:
-                        line += f"{w:.2f}".rjust(col_width)
+                        line += f"{w:.2f}".rjust(col_widths[flop_type])
 
                 if is_leaf:
                     # no special styling
