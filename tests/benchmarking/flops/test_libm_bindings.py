@@ -1,3 +1,4 @@
+import ctypes
 import subprocess
 import sys
 
@@ -42,5 +43,22 @@ def test_load_libm_survives_an_unlocatable_library(monkeypatch):
     # --- act / assert ------------------------------------
     try:
         assert _libm_bindings._load_libm() is None or sys.platform == "win32"
+    finally:
+        _libm_bindings._load_libm.cache_clear()  # drop the None so later real calls reload
+
+
+def test_load_libm_returns_none_when_the_library_fails_to_load(monkeypatch):
+    # find_library locates a name but the CDLL load raises OSError -> None, deferring to the clear
+    # RuntimeError _require_libm raises at flops-benchmark time
+    # --- arrange -----------------------------------------
+    def _raise_oserror(*_args, **_kwargs):
+        raise OSError("simulated libm load failure")
+
+    monkeypatch.setattr(ctypes, "CDLL", _raise_oserror)
+    _libm_bindings._load_libm.cache_clear()
+
+    # --- act / assert ------------------------------------
+    try:
+        assert _libm_bindings._load_libm() is None
     finally:
         _libm_bindings._load_libm.cache_clear()  # drop the None so later real calls reload

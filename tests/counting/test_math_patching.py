@@ -89,6 +89,13 @@ def test_math_module_patched_inside_context_only(fname):
         ("copysign", (3.0, -2.0)),
         ("hypot", (1.0, 2.0, 2.0)),
         ("hypot", (-3.0,)),
+        # plain-float delegation paths for the special functions (their CountedFloat counting
+        # paths are exercised separately in test_new_math_ops_count_and_are_contagious)
+        ("gamma", (2.0,)),
+        ("lgamma", (2.0,)),
+        ("erf", (0.5,)),
+        ("erfc", (0.5,)),
+        ("remainder", (5.0, 3.0)),
     ],
 )
 def test_patched_math_functions_match_stdlib_for_plain_floats(thread_counter, fname, args):
@@ -767,3 +774,29 @@ def test_capture_originals_keeps_both_original_tables_in_sync():
         assert delegation_target is _math_patching._saved_originals[name], (
             f"original_math_{name} does not match the restoration snapshot for '{name}'"
         )
+
+
+# =================================================================================================
+#  Version-gated stand-ins and teardown guard
+# =================================================================================================
+def test_fma_unavailable_stand_in_raises() -> None:
+    # the stand-in exists so original_math_fma is callable pre-3.13; calling it must raise
+    # --- act / assert ------------------------------------
+    with pytest.raises(NotImplementedError, match=r"math\.fma"):
+        _math_patching._math_fma_unavailable(1.0, 2.0, 3.0)
+
+
+def test_sumprod_unavailable_stand_in_raises() -> None:
+    # --- act / assert ------------------------------------
+    with pytest.raises(NotImplementedError, match=r"math\.sumprod"):
+        _math_patching._math_sumprod_unavailable([1.0], [2.0])
+
+
+def test_remove_uncounted_math_patches_is_a_noop_when_none_installed() -> None:
+    # the guard returns early when no thread is reporting, so there is nothing to undo
+    # --- arrange -----------------------------------------
+    assert _math_patching._reporting_thread_count == 0
+
+    # --- act / assert (must not raise or touch the math module) ---
+    _math_patching.remove_uncounted_math_patches()
+    assert _math_patching._reporting_thread_count == 0

@@ -1,6 +1,12 @@
 import pytest
 
-from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict, _load_json_files_as_dict
+from counted_float._core.counting._builtin_data import (
+    BuiltInData,
+    FlopWeightsTreeView,
+    _construct_flop_weights_from_json_str,
+    _flat_to_nested_dict,
+    _load_json_files_as_dict,
+)
 from counted_float._core.models import FlopsBenchmarkResults, FlopWeights
 
 
@@ -141,3 +147,20 @@ def test_load_json_files_as_dict_uses_only_the_traversable_contract():
 
     # --- assert ------------------------------------------
     assert result == {"apple_m4_pro": '{"cpu": "m4"}', "arm.graviton": '{"cpu": "g"}'}
+
+
+def test_construct_flop_weights_rejects_unknown_json():
+    # JSON that matches none of the supported data schemas raises rather than degrading silently
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="known data structure"):
+        _construct_flop_weights_from_json_str('{"not": "a known schema"}')
+
+
+def test_show_renders_integer_weights():
+    # nearest-int rounding yields int weights; the tree renderer must format those as plain integers
+    # --- arrange -----------------------------------------
+    int_weights = BuiltInData.get_flop_weights(key_filter=".").round("nearest_int")
+    tree = FlopWeightsTreeView.from_nested_dict(name="ALL", nested_dict={"cpus": int_weights})
+
+    # --- act / assert (must not raise; exercises the int-weight branch) ---
+    tree.show()

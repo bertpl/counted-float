@@ -1266,3 +1266,14 @@ def test_counted_float_pow_runtime_counted_exponent_counts_pow(thread_counter):
     # --- assert ------------------------------------------
     assert thread_counter.total_count() == 1
     assert thread_counter.POW == 1
+
+
+@pytest.mark.parametrize("method", ["__rfloordiv__", "__rmod__", "__rdivmod__", "__rpow__"])
+def test_reflected_op_returns_notimplemented_for_unsupported_operand(method: str) -> None:
+    # a reflected dunder must defer (return NotImplemented) when the underlying float op cannot
+    # handle the other operand, so Python can fall through to the operand's own handling / a TypeError
+    # --- act ---------------------------------------------
+    result = getattr(CountedFloat(2.0), method)("not a number")
+
+    # --- assert ------------------------------------------
+    assert result is NotImplemented

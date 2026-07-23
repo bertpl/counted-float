@@ -208,14 +208,10 @@ relative_files = true  # so per-combo matrix data files combine without a [paths
 
 [tool.coverage.report]
 precision = 2
-fail_under = 95        # cumulative gate, enforced on the combined matrix data
+fail_under = 100       # cumulative gate, enforced on the combined matrix data
 exclude_also = [
     "@abstractmethod",
     "@abc.abstractmethod",
-    # thread-local lazy-init handlers: each runs at most once per thread (on its very first
-    # counted op at that specific site), so per-site coverage is not meaningful; the init
-    # mechanism itself is covered by the fresh-thread tests
-    "except AttributeError:  # first counted op on this thread",
 ]
 
 [tool.codespell]
