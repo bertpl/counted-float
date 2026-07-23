@@ -14,6 +14,14 @@ def test_show_data():
     runner.invoke(show_data)
 
 
+def test_show_data_prints_model_relative_footer():
+    """`show-data` closes with a caveat naming the weights as model-relative and linking the docs."""
+    result = CliRunner().invoke(show_data)
+    assert result.exit_code == 0
+    assert "model-relative" in result.output
+    assert "counted-float.readthedocs.io/en/latest/cost_model/" in result.output
+
+
 @pytest.mark.parametrize("flag", ["--key-filter", "--key_filter"])
 def test_show_data_key_filter_spellings(flag: str, monkeypatch) -> None:
     """Both the kebab-case flag and its underscore alias forward the same filter value."""

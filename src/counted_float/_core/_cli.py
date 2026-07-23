@@ -39,6 +39,12 @@ def benchmark(output: Path | None) -> None:
 )
 def show_data(key_filter: str) -> None:
     BuiltInData.show(key_filter=key_filter)
+    # a first-time reader can mistake these weights for absolute truth; the one-line footer names
+    # them as model-relative and points at the cost model rather than restating its caveats here
+    click.echo(
+        "Weights are model-relative estimates (relative to ADD); see the cost model for the "
+        "pricing rules and their caveats: https://counted-float.readthedocs.io/en/latest/cost_model/"
+    )
 
 
 @cli.command(short_help="run benchmark of float vs CountedFloat performance")

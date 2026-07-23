@@ -84,6 +84,16 @@ counted region.
   (those comparisons really execute) but can surprise when a dict is used as
   bookkeeping rather than algorithm — pause counting or use plain-float keys
   for bookkeeping structures
+- while a `FlopCountingContext` is open, the patched `math.fsum`, `math.prod`,
+  `math.sumprod` and `math.dist` materialize their iterable inputs (they call
+  `list(...)` on them) even when no `CountedFloat` is involved, so the argument
+  can be inspected after the value is computed. The stdlib versions consume some
+  of these lazily, so passing a very large one-shot iterator to one of these
+  functions inside a context holds the whole sequence in memory — O(n) space
+  where the unpatched call would stream. The computed value is unchanged; only
+  peak memory differs, and only while a context is active. (`math.hypot` takes
+  its coordinates as separate positional arguments, already materialized as a
+  tuple by the interpreter, so it does not diverge.)
 - flop weights should be taken with a grain of salt and should only provide
   relative ballpark estimates w.r.t. computational complexity. Production
   implementations in a compiled language could have vastly differing
