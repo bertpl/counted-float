@@ -64,6 +64,18 @@ def test_operand_side_does_not_change_the_count(
     counts_counted_right = _counts_of(op, other, counted)
 
     # --- assert ------------------------------------------
+    if op is operator.mul and float(other) in (1.0, -1.0):
+        # identity multipliers fold on both sides alike: * 1.0 counts nothing, * -1.0 a bare MINUS
+        expected = FlopCounts() if float(other) == 1.0 else FlopCounts(MINUS=1)
+        assert counts_counted_left == expected
+        assert counts_counted_right == expected
+        return
+    if op is operator.truediv and float(other) == -1.0:
+        # a constant divisor of -1 is a bare sign flip (MINUS); as a dividend the division is real
+        assert counts_counted_left.MINUS == 1
+        assert counts_counted_left.total_count() == 1
+        assert counts_counted_right.DIV == 1
+        return
     if op is operator.truediv and float(other) == 1.0:
         # a constant divisor of 1 folds away entirely; as a dividend the division is real
         assert counts_counted_left.total_count() == 0

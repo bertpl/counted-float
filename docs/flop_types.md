@@ -18,11 +18,11 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 
 | Python operation | Counts as | Mechanism | Weight source | Stays `CountedFloat`? |
 |---|---|---|---|---|
-| `x + y`, `x - y`, `x * y` | `ADD`, `SUB`, `MUL` | operator | ISA | yes |
-| `x / y` | `DIV` (`MUL` for a power-of-two constant divisor — the exact reciprocal fold; nothing for `x / 1.0`) | operator | ISA | yes |
-| `x // y` | `DIV + RND` | operator (decomposed) | ISA | yes |
-| `x % y` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes |
-| `divmod(x, y)` | `DIV + RND + MUL + SUB` | operator (decomposed) | ISA | yes (both) |
+| `x + y`, `x - y`, `x * y` | `ADD`, `SUB`, `MUL` (sign-exact identity constants fold: `* 1.0` / `- 0.0` / `+ (-0.0)` → nothing, `* -1.0` / `(-0.0) - x` → `MINUS`) | operator | ISA | yes |
+| `x / y` | `DIV` (`MUL` for a power-of-two constant divisor — the exact reciprocal fold; `MINUS` for `x / -1.0`; nothing for `x / 1.0`) | operator | ISA | yes |
+| `x // y` | `DIV + RND` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes |
+| `x % y` | `DIV + RND + MUL + SUB` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes |
+| `divmod(x, y)` | `DIV + RND + MUL + SUB` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes (both) |
 | `-x` | `MINUS` | operator | ISA | yes |
 | `+x` | *(nothing)* | operator | — | yes |
 | `abs(x)`, `math.fabs(x)` | `ABS` | operator / patch | ISA | yes |

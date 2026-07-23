@@ -855,7 +855,7 @@ def test_counted_float_counts_div_int(thread_counter):
         (4, {"MUL": 1}),  # an int and an equal-valued plain float compile identically
         (1.0, {}),  # folds away entirely, like x ** 1
         (1, {}),
-        (-1.0, {"MUL": 1}),  # only exact identity folds to nothing; the sign flip keeps its MUL
+        (-1.0, {"MINUS": 1}),  # x / -1.0 is exactly -x: a bare sign flip, not a multiply
         (2.0**-1023, {"MUL": 1}),  # smallest power of two whose reciprocal is finite
         (2.0**-1024, {"DIV": 1}),  # reciprocal overflows -> fold not value-preserving
         (3.0, {"DIV": 1}),
@@ -872,6 +872,79 @@ def test_counted_float_counts_div_by_constant(thread_counter, divisor, expected_
 
     # --- act ---------------------------------------------
     _ = cf / divisor
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == expected
+
+
+@pytest.mark.parametrize(
+    ("case", "expected_counts"),
+    [
+        # --- folds: the compiled port emits nothing (cost-model rule 1.7) ---
+        (lambda cf: cf * 1.0, {}),
+        (lambda cf: 1.0 * cf, {}),
+        (lambda cf: cf * 1, {}),  # an int and an equal-valued plain float compile identically
+        (lambda cf: cf - 0.0, {}),
+        (lambda cf: cf - 0, {}),  # int 0 compiles as +0.0
+        (lambda cf: cf + (-0.0), {}),
+        (lambda cf: (-0.0) + cf, {}),
+        # --- sign flips: exactly -x, so MINUS ---
+        (lambda cf: cf * -1.0, {"MINUS": 1}),
+        (lambda cf: -1.0 * cf, {"MINUS": 1}),
+        (lambda cf: cf * -1, {"MINUS": 1}),
+        (lambda cf: (-0.0) - cf, {"MINUS": 1}),
+        (lambda cf: cf / -1.0, {"MINUS": 1}),
+        # --- sharp near-misses: a signed zero makes these value-changing, so they keep counting ---
+        (lambda cf: cf + 0.0, {"ADD": 1}),  # -0.0 + 0.0 is +0.0
+        (lambda cf: cf + 0, {"ADD": 1}),
+        (lambda cf: 0.0 + cf, {"ADD": 1}),
+        (lambda cf: cf - (-0.0), {"SUB": 1}),  # it IS x + 0.0
+        (lambda cf: 0.0 - cf, {"SUB": 1}),  # 0.0 - 0.0 is +0.0, not the sign flip's -0.0
+        (lambda cf: 0 - cf, {"SUB": 1}),
+        # --- decomposed operations: the division step folds like a bare / ---
+        (lambda cf: cf // 8.0, {"RND": 1, "MUL": 1}),
+        (lambda cf: cf // 1.0, {"RND": 1}),
+        (lambda cf: cf // 3.0, {"DIV": 1, "RND": 1}),
+        (lambda cf: cf % 8.0, {"RND": 1, "MUL": 2, "SUB": 1}),
+        (lambda cf: cf % 3.0, {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+        (lambda cf: divmod(cf, 4.0), {"RND": 1, "MUL": 2, "SUB": 1}),
+        (lambda cf: divmod(cf, 3.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+    ],
+)
+def test_counted_float_identity_folds(thread_counter, case, expected_counts: dict[str, int]):
+    """The sign-exact identity folds of cost-model rule 1.7, and the near-misses that must not fold."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = case(cf)
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == expected
+
+
+@pytest.mark.parametrize(
+    ("case", "expected_counts"),
+    [
+        (lambda cf: cf * CountedFloat(1.0), {"MUL": 1}),
+        (lambda cf: cf - CountedFloat(0.0), {"SUB": 1}),
+        (lambda cf: cf + CountedFloat(-0.0), {"ADD": 1}),
+        (lambda cf: cf / CountedFloat(-1.0), {"DIV": 1}),
+        (lambda cf: cf // CountedFloat(8.0), {"DIV": 1, "RND": 1}),
+        (lambda cf: cf % CountedFloat(8.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+    ],
+)
+def test_counted_float_identity_folds_key_on_constants_only(thread_counter, case, expected_counts):
+    """The folds key on the operand being constant: a CountedFloat operand is dynamic, no fold."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(1.23456)
+
+    # --- act ---------------------------------------------
+    _ = case(cf)
 
     # --- assert ------------------------------------------
     assert thread_counter.total_count() == sum(expected_counts.values())
@@ -1028,15 +1101,15 @@ def test_counted_float_counts_floordiv(thread_counter):
     cf = CountedFloat(7.5)
 
     # --- act ---------------------------------------------
-    forward = cf // 2.0
+    forward = cf // 3.0
     reflected = 17.0 // cf
 
     # --- assert ------------------------------------------
     # values compared via float() so the comparison itself does not count a COMP
     assert isinstance(forward, CountedFloat)
     assert isinstance(reflected, CountedFloat)
-    assert (float(forward), float(reflected)) == (3.0, 2.0)
-    assert thread_counter.DIV == 2  # each // counts DIV + RND
+    assert (float(forward), float(reflected)) == (2.0, 2.0)
+    assert thread_counter.DIV == 2  # each // counts DIV + RND (3.0 is not a foldable divisor)
     assert thread_counter.RND == 2
     assert thread_counter.total_count() == 4
 
@@ -1046,7 +1119,7 @@ def test_counted_float_counts_mod(thread_counter):
     cf = CountedFloat(7.5)
 
     # --- act ---------------------------------------------
-    forward = cf % 2.0
+    forward = cf % 3.0
     reflected = 17.0 % cf
 
     # --- assert ------------------------------------------
@@ -1066,7 +1139,7 @@ def test_counted_float_counts_divmod(thread_counter):
     cf = CountedFloat(7.5)
 
     # --- act ---------------------------------------------
-    q, r = divmod(cf, 2.0)
+    q, r = divmod(cf, 3.0)
     rq, rr = divmod(17.0, cf)
 
     # --- assert ------------------------------------------
@@ -1074,7 +1147,7 @@ def test_counted_float_counts_divmod(thread_counter):
     assert isinstance(r, CountedFloat)
     assert isinstance(rq, CountedFloat)
     assert isinstance(rr, CountedFloat)
-    assert (float(q), float(r)) == (3.0, 1.5)
+    assert (float(q), float(r)) == (2.0, 1.5)
     # each divmod shares the quotient's DIV + RND with the remainder: DIV + RND + MUL + SUB per call
     assert thread_counter.DIV == 2
     assert thread_counter.RND == 2

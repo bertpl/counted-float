@@ -32,7 +32,7 @@ def test_concurrent_contexts_report_exactly_their_own_counts():
             for _ in range(n_adds):
                 x = x + 1.0
             for _ in range(n_muls):
-                x = x * 1.0
+                x = x * 0.5  # not an identity constant: * 1.0 would fold away and count nothing
         results[idx] = ctx.flop_counts()
 
     # --- act ---------------------------------------------
