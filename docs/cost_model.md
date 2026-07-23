@@ -98,11 +98,7 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
   `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives `+0.0`, where a sign flip
   would give `-0.0`). Inside the decomposed operations the same folds apply to the
   division step: a power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV
-  component into MUL.
-  *Known deviation: the folds of this bullet are not yet implemented — counted-float
-  currently counts `x * 1.0` and `x * -1.0` as MUL, `x - 0.0` and `(-0.0) - x` as SUB,
-  `x + (-0.0)` as ADD, `x / -1.0` as MUL (via 1.6), and the decompositions' division step
-  as DIV regardless of the divisor.*
+  component into MUL, and `// 1.0` drops it entirely.
 
 **Rule 2 — operations that compile to a library call are priced as the call's real
 algorithm, contract included.**
