@@ -31,6 +31,11 @@ PRECOMPUTED_DIR = "precomputed"
 PRECOMPUTED_WEIGHTS_FILE = "consensus_flop_weights.json"
 
 
+# a source tree is str-keyed all the way down: each level maps a name to either a deeper level or a
+# leaf FlopWeights. Recursive so the isinstance-driven descent below type-checks against itself.
+NestedFlopWeights = dict[str, "NestedFlopWeights | FlopWeights"]
+
+
 def _data_sources_root() -> Traversable:
     """Return the root of the built-in source data tree; source keys are relative to it."""
     return files(DATA_PACKAGE) / SOURCES_DIR
@@ -138,7 +143,7 @@ def _precomputed_flop_weights() -> dict[str, FlopWeights]:
     return {key_filter: FlopWeights.model_validate({"weights": weights}) for key_filter, weights in raw.items()}
 
 
-def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dict | FlopWeights]) -> FlopWeights:
+def _compute_nested_average_flop_weights(nested_flop_weights_dict: NestedFlopWeights) -> FlopWeights:
     # make sure all values of the dict are FlopWeights instances
     for key, value in nested_flop_weights_dict.items():
         if isinstance(value, dict):
@@ -149,7 +154,7 @@ def _compute_nested_average_flop_weights(nested_flop_weights_dict: dict[str, dic
     return FlopWeights.as_geo_mean(list(nested_flop_weights_dict.values()))  # ty: ignore[invalid-argument-type]
 
 
-def _flat_to_nested_dict(flat_dict: dict) -> dict:
+def _flat_to_nested_dict(flat_dict: dict[str, FlopWeights]) -> NestedFlopWeights:
     """Convert a flat dict with .-separated keys to a nested dict.
 
     E.g. {'a.b.c': 1, 'a.b.d': 2, 'a.e': 3} -> {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}}.
@@ -353,7 +358,7 @@ class FlopWeightsTreeView:
     #  Factory methods
     # -------------------------------------------------------------------------
     @classmethod
-    def from_nested_dict(cls, name: str, nested_dict: dict[str, dict | FlopWeights]) -> FlopWeightsTreeView:
+    def from_nested_dict(cls, name: str, nested_dict: NestedFlopWeights) -> FlopWeightsTreeView:
         members = []
         for key in sorted(nested_dict.keys()):
             value = nested_dict[key]

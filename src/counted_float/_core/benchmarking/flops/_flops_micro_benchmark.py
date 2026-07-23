@@ -48,7 +48,7 @@ class FlopsMicroBenchmark(MicroBenchmark):
     # of a benchmark uses pool slot r mod INPUT_POOL_SIZE (see prepare_suite/prepare_slice)
     INPUT_POOL_SIZE = 4
 
-    def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable) -> None:
+    def __init__(self, name: str, size: int, array_init: ArrayGenerator, f: Callable[..., object]) -> None:
         super().__init__(name=name, single_execution=f"{size} iterations")
         self.size = size
         self.array_init = array_init

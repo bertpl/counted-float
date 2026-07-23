@@ -1,4 +1,7 @@
 from collections.abc import Callable
+from typing import TypeVar, overload
+
+_ProbeFn = TypeVar("_ProbeFn", bound=Callable[..., object])
 
 try:
     import numba  # ty: ignore[unresolved-import] -- numba is an optional dependency; shimmed below if absent
@@ -7,15 +10,20 @@ try:
 except ImportError:
     NUMBA_AVAILABLE = False
 
-    # dummy decorator that will replace numba.jit and numba.njit
-    def dummy_decorator(*args: object, **kwargs: object) -> Callable:
-        # dummy decorator that does nothing and can be used with or without arguments
+    # dummy decorator replacing numba.jit / numba.njit: identity in both call forms, so that
+    # without numba the decorated probe keeps its original callable type rather than `object`
+    @overload
+    def dummy_decorator(func: _ProbeFn, /) -> _ProbeFn: ...
+    @overload
+    def dummy_decorator(*args: object, **kwargs: object) -> Callable[[_ProbeFn], _ProbeFn]: ...
+    def dummy_decorator(*args: object, **kwargs: object) -> object:
+        # does nothing and can be used with or without arguments
         if len(args) == 1 and isinstance(args[0], Callable):
             # decorator used without arguments
             return args[0]
 
         # decorator used with arguments
-        def decorator(func: Callable) -> Callable:
+        def decorator(func: Callable[..., object]) -> Callable[..., object]:
             return func
 
         return decorator
