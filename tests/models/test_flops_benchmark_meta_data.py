@@ -1,3 +1,5 @@
+import psutil
+
 from counted_float._core.models._flops_benchmark_meta_data import (
     BenchmarkSettings,
     OSInfo,
@@ -28,6 +30,20 @@ def test_processor_info():
 
     # --- assert ------------------------------------------
     assert isinstance(processor_info, ProcessorInfo)
+
+
+def test_processor_info_records_undetectable_core_count_as_none(monkeypatch):
+    # psutil.cpu_count() returns None when the count can't be determined; from_system must
+    # record that as None instead of raising a validation error
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: None)
+
+    # --- act ---------------------------------------------
+    processor_info = ProcessorInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert processor_info.n_logical_core_count is None
+    assert processor_info.n_physical_core_count is None
 
 
 def test_os_info():

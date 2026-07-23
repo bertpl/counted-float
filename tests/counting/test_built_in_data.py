@@ -1,6 +1,6 @@
 import pytest
 
-from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict
+from counted_float._core.counting._builtin_data import BuiltInData, _flat_to_nested_dict, _load_json_files_as_dict
 from counted_float._core.models import FlopsBenchmarkResults, FlopWeights
 
 
@@ -96,3 +96,48 @@ def test_builtin_data_flat_to_nested_dict():
 
     # --- assert ------------------------------------------
     assert nested_dict == expected_nested_dict
+
+
+class _FakeTraversable:
+    """Stand-in for a zip/frozen-backed importlib.resources Traversable.
+
+    Exposes only the guaranteed contract (name / is_dir / is_file / iterdir / read_text) and
+    deliberately no `.stem`, so the loader is pinned to the pathlib-free Traversable surface.
+    """
+
+    def __init__(self, name, *, text=None, children=()):
+        self.name = name
+        self._text = text
+        self._children = children
+
+    def is_dir(self):
+        return self._text is None
+
+    def is_file(self):
+        return self._text is not None
+
+    def iterdir(self):
+        return iter(self._children)
+
+    def read_text(self, encoding="utf-8"):
+        assert self._text is not None
+        return self._text
+
+
+def test_load_json_files_as_dict_uses_only_the_traversable_contract():
+    # a resource backend without pathlib's `.stem` (zip / frozen installs) must still load
+    # --- arrange -----------------------------------------
+    root = _FakeTraversable(
+        "sources",
+        children=(
+            _FakeTraversable("apple_m4_pro.json", text='{"cpu": "m4"}'),
+            _FakeTraversable("notes.md", text="ignored"),
+            _FakeTraversable("arm", children=(_FakeTraversable("graviton.json", text='{"cpu": "g"}'),)),
+        ),
+    )
+
+    # --- act ---------------------------------------------
+    result = _load_json_files_as_dict(root)
+
+    # --- assert ------------------------------------------
+    assert result == {"apple_m4_pro": '{"cpu": "m4"}', "arm.graviton": '{"cpu": "g"}'}
