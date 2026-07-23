@@ -25,7 +25,7 @@ def test_importing_the_benchmarking_api_does_not_load_libm():
 @pytest.mark.parametrize("getter", [_libm_bindings.libm_cbrt, _libm_bindings.libm_remainder])
 def test_getters_raise_a_clear_error_when_libm_is_unlocatable(monkeypatch, getter):
     # --- arrange -----------------------------------------
-    monkeypatch.setattr(_libm_bindings, "_libm", None)  # what _load_libm returns on musl/Android
+    monkeypatch.setattr(_libm_bindings, "_load_libm", lambda: None)  # musl/Android: no locatable libm
 
     # --- act / assert ------------------------------------
     with pytest.raises(RuntimeError, match="C math library"):
@@ -34,7 +34,13 @@ def test_getters_raise_a_clear_error_when_libm_is_unlocatable(monkeypatch, gette
 
 def test_load_libm_survives_an_unlocatable_library(monkeypatch):
     # --- arrange -----------------------------------------
+    # find_library returning None is the musl/Android case; clear the cache so this call re-runs
+    # the loader rather than returning a real library some earlier test cached
     monkeypatch.setattr(_libm_bindings.ctypes.util, "find_library", lambda name: None)
+    _libm_bindings._load_libm.cache_clear()
 
     # --- act / assert ------------------------------------
-    assert _libm_bindings._load_libm() is None or sys.platform == "win32"
+    try:
+        assert _libm_bindings._load_libm() is None or sys.platform == "win32"
+    finally:
+        _libm_bindings._load_libm.cache_clear()  # drop the None so later real calls reload

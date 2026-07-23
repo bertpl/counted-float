@@ -17,14 +17,17 @@ import ctypes
 import ctypes.util
 import sys
 from collections.abc import Callable
+from functools import cache
 
 
+@cache
 def _load_libm() -> ctypes.CDLL | None:
     """Load the C math library (the UCRT on Windows, libm elsewhere), or None if unlocatable.
 
     ``ctypes.util.find_library`` needs ldconfig-style machinery that platforms like musl or
     Android may lack; returning None instead of crashing defers the failure to the getters
     below, which raise a clear error at flops-benchmark time rather than at import time.
+    Cached, so the library is loaded once on first use and never at import.
     """
     name = "ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m")
     if name is None:
@@ -35,17 +38,15 @@ def _load_libm() -> ctypes.CDLL | None:
         return None
 
 
-_libm = _load_libm()
-
-
 def _require_libm() -> ctypes.CDLL:
     """The loaded C math library, or a clear error naming the feature that needs it."""
-    if _libm is None:
+    libm = _load_libm()
+    if libm is None:
         raise RuntimeError(
             "the flops benchmark needs the C math library for its cbrt/remainder probes, "
             "and none could be located on this platform"
         )
-    return _libm
+    return libm
 
 
 def libm_cbrt() -> Callable[[float], float]:
