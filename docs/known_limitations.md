@@ -34,9 +34,12 @@ counted region.
   count that is quietly missing them says so — see
   [watching what gets counted](counting_flops.md#watching-what-gets-counted)
 - operator-level fused multiply-add is not modeled: `a*b + c` counts as separate
-  MUL + ADD, but a compiled port on any modern target (x86 FMA3, ARMv8) commonly
-  fuses it into a single FMA instruction with a single rounding, so flop counts
-  over-estimate fusable multiply-add sequences (dot products, Horner evaluation).
+  MUL + ADD, matching the contraction-off reference semantics the
+  [cost model](cost_model.md) pins. Real builds routinely contract: on aarch64,
+  FP contraction is the compiler *default* at plain `-O2` (no fast-math flag
+  involved), and x86 FMA3 targets fuse under the same defaults — so on such
+  builds, flop counts over-estimate fusable multiply-add sequences (dot
+  products, Horner evaluation) by up to the fused sequences' MUL share.
   Python cannot observe operator-level fusion, so the library cannot count it.
   `math.fma` (Python 3.13+) is the one place a fusion *is* observable, and it is
   counted as a single `FMA`; expressing a multiply-add that way is therefore the

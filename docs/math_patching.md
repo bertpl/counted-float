@@ -71,7 +71,7 @@ Every commonly used `math` function, and how it participates in counting:
 | **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | exactly the float-representation helpers — `frexp`, `ldexp`, `modf`, `nextafter`, `ulp` |
-| **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` |
+| **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` — and truthiness itself (`bool(x)`, `if x:`, `assert x`), which a compiled port would test against zero but which fires pervasively in bookkeeping; an *algorithmic* zero-test can be written as `x != 0.0`, which counts `COMP` |
 
 The not-instrumented set breaks contagion: the plain-`float` result silently
 stops all downstream counting, so convert back with `CountedFloat(...)` if a
