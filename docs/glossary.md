@@ -30,12 +30,10 @@ contracting is the compiler default at ordinary optimization levels). The two st
 different rules: the compiler's arithmetic is bit-exact against the authored source, while
 the author's porting choices (which library calls, whether a small constant power becomes
 a multiply chain) have no bit-target to hit — different libms already differ in last bits
-— and owe algorithmic faithfulness instead. See
-[Cost-model principles](cost_model.md#how-the-imaginary-port-gets-made) for the full
-story. The
-cost model prices operator arithmetic as what this port would execute, rather than what the
-much slower Python interpreter happens to do — see
-[Cost-model principles](cost_model.md).
+— and owe algorithmic faithfulness instead. The cost model prices operator arithmetic as
+what this port would execute, rather than what the much slower Python interpreter happens
+to do. See
+[Cost-model principles](cost_model.md#how-the-imaginary-port-gets-made) for the full story.
 
 ## Constant { #constant }
 

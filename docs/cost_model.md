@@ -16,8 +16,8 @@ while being compiled — while a **`CountedFloat` operand is dynamic algorithm i
 Rules that treat constants specially (strength reduction, reciprocal multiplication) key
 on exactly this distinction.
 
-**Second: the port is made in two stages, by two different actors, playing by two
-different rules.**
+**Second: the [port](glossary.md#compiled-port) is made in two stages, by two different
+actors, playing by two different rules.**
 
 - **The author** — a competent numerical programmer — rewrites the Python code in C. The
   author sees the constants in the source and makes the choices working numerical code
@@ -38,9 +38,9 @@ different rules.**
   single fused multiply-add does not: the fused form rounds once where the source rounds
   twice — faster, and slightly *different*. One subtlety is pinned explicitly: on some
   CPUs (notably 64-bit ARM) compilers apply that fusion **by default** at ordinary
-  optimization levels, no fast-math flag involved — the model's compiler has it switched
-  off (`-ffp-contract=off`), so the priced instruction stream is the same on every
-  architecture.
+  optimization levels, no fast-math flag involved — the model's assumed compiler has it
+  switched off (`-ffp-contract=off`), so the priced instruction stream is the same on
+  every architecture.
 
 Every pricing decision below is an application of one question: **who produced this
 operation — the author, writing it into the source, or the compiler, translating the
