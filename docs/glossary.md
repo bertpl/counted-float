@@ -21,12 +21,19 @@ avoids the collision with the operating-system sense of the word.)
 
 ## Compiled port { #compiled-port }
 
-The hypothetical result of rewriting the Python code in C and compiling it at ordinary
-optimization levels, without accuracy-trading flags (no fast-math): a program that produces
-bit-identical results, as fast as a compiler can make it without changing any of them. The
-cost model prices operator arithmetic as what this port would execute, rather than what the
-much slower Python interpreter happens to do — see
-[Cost-model principles](cost_model.md).
+The imaginary program the cost model prices: a competent numerical programmer (the
+*author*) rewrites the Python code in C, and a compiler translates that C to machine code
+without changing any computed value — strict IEEE-754 evaluation, with
+[FP contraction](#fp-contraction) pinned off (`-ffp-contract=off`; merely saying
+"no fast-math" would not exclude it, since on some targets — aarch64 notably —
+contracting is the compiler default at ordinary optimization levels). The two stages obey
+different rules: the compiler's arithmetic is bit-exact against the authored source, while
+the author's porting choices (which library calls, whether a small constant power becomes
+a multiply chain) have no bit-target to hit — different libms already differ in last bits
+— and owe algorithmic faithfulness instead. The cost model prices operator arithmetic as
+what this port would execute, rather than what the much slower Python interpreter happens
+to do. See
+[Cost-model principles](cost_model.md#how-the-imaginary-port-gets-made) for the full story.
 
 ## Constant { #constant }
 
@@ -79,8 +86,10 @@ Operations in that category are priced by benchmarking the actual libm call.
 
 ## Strength reduction { #strength-reduction }
 
-A compiler transformation replacing an expensive operation with a cheaper one that yields
-the same result, enabled when part of the expression is [constant](#constant): `x ** 2`
-becomes a single multiply, `x / 2.0` becomes `x * 0.5` (exact, since `0.5` is exactly
-representable). The cost model applies it only where the replacement is bit-identical *and*
-a standard C compiler genuinely performs it ([cost-model rule 1](cost_model.md#the-rules)).
+Replacing an expensive operation with a cheaper one that computes the same thing, enabled
+when part of the expression is [constant](#constant): `x ** 2` becomes a single multiply,
+`x / 2.0` becomes `x * 0.5` (exact, since `0.5` is exactly representable). In the cost
+model it happens at either stage of the [compiled port](#compiled-port): bit-exact
+reductions are compiler rewrites; value-changing ones (the multiply chain for `x ** 5`)
+can only be *author* decisions, declared and bounded in
+[cost-model rule 1](cost_model.md#the-rules).

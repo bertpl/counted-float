@@ -20,7 +20,10 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
       - integer 2 <= |n| <= 16   -> square-and-multiply MULs (x**3 -> 2 MUL, x**8 -> 3 MUL, ...),
                                     plus one DIV when negative; the |n| <= 16 cutoff keeps the
                                     model honest — beyond it real compilers' powi expansion
-                                    varies and a generic POW is a fair stand-in
+                                    varies and a generic POW is a fair stand-in.  The chain is a
+                                    source-level porting decision, priced as written — not a
+                                    toolchain transformation needing bit-identity to libm pow;
+                                    see the constant-exponent rule in docs/cost_model.md
       - anything else            -> POW
     """
     value = float(exponent)
