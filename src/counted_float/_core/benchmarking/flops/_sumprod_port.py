@@ -40,7 +40,7 @@ def _make_fma_single() -> Callable[[float, float, float], float]:
     def fma_intrinsic(typingctx: object, x: object, y: object, z: object) -> object:
         sig = types.float64(types.float64, types.float64, types.float64)
 
-        def codegen(context: object, builder: ir.IRBuilder, signature: object, args: tuple) -> object:
+        def codegen(context: object, builder: ir.IRBuilder, signature: object, args: tuple[object, ...]) -> object:
             fnty = ir.FunctionType(ir.DoubleType(), [ir.DoubleType()] * 3)
             fn = builder.module.declare_intrinsic("llvm.fma", [ir.DoubleType()], fnty)
             return builder.call(fn, args)

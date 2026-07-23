@@ -195,6 +195,10 @@ include = ["src/counted_float"]
 # extra is absent from the env; flagging them as unused in the other env would
 # make `ty check` results depend on which extras happen to be installed.
 unused-ignore-comment = "ignore"
+# Tightened beyond ty defaults: keep the py.typed surface fully parametrized (no bare
+# generics), and require every `ty: ignore` to name the rule it suppresses.
+missing-type-argument = "error"
+blanket-ignore-comment = "error"
 
 [tool.coverage.run]
 source = ["counted_float"]
