@@ -37,3 +37,20 @@ def test_main_exits_with_guidance_when_click_missing(monkeypatch, capsys):
         _cli_main.main()
     assert exc_info.value.code == 1
     assert 'pip install "counted-float[cli]"' in capsys.readouterr().err
+
+
+def test_main_reraises_a_non_click_import_error(monkeypatch):
+    # only a missing `click` becomes install guidance; any other ModuleNotFoundError propagates
+    # --- arrange -----------------------------------------
+    real_import = builtins.__import__
+
+    def _fake_import(name, *args, **kwargs):
+        if name == "counted_float._core._cli":
+            raise ModuleNotFoundError("simulated missing dependency", name="numpy")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", _fake_import)
+
+    # --- act & assert ------------------------------------
+    with pytest.raises(ModuleNotFoundError, match="simulated missing dependency"):
+        _cli_main.main()

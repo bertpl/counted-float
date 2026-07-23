@@ -109,6 +109,16 @@ _OPERATORS: list[tuple[str, Callable[[], object]]] = [
     ("le", lambda: CF(1.5) <= CF(2.5)),
     ("gt", lambda: CF(1.5) > CF(2.5)),
     ("ge", lambda: CF(1.5) >= CF(2.5)),
+    # constant-operand fold paths keep their own lazy-init sites, distinct from the generic
+    # branches above (which take a CountedFloat or int operand)
+    ("truediv_const_divisor", lambda: CF(1.5) / 3.0),
+    # divisor 1.0 folds in count_div (no counter access), so __floordiv__'s own RND increment is
+    # the first access on the thread -- exercising its handler rather than count_div's
+    ("floordiv_by_one", lambda: CF(7.0) // 1.0),
+    ("mul_minus_one", lambda: CF(2.5) * -1.0),
+    ("round_ndigits_zero", lambda: round(CF(2.567), 0)),
+    ("rsub_minus_zero", lambda: CF(2.0).__rsub__(-0.0)),
+    ("rpow_countedfloat_base", lambda: CF(2.0).__rpow__(CF(3.0))),
 ]
 
 
@@ -196,3 +206,25 @@ def test_patch_args_cover_every_registered_patch() -> None:
     # a newly registered patch must gain a _PATCH_ARGS entry, or its fresh-thread case would KeyError
     # --- assert -----------------------------
     assert set(_math_patching._PATCHES) <= set(_PATCH_ARGS)
+
+
+# alternate patch code paths the registry-keyed test above misses (it uses one argument tuple per
+# function): math.log's two-arg runtime-base form, and math.fma's constant-product (z-only) branch
+_ALT_PATCH_CASES: list[tuple[str, Callable[[], object]]] = [
+    ("log_runtime_base", lambda: math.log(CF(8.0), CF(2.0))),
+]
+if hasattr(math, "fma"):
+    _ALT_PATCH_CASES.append(("fma_constant_product", lambda: math.fma(2.0, 3.0, CF(4.0))))
+
+
+@pytest.mark.parametrize(("case_id", "call"), _ALT_PATCH_CASES, ids=[c[0] for c in _ALT_PATCH_CASES])
+def test_math_patch_alternate_path_first_op_on_fresh_thread(case_id: str, call: Callable[[], object]) -> None:
+    # --- arrange / act (a context installs the patch module-wide, so the pristine thread sees it) ---
+    with FlopCountingContext() as ctx:
+        call()
+        reference = _counts_as_dict(ctx.flop_counts())
+        fresh = _first_op_counts_on_fresh_thread(call)
+
+    # --- assert -----------------------------
+    assert reference, f"{case_id} counted nothing"
+    assert fresh == reference

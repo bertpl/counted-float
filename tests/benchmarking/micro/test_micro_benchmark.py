@@ -234,3 +234,16 @@ def test_run_many_measures_the_real_clock():
 
     # --- assert ------------------------------------------
     assert results.summary_stats_nsecs_per_exec().q25 >= nsecs_per_execution
+
+
+def test_prepare_slice_defaults_to_the_full_per_run_preparation(fake_clock):
+    # the base prepare_slice just runs the full per-run preparation; only subclasses that
+    # pre-allocate override it with a cheaper variant
+    # --- arrange -----------------------------------------
+    benchmark = ClockAdvancingBenchmark(fake_clock, nsecs_per_execution=10.0)
+
+    # --- act ---------------------------------------------
+    benchmark.prepare_slice(n_executions=7, round_index=0)
+
+    # --- assert ------------------------------------------
+    assert benchmark.n_executions_per_run == [7]  # delegated to _prepare_benchmark(7)

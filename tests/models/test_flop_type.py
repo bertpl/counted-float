@@ -1,6 +1,7 @@
 import pytest
 
 from counted_float._core.models import FlopType
+from counted_float._core.models._flop_type import normalize_flop_type_keyed_dict
 
 
 def test_flop_type_long_name():
@@ -40,3 +41,12 @@ def test_from_serialized_key_rejects_display_labels():
     # pre-2.0.0 files keyed on display labels; those are deliberately no longer readable
     with pytest.raises(ValueError, match="unrecognized flop-type key"):
         FlopType.from_serialized_key(FlopType.ADD.label)
+
+
+def test_normalize_flop_type_keyed_dict_passes_non_dict_through():
+    # a non-dict is handed straight back so pydantic raises its own type error, unmasked
+    # --- act ---------------------------------------------
+    result = normalize_flop_type_keyed_dict("not a dict", null_to_nan=True)
+
+    # --- assert ------------------------------------------
+    assert result == "not a dict"

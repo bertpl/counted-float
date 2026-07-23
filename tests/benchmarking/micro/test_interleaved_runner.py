@@ -230,3 +230,13 @@ def test_runner_schedule_is_reproducible_with_seed():
     # same warmup + measurement schedule (calibration length may differ: it adapts to timing)
     n_recorded = 5 * 3  # (1 warmup + 4 measure) rounds x 3 benchmarks
     assert first[-n_recorded:] == second[-n_recorded:]
+
+
+def test_slice_controller_target_is_the_common_target_before_per_exec_timing():
+    # before any per-execution timing is recorded, the N_MIN_EXECUTIONS floor cannot apply yet,
+    # so the effective target is just the common target
+    # --- arrange / act -----------------------------------
+    controller = SliceController(t_slice_target_nsecs=1234.0)
+
+    # --- assert ------------------------------------------
+    assert controller.t_slice_target_nsecs == 1234.0

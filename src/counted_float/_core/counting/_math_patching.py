@@ -623,10 +623,10 @@ def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> object:
         return original_math_prod(values, start=start)
     if isinstance(start, CountedFloat) or start != 1:
         acc, remaining = start, values
-    elif values:
-        acc, remaining = values[0], values[1:]
     else:
-        return start
+        # start is plain 1 (folds away); the guard above guarantees a CountedFloat is present, and a
+        # plain-1 start means it is in `values`, so `values` is non-empty here
+        acc, remaining = values[0], values[1:]
     for value in remaining:
         acc = acc * value
     return acc
