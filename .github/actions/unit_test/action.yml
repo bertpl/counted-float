@@ -53,8 +53,11 @@ runs:
           RES: ${{ inputs.dependency_resolution }}
           EXTRAS: ${{ inputs.include_all_extra_deps }}
           COV: ${{ inputs.coverage }}
-          # distinct per-combo data file so the coverage job combines rather than overwrites
-          COVERAGE_FILE: .coverage.${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-${{ inputs.include_all_extra_deps }}
+          # distinct per-combo data file so the coverage job combines rather than overwrites;
+          # the runner OS is part of the key because the same python/resolution/extras combo runs
+          # on several OSes (ubuntu/macOS/windows), whose data files would otherwise share a name
+          # and overwrite each other at combine time -- silently dropping those legs' coverage
+          COVERAGE_FILE: .coverage.${{ runner.os }}-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-${{ inputs.include_all_extra_deps }}
         run: |
           EXTRA_FLAG=""
           [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
@@ -77,13 +80,13 @@ runs:
           # each combo records its own collected set so the coverage job can union them.
           uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev \
             pytest ./tests --collect-only -q -o addopts="" \
-            | grep '::' > "test-ids-${PY}-${RES}-${EXTRAS}.txt"
+            | grep '::' > "test-ids-${RUNNER_OS}-${PY}-${RES}-${EXTRAS}.txt"
 
       - name: Upload coverage + node-id data
         if: inputs.coverage == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: coverage-data-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
+          name: coverage-data-${{ runner.os }}-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-extras-${{ inputs.include_all_extra_deps }}
           path: |
             .coverage.*
             test-ids-*.txt
