@@ -180,7 +180,7 @@ def _load_json_files_as_dict(resource_root: Traversable) -> dict[str, str]:
             for key, value in sub_dir_json_dict.items():
                 result[f"{entry.name}.{key}"] = value
         elif entry.is_file() and entry.name.endswith(".json"):
-            result[entry.stem] = entry.read_text(encoding="utf-8")  # ty: ignore[unresolved-attribute] -- Path-like
+            result[entry.name.removesuffix(".json")] = entry.read_text(encoding="utf-8")
     return result
 
 

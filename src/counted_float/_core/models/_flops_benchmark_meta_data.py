@@ -57,8 +57,8 @@ class SystemInfo(JsonReprModel):
 class ProcessorInfo(JsonReprModel):
     description: str
     architecture: str
-    n_logical_core_count: int
-    n_physical_core_count: int
+    n_logical_core_count: int | None
+    n_physical_core_count: int | None
     min_freq_mhz: int | None
     max_freq_mhz: int | None
 
