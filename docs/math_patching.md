@@ -77,6 +77,11 @@ The not-instrumented set breaks contagion: the plain-`float` result silently
 stops all downstream counting, so convert back with `CountedFloat(...)` if a
 result of these feeds counted computation.
 
+While a context is open, the reduction patches (`fsum`, `prod`, `sumprod`,
+`dist`) materialize their iterable inputs to inspect the operands after
+computing the result — a space-behavior divergence from the streaming stdlib
+versions; see [Known limitations](known_limitations.md).
+
 The predicates return a `bool` rather than a number, so contagion does not apply
 to them — but they are uncounted all the same. `math.isclose` is the one where
 that matters: it performs real arithmetic (a difference, absolute values, and a
