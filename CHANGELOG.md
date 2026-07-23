@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.0.0 (2026-07-23)
 
 ### Added
 
@@ -31,17 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `math.gamma`, `math.lgamma`, `math.erf`, `math.erfc` and `math.remainder` are now counted; the uninstrumented remainder of the `math` module is exactly the float-representation helpers
 - `math.sumprod` is now counted, as a per-call + per-extra-element price measured on the extended-precision algorithm it really runs
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - `math.sumprod` on counted values now computes the same extended-precision result as on plain floats, and no longer silently miscounts it as a naive multiply-add chain
 - `show-data` group headers are now legible on every terminal theme; the docs' screenshots and data-derived content are now regenerated from live output and drift-tested
-
-### Security
-
 ## 1.7.0 (2026-07-17)
 
 ### Added
