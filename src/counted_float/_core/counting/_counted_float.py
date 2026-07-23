@@ -150,6 +150,12 @@ class CountedFloat(float):
     #  CONSTRUCTOR
     # -------------------------------------------------------------------------
     def __new__(cls, value: float | int) -> CountedFloat:
+        """Construct from a numeric source, counting I2F for int inputs.
+
+        Numeric-source construction is the supported contract: counted code converts numbers,
+        it does not parse them. Strings happen to work (the delegation to ``float(value)``
+        accepts them) but that is incidental, not part of the contract -- hence the annotation.
+        """
         if isinstance(value, int):
             try:
                 _TLS.flop_counts.I2F += 1

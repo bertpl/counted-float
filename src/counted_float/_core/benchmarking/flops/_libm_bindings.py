@@ -19,17 +19,38 @@ import sys
 from collections.abc import Callable
 
 
-def _load_libm() -> ctypes.CDLL:
-    """Load the C math library (the UCRT on Windows, libm elsewhere)."""
-    return ctypes.CDLL("ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m"))
+def _load_libm() -> ctypes.CDLL | None:
+    """Load the C math library (the UCRT on Windows, libm elsewhere), or None if unlocatable.
+
+    ``ctypes.util.find_library`` needs ldconfig-style machinery that platforms like musl or
+    Android may lack; returning None instead of crashing defers the failure to the getters
+    below, which raise a clear error at flops-benchmark time rather than at import time.
+    """
+    name = "ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m")
+    if name is None:
+        return None
+    try:
+        return ctypes.CDLL(name)
+    except OSError:
+        return None
 
 
 _libm = _load_libm()
 
 
+def _require_libm() -> ctypes.CDLL:
+    """The loaded C math library, or a clear error naming the feature that needs it."""
+    if _libm is None:
+        raise RuntimeError(
+            "the flops benchmark needs the C math library for its cbrt/remainder probes, "
+            "and none could be located on this platform"
+        )
+    return _libm
+
+
 def libm_cbrt() -> Callable[[float], float]:
     """The C99 ``double cbrt(double)`` function, as a ctypes function object."""
-    fn = _libm.cbrt
+    fn = _require_libm().cbrt
     fn.restype = ctypes.c_double
     fn.argtypes = [ctypes.c_double]
     return fn
@@ -37,7 +58,7 @@ def libm_cbrt() -> Callable[[float], float]:
 
 def libm_remainder() -> Callable[[float, float], float]:
     """The C99 ``double remainder(double, double)`` function, as a ctypes function object."""
-    fn = _libm.remainder
+    fn = _require_libm().remainder
     fn.restype = ctypes.c_double
     fn.argtypes = [ctypes.c_double, ctypes.c_double]
     return fn

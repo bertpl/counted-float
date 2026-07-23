@@ -608,7 +608,7 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
     return float.__new__(CountedFloat, result)
 
 
-def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
+def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> object:
     """Patch math.prod: stdlib contract, counted as the multiply chain it computes.
 
     The product is folded left-to-right with real multiplications, so counting and contagion

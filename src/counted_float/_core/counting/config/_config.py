@@ -42,6 +42,8 @@ class Config:
 
         Returns a fresh deep copy; mutating it does not affect the configured weights.
         """
+        # benign race by design: two threads hitting the lazy init both compute the same default
+        # and one write wins -- idempotent, so no lock is warranted for a rarely-cold path
         if cls.__weights is None:
             cls.__weights = get_default_consensus_flop_weights()
         return cls.__weights.model_copy(deep=True)
