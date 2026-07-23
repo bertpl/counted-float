@@ -1,12 +1,22 @@
+import math
+
 import pytest
 
 from counted_float import FlopCountingContext
+from counted_float._core.counting import _math_patching
 from counted_float._core.counting._thread_counter import (
     _TLS,
     THREAD_COUNTER,
     ThreadLocalFlopCounter,
     _create_thread_state,
 )
+
+# Shared by the machinery and counting halves of the math-patching tests; defined here so both
+# reach them at collection time (they key `@pytest.mark.parametrize` decorators).
+PATCHED_FUNCTION_NAMES = sorted(_math_patching._PATCHES.keys())
+
+# captured at import of this conftest, i.e. with no counting context active anywhere
+STDLIB_MATH_FUNCTIONS = {name: getattr(math, name) for name in PATCHED_FUNCTION_NAMES}
 
 
 @pytest.fixture
