@@ -27,6 +27,7 @@ README = REPO_ROOT / "README.md"
 PYTHON_VERSIONS_FILE = REPO_ROOT / ".python-versions"
 SPLASH_SCRIPT = REPO_ROOT / ".github" / "scripts" / "create_splash.sh"
 SPLASH_WEBP = REPO_ROOT / "images" / "splash_with_version.webp"
+MUTATION_STATS_FILE = REPO_ROOT / "mutants" / "mutmut-cicd-stats.json"
 
 PACKAGE_NAME = "counted-float"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
@@ -262,8 +263,64 @@ def _coverage_color(pct: float) -> str:
     return "yellow" if pct >= 75 else "red"
 
 
+def _mutation_color(pct: int) -> str:
+    """Map a mutation score to a shields.io badge color.
+
+    The thresholds sit lower than the coverage ones on purpose: a mutation score answers a
+    stricter question -- would the suite *notice* this behavior change, not merely execute the
+    line -- so a given percentage here is worth more than the same coverage percentage.
+    """
+    if pct >= 80:
+        return "brightgreen"
+    return "yellow" if pct >= 60 else "red"
+
+
+def _measure_mutation_score() -> int | None:
+    """Run the mutation suite locally and return its score as a whole percentage.
+
+    Unlike the coverage and test-count metrics, this one cannot come from CI: mutation testing is
+    deliberately kept off the pipeline (a full run takes minutes and gates nothing), so the release
+    measures it here instead.
+
+    Killed over *all* mutants: timeouts count toward the denominator but never the numerator, so a
+    mutant that merely ran slowly is never scored as caught.
+
+    Returns:
+        The rounded percentage, or None if the run or its stats could not be obtained -- in which
+        case the committed badge is left untouched. This never aborts the release: the run is
+        mildly timeout-sensitive and machine-dependent, and a stray survivor must not block a
+        publish.
+    """
+    print("  measuring the mutation score (runs the mutation suite; takes a few minutes)")
+    MUTATION_STATS_FILE.unlink(missing_ok=True)
+    for target in ("mutation", "mutation-stats"):
+        # not run_command(): that raises, and a mutation hiccup must never fail a release
+        outcome = subprocess.run(["make", target], cwd=REPO_ROOT, capture_output=True, check=False)
+        if outcome.returncode != 0:
+            print(
+                f"\nWARNING: 'make {target}' failed; leaving the committed mutation badge as is. "
+                f"Run it by hand to see why -- its output is captured here to keep the release log readable.\n",
+                file=sys.stderr,
+            )
+            return None
+    try:
+        stats = json.loads(MUTATION_STATS_FILE.read_text())
+        killed, total = int(stats["killed"]), int(stats["total"])
+    except (OSError, ValueError, KeyError) as exc:
+        print(f"\nWARNING: could not read the mutation stats ({exc}); leaving the badge as is.\n", file=sys.stderr)
+        return None
+    if total <= 0:
+        print("\nWARNING: the mutation run produced no mutants; leaving the badge as is.\n", file=sys.stderr)
+        return None
+    return round(100 * killed / total)
+
+
 def refresh_readme_badges() -> None:
-    """Stamp the README coverage + test-count badges from CI's cumulative metrics."""
+    """Stamp the README coverage, test-count and mutation badges.
+
+    Coverage and test counts come from CI's cumulative metrics; the mutation score is measured
+    locally (see _measure_mutation_score) and is skipped rather than fatal when unavailable.
+    """
     metrics = _fetch_release_metrics()
     coverage_pct = float(metrics["coverage_pct"])
     union = int(metrics["test_union"])
@@ -282,6 +339,13 @@ def refresh_readme_badges() -> None:
         text,
     )
     text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{union}-blue", text)
+    mutation_pct = _measure_mutation_score()
+    if mutation_pct is not None:
+        text = re.sub(
+            r"badge/mutmut-\d+%25-[a-z]+",
+            f"badge/mutmut-{mutation_pct}%25-{_mutation_color(mutation_pct)}",
+            text,
+        )
     README.write_text(text)
 
 

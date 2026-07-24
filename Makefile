@@ -11,6 +11,7 @@ help:
 	@echo '  lint		                    Run all pre-commit hooks on all files.'
 	@echo '  mutation		                Run local mutation testing (mutmut). MODULE=<substr> scopes it.'
 	@echo '  mutation-results	            List the surviving mutants from the last mutation run.'
+	@echo '  mutation-stats	                Export the last mutation run'"'"'s tallies as JSON (used by the release badge).'
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
@@ -51,6 +52,10 @@ mutation:
 
 mutation-results:
 	uv run --group mutation --all-extras --python 3.13 mutmut results
+
+mutation-stats:
+	# machine-readable killed/survived/total of the last run -> mutants/mutmut-cicd-stats.json (release.py reads it)
+	uv run --group mutation --all-extras --python 3.13 mutmut export-cicd-stats
 
 precompute-weights:
 	uv run python scripts/generate_precomputed_weights.py
