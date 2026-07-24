@@ -473,6 +473,14 @@ def test_prod_without_counted_values_keeps_stdlib_behavior(thread_counter):
     assert thread_counter.total_count() == 0
 
 
+def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter):
+    # the all-plain path delegates to the original; it must forward `start`, not drop it
+    # --- act / assert ------------------------------------
+    result = math.prod([2, 3, 4], start=10)
+    assert result == 240  # 10 * 2 * 3 * 4, not the start-dropped 24
+    assert thread_counter.total_count() == 0
+
+
 @pytest.mark.parametrize("n_values", [1, 2, 5])
 def test_fsum_counts_the_addition_chain(thread_counter, n_values):
     # --- arrange -----------------------------------------
