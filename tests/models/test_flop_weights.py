@@ -153,7 +153,8 @@ def test_round_nearest_int_floors_at_one_and_returns_int(weight: float, expected
 
     # --- assert ------------------------------------------
     assert rounded == expected
-    assert isinstance(rounded, int) and not isinstance(rounded, float)  # int, never a float
+    assert isinstance(rounded, int)  # a genuine int...
+    assert not isinstance(rounded, float)  # ...never a float (the "10%"/round_number path returns floats)
 
 
 def test_round_nearest_int_leaves_missing_weights_missing():

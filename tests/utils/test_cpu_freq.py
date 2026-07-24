@@ -68,7 +68,7 @@ def test_cpu_freq_none_zero_or_negative_reading_returns_none(monkeypatch, raw_re
 def test_cpu_freq_missing_attribute_returns_none(monkeypatch):
     # if psutil.cpu_freq() lacks the requested attribute, the AttributeError branch sets value=0.0 → None
     # --- arrange -----------------------------------------
-    monkeypatch.setattr(psutil, "cpu_freq", lambda: SimpleNamespace(), raising=False)
+    monkeypatch.setattr(psutil, "cpu_freq", SimpleNamespace, raising=False)  # called with no args -> empty namespace
 
     # --- act ---------------------------------------------
     result = _get_psutil_cpu_freq_attribute_mhz("current")

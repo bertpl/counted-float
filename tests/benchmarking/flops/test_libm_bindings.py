@@ -85,7 +85,9 @@ def test_libm_cbrt_computes_real_cube_roots(value: float, expected: float):
     result = cbrt(value)
 
     # --- assert ------------------------------------------
-    assert result == expected
+    # approx, not exact: cbrt's last bit is platform-dependent (glibc returns 3.0000000000000004 for
+    # 27.0); a corrupted restype/argtypes would be off by orders of magnitude, not one ULP
+    assert result == pytest.approx(expected)
 
 
 @_needs_libm
