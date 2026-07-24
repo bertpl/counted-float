@@ -10,6 +10,14 @@ ensure results of math operations where at least one operand is a
 `CountedFloat` will also be a `CountedFloat`. This way we ensure flop counting
 is a 'closed system'.
 
+That closed system is also why `CountedFloat` is **final** — subclassing it
+raises `TypeError` at class-definition time. Every operator builds its result as
+a `CountedFloat` rather than as the operand's own type, so a subclass would lose
+its identity on its first operation; and for as long as it existed, the operand
+tests that drive constant folding would read it as a plain-float constant and
+price its arithmetic as folded away, undercounting silently. Hold a
+`CountedFloat` inside your own type rather than deriving from it.
+
 On top of this, `math` module functions that require counting (`sqrt`, `log2`,
 `pow`, ...) are also instrumented: while a `FlopCountingContext` is active
 (see below), they are temporarily replaced by counting equivalents. Outside
