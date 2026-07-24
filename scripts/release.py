@@ -32,6 +32,8 @@ MUTATION_STATS_FILE = REPO_ROOT / "mutants" / "mutmut-cicd-stats.json"
 PACKAGE_NAME = "counted-float"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+# provenance line above the badge block: rewritten in place each release, never appended to
+BADGE_STAMP_RE = re.compile(r"^<!-- badges below refreshed at release v[^>]*-->$", re.MULTILINE)
 
 
 # ==================================================================================================
@@ -315,8 +317,21 @@ def _measure_mutation_score() -> int | None:
     return round(100 * killed / total)
 
 
-def refresh_readme_badges() -> None:
-    """Stamp the README coverage, test-count and mutation badges.
+def _stamp_badge_provenance(text: str, version: str) -> str:
+    """Return the README text with its badge-provenance comment set to this release.
+
+    The badge values are snapshots taken at release time, not live readings, so the comment
+    records which release they describe. An HTML comment keeps it visible in the raw file and
+    absent from the rendered page. Rewritten in place, so releases never stack up stamps.
+    """
+    stamp = f"<!-- badges below refreshed at release v{version} -->"
+    if BADGE_STAMP_RE.search(text):
+        return BADGE_STAMP_RE.sub(stamp, text, count=1)
+    return f"{stamp}\n{text}"
+
+
+def refresh_readme_badges(version: str) -> None:
+    """Stamp the README coverage, test-count and mutation badges, and record the release they describe.
 
     Coverage and test counts come from CI's cumulative metrics; the mutation score is measured
     locally (see _measure_mutation_score) and is skipped rather than fatal when unavailable.
@@ -346,7 +361,7 @@ def refresh_readme_badges() -> None:
             f"badge/mutmut-{mutation_pct}%25-{_mutation_color(mutation_pct)}",
             text,
         )
-    README.write_text(text)
+    README.write_text(_stamp_badge_provenance(text, version))
 
 
 def stamp_splash(version: str) -> None:
@@ -364,7 +379,7 @@ def stamp_splash(version: str) -> None:
 def step_9_commit_release(version: str) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
     print_step(9, f"refresh README badges + stamp splash + commit 'release: {version}'")
-    refresh_readme_badges()
+    refresh_readme_badges(version)
     stamp_splash(version)
     run_command(["git", "add", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
