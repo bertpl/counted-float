@@ -130,11 +130,12 @@ def math_sqrt(x: float) -> float | CountedFloat:
 
 def math_cbrt(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_cbrt(x)
         try:
             _TLS.flop_counts.CBRT += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().CBRT += 1
-        return float.__new__(CountedFloat, original_math_cbrt(x))
+        return float.__new__(CountedFloat, result)
     return original_math_cbrt(x)
 
 
@@ -353,21 +354,23 @@ def math_acos(x: float) -> float | CountedFloat:
 
 def math_atan(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_atan(x)
         try:
             _TLS.flop_counts.ATAN += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ATAN += 1
-        return float.__new__(CountedFloat, original_math_atan(x))
+        return float.__new__(CountedFloat, result)
     return original_math_atan(x)
 
 
 def math_atan2(y: float, x: float) -> float | CountedFloat:
     if isinstance(y, CountedFloat) or isinstance(x, CountedFloat):
+        result = original_math_atan2(y, x)
         try:
             _TLS.flop_counts.ATAN2 += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ATAN2 += 1
-        return float.__new__(CountedFloat, original_math_atan2(y, x))
+        return float.__new__(CountedFloat, result)
     return original_math_atan2(y, x)
 
 
@@ -444,11 +447,12 @@ def math_remainder(x: float, y: float) -> float | CountedFloat:
 
 def math_fabs(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_fabs(x)
         try:
             _TLS.flop_counts.ABS += 1  # same FABS/ANDPD instruction as abs(); reuses FlopType.ABS
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ABS += 1
-        return float.__new__(CountedFloat, original_math_fabs(x))
+        return float.__new__(CountedFloat, result)
     return original_math_fabs(x)
 
 
@@ -476,21 +480,23 @@ def math_cosh(x: float) -> float | CountedFloat:
 
 def math_tanh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_tanh(x)
         try:
             _TLS.flop_counts.TANH += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().TANH += 1
-        return float.__new__(CountedFloat, original_math_tanh(x))
+        return float.__new__(CountedFloat, result)
     return original_math_tanh(x)
 
 
 def math_asinh(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_asinh(x)
         try:
             _TLS.flop_counts.ASINH += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ASINH += 1
-        return float.__new__(CountedFloat, original_math_asinh(x))
+        return float.__new__(CountedFloat, result)
     return original_math_asinh(x)
 
 
@@ -564,21 +570,23 @@ def math_erfc(x: float) -> float | CountedFloat:
 
 def math_degrees(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_degrees(x)
         try:
             _TLS.flop_counts.MUL += 1  # x * (180/pi), the constant folded at compile time
         except AttributeError:  # first counted op on this thread
             _create_thread_state().MUL += 1
-        return float.__new__(CountedFloat, original_math_degrees(x))
+        return float.__new__(CountedFloat, result)
     return original_math_degrees(x)
 
 
 def math_radians(x: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat):
+        result = original_math_radians(x)
         try:
             _TLS.flop_counts.MUL += 1  # x * (pi/180), the constant folded at compile time
         except AttributeError:  # first counted op on this thread
             _create_thread_state().MUL += 1
-        return float.__new__(CountedFloat, original_math_radians(x))
+        return float.__new__(CountedFloat, result)
     return original_math_radians(x)
 
 
@@ -686,11 +694,12 @@ def math_sumprod(p: Iterable[float], q: Iterable[float], /) -> object:
 
 def math_copysign(x: float, y: float) -> float | CountedFloat:
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        result = original_math_copysign(x, y)
         try:
             _TLS.flop_counts.COPYSIGN += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COPYSIGN += 1
-        return float.__new__(CountedFloat, original_math_copysign(x, y))
+        return float.__new__(CountedFloat, result)
     return original_math_copysign(x, y)
 
 

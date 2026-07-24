@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- a `CountedFloat` construction or integer conversion that raises — an int too large to become a float, or `int()`/`floor()`/`ceil()`/`trunc()`/`round()` of `inf`/`nan` — no longer leaves a phantom flop counted
+
 ### Security
 
 ## 2.0.1 (2026-07-24)

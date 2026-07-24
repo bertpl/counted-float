@@ -156,12 +156,13 @@ class CountedFloat(float):
         it does not parse them. Strings happen to work (the delegation to ``float(value)``
         accepts them) but that is incidental, not part of the contract -- hence the annotation.
         """
+        instance = super().__new__(cls, float(value))  # compute first: an oversized int raises before counting
         if isinstance(value, int):
             try:
                 _TLS.flop_counts.I2F += 1
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().I2F += 1
-        return super().__new__(cls, float(value))
+        return instance
 
     def __str__(self) -> str:
         return self.__repr__()
@@ -177,19 +178,21 @@ class CountedFloat(float):
     # -------------------------------------------------------------------------
     def __abs__(self) -> CountedFloat:
         """abs(x)."""
+        result = float.__abs__(self)
         try:
             _TLS.flop_counts.ABS += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ABS += 1
-        return float.__new__(CountedFloat, float.__abs__(self))
+        return float.__new__(CountedFloat, result)
 
     def __neg__(self) -> CountedFloat:
         """-x."""
+        result = float.__neg__(self)
         try:
             _TLS.flop_counts.MINUS += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().MINUS += 1
-        return float.__new__(CountedFloat, float.__neg__(self))
+        return float.__new__(CountedFloat, result)
 
     def __pos__(self) -> CountedFloat:
         """+x.
@@ -280,14 +283,15 @@ class CountedFloat(float):
                     CPython itself runs (David Gay's algorithm), which has no fixed
                     instruction cost to price.
         """
+        result = float.__round__(self, n)  # compute first: round(inf/nan) with n=None raises (F2I) before counting
         if n is None:
             try:
-                _TLS.flop_counts.F2I += 1  # will round and return int
+                _TLS.flop_counts.F2I += 1  # rounded and returned int
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().F2I += 1
         elif operator.index(n) == 0:
             try:
-                _TLS.flop_counts.RND += 1  # will round and return float
+                _TLS.flop_counts.RND += 1  # rounded and returned float
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().RND += 1
         else:
@@ -300,39 +304,43 @@ class CountedFloat(float):
             cnt.RND += 1
             cnt.DIV += 1
 
-        return float.__round__(self, n)
+        return result
 
     def __floor__(self) -> int:
         """math.floor(x)."""
+        result = float.__floor__(self)  # compute first: floor(inf/nan) raises before counting
         try:
             _TLS.flop_counts.F2I += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().F2I += 1
-        return float.__floor__(self)
+        return result
 
     def __ceil__(self) -> int:
         """math.ceil(x)."""
+        result = float.__ceil__(self)  # compute first: ceil(inf/nan) raises before counting
         try:
             _TLS.flop_counts.F2I += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().F2I += 1
-        return float.__ceil__(self)
+        return result
 
     def __int__(self) -> int:
         """int(x)."""
+        result = float.__int__(self)  # compute first: int(inf/nan) raises before counting
         try:
             _TLS.flop_counts.F2I += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().F2I += 1
-        return float.__int__(self)
+        return result
 
     def __trunc__(self) -> int:
         """int(x)."""
+        result = float.__trunc__(self)  # compute first: trunc(inf/nan) raises before counting
         try:
             _TLS.flop_counts.F2I += 1
         except AttributeError:  # first counted op on this thread
             _create_thread_state().F2I += 1
-        return float.__trunc__(self)
+        return result
 
     def __add__(self, other: float) -> CountedFloat:
         """x+other.
