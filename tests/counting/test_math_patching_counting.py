@@ -412,6 +412,20 @@ def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(thread_counte
     assert thread_counter.DIST == 1  # only the successful call above counted anything
 
 
+def test_dist_counts_when_only_q_holds_a_counted_float(thread_counter):
+    # the contagion scan must cover BOTH point tuples: a CountedFloat present solely in q (with p
+    # all plain floats) is still a runtime input and still counts DIST -- a scan that only inspects
+    # p would miss it and hand back an uncounted plain float
+    # --- act ---------------------------------------------
+    result = math.dist([1.0, 2.0], [CountedFloat(4.0), CountedFloat(6.0)])
+
+    # --- assert ------------------------------------------
+    assert float(result) == 5.0
+    assert isinstance(result, CountedFloat)
+    assert thread_counter.DIST == 1
+    assert thread_counter.total_count() == 1
+
+
 @pytest.mark.parametrize("n_values", [1, 2, 4])
 def test_prod_counts_the_multiply_chain(thread_counter, n_values):
     # --- arrange -----------------------------------------
@@ -435,6 +449,20 @@ def test_prod_with_an_explicit_start_counts_its_multiply(thread_counter):
     assert float(result) == 30.0
     assert isinstance(result, CountedFloat)
     assert thread_counter.MUL == 2  # start*v1, then *v2
+
+
+def test_prod_with_a_plain_nonidentity_start_is_not_folded_away(thread_counter):
+    # a plain start of 2.0 is NOT the multiplicative identity: it opens the chain and its multiply
+    # is counted, exactly as writing the chain out would. Only an identity start (plain 1) folds
+    # away -- folding a non-identity start would drop a MUL and change the product itself
+    # --- act ---------------------------------------------
+    result = math.prod([CountedFloat(3.0), CountedFloat(4.0)], start=2.0)
+
+    # --- assert ------------------------------------------
+    assert float(result) == 24.0  # 2.0 * 3.0 * 4.0, not the folded-start 3.0 * 4.0 == 12.0
+    assert isinstance(result, CountedFloat)
+    assert thread_counter.MUL == 2  # 2.0*v1, then *v2
+    assert thread_counter.total_count() == 2
 
 
 def test_prod_without_counted_values_keeps_stdlib_behavior(thread_counter):

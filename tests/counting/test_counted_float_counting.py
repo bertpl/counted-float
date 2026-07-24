@@ -807,7 +807,25 @@ def test_counted_float_pow_runtime_counted_exponent_counts_pow(thread_counter):
     assert thread_counter.POW == 1
 
 
-@pytest.mark.parametrize("method", ["__rfloordiv__", "__rmod__", "__rdivmod__", "__rpow__"])
+def test_counted_float_rpow_runtime_counted_base_counts_pow(thread_counter):
+    # a CountedFloat base reaches __rpow__ as a genuinely runtime value -- a port computes
+    # base ** x with no constant to fold, so a lone POW. Pin the absolute count so a
+    # magnitude/field mutant on this branch is caught (a self-comparison of two runtime paths
+    # would move alike on both sides and hide it)
+    # --- act ---------------------------------------------
+    result = CountedFloat(2.0).__rpow__(CountedFloat(3.0))  # base 3.0 ** exponent 2.0
+
+    # --- assert ------------------------------------------
+    assert float(result) == 9.0
+    assert isinstance(result, CountedFloat)
+    assert thread_counter.POW == 1
+    assert thread_counter.total_count() == 1
+
+
+@pytest.mark.parametrize(
+    "method",
+    ["__radd__", "__rsub__", "__rmul__", "__rtruediv__", "__rfloordiv__", "__rmod__", "__rdivmod__", "__rpow__"],
+)
 def test_reflected_op_returns_notimplemented_for_unsupported_operand(method: str) -> None:
     # a reflected dunder must defer (return NotImplemented) when the underlying float op cannot
     # handle the other operand, so Python can fall through to the operand's own handling / a TypeError
