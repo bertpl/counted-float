@@ -249,9 +249,19 @@ only_mutate = [
     "src/counted_float/_core/benchmarking/flops/_array_generator.py",
     "src/counted_float/_core/benchmarking/flops/_libm_bindings.py",
 ]
-# _callsite.py is pure call-stack introspection; mutmut runs tests through a trampoline that becomes
-# the reported call site, so its tests cannot exercise it and every mutant would be a false survivor.
-do_not_mutate = ["src/counted_float/_core/counting/verbosity/_callsite.py"]
+# Excluded from mutation -- every surviving mutant here is a false signal, not a real gap:
+#   - _callsite.py is pure call-stack introspection, and mutmut runs tests through a trampoline that
+#     becomes the reported call site, so no test can exercise it.
+#   - _flop_weights_tree_view.py is a renderer whose meaningful behavior is covered elsewhere: the
+#     plain-text layout byte-for-byte by the docs-drift test (which mutmut can't run -- it regenerates
+#     via a subprocess), and the color styling + integer formatting (which the drift test strips /
+#     never exercises) by tests/counting/test_flop_weights_tree_view.py. What remains is purely
+#     cosmetic (color constants, column-packing widths) or equivalent (overwritten list inits, no-op
+#     strict= on always-equal-length zips), so pinning it would add churn, not signal.
+do_not_mutate = [
+    "src/counted_float/_core/counting/verbosity/_callsite.py",
+    "src/counted_float/_core/counting/_flop_weights_tree_view.py",
+]
 # -n 0 runs the suite serially (mutmut parallelizes across mutants itself); it overrides the
 # addopts `-n auto` -- `-p no:xdist` would instead make `-n` unrecognized and pytest refuse to start.
 # The --ignore/--deselect drop the tests that assert on the *real* call-site filename, which the
