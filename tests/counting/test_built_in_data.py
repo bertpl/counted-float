@@ -2,11 +2,11 @@ import pytest
 
 from counted_float._core.counting._builtin_data import (
     BuiltInData,
-    FlopWeightsTreeView,
     _construct_flop_weights_from_json_str,
     _flat_to_nested_dict,
     _load_json_files_as_dict,
 )
+from counted_float._core.counting._flop_weights_tree_view import FlopWeightsTreeView
 from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights
 
 
