@@ -24,3 +24,13 @@ def test_convert_nsecs_to_cycles(nsec, cpu_freq_mhz: float | None, fallback_freq
 
     # --- assert ------------------------------------------
     assert result == pytest.approx(expected_result)
+
+
+def test_convert_nsecs_to_cycles_uses_default_fallback_freq_mhz():
+    # with cpu_freq_mhz None and no explicit fallback, the default fallback_freq_mhz=1000 must apply;
+    # a mutated default (e.g. 2000) would double the result and fail this pin
+    # --- act ---------------------------------------------
+    result = convert_nsecs_to_cycles(nsec=3.0, cpu_freq_mhz=None)
+
+    # --- assert ------------------------------------------
+    assert result == pytest.approx(3.0)

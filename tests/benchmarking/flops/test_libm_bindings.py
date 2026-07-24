@@ -1,10 +1,17 @@
 import ctypes
+import math
 import subprocess
 import sys
 
 import pytest
 
 from counted_float._core.benchmarking.flops import _libm_bindings
+
+# The real-result probes below need a locatable C math library; skip on platforms (musl, Android)
+# where find_library cannot resolve one, matching how the getters themselves degrade.
+_needs_libm = pytest.mark.skipif(
+    _libm_bindings._load_libm() is None, reason="no locatable C math library on this platform"
+)
 
 
 def test_importing_the_benchmarking_api_does_not_load_libm():
@@ -62,3 +69,36 @@ def test_load_libm_returns_none_when_the_library_fails_to_load(monkeypatch):
         assert _libm_bindings._load_libm() is None
     finally:
         _libm_bindings._load_libm.cache_clear()  # drop the None so later real calls reload
+
+
+@_needs_libm
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [(8.0, 2.0), (27.0, 3.0), (-8.0, -2.0), (1.0, 1.0), (0.0, 0.0)],
+)
+def test_libm_cbrt_computes_real_cube_roots(value: float, expected: float):
+    # a wrong restype/argtypes (ctypes defaults restype to c_int) would corrupt the returned double
+    # --- arrange -----------------------------------------
+    cbrt = _libm_bindings.libm_cbrt()
+
+    # --- act ---------------------------------------------
+    result = cbrt(value)
+
+    # --- assert ------------------------------------------
+    # approx, not exact: cbrt's last bit is platform-dependent (glibc returns 3.0000000000000004 for
+    # 27.0); a corrupted restype/argtypes would be off by orders of magnitude, not one ULP
+    assert result == pytest.approx(expected)
+
+
+@_needs_libm
+@pytest.mark.parametrize(("x", "y"), [(5.0, 3.0), (7.5, 2.0), (-5.0, 3.0), (10.0, 4.0), (1.0, 3.0)])
+def test_libm_remainder_matches_math_remainder(x: float, y: float):
+    # a wrong restype/argtypes would corrupt the result; math.remainder is the same IEEE operation
+    # --- arrange -----------------------------------------
+    remainder = _libm_bindings.libm_remainder()
+
+    # --- act ---------------------------------------------
+    result = remainder(x, y)
+
+    # --- assert ------------------------------------------
+    assert result == math.remainder(x, y)

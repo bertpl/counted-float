@@ -140,6 +140,57 @@ def test_flop_weights_show_smoke(sample_flop_weights_dict_by_str):
     flop_weights.show()
 
 
+@pytest.mark.parametrize(("weight", "expected"), [(0.3, 1), (2.4, 2)])
+def test_round_nearest_int_floors_at_one_and_returns_int(weight: float, expected: int):
+    # 0.3 would round to 0, but the max(1, ...) floor lifts it to 1; 2.4 is a normal round above
+    # the floor. Both must come back as a genuine int, not a 1.0 float (the "10%"/round_number path
+    # returns floats, so the type is what tells the two apart).
+    # --- arrange -----------------------------------------
+    flop_weights = FlopWeights(weights={FlopType.ADD: weight})
+
+    # --- act ---------------------------------------------
+    rounded = flop_weights.round("nearest_int").weights[FlopType.ADD]
+
+    # --- assert ------------------------------------------
+    assert rounded == expected
+    assert isinstance(rounded, int)  # a genuine int...
+    assert not isinstance(rounded, float)  # ...never a float (the "10%"/round_number path returns floats)
+
+
+def test_round_nearest_int_leaves_missing_weights_missing():
+    # a NaN weight marks "unknown"; rounding must skip it, not turn it into a number (and note that
+    # round(nan) would itself raise, so a dropped NaN guard blows up here rather than degrading)
+    # --- arrange -----------------------------------------
+    flop_weights = FlopWeights(weights={FlopType.ADD: 2.0, FlopType.MUL: math.nan})
+
+    # --- act ---------------------------------------------
+    rounded = flop_weights.round("nearest_int")
+
+    # --- assert ------------------------------------------
+    assert rounded.weights[FlopType.ADD] == 2
+    assert math.isnan(rounded.weights[FlopType.MUL])  # missing stays missing
+
+
+def test_as_geo_mean_fill_missing_data_imputes_only_when_true(sample_flop_weights_dict_by_enum):
+    # one genuinely missing entry makes the two branches diverge: fill=True imputes it to a finite
+    # value (so the row's geo-mean is finite), fill=False leaves it NaN (so the geo-mean propagates
+    # NaN). Present entries must be untouched either way.
+    # --- arrange -----------------------------------------
+    weights1 = FlopWeights(weights=dict(sample_flop_weights_dict_by_enum))
+    weights2_dict = {k: v + 1 for k, v in sample_flop_weights_dict_by_enum.items()}
+    weights2_dict[FlopType.MUL] = math.nan  # the only missing entry
+    weights2 = FlopWeights(weights=weights2_dict)
+
+    # --- act ---------------------------------------------
+    filled = FlopWeights.as_geo_mean([weights1, weights2], fill_missing_data=True)
+    unfilled = FlopWeights.as_geo_mean([weights1, weights2], fill_missing_data=False)
+
+    # --- assert ------------------------------------------
+    assert not math.isnan(filled.weights[FlopType.MUL])  # imputed -> finite
+    assert math.isnan(unfilled.weights[FlopType.MUL])  # left missing -> NaN propagates
+    assert filled.weights[FlopType.ADD] == unfilled.weights[FlopType.ADD]  # present data untouched by fill
+
+
 @pytest.mark.parametrize("fill_missing_data", [True, False])
 def test_flop_weights_as_geo_mean(sample_flop_weights_dict_by_enum, fill_missing_data: bool):
     # --- arrange -----------------------------------------

@@ -181,6 +181,21 @@ def test_each_call_site_is_reported_separately(logged_lines):
     assert first != second, "Two distinct call sites are two distinct findings."
 
 
+def test_two_operations_from_one_call_site_are_both_reported(logged_lines):
+    # --- arrange -----------------------------------------
+    x = CountedFloat(2.5)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        _ = math.ulp(x), math.frexp(x)  # two operations, one source line -> one shared location
+
+    # --- assert ------------------------------------------
+    operations = {line.split()[1] for line in logged_lines()}
+    assert operations == {"ulp", "frexp"}, (
+        "The operation is half the dedup key, so two operations from one line are two findings."
+    )
+
+
 def test_a_call_site_is_reported_once_per_process(logged_lines):
     # --- arrange -----------------------------------------
     x = CountedFloat(2.5)

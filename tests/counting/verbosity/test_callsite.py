@@ -38,6 +38,26 @@ def test_locate_call_skips_frames_inside_the_package():
     )
 
 
+def test_locate_call_skips_the_top_level_package_frame():
+    # --- arrange -----------------------------------------
+    # a frame whose module name is exactly the package, as ``counted_float/__init__.py`` reports --
+    # it lacks the trailing dot the submodule check keys on, so only the exact-name clause skips it.
+    package_frame = compile(
+        "from counted_float._core.counting.verbosity._callsite import locate_call\nlocation = locate_call()\n",
+        "<fabricated counted_float top-level frame>",
+        "exec",
+    )
+    namespace = {"__name__": "counted_float"}
+
+    # --- act ---------------------------------------------
+    exec(package_frame, namespace)  # noqa: S102 -- fabricating the top-level package frame is the point
+
+    # --- assert ------------------------------------------
+    assert Path(namespace["location"][0]).name == "test_callsite.py", (
+        "The top-level package frame should have been walked past, down to this test's frame."
+    )
+
+
 def test_locate_call_without_any_user_frame(monkeypatch):
     # --- arrange -----------------------------------------
     # the walk only gives up when no frame outside the package is left, which a caller of the

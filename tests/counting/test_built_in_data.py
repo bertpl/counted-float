@@ -7,7 +7,7 @@ from counted_float._core.counting._builtin_data import (
     _flat_to_nested_dict,
     _load_json_files_as_dict,
 )
-from counted_float._core.models import FlopsBenchmarkResults, FlopWeights
+from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights
 
 
 # =================================================================================================
@@ -32,6 +32,23 @@ def test_builtin_data_get_flop_weights(key_filter: str):
 
     # --- assert ------------------------------------------
     assert isinstance(result, FlopWeights)
+
+
+def test_get_flop_weights_returns_independent_copies_per_call():
+    # "" is a precomputed cache key, so this exercises the cache-hit model_copy(deep=True) path:
+    # each call must hand back a distinct deep copy. A shared reference would let one caller's
+    # mutation corrupt the process-wide cache and every later caller.
+    # --- arrange -----------------------------------------
+    first = BuiltInData.get_flop_weights(key_filter="")
+    second = BuiltInData.get_flop_weights(key_filter="")
+
+    # --- act ---------------------------------------------
+    first.weights[FlopType.ADD] = -999.0  # mutate one copy
+
+    # --- assert ------------------------------------------
+    assert first is not second  # distinct objects...
+    assert second.weights[FlopType.ADD] != -999.0  # ...the sibling copy is untouched...
+    assert BuiltInData.get_flop_weights(key_filter="").weights[FlopType.ADD] != -999.0  # ...and so is the cache
 
 
 def test_builtin_data_get_flop_weights_invalid_key():

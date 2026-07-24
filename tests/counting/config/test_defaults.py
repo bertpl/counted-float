@@ -29,6 +29,21 @@ def test_default_flop_weights_rounding(rounding_mode: str):
 
 
 @pytest.mark.parametrize("getter", [get_builtin_flop_weights, get_default_consensus_flop_weights])
+def test_default_rounding_mode_is_ten_percent(getter):
+    # the documented public default is "10%"; every other test passes rounding_mode explicitly, so
+    # a changed default would slip through. Pin it: the no-arg result must match the explicit "10%"
+    # result (which also rules out a nearest_int default) and differ from the unrounded (None) one.
+    # --- act ---------------------------------------------
+    default = getter()
+    explicit_ten_percent = getter(rounding_mode="10%")
+    unrounded = getter(rounding_mode=None)
+
+    # --- assert ------------------------------------------
+    assert default.weights == explicit_ten_percent.weights  # default rounds the "10%" way...
+    assert default.weights != unrounded.weights  # ...and is not the unrounded default
+
+
+@pytest.mark.parametrize("getter", [get_builtin_flop_weights, get_default_consensus_flop_weights])
 def test_builtin_flop_weight_getters_return_defensive_copies(getter):
     # --- act ---------------------------------------------
     flop_weights = getter()

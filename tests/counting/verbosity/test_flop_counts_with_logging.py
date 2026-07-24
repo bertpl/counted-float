@@ -69,6 +69,18 @@ def test_a_bulk_increment_logs_one_line_carrying_its_size(target, logged_lines):
     assert "+4" in line
 
 
+def test_a_further_increment_logs_its_delta_not_the_new_total(target, logged_lines):
+    # --- act ---------------------------------------------
+    target.ADD += 4
+    target.ADD += 3
+
+    # --- assert ------------------------------------------
+    first, second = logged_lines()
+    assert "+4" in first
+    assert "+3" in second, "The logged amount is this statement's increment, not the field's running total."
+    assert "+7" not in second
+
+
 def test_the_logged_line_reports_the_incrementing_location(target, logged_lines):
     # --- act ---------------------------------------------
     target.ADD += 1
