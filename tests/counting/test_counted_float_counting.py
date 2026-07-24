@@ -870,3 +870,86 @@ def test_counted_float_non_finite_to_int_conversion_counts_nothing(
         convert(cf)
 
     assert thread_counter.total_count() == 0
+
+
+# =================================================================================================
+#  CountedFloat - the reflected return path carries the real value
+# =================================================================================================
+@pytest.mark.parametrize(
+    ("case", "expected"),
+    [
+        (lambda cf: 5.0 - cf, 2.0),  # __rsub__ plain-minuend path: 5.0 - 3.0
+        (lambda cf: (-0.0) - cf, -3.0),  # __rsub__ -0.0 sign-flip path: -(3.0)
+        (lambda cf: divmod(17.0, cf), (5.0, 2.0)),  # __rdivmod__: (17 // 3, 17 % 3)
+    ],
+    ids=["rsub", "rsub_sign_flip", "rdivmod"],
+)
+def test_reflected_ops_carry_the_real_value(thread_counter, case: Callable, expected):
+    # __rsub__ and __rdivmod__ rewrap their result(s) via float.__new__(CountedFloat, ...); the
+    # count tests assert only the type, so a dropped result argument (a 0.0 return) would pass them.
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(3.0)
+
+    # --- act ---------------------------------------------
+    result = case(cf)
+
+    # --- assert ------------------------------------------
+    if isinstance(expected, tuple):
+        assert all(isinstance(r, CountedFloat) for r in result)
+        assert tuple(float(r) for r in result) == expected
+    else:
+        assert isinstance(result, CountedFloat)
+        assert float(result) == expected
+
+
+# =================================================================================================
+#  CountedFloat - counts accumulate across repeated calls
+# =================================================================================================
+# Each op is invoked twice from a fresh counter: a single-shot call (or a forward-then-reflected
+# pair, where each path runs once) leaves the counting site at zero when it fires, so `field += 1`
+# and `field = 1` are indistinguishable.  Each op is invoked n_calls times and the count asserted to
+# reach n_calls x the per-call amount: n_calls == 1 pins the single-shot count, n_calls in (2, 5)
+# forces the accumulating form.  The ops here are the single-shot paths not already covered elsewhere.
+_ACCUMULATING_COUNTED_FLOAT_OPS = [
+    ("neg", lambda: -CountedFloat(1.5), {"MINUS": 1}),
+    ("abs", lambda: abs(CountedFloat(-1.5)), {"ABS": 1}),
+    ("int", lambda: int(CountedFloat(1.5)), {"F2I": 1}),
+    ("floor", lambda: math.floor(CountedFloat(1.5)), {"F2I": 1}),
+    ("ceil", lambda: math.ceil(CountedFloat(1.5)), {"F2I": 1}),
+    ("trunc", lambda: math.trunc(CountedFloat(1.5)), {"F2I": 1}),
+    ("round_to_int", lambda: round(CountedFloat(1.5)), {"F2I": 1}),  # no ndigits -> F2I
+    ("round_to_float", lambda: round(CountedFloat(1.5), 0), {"RND": 1}),
+    ("round_to_digits", lambda: round(CountedFloat(1.5), 2), {"MUL": 1, "RND": 1, "DIV": 1}),
+    ("floordiv", lambda: CountedFloat(7.5) // CountedFloat(3.0), {"DIV": 1, "RND": 1}),
+    ("mod", lambda: CountedFloat(7.5) % CountedFloat(3.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+    ("divmod", lambda: divmod(CountedFloat(7.5), CountedFloat(3.0)), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+    ("rsub", lambda: 5.0 - CountedFloat(3.0), {"SUB": 1}),  # __rsub__ plain-minuend path
+    ("rsub_sign_flip", lambda: (-0.0) - CountedFloat(3.0), {"MINUS": 1}),  # __rsub__ -0.0 minuend fold
+    ("pow_sqrt", lambda: CountedFloat(2.0) ** 0.5, {"SQRT": 1}),  # count_pow_with_constant_exponent
+    ("pow_sqrt_reciprocal", lambda: CountedFloat(2.0) ** -0.5, {"SQRT": 1, "DIV": 1}),  # -0.5 branch
+    ("pow_reciprocal", lambda: CountedFloat(2.0) ** -1, {"DIV": 1}),
+    ("pow_powi", lambda: CountedFloat(2.0) ** 3, {"MUL": 2}),  # square-and-multiply chain
+    ("pow_neg_powi", lambda: CountedFloat(2.0) ** -3, {"MUL": 2, "DIV": 1}),
+    ("rpow_exp2", lambda: 2.0 ** CountedFloat(3.0), {"EXP2": 1}),  # count_pow_with_constant_base
+    ("rpow_exp10", lambda: 10.0 ** CountedFloat(3.0), {"EXP10": 1}),
+    ("rpow_runtime_base", lambda: CountedFloat(2.0).__rpow__(CountedFloat(3.0)), {"POW": 1}),  # __rpow__ runtime base
+]
+
+
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+@pytest.mark.parametrize(
+    ("op", "per_call"),
+    [(op, counts) for _, op, counts in _ACCUMULATING_COUNTED_FLOAT_OPS],
+    ids=[i for i, _, _ in _ACCUMULATING_COUNTED_FLOAT_OPS],
+)
+def test_repeated_counted_float_ops_accumulate_their_counts(
+    thread_counter, op: Callable, per_call: dict[str, int], n_calls: int
+):
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        op()
+
+    # --- assert ------------------------------------------
+    for field, count in per_call.items():
+        assert getattr(thread_counter, field) == n_calls * count
+    assert thread_counter.total_count() == n_calls * sum(per_call.values())
