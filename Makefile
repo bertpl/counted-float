@@ -30,6 +30,9 @@ test:
 	uv run --all-extras --python 3.13 pytest ./tests
 
 lint:
+	# reconcile the venv to the lockfile first, so the hooks run the pinned ruff/ty -- not whatever a
+	# prior `uv run --exact` or interpreter switch left behind, which would drift make lint from CI
+	uv sync --locked --all-extras
 	uv run pre-commit run --all-files
 
 format:
