@@ -816,3 +816,39 @@ def test_reflected_op_returns_notimplemented_for_unsupported_operand(method: str
 
     # --- assert ------------------------------------------
     assert result is NotImplemented
+
+
+# =================================================================================================
+#  CountedFloat - error-before-count invariant (a raising op counts nothing)
+# =================================================================================================
+def test_counted_float_construction_from_overflowing_int_counts_nothing(thread_counter):
+    """An int too large to become a float raises before the I2F is counted -- no phantom flop."""
+    # --- act / assert ------------------------------------
+    with pytest.raises(OverflowError):
+        CountedFloat(10**400)  # float(10**400) overflows; the I2F must not survive the raise
+
+    assert thread_counter.total_count() == 0
+
+
+@pytest.mark.parametrize(
+    ("non_finite", "expected_exc"),
+    [(float("inf"), OverflowError), (float("nan"), ValueError)],
+    ids=["inf", "nan"],
+)
+@pytest.mark.parametrize(
+    "convert",
+    [int, math.floor, math.ceil, math.trunc, round],
+    ids=["int", "floor", "ceil", "trunc", "round"],
+)
+def test_counted_float_non_finite_to_int_conversion_counts_nothing(
+    thread_counter, convert: Callable, non_finite: float, expected_exc: type[Exception]
+):
+    """int/floor/ceil/trunc/round(x) of inf or nan raises before the F2I is counted -- no phantom flop."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(non_finite)  # construction from a float counts nothing
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(expected_exc):
+        convert(cf)
+
+    assert thread_counter.total_count() == 0
