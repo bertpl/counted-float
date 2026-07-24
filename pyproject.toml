@@ -96,6 +96,11 @@ docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
 ]
+# mutation testing (`make mutation`) — its own opt-in group, so the dev sync that
+# `make lint` and CI run stays lean (mutmut drags in libcst / textual / setproctitle).
+mutation = [
+    "mutmut>=3.6.0",
+]
 
 [build-system]
 requires = ["hatchling", "hatch-fancy-pypi-readme", "hatch-vcs"]
@@ -221,3 +226,53 @@ ignore-words-list = "sme,intoto"
 
 [tool.pytest.ini_options]
 addopts = "-n auto --dist worksteal"
+
+[tool.mutmut]
+# Local mutation testing via `make mutation` (never a CI gate; see the Makefile targets).
+# source_paths must be the whole package: mutmut copies only source_paths (plus tests/) into its
+# `mutants/` sandbox, so anything omitted becomes unimportable and test collection fails. The set of
+# files actually mutated is scoped by only_mutate below.
+source_paths = ["src/counted_float"]
+# Everything under _core except the hardware-timed benchmark loops; the pure-Python benchmark ports
+# are fast and tested, so they are in. (mutmut's globs match recursively, but the subfolders are
+# listed explicitly so the intent survives a version whose globbing is literal.)
+only_mutate = [
+    "src/counted_float/_core/counting/*.py",
+    "src/counted_float/_core/counting/config/*.py",
+    "src/counted_float/_core/counting/verbosity/*.py",
+    "src/counted_float/_core/compatibility/*.py",
+    "src/counted_float/_core/models/*.py",
+    "src/counted_float/_core/utils/*.py",
+    "src/counted_float/_core/_cli.py",
+    "src/counted_float/_core/_cli_main.py",
+    "src/counted_float/_core/benchmarking/flops/_sumprod_port.py",
+    "src/counted_float/_core/benchmarking/flops/_array_generator.py",
+    "src/counted_float/_core/benchmarking/flops/_libm_bindings.py",
+]
+# _callsite.py is pure call-stack introspection; mutmut runs tests through a trampoline that becomes
+# the reported call site, so its tests cannot exercise it and every mutant would be a false survivor.
+do_not_mutate = ["src/counted_float/_core/counting/verbosity/_callsite.py"]
+# -n 0 runs the suite serially (mutmut parallelizes across mutants itself); it overrides the
+# addopts `-n auto` -- `-p no:xdist` would instead make `-n` unrecognized and pytest refuse to start.
+# The --ignore/--deselect drop the tests that assert on the *real* call-site filename, which the
+# trampoline reports as `trampoline.py` (they pass under a normal `make test`).
+pytest_add_cli_args = [
+    "-n", "0",
+    "--ignore=tests/counting/verbosity/test_callsite.py",
+    "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_the_logged_line_reports_the_incrementing_location",
+    "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_lines_without_a_note_carry_no_rationale",
+    "--deselect=tests/counting/verbosity/test_info_counting.py::test_logged_lines_locate_the_user_expression_not_the_library",
+    "--deselect=tests/counting/verbosity/test_uncounted_warnings.py::test_each_call_site_is_reported_separately",
+]
+# Sandbox-safe unit tests only: tests/docs/ reads scripts/ and docs/ files mutmut does not copy in,
+# and the slow real-benchmark tests under tests/benchmarking/ are excluded (only the fast port tests).
+pytest_add_cli_args_test_selection = [
+    "tests/counting",
+    "tests/models",
+    "tests/utils",
+    "tests/shared",
+    "tests/cli",
+    "tests/benchmarking/flops/test_sumprod_port.py",
+    "tests/benchmarking/flops/test_array_generator.py",
+    "tests/benchmarking/flops/test_libm_bindings.py",
+]
