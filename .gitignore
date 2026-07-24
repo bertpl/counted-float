@@ -28,6 +28,10 @@ venv
 # Pytest cache
 .cache
 
+# mutmut mutation-testing sandbox + cache (make mutation)
+mutants
+.mutmut-cache
+
 # OS thumbnail files
 .DS_Store
 Thumbs.db

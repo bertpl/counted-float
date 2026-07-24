@@ -9,6 +9,8 @@ help:
 	@echo ''
 	@echo '  test		                    Run pytest unit tests.'
 	@echo '  lint		                    Run all pre-commit hooks on all files.'
+	@echo '  mutation		                Run local mutation testing (mutmut). MODULE=<substr> scopes it.'
+	@echo '  mutation-results	            List the surviving mutants from the last mutation run.'
 	@echo '  format		                    Format source code using ruff.'
 	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
@@ -42,6 +44,13 @@ format:
 format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
+
+mutation:
+	# local mutation testing over _core (config in [tool.mutmut]); MODULE=<substr> scopes to matching mutants
+	uv run --group mutation --all-extras --python 3.13 mutmut run $(if $(MODULE),"*$(MODULE)*",)
+
+mutation-results:
+	uv run --group mutation --all-extras --python 3.13 mutmut results
 
 precompute-weights:
 	uv run python scripts/generate_precomputed_weights.py
