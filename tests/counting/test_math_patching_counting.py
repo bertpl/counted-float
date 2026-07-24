@@ -473,6 +473,14 @@ def test_prod_without_counted_values_keeps_stdlib_behavior(thread_counter):
     assert thread_counter.total_count() == 0
 
 
+def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter):
+    # the all-plain path delegates to the original; it must forward `start`, not drop it
+    # --- act / assert ------------------------------------
+    result = math.prod([2, 3, 4], start=10)
+    assert result == 240  # 10 * 2 * 3 * 4, not the start-dropped 24
+    assert thread_counter.total_count() == 0
+
+
 @pytest.mark.parametrize("n_values", [1, 2, 5])
 def test_fsum_counts_the_addition_chain(thread_counter, n_values):
     # --- arrange -----------------------------------------
@@ -675,3 +683,174 @@ def test_math_fma_domain_error_counts_nothing(thread_counter):
         math.fma(math.inf, 0.0, cf)
 
     assert thread_counter.total_count() == 0
+
+
+# =================================================================================================
+#  Patched math functions - the CountedFloat return path carries the real value
+# =================================================================================================
+@pytest.mark.parametrize(
+    ("fname", "args"),
+    [
+        ("sqrt", (2.0,)),
+        ("cbrt", (2.0,)),
+        ("log", (2.0,)),
+        ("log2", (8.0,)),
+        ("log10", (1000.0,)),
+        ("exp", (2.0,)),
+        ("exp2", (3.0,)),
+        ("pow", (2.0, 3.0)),
+        ("sin", (0.5,)),
+        ("cos", (0.5,)),
+        ("tan", (0.5,)),
+        ("asin", (0.5,)),
+        ("acos", (0.5,)),
+        ("atan", (0.5,)),
+        ("atan2", (1.0, 2.0)),
+        ("hypot", (3.0, 4.0)),
+        ("expm1", (0.5,)),
+        ("log1p", (0.5,)),
+        ("fmod", (5.0, 3.0)),
+        ("remainder", (5.0, 3.0)),
+        ("fabs", (-2.0,)),
+        ("sinh", (0.5,)),
+        ("cosh", (0.5,)),
+        ("tanh", (0.5,)),
+        ("asinh", (0.5,)),
+        ("acosh", (2.0,)),
+        ("atanh", (0.5,)),
+        ("gamma", (2.5,)),
+        ("lgamma", (2.5,)),
+        ("erf", (0.5,)),
+        ("erfc", (0.5,)),
+        ("degrees", (2.0,)),
+        ("radians", (90.0,)),
+    ],
+)
+def test_patched_math_functions_carry_the_real_value_for_counted_floats(thread_counter, fname, args):
+    # the counted-input twin of test_patched_math_functions_match_stdlib_for_plain_floats: on the
+    # CountedFloat path the result is rewrapped via float.__new__(CountedFloat, result), and the
+    # count-focused tests only assert the count and the type -- never the value.  Dropping that
+    # result argument (returning a bare 0.0) passes every one of them, so the value is pinned here.
+    # --- arrange -----------------------------------------
+    original = STDLIB_MATH_FUNCTIONS[fname]
+    counted_args = tuple(CountedFloat(a) for a in args)
+
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(*counted_args)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert float(result) == original(*args)  # patched wraps the original's own result -> bit-identical
+
+
+# =================================================================================================
+#  Patched math functions - counts accumulate across repeated calls
+# =================================================================================================
+# Each op is invoked n_calls times from a fresh counter, asserting the count reaches n_calls x the
+# per-call amount.  n_calls == 1 pins the single-shot count; n_calls in (2, 5) forces the accumulating
+# form -- a single-shot test cannot tell `field += 1` from `field = 1` (both leave the field at 1).
+_ACCUMULATING_MATH_OPS = [
+    ("sqrt", lambda: math.sqrt(CountedFloat(2.0)), {"SQRT": 1}),
+    ("cbrt", lambda: math.cbrt(CountedFloat(2.0)), {"CBRT": 1}),
+    ("log", lambda: math.log(CountedFloat(2.0)), {"LOG": 1}),
+    ("log2", lambda: math.log2(CountedFloat(2.0)), {"LOG2": 1}),
+    ("log10", lambda: math.log10(CountedFloat(2.0)), {"LOG10": 1}),
+    ("log_int_base", lambda: math.log(CountedFloat(27.0), 3), {"LOG": 1, "MUL": 1}),
+    ("log_counted_base", lambda: math.log(16.0, CountedFloat(2.0)), {"LOG": 1, "DIV": 1}),
+    ("log_const_base_2", lambda: math.log(CountedFloat(8.0), 2), {"LOG2": 1}),  # base 2 folds to LOG2
+    ("log_const_base_10", lambda: math.log(CountedFloat(1000.0), 10), {"LOG10": 1}),  # base 10 folds to LOG10
+    ("exp", lambda: math.exp(CountedFloat(0.5)), {"EXP": 1}),
+    ("exp2", lambda: math.exp2(CountedFloat(0.5)), {"EXP2": 1}),
+    ("sin", lambda: math.sin(CountedFloat(0.5)), {"SIN": 1}),
+    ("asin", lambda: math.asin(CountedFloat(0.5)), {"ASIN": 1}),
+    ("acos", lambda: math.acos(CountedFloat(0.5)), {"ACOS": 1}),
+    ("atan", lambda: math.atan(CountedFloat(0.5)), {"ATAN": 1}),
+    ("atan2", lambda: math.atan2(CountedFloat(1.0), CountedFloat(2.0)), {"ATAN2": 1}),
+    ("expm1", lambda: math.expm1(CountedFloat(0.5)), {"EXPM1": 1}),
+    ("log1p", lambda: math.log1p(CountedFloat(0.5)), {"LOG1P": 1}),
+    ("sinh", lambda: math.sinh(CountedFloat(0.5)), {"SINH": 1}),
+    ("cosh", lambda: math.cosh(CountedFloat(0.5)), {"COSH": 1}),
+    ("tanh", lambda: math.tanh(CountedFloat(0.5)), {"TANH": 1}),
+    ("asinh", lambda: math.asinh(CountedFloat(0.5)), {"ASINH": 1}),
+    ("acosh", lambda: math.acosh(CountedFloat(2.0)), {"ACOSH": 1}),
+    ("atanh", lambda: math.atanh(CountedFloat(0.5)), {"ATANH": 1}),
+    ("gamma", lambda: math.gamma(CountedFloat(2.5)), {"GAMMA": 1}),
+    ("lgamma", lambda: math.lgamma(CountedFloat(2.5)), {"LGAMMA": 1}),
+    ("erf", lambda: math.erf(CountedFloat(0.5)), {"ERF": 1}),
+    ("erfc", lambda: math.erfc(CountedFloat(0.5)), {"ERFC": 1}),
+    ("fabs", lambda: math.fabs(CountedFloat(-2.0)), {"ABS": 1}),
+    ("fmod", lambda: math.fmod(CountedFloat(5.0), CountedFloat(3.0)), {"FMOD": 1}),
+    ("remainder", lambda: math.remainder(CountedFloat(5.0), CountedFloat(3.0)), {"REMAINDER": 1}),
+    ("hypot_abs", lambda: math.hypot(CountedFloat(-3.0)), {"ABS": 1}),
+    ("hypot2", lambda: math.hypot(CountedFloat(3.0), CountedFloat(4.0)), {"HYPOT": 1}),
+    (
+        "hypot3",
+        lambda: math.hypot(CountedFloat(1.0), CountedFloat(2.0), CountedFloat(2.0)),
+        {"HYPOT": 1, "HYPOT_XARG": 1},
+    ),
+    (
+        "dist3",
+        lambda: math.dist([CountedFloat(0.0), CountedFloat(0.0), CountedFloat(0.0)], [1.0, 2.0, 2.0]),
+        {"DIST": 1, "DIST_XARG": 1},
+    ),
+    ("fsum", lambda: math.fsum([CountedFloat(0.1)] * 3), {"ADD": 2}),
+    ("degrees", lambda: math.degrees(CountedFloat(1.0)), {"MUL": 1}),
+    ("radians", lambda: math.radians(CountedFloat(1.0)), {"MUL": 1}),
+]
+
+
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+@pytest.mark.parametrize(
+    ("op", "per_call"),
+    [(op, counts) for _, op, counts in _ACCUMULATING_MATH_OPS],
+    ids=[i for i, _, _ in _ACCUMULATING_MATH_OPS],
+)
+def test_repeated_math_ops_accumulate_their_counts(thread_counter, op, per_call: dict[str, int], n_calls: int):
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        op()
+
+    # --- assert ------------------------------------------
+    for field, count in per_call.items():
+        assert getattr(thread_counter, field) == n_calls * count
+    assert thread_counter.total_count() == n_calls * sum(per_call.values())
+
+
+@requires_fma
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+def test_repeated_fma_accumulates_its_count(thread_counter, n_calls: int):
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        math.fma(CountedFloat(2.0), CountedFloat(3.0), CountedFloat(4.0))
+
+    # --- assert ------------------------------------------
+    assert n_calls == thread_counter.FMA
+    assert thread_counter.total_count() == n_calls
+
+
+@requires_fma
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+def test_repeated_fma_with_constant_multiplicands_accumulates_add(thread_counter, n_calls: int):
+    # two constant multiplicands fold to one constant, leaving a bare ADD; a distinct counting site
+    # from the fused FMA above
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        math.fma(2.0, 3.0, CountedFloat(4.0))
+
+    # --- assert ------------------------------------------
+    assert n_calls == thread_counter.ADD
+    assert thread_counter.total_count() == n_calls
+
+
+@needs_sumprod
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+def test_repeated_sumprod_accumulates_its_counts(thread_counter, n_calls: int):
+    # 3 elements -> SUMPROD + 1 SUMPROD_XELEM per call
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        math.sumprod([CountedFloat(1.0), CountedFloat(2.0), CountedFloat(3.0)], [1.0, 1.0, 1.0])
+
+    # --- assert ------------------------------------------
+    assert n_calls == thread_counter.SUMPROD
+    assert n_calls == thread_counter.SUMPROD_XELEM
+    assert thread_counter.total_count() == 2 * n_calls

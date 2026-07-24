@@ -60,3 +60,11 @@ def test_instruction_latencies_deserialization(pydantic_cls):
 
     # --- assert ------------------------------------------
     assert isinstance(deser_obj.latencies, pydantic_cls)
+
+
+def test_latency_consensus_is_the_larger_of_min_and_max_cycles():
+    # consensus takes max(min, max) -- even when min exceeds max, so a mutant that drops min_cycles
+    # (returning only the max) is caught
+    # --- act & assert ------------------------------------
+    assert Latency(min_cycles=5.0, max_cycles=3.0).consensus() == 5.0
+    assert Latency(min_cycles=2.0, max_cycles=8.0).consensus() == 8.0

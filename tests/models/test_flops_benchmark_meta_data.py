@@ -1,5 +1,10 @@
+import platform
+from importlib.metadata import PackageNotFoundError
+
+import cpuinfo
 import psutil
 
+import counted_float._core.models._flops_benchmark_meta_data as meta
 from counted_float._core.models._flops_benchmark_meta_data import (
     BenchmarkSettings,
     OSInfo,
@@ -75,6 +80,126 @@ def test_package_info():
     assert "." in package_info.numpy  # not optional
     assert "." in package_info.psutil  # not optional
     assert "." in package_info.py_cpuinfo  # not optional
+
+
+# =================================================================================================
+#  from_system() field mapping (host calls mocked, so each field's source is pinned)
+# =================================================================================================
+def test_processor_info_maps_each_host_fact_to_its_field(monkeypatch):
+    # distinct mocked values so a swapped field or flag is caught
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(
+        cpuinfo,
+        "get_cpu_info",
+        lambda: {"brand_raw": "Test CPU", "arch_string_raw": "x86_64", "arch": "X86_64", "bits": 64},
+    )
+    monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: 8 if logical else 4)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: 1000.0)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: 3000.0)
+
+    # --- act ---------------------------------------------
+    info = ProcessorInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert info.description == "Test CPU"
+    assert info.architecture == "x86_64 - X86_64 - 64-bits"
+    assert info.n_logical_core_count == 8  # logical=True
+    assert info.n_physical_core_count == 4  # logical=False
+    assert info.min_freq_mhz == 1000
+    assert info.max_freq_mhz == 3000
+
+
+def test_processor_info_architecture_drops_absent_parts_and_freq_none_stays_none(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(
+        cpuinfo,
+        "get_cpu_info",
+        lambda: {"brand_raw": "CPU", "arch_string_raw": "arm64", "arch": None, "bits": None},
+    )
+    monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: 1)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: None)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: None)
+
+    # --- act ---------------------------------------------
+    info = ProcessorInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert info.architecture == "arm64"  # arch and bits absent -> only arch_string_raw, no blank joins
+    assert info.min_freq_mhz is None  # a None reading maps to None, not 0
+    assert info.max_freq_mhz is None
+
+
+def test_processor_info_defaults_description_and_architecture_to_empty(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(cpuinfo, "get_cpu_info", dict)  # nothing detected
+    monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: None)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: 500.0)
+    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: 500.0)
+
+    # --- act ---------------------------------------------
+    info = ProcessorInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert info.description == ""  # brand_raw absent -> "" default
+    assert info.architecture == ""  # no parts present
+
+
+def test_os_info_maps_platform_calls_to_fields(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(platform, "platform", lambda: "PLATFORM")
+    monkeypatch.setattr(platform, "system", lambda: "SYSTEM")
+    monkeypatch.setattr(platform, "release", lambda: "RELEASE")
+    monkeypatch.setattr(platform, "version", lambda: "VERSION")
+
+    # --- act ---------------------------------------------
+    info = OSInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert (info.platform, info.system, info.release, info.version) == ("PLATFORM", "SYSTEM", "RELEASE", "VERSION")
+
+
+def test_python_info_maps_platform_calls_to_fields(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(platform, "python_version", lambda: "3.13.0")
+    monkeypatch.setattr(platform, "python_implementation", lambda: "CPython")
+    monkeypatch.setattr(platform, "python_compiler", lambda: "Clang 1")
+
+    # --- act ---------------------------------------------
+    info = PythonInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert (info.version, info.implementation, info.compiler) == ("3.13.0", "CPython", "Clang 1")
+
+
+def test_packages_info_queries_each_fields_own_package(monkeypatch):
+    # version() echoes the package name, so each field must query its own package literal
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(meta, "version", lambda pkg: f"v-{pkg}")
+
+    # --- act ---------------------------------------------
+    info = PackagesInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert info.counted_float == "v-counted-float"
+    assert info.llvmlite == "v-llvmlite"
+    assert info.numba == "v-numba"
+    assert info.numpy == "v-numpy"
+    assert info.psutil == "v-psutil"
+    assert info.py_cpuinfo == "v-py-cpuinfo"
+
+
+def test_packages_info_reports_not_installed_for_missing_package(monkeypatch):
+    # --- arrange -----------------------------------------
+    def _raise_not_found(pkg):
+        raise PackageNotFoundError(pkg)
+
+    monkeypatch.setattr(meta, "version", _raise_not_found)
+
+    # --- act ---------------------------------------------
+    info = PackagesInfo.from_system()
+
+    # --- assert ------------------------------------------
+    assert info.numba == "<not_installed>"
 
 
 # =================================================================================================

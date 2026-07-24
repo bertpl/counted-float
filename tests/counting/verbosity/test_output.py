@@ -50,3 +50,13 @@ def test_a_location_without_a_line_number_renders_as_one_span(location):
 
     # --- assert ------------------------------------------
     assert spans == ((location, "dim"),)
+
+
+def test_shared_returns_the_process_wide_singleton():
+    # --- act ---------------------------------------------
+    first = VerbosityWriter.shared()
+    second = VerbosityWriter.shared()
+
+    # --- assert ------------------------------------------
+    assert isinstance(first, VerbosityWriter)
+    assert first is second  # created once, then reused

@@ -310,3 +310,48 @@ def test_show_lists_measured_weights_before_missing_ones(capsys):
     shown = [line for line in capsys.readouterr().out.split("\n") if ":" in line]
     assert FlopType.ADD.long_name() in shown[0]
     assert FlopType.MUL.long_name() in shown[1]
+
+
+def test_show_formats_each_row_and_wraps_in_braces(capsys):
+    # --- arrange -----------------------------------------
+    fw = FlopWeights(weights={FlopType.ADD: 1.0, FlopType.MUL: 5.0})  # every other type auto-fills to NaN
+
+    # --- act ---------------------------------------------
+    fw.show()
+    lines = capsys.readouterr().out.splitlines()
+
+    # --- assert ------------------------------------------
+    assert lines[0] == "{"
+    assert lines[-1] == "}"
+    assert lines[1] == "    FlopType.ADD            [x+y]             :   1.00000"  # 9.5f, name-padded
+    assert lines[2] == "    FlopType.MUL            [x*y]             :   5.00000"
+    assert lines[3] == "    FlopType.ABS            [abs(x)]          :       nan"  # missing sorts last, prints nan
+    assert len(lines) == 2 + len(FlopType)  # one row per flop type, plus the two brace lines
+
+
+def test_show_renders_integer_weights_without_decimals(capsys):
+    # nearest_int rounding yields int weights, which take the >4 integer format instead of 9.5f
+    # --- arrange -----------------------------------------
+    fw = FlopWeights(weights={FlopType.ADD: 3.0, FlopType.MUL: 7.0}).round("nearest_int")
+
+    # --- act ---------------------------------------------
+    fw.show()
+    rows = [line for line in capsys.readouterr().out.splitlines() if ":" in line]
+
+    # --- assert ------------------------------------------
+    assert rows[0] == "    FlopType.ADD            [x+y]             :    3"
+    assert rows[1] == "    FlopType.MUL            [x*y]             :    7"
+
+
+def test_str_uses_display_labels_not_stable_names():
+    # JsonReprModel.__str__ renders under a {"display": True} context, so FlopType keys become human
+    # labels rather than the stable on-disk names -- this pins that context (see models/_base.py)
+    # --- arrange -----------------------------------------
+    fw = FlopWeights(weights={FlopType.ADD: 1.0})
+
+    # --- act ---------------------------------------------
+    rendered = str(fw)
+
+    # --- assert ------------------------------------------
+    assert '"x+y": 1.0' in rendered  # ADD's human display label
+    assert '"ADD"' not in rendered  # not the stable on-disk key
