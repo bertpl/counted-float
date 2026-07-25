@@ -1,9 +1,13 @@
 """Release driver for counted-float.
 
-Run via ``make release VERSION=X.Y.Z``.  Validates state, finalizes the
-changelog, commits, tags, opens a new Unreleased section, commits, and
-pushes main + tag atomically.  The package version itself is derived from
-the git tag at build time (hatch-vcs), so no version bump is written.
+Run via ``make release VERSION=X.Y.Z``.  Validates state, gathers the badge
+metrics, finalizes the changelog, commits, tags, opens a new Unreleased
+section, commits, and pushes main + tag atomically.  The package version
+itself is derived from the git tag at build time (hatch-vcs), so no version
+bump is written.
+
+Every check that can fail runs before the first write, so an abort always
+leaves the tree as it was.  ``--dry-run`` stops at exactly that boundary.
 """
 
 from __future__ import annotations
@@ -17,8 +21,10 @@ import sys
 import tempfile
 import urllib.error
 import urllib.request
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import NoReturn
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
@@ -32,6 +38,10 @@ MUTATION_STATS_FILE = REPO_ROOT / "mutants" / "mutmut-cicd-stats.json"
 PACKAGE_NAME = "counted-float"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
+# ceiling on the mutation measurement, past which the run is treated as unable to produce a number.
+# A healthy full run finishes in a small fraction of this; the headroom is for a bad run, not for an
+# unknown machine -- the release always runs on the maintainer's.
+MUTATION_TIMEOUT_SEC = 600
 # provenance line above the badge block: rewritten in place each release, never appended to
 BADGE_STAMP_RE = re.compile(r"^<!-- badges below refreshed at release v[^>]*-->$", re.MULTILINE)
 
@@ -59,8 +69,14 @@ def print_step(n: int, msg: str) -> None:
     print(f"  [{n:>2}] {msg}")
 
 
-def fail_with_message(msg: str, code: int = 1) -> None:
-    """Print an error and exit."""
+def fail_with_message(msg: str, code: int = 1) -> NoReturn:
+    """Print an error and exit.
+
+    ``NoReturn`` is the rarely-seen annotation for a function that never returns *at all* -- not one
+    that returns ``None``. This one always leaves through ``sys.exit``, and saying so is what makes
+    every guard clause below read correctly: ``if not m: fail_with_message(...)`` followed by
+    ``m.group(1)`` is only sound because control cannot come back here.
+    """
     print(f"\nERROR: {msg}", file=sys.stderr)
     sys.exit(code)
 
@@ -167,51 +183,23 @@ def step_7_check_changelog_has_entries() -> None:
 
 
 # ==================================================================================================
-#  release commit steps (8-10)
+#  badge metrics (step 8)
 # ==================================================================================================
-def step_8_finalize_changelog(version: str) -> None:
-    """Move Unreleased entries to a dated version section."""
-    print_step(8, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
-    text = CHANGELOG.read_text()
-    m = re.search(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
-    if not m:
-        fail_with_message("no '## Unreleased' section to finalize")
-    body = m.group(1)
-    new_body_lines: list[str] = []
-    lines = body.splitlines(keepends=True)
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        cat_match = re.match(r"^### (\w+)\s*$", line)
-        if cat_match and cat_match.group(1) in CATEGORIES:
-            j = i + 1
-            has_entry = False
-            while j < len(lines) and not re.match(r"^### ", lines[j]):
-                if lines[j].lstrip().startswith("- "):
-                    has_entry = True
-                    break
-                j += 1
-            if has_entry:
-                new_body_lines.append(line)
-                i += 1
-                while i < len(lines) and not re.match(r"^### ", lines[i]):
-                    new_body_lines.append(lines[i])
-                    i += 1
-            else:
-                i += 1
-                while i < len(lines) and lines[i].strip() == "":
-                    i += 1
-        else:
-            new_body_lines.append(line)
-            i += 1
-    new_body = "".join(new_body_lines).rstrip() + "\n"
-    new_header = f"## {version} ({date.today().isoformat()})\n"
-    text = text[: m.start()] + new_header + new_body + text[m.end() :]
-    CHANGELOG.write_text(text)
-
+# Gathering these is the last precondition, and the only one that can take minutes: it runs after
+# every cheap check has passed and before the first write, so an abort here costs nothing to
+# recover from.
 
 # warn if the cumulative union exceeds this multiple of the largest single combo
 TEST_COUNT_UNION_RATIO_WARN = 1.5
+
+
+@dataclass(frozen=True)
+class BadgeMetrics:
+    """The badge numbers for one release, gathered before anything is written."""
+
+    coverage_pct: float
+    test_union: int
+    mutation_pct: int
 
 
 def _latest_main_coverage_run() -> tuple[str, str]:
@@ -277,7 +265,7 @@ def _mutation_color(pct: int) -> str:
     return "yellow" if pct >= 60 else "red"
 
 
-def _measure_mutation_score() -> int | None:
+def _measure_mutation_score() -> int:
     """Run the mutation suite locally and return its score as a whole percentage.
 
     Unlike the coverage and test-count metrics, this one cannot come from CI: mutation testing is
@@ -287,34 +275,111 @@ def _measure_mutation_score() -> int | None:
     Killed over *all* mutants: timeouts count toward the denominator but never the numerator, so a
     mutant that merely ran slowly is never scored as caught.
 
+    Two questions are kept apart. Whether a number could be produced at all gates the release: a
+    crashing suite, a missing or malformed stats file, an empty mutant set or a run past
+    MUTATION_TIMEOUT_SEC all mean the measurement is broken, and swallowing that compounds
+    silently across every later release -- the badge would keep claiming a figure nobody measured.
+    What the number *is* never gates: the score wobbles run to run from timeout nondeterminism, so
+    a threshold would reject releases over measurement noise.
+
     Returns:
-        The rounded percentage, or None if the run or its stats could not be obtained -- in which
-        case the committed badge is left untouched. This never aborts the release: the run is
-        mildly timeout-sensitive and machine-dependent, and a stray survivor must not block a
-        publish.
+        The rounded percentage.
     """
     print("  measuring the mutation score (runs the mutation suite; takes a few minutes)")
     MUTATION_STATS_FILE.unlink(missing_ok=True)
     for target in ("mutation", "mutation-stats"):
-        # not run_command(): that raises, and a mutation hiccup must never fail a release
-        outcome = subprocess.run(["make", target], cwd=REPO_ROOT, capture_output=True, check=False)
-        if outcome.returncode != 0:
-            print(
-                f"\nWARNING: 'make {target}' failed; leaving the committed mutation badge as is. "
-                f"Run it by hand to see why -- its output is captured here to keep the release log readable.\n",
-                file=sys.stderr,
+        # not run_command(): its diagnostics dump captured output, which for a full mutation run
+        # buries the actual message -- the hint to re-run by hand is more useful here
+        try:
+            outcome = subprocess.run(
+                ["make", target],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                check=False,
+                timeout=MUTATION_TIMEOUT_SEC,
             )
-            return None
+        except subprocess.TimeoutExpired:
+            fail_with_message(
+                f"'make {target}' did not finish within {MUTATION_TIMEOUT_SEC}s, so no mutation score "
+                f"could be measured. Run it by hand to see where it hangs."
+            )
+        if outcome.returncode != 0:
+            fail_with_message(
+                f"'make {target}' failed, so no mutation score could be measured. "
+                f"Run it by hand to see why -- its output is captured here to keep the release log readable."
+            )
     try:
         stats = json.loads(MUTATION_STATS_FILE.read_text())
         killed, total = int(stats["killed"]), int(stats["total"])
     except (OSError, ValueError, KeyError) as exc:
-        print(f"\nWARNING: could not read the mutation stats ({exc}); leaving the badge as is.\n", file=sys.stderr)
-        return None
+        fail_with_message(f"could not read the mutation stats ({exc}), so no mutation score could be measured")
     if total <= 0:
-        print("\nWARNING: the mutation run produced no mutants; leaving the badge as is.\n", file=sys.stderr)
-        return None
+        fail_with_message("the mutation run produced no mutants, so no mutation score could be measured")
     return round(100 * killed / total)
+
+
+def step_8_gather_badge_metrics() -> BadgeMetrics:
+    """Resolve every badge number, failing the release if any of them cannot be obtained."""
+    print_step(8, "gather badge metrics (CI metrics for HEAD + local mutation score)")
+    metrics = _fetch_release_metrics()
+    union = int(metrics["test_union"])
+    max_combo = int(metrics["test_max"])
+    if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
+        print(
+            f"\nWARNING: cumulative test count ({union}) exceeds "
+            f"{TEST_COUNT_UNION_RATIO_WARN}x the largest single combo ({max_combo}). "
+            "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
+            file=sys.stderr,
+        )
+    return BadgeMetrics(
+        coverage_pct=float(metrics["coverage_pct"]),
+        test_union=union,
+        mutation_pct=_measure_mutation_score(),
+    )
+
+
+# ==================================================================================================
+#  release commit steps (9-11)
+# ==================================================================================================
+def step_9_finalize_changelog(version: str) -> None:
+    """Move Unreleased entries to a dated version section."""
+    print_step(9, f"finalize CHANGELOG.md '## Unreleased' -> '## {version} ({date.today().isoformat()})'")
+    text = CHANGELOG.read_text()
+    m = re.search(r"^## Unreleased\s*$(.*?)(?=^## |\Z)", text, re.MULTILINE | re.DOTALL)
+    if not m:
+        fail_with_message("no '## Unreleased' section to finalize")
+    body = m.group(1)
+    new_body_lines: list[str] = []
+    lines = body.splitlines(keepends=True)
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        cat_match = re.match(r"^### (\w+)\s*$", line)
+        if cat_match and cat_match.group(1) in CATEGORIES:
+            j = i + 1
+            has_entry = False
+            while j < len(lines) and not re.match(r"^### ", lines[j]):
+                if lines[j].lstrip().startswith("- "):
+                    has_entry = True
+                    break
+                j += 1
+            if has_entry:
+                new_body_lines.append(line)
+                i += 1
+                while i < len(lines) and not re.match(r"^### ", lines[i]):
+                    new_body_lines.append(lines[i])
+                    i += 1
+            else:
+                i += 1
+                while i < len(lines) and lines[i].strip() == "":
+                    i += 1
+        else:
+            new_body_lines.append(line)
+            i += 1
+    new_body = "".join(new_body_lines).rstrip() + "\n"
+    new_header = f"## {version} ({date.today().isoformat()})\n"
+    text = text[: m.start()] + new_header + new_body + text[m.end() :]
+    CHANGELOG.write_text(text)
 
 
 def _stamp_badge_provenance(text: str, version: str) -> str:
@@ -330,37 +395,25 @@ def _stamp_badge_provenance(text: str, version: str) -> str:
     return f"{stamp}\n{text}"
 
 
-def refresh_readme_badges(version: str) -> None:
-    """Stamp the README coverage, test-count and mutation badges, and record the release they describe.
+def refresh_readme_badges(version: str, badges: BadgeMetrics) -> None:
+    """Stamp the README badges from already-gathered numbers, and record the release they describe.
 
-    Coverage and test counts come from CI's cumulative metrics; the mutation score is measured
-    locally (see _measure_mutation_score) and is skipped rather than fatal when unavailable.
+    Purely a write: everything that can fail was resolved during validation, so reaching here means
+    the badge values are known and the provenance stamp cannot end up naming a release whose
+    measurements were never taken.
     """
-    metrics = _fetch_release_metrics()
-    coverage_pct = float(metrics["coverage_pct"])
-    union = int(metrics["test_union"])
-    max_combo = int(metrics["test_max"])
-    if max_combo and union > TEST_COUNT_UNION_RATIO_WARN * max_combo:
-        print(
-            f"\nWARNING: cumulative test count ({union}) exceeds "
-            f"{TEST_COUNT_UNION_RATIO_WARN}x the largest single combo ({max_combo}). "
-            "Node-id mismatches across combos can inflate the union — verify before publishing.\n",
-            file=sys.stderr,
-        )
     text = README.read_text()
     text = re.sub(
         r"badge/coverage-[\d.]+%25-[a-z]+",
-        f"badge/coverage-{coverage_pct:.2f}%25-{_coverage_color(coverage_pct)}",
+        f"badge/coverage-{badges.coverage_pct:.2f}%25-{_coverage_color(badges.coverage_pct)}",
         text,
     )
-    text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{union}-blue", text)
-    mutation_pct = _measure_mutation_score()
-    if mutation_pct is not None:
-        text = re.sub(
-            r"badge/mutmut-\d+%25-[a-z]+",
-            f"badge/mutmut-{mutation_pct}%25-{_mutation_color(mutation_pct)}",
-            text,
-        )
+    text = re.sub(r"badge/tests-\d+-blue", f"badge/tests-{badges.test_union}-blue", text)
+    text = re.sub(
+        r"badge/mutmut-\d+%25-[a-z]+",
+        f"badge/mutmut-{badges.mutation_pct}%25-{_mutation_color(badges.mutation_pct)}",
+        text,
+    )
     README.write_text(_stamp_badge_provenance(text, version))
 
 
@@ -376,27 +429,27 @@ def stamp_splash(version: str) -> None:
     run_command(["sh", str(SPLASH_SCRIPT), f"v{version}"], cwd=REPO_ROOT)
 
 
-def step_9_commit_release(version: str) -> None:
+def step_10_commit_release(version: str, badges: BadgeMetrics) -> None:
     """Refresh README badges, stamp the splash, then create the release commit."""
-    print_step(9, f"refresh README badges + stamp splash + commit 'release: {version}'")
-    refresh_readme_badges(version)
+    print_step(10, f"refresh README badges + stamp splash + commit 'release: {version}'")
+    refresh_readme_badges(version, badges)
     stamp_splash(version)
     run_command(["git", "add", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
 
-def step_10_tag(version: str) -> None:
+def step_11_tag(version: str) -> None:
     """Create the version tag."""
-    print_step(10, f"create tag v{version}")
+    print_step(11, f"create tag v{version}")
     run_command(["git", "tag", f"v{version}"])
 
 
 # ==================================================================================================
-#  post-release steps (11-13)
+#  post-release steps (12-14)
 # ==================================================================================================
-def step_11_add_unreleased_section() -> None:
+def step_12_add_unreleased_section() -> None:
     """Add a fresh Unreleased section to the changelog."""
-    print_step(11, "add fresh '## Unreleased' section to CHANGELOG.md")
+    print_step(12, "add fresh '## Unreleased' section to CHANGELOG.md")
     text = CHANGELOG.read_text()
     m = re.search(r"^## ", text, re.MULTILINE)
     if not m:
@@ -406,16 +459,16 @@ def step_11_add_unreleased_section() -> None:
     CHANGELOG.write_text(text)
 
 
-def step_12_commit_next_cycle() -> None:
+def step_13_commit_next_cycle() -> None:
     """Commit the fresh Unreleased section."""
-    print_step(12, "commit 'chore: begin next development cycle'")
+    print_step(13, "commit 'chore: begin next development cycle'")
     run_command(["git", "add", "CHANGELOG.md"])
     run_command(["git", "commit", "-m", "chore: begin next development cycle"])
 
 
-def step_13_push(version: str) -> None:
+def step_14_push(version: str) -> None:
     """Push main and the tag atomically."""
-    print_step(13, f"push main + v{version} atomically")
+    print_step(14, f"push main + v{version} atomically")
     run_command(["git", "push", "--atomic", "origin", "main", f"refs/tags/v{version}"])
 
 
@@ -439,6 +492,11 @@ def main() -> None:
     """Entry point."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("version", help="X.Y.Z (no leading v)")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="run every precondition, including the mutation measurement, then stop before the first write",
+    )
     args = parser.parse_args()
     version = args.version
     parse_semver(version)
@@ -453,24 +511,32 @@ def main() -> None:
     step_5_check_pypi_doesnt_have(version)
     step_6_check_classifiers_match()
     step_7_check_changelog_has_entries()
+    badges = step_8_gather_badge_metrics()
+
+    if args.dry_run:
+        print(
+            f"\nDry run: every precondition passed and nothing was written.\n"
+            f"  coverage {badges.coverage_pct:.2f}% | tests {badges.test_union} | mutation {badges.mutation_pct}%\n"
+        )
+        return
 
     print("\nRelease commit:")
-    step_8_finalize_changelog(version)
-    step_9_commit_release(version)
-    step_10_tag(version)
+    step_9_finalize_changelog(version)
+    step_10_commit_release(version, badges)
+    step_11_tag(version)
 
     print("\nPost-release:")
     also_next_cycle = False
     try:
-        step_11_add_unreleased_section()
-        step_12_commit_next_cycle()
+        step_12_add_unreleased_section()
+        step_13_commit_next_cycle()
         also_next_cycle = True
-        step_13_push(version)
+        step_14_push(version)
     except subprocess.CalledProcessError:
-        post_tag_recovery_hint(11, version, also_next_cycle)
+        post_tag_recovery_hint(12, version, also_next_cycle)
         sys.exit(1)
     except SystemExit:
-        post_tag_recovery_hint(11, version, also_next_cycle)
+        post_tag_recovery_hint(12, version, also_next_cycle)
         raise
 
 

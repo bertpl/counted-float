@@ -17,6 +17,11 @@ testing.
 The helpers below take that example apart: the ``try``/``except AttributeError`` pair itself, the
 ``ADD += 1`` write inside each of its branches, and - for the sites whose branches bind the counter
 to a local rather than incrementing it in place - the name each branch binds.
+
+The test reads the source through the module's own file path, so under a mutation runner - which
+works on its own copy of the package - it would be reading generated mutant variants instead of the
+real source.  Those variants are not what this module guards, so it stands down there (see
+``_is_mutation_sandbox_copy``).
 """
 
 import ast
@@ -29,6 +34,9 @@ from counted_float._core.counting import _counted_float, _math_patching
 
 _LAZY_INIT_MODULES = [_counted_float, _math_patching]
 
+# mutmut copies the package under this directory before mutating it (see [tool.mutmut] source_paths)
+_MUTATION_SANDBOX_DIR = "mutants"
+
 
 # =================================================================================================
 #  Helpers
@@ -36,6 +44,17 @@ _LAZY_INIT_MODULES = [_counted_float, _math_patching]
 def _module_id(module: ModuleType) -> str:
     """Bare module name, for readable parametrize ids."""
     return module.__name__.rsplit(".", 1)[-1]
+
+
+def _is_mutation_sandbox_copy(path: Path) -> bool:
+    """Whether this path is a mutation runner's copy of the source rather than the source itself.
+
+    The runner rewrites every mutated function into a trampoline over generated variants, whose
+    cold-start handlers are not the idiom documented above - so the structural assertions below
+    have nothing meaningful to say about them.  Recognizing the copy keeps this test out of the
+    way instead of teaching it the runner's generated shapes.
+    """
+    return _MUTATION_SANDBOX_DIR in path.parts
 
 
 def _lazy_init_pairs(tree: ast.Module) -> list[tuple[ast.Try, ast.ExceptHandler]]:
@@ -87,8 +106,10 @@ def _bound_names(body: list[ast.stmt]) -> list[str]:
 @pytest.mark.parametrize("module", _LAZY_INIT_MODULES, ids=_module_id)
 def test_lazy_init_handler_matches_its_try_branch(module: ModuleType):
     # --- arrange -----------------------------------------
-    source = Path(module.__file__ or "").read_text(encoding="utf-8")
-    tree = ast.parse(source)
+    path = Path(module.__file__ or "")
+    if _is_mutation_sandbox_copy(path):
+        pytest.skip("reading a mutation runner's copy of the source, not the source itself")
+    tree = ast.parse(path.read_text(encoding="utf-8"))
 
     # --- act ---------------------------------------------
     pairs = _lazy_init_pairs(tree)

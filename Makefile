@@ -67,6 +67,7 @@ regen-machine-code:
 	uv run --all-extras python scripts/generate_machine_code_docs.py
 
 release:
-	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z" && exit 1)
+	# DRY_RUN=1 stops after the preconditions (mutation measurement included), writing nothing
+	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z [DRY_RUN=1]" && exit 1)
 	$(MAKE) test
-	uv run python scripts/release.py $(VERSION)
+	uv run python scripts/release.py $(VERSION) $(if $(DRY_RUN),--dry-run,)
