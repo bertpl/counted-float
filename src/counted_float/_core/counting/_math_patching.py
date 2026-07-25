@@ -17,8 +17,11 @@ The `original_math_*` references are (re)captured at patch time, not at import t
 package may have applied its own `math` patches after we were imported, and we want to delegate
 through — and later restore — whatever is current, rather than silently wiping those patches.
 
-**Map of the name-keyed tables.** Only the first two are maintained by hand; every other is derived
-or filled at runtime, so a function is added or reclassified in one place (plus its replacement).
+**Map of the name-keyed tables.** Four are maintained by hand, and they are not four copies of one
+list: `_PATCHES`, `_UNCOUNTED_MATH` and `_MATH_NOT_PATCHED` are the *classification*, and every
+public `math` function belongs to exactly one of them. `original_math_*` is the one place a name is
+genuinely written twice — unavoidably, since the replacements call those names directly and a type
+checker has to be able to resolve them. Everything below those four is derived or filled at runtime.
 
   | table                  | holds                          | written        | read              |
   |------------------------|--------------------------------|----------------|-------------------|
@@ -30,12 +33,11 @@ or filled at runtime, so a function is added or reclassified in one place (plus 
   | `_saved_originals`     | name -> function to restore    | at capture     | restore           |
   | `_uncounted_originals` | name -> function to delegate to| at apply       | reporting replacements |
 
-  ¹ the *names* are declared by hand, because the replacements call them directly and a type
-  checker has to resolve them; their values are always rebound by `_capture_originals`.
+  ¹ only the *names* are; their values are always overwritten by `_capture_originals`.
 
-  `_PATCHES`, `_UNCOUNTED_MATH` and `_MATH_NOT_PATCHED` partition the public `math` surface between
-  them — exhaustively and without overlap, which a test enforces, so a function CPython adds later
-  cannot slip through unclassified.
+  That the three classification tables really do partition the surface — exhaustively and without
+  overlap — is enforced by a test, so a function CPython adds later cannot slip through
+  unclassified.
 
 **Lifecycle**, in order: import (declare references and tables) -> first context entry (capture the
 current `math`, install `_PATCHES`) -> first reporting thread (install `_UNCOUNTED_PATCHES`) -> last
