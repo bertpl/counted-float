@@ -5,24 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 2.0.4 (2026-07-25)
 
 ### Changed
 
 - importing the package no longer pulls in numpy, rich, psutil or py-cpuinfo, cutting import time for counting-only use
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - a benchmark slice that measures zero elapsed time no longer crashes the calibration; it now ramps up the execution count instead
-
-### Security
-
 ## 2.0.3 (2026-07-25)
 
 ### Fixed
