@@ -81,8 +81,11 @@ class BuiltInData:
             'specs.x86.intel_core_i9_13900k'
             ...
 
-        :param key_filter: (str, default="") If non-empty, only include entries whose keys contain this substring.
-        :return: A dictionary mapping benchmark names to their corresponding FlopsBenchmarkResults.
+        Args:
+            key_filter: If non-empty, only include entries whose keys contain this substring.
+
+        Returns:
+            A dictionary mapping benchmark names to their corresponding FlopsBenchmarkResults.
         """
         return {
             key: _construct_flop_weights_from_json_str(json_str)
@@ -194,8 +197,12 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
     The JSON string can represent either...
       - FlopsBenchmarkResults
       - InstructionLatencies_<x>
-    :param json_str: (str) JSON string representing either of the aforementioned data structures.
-    :return: FlopWeights instance extracted from the input data.
+
+    Args:
+        json_str: JSON string representing either of the aforementioned data structures.
+
+    Returns:
+        FlopWeights instance extracted from the input data.
     """
     # try all supported classes, all of which have a .flop_weights property
     return _deserialize_as_any_pydantic_class(

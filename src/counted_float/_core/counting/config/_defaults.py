@@ -23,13 +23,18 @@ def get_builtin_flop_weights(
 ) -> FlopWeights:
     """Get built-in flop weights estimated from built-in benchmark results and/or instruction latency analyses.
 
-    :param key_filter: (str, default="") If non-empty, only include entries whose keys contain this substring.
-                       E.g. "benchmarks" to only include benchmark results, or "x86" to only include
-                       x86-related flop weights.
-    :param rounding_mode: (str, default="10%") rounding mode (None, "nearest_int", "10%").
-    :return: A FlopWeights instance computed as the (hierarchical) geo-mean of all matching built-in data.
-             A fresh copy on every call; mutating it does not corrupt the underlying cache.
-    :raises ValueError: If no built-in data matches the given key_filter.
+    Args:
+        key_filter: If non-empty, only include entries whose keys contain this substring.
+            E.g. "benchmarks" to only include benchmark results, or "x86" to only include
+            x86-related flop weights.
+        rounding_mode: Which rounding to apply to the resulting weights.
+
+    Returns:
+        A FlopWeights instance computed as the (hierarchical) geo-mean of all matching built-in
+        data. A fresh copy on every call; mutating it does not corrupt the underlying cache.
+
+    Raises:
+        ValueError: If no built-in data matches the given key_filter.
     """
     return _get_builtin_flop_weights_cached(key_filter, rounding_mode).model_copy(deep=True)
 
