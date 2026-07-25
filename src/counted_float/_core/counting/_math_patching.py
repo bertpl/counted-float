@@ -169,6 +169,10 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
         return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
+    if not (isinstance(x, CountedFloat) or isinstance(base, CountedFloat)):
+        # settle the uncountable case before touching the counter: fetching it on a thread that
+        # counted nothing would allocate that thread's state for no reason
+        return result
     try:
         cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
@@ -192,9 +196,8 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
             cnt.note("const base -> log(x) * 1/log(base)")
             cnt.LOG += 1
             cnt.MUL += 1
-    if isinstance(x, CountedFloat) or isinstance(base, CountedFloat):
-        return float.__new__(CountedFloat, result)
-    return result
+    # the guard above already established that at least one operand is counted
+    return float.__new__(CountedFloat, result)
 
 
 def math_log2(x: float) -> float | CountedFloat:
@@ -616,7 +619,7 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
     return float.__new__(CountedFloat, result)
 
 
-def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> object:
+def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
     """Patch math.prod: stdlib contract, counted as the multiply chain it computes.
 
     The product is folded left-to-right with real multiplications, so counting and contagion
@@ -661,7 +664,7 @@ def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
     return float.__new__(CountedFloat, result)
 
 
-def math_sumprod(p: Iterable[float], q: Iterable[float], /) -> object:
+def math_sumprod(p: Iterable[float], q: Iterable[float], /) -> float | CountedFloat:
     """Patch math.sumprod: stdlib contract, counted as the extended-precision algorithm it runs.
 
     CPython's compensated (TripleLength) accumulation is gated on exact-float elements, so

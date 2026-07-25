@@ -45,14 +45,14 @@ class MicroBenchmark(ABC):
         Per-run progress goes to the shared benchmark console (silenced via output_quiet).
 
         Runs consist of warmup_runs & actual test runs, with the provided parameters.
-        :param n_runs_total: (int, default=20) total number of benchmark_runs runs
-        :param n_runs_warmup: (int, default=5) number of warmup_runs runs
-                                             - the first n_runs_warmup of n_runs_total are not included in timing stats
-                                             - warmup_runs runs serve to initialize n_executions & get processor,
-                                               cache, ...
-                                                 in a stable, representative state
-        :param n_seconds_per_run_target: (float, default=0.5) target time (sec) per benchmark_runs run (prepare + run).
-                                             n_executions will be iteratively adjusted to achieve this target time.
+
+        Args:
+            n_runs_total: Total number of runs.
+            n_runs_warmup: How many leading runs are warmup rather than measurement. They are
+                excluded from the timing stats, and serve to settle n_executions and to bring the
+                processor, caches and so on into a stable, representative state.
+            n_seconds_per_run_target: Target wall time per run (prepare + run), in seconds.
+                n_executions is iteratively adjusted to hit it.
         """
         console.print(f"{self.name.ljust(35)}: ", end="")
 
