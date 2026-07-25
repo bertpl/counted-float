@@ -4,7 +4,7 @@ import pytest
 
 from counted_float._core.benchmarking._output import output_quiet
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner, MicroBenchmark, SliceController
-from counted_float._core.models import MicroBenchmarkResult
+from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 
 
 @pytest.fixture(autouse=True)
@@ -39,6 +39,18 @@ class FakeBenchmark(MicroBenchmark):
 
     def _run_benchmark(self) -> None:
         pass
+
+
+class UntimeableBenchmark(FakeBenchmark):
+    """A benchmark every one of whose slices measures zero elapsed time.
+
+    What a clock too coarse to resolve a cheap probe produces, made deterministic: the real thing
+    depends on machine load, so it surfaces as an occasional crash rather than a reproducible one.
+    """
+
+    def run_slice(self, n_executions: int, round_index: int, cpu_freq_mhz: float | None) -> SingleRunResult:
+        self.prepare_slice(n_executions, round_index)
+        return SingleRunResult(n_executions=n_executions, t_nsecs=0.0, t_cycles=0.0)
 
 
 # =================================================================================================
@@ -104,6 +116,41 @@ def test_controller_execution_count_floor_raises_effective_target():
     assert controller.t_slice_target_nsecs == SliceController.N_MIN_EXECUTIONS * 1e6
 
 
+def test_controller_treats_an_unmeasurably_fast_slice_as_far_below_target():
+    """A slice measuring zero has no ratio to take, so it must ramp by the full allowed step.
+
+    Reachable whenever a cheap probe at a low execution count finishes below the clock's
+    resolution -- the ramp's own starting regime on a coarse-resolution clock, not an exotic case.
+    """
+    # --- arrange -----------------------------------------
+    controller = SliceController(t_slice_target_nsecs=1e6)
+    controller.n_executions = 4
+
+    # --- act ---------------------------------------------
+    controller.record_slice(t_nsecs=0.0)
+
+    # --- assert ------------------------------------------
+    assert controller.n_executions == int(4 * SliceController.MAX_ADJUST_FACTOR_CALIBRATION)
+    assert not controller.is_calibrated  # a zero slice is not on target
+
+
+def test_controller_survives_a_zero_slice_once_calibrated():
+    """The calibrated deadband path divides by the same measurement, so it needs the same guard."""
+    # --- arrange -----------------------------------------
+    controller = SliceController(t_slice_target_nsecs=1e6)
+    controller.n_executions = 1000  # keeps the per-execution floor below the common target
+    controller.record_slice(t_nsecs=1e6)
+    controller.record_slice(t_nsecs=1e6)
+    assert controller.is_calibrated
+    n_before = controller.n_executions
+
+    # --- act ---------------------------------------------
+    controller.record_slice(t_nsecs=0.0)
+
+    # --- assert ------------------------------------------
+    assert controller.n_executions == int(n_before * SliceController.MAX_ADJUST_FACTOR_CALIBRATED)
+
+
 def test_controller_never_exceeds_absolute_execution_cap():
     # --- arrange -----------------------------------------
     controller = SliceController(t_slice_target_nsecs=1e6)
@@ -139,6 +186,25 @@ def test_runner_returns_requested_number_of_recorded_slices(fake_benchmarks):
         assert isinstance(result, MicroBenchmarkResult)
         assert len(result.warmup_runs) == 2
         assert len(result.benchmark_runs) == 7
+
+
+def test_runner_completes_when_every_slice_measures_zero():
+    """A full run must survive a probe the clock cannot resolve, rather than dividing by its time."""
+    # --- arrange -----------------------------------------
+    benchmarks = {name: UntimeableBenchmark(name) for name in ["alpha", "beta"]}
+    runner = InterleavedBenchmarkRunner(
+        benchmarks, t_slice_target_ms=0.001, n_rounds_measure=3, n_rounds_warmup=1, seed=3
+    )
+
+    # --- act ---------------------------------------------
+    results = runner.run()
+
+    # --- assert ------------------------------------------
+    assert set(results.keys()) == set(benchmarks.keys())
+    for result in results.values():
+        assert len(result.benchmark_runs) == 3
+        # the reported quantiles stay well-defined even though every measurement was zero
+        assert result.summary_stats_nsecs_per_exec().q50 == 0.0
 
 
 def test_runner_prepares_each_suite_exactly_once(fake_benchmarks):

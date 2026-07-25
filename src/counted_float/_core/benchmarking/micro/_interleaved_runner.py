@@ -10,6 +10,7 @@ handled by a low-quantile estimator over the recorded slices.
 
 from __future__ import annotations
 
+import math
 import random
 from typing import TYPE_CHECKING, Generic, TypeVar
 
@@ -87,11 +88,26 @@ class SliceController:
                     self.is_calibrated = True
             else:
                 self._n_consecutive_on_target = 0
-            self._rescale(target / t_nsecs, max_factor=self.MAX_ADJUST_FACTOR_CALIBRATION)
+            self._rescale(self._adjust_factor(t_nsecs, target), max_factor=self.MAX_ADJUST_FACTOR_CALIBRATION)
         elif not (self.DEADBAND_LOW * target <= t_nsecs <= self.DEADBAND_HIGH * target):
-            self._rescale(target / t_nsecs, max_factor=self.MAX_ADJUST_FACTOR_CALIBRATED)
+            self._rescale(self._adjust_factor(t_nsecs, target), max_factor=self.MAX_ADJUST_FACTOR_CALIBRATED)
 
     # --- internals ----------------------------------------
+    @staticmethod
+    def _adjust_factor(t_nsecs: float, target: float) -> float:
+        """By how much to scale n_executions so a slice of t_nsecs would land on target.
+
+        A slice measuring zero is not merely fast: it finished below the clock's resolution, so
+        there is no ratio to take. Asking for an unbounded increase is the honest answer — the
+        caller's clamp turns it into the largest step an adjustment is allowed to make, which is
+        exactly what a slice too short to time calls for. On a coarse-resolution clock this is
+        reachable for a cheap probe at low execution counts, so it is the ramp's starting regime
+        rather than a pathological case.
+        """
+        if t_nsecs <= 0.0:
+            return math.inf
+        return target / t_nsecs
+
     def _rescale(self, factor: float, max_factor: float) -> None:
         factor = max(1 / max_factor, min(max_factor, factor))
         self.n_executions = max(1, min(self.MAX_N_EXECUTIONS, int(self.n_executions * factor)))

@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- a benchmark slice that measures zero elapsed time no longer crashes the calibration; it now ramps up the execution count instead
+
 ### Security
 
 ## 2.0.3 (2026-07-25)
