@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- re-entering a `PauseFlopCounting` block that is already active now fails immediately with a clear message, instead of corrupting the pause state and silently leaving counting paused
+
 ### Security
 
 ## 2.0.2 (2026-07-24)

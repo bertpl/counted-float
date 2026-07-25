@@ -20,6 +20,10 @@ from counted_float._core.models import FlopCounts
 _CROSS_THREAD_MESSAGE = (
     "FlopCountingContext is confined to the thread that opened it; open a separate context per thread"
 )
+_PAUSE_CROSS_THREAD_MESSAGE = (
+    "PauseFlopCounting is confined to the thread that entered it; pause each thread separately"
+)
+_PAUSE_REENTRY_MESSAGE = "PauseFlopCounting is already active; use a separate instance per 'with' block"
 
 
 # =================================================================================================
@@ -232,18 +236,48 @@ class PauseFlopCounting:
 
     This acts on the calling thread, across all of that thread's active FlopCountingContext
     instances.  On exit the counter's prior state is restored (rather than counting being resumed
-    unconditionally), so these blocks can be nested and can sit inside code that already paused
-    counting.
+    unconditionally), so a block can sit inside code that already paused counting.
+
+    One instance covers one open block, so construct the manager where the block is:
+
+        with PauseFlopCounting():       # nested blocks of separate instances: fine
+            with PauseFlopCounting():
+                ...
+
+        pause = PauseFlopCounting()
+        with pause:
+            with pause:                 # re-entering an open block: RuntimeError
+                ...
+
+        pause = PauseFlopCounting()
+        with pause:
+            ...
+        with pause:                     # entering again once the block closed: fine
+            ...
+
+    The single slot holding the state to restore is what makes re-entry an error.
+    FlopCountingContext does re-enter on one instance: it accumulates counts that are read off it
+    afterwards, so its instance has an identity worth keeping while open - which a pause, holding
+    no result, has no equivalent of.
 
     Like FlopCountingContext, an instance is confined to the thread that entered it: exiting from
     another thread raises RuntimeError (it would silently resume the *caller's* thread counter).
     """
 
     def __init__(self) -> None:
+        # State of the thread counter from before this block paused it, restored on exit
         self.__was_active: bool = False
+
+        # ident of the thread that entered the block; None while no block is open, which is what
+        # also makes it the liveness flag that the re-entry guard reads
         self.__owner_ident: int | None = None
 
     def __enter__(self) -> Self:
+        if self.__owner_ident is not None:
+            # guards against re-entering an instance whose block is still open, which would
+            # overwrite the single slot holding the state that block has to restore.  Refused
+            # before anything is written, so that state survives even if the error is caught
+            raise RuntimeError(_PAUSE_REENTRY_MESSAGE)
         self.__owner_ident = threading.get_ident()
         self.__was_active = THREAD_COUNTER.is_active()
         THREAD_COUNTER.pause()
@@ -256,9 +290,7 @@ class PauseFlopCounting:
         exc_tb: TracebackType | None,
     ) -> None:
         if threading.get_ident() != self.__owner_ident:
-            raise RuntimeError(
-                "PauseFlopCounting is confined to the thread that entered it; pause each thread separately"
-            )
+            raise RuntimeError(_PAUSE_CROSS_THREAD_MESSAGE)
         self.__owner_ident = None
         if self.__was_active:
             THREAD_COUNTER.resume()

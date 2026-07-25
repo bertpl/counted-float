@@ -236,6 +236,52 @@ def test_pause_flop_counting_restores_paused_state():
     assert flop_counts.MUL == 1
 
 
+def test_pause_flop_counting_reentry_of_open_instance_refused():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+    pause = PauseFlopCounting()
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext() as fcc:
+        with pause:
+            # re-entering the same instance while its own block is still open
+            with pytest.raises(RuntimeError, match="already active"), pause:
+                pass
+            _ = cf1 + cf2  # still inside the open pause: not counted
+
+        # the refusal left the open block's saved state untouched, so its exit resumed counting
+        _ = cf1 * cf2  # should be counted
+
+    # --- assert ------------------------------------------
+    flop_counts = fcc.flop_counts()
+    assert flop_counts.ADD == 0
+    assert flop_counts.MUL == 1
+
+
+def test_pause_flop_counting_sequential_reuse_of_one_instance():
+    # --- arrange -----------------------------------------
+    cf1 = CountedFloat(1.0)
+    cf2 = CountedFloat(2.0)
+    pause = PauseFlopCounting()
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext() as fcc:
+        with pause:
+            _ = cf1 + cf2  # should not be counted
+        _ = cf1 * cf2  # should be counted
+        with pause:  # same instance, previous block closed
+            _ = cf1 - cf2  # should not be counted
+        _ = cf1 / cf2  # should be counted
+
+    # --- assert ------------------------------------------
+    flop_counts = fcc.flop_counts()
+    assert flop_counts.ADD == 0
+    assert flop_counts.SUB == 0
+    assert flop_counts.MUL == 1
+    assert flop_counts.DIV == 1
+
+
 def test_flop_counting_context_reentrant_same_instance():
     # --- arrange -----------------------------------------
     cf1 = CountedFloat(1.0)
