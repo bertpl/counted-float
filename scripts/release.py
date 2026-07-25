@@ -70,7 +70,13 @@ def print_step(n: int, msg: str) -> None:
 
 
 def fail_with_message(msg: str, code: int = 1) -> NoReturn:
-    """Print an error and exit."""
+    """Print an error and exit.
+
+    ``NoReturn`` is the rarely-seen annotation for a function that never returns *at all* -- not one
+    that returns ``None``. This one always leaves through ``sys.exit``, and saying so is what makes
+    every guard clause below read correctly: ``if not m: fail_with_message(...)`` followed by
+    ``m.group(1)`` is only sound because control cannot come back here.
+    """
     print(f"\nERROR: {msg}", file=sys.stderr)
     sys.exit(code)
 
