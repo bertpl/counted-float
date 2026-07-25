@@ -17,6 +17,30 @@ The `original_math_*` references are (re)captured at patch time, not at import t
 package may have applied its own `math` patches after we were imported, and we want to delegate
 through — and later restore — whatever is current, rather than silently wiping those patches.
 
+**Map of the name-keyed tables.** Only the first two are maintained by hand; every other is derived
+or filled at runtime, so a function is added or reclassified in one place (plus its replacement).
+
+  | table                  | holds                          | written        | read              |
+  |------------------------|--------------------------------|----------------|-------------------|
+  | `_PATCHES`             | name -> counting replacement   | by hand        | capture/apply/restore |
+  | `original_math_*`      | name -> delegation target      | by hand¹       | every delegated call |
+  | `_UNCOUNTED_MATH`      | name -> why it goes uncounted  | by hand        | builds the next one |
+  | `_MATH_NOT_PATCHED`    | name -> why it needs no patch  | by hand        | the surface test, docs |
+  | `_UNCOUNTED_PATCHES`   | name -> reporting replacement  | derived        | apply/restore     |
+  | `_saved_originals`     | name -> function to restore    | at capture     | restore           |
+  | `_uncounted_originals` | name -> function to delegate to| at apply       | reporting replacements |
+
+  ¹ the *names* are declared by hand, because the replacements call them directly and a type
+  checker has to resolve them; their values are always rebound by `_capture_originals`.
+
+  `_PATCHES`, `_UNCOUNTED_MATH` and `_MATH_NOT_PATCHED` partition the public `math` surface between
+  them — exhaustively and without overlap, which a test enforces, so a function CPython adds later
+  cannot slip through unclassified.
+
+**Lifecycle**, in order: import (declare references and tables) -> first context entry (capture the
+current `math`, install `_PATCHES`) -> first reporting thread (install `_UNCOUNTED_PATCHES`) -> last
+reporting thread leaves (restore those) -> last context exit (restore the capture).
+
 The patching contract (mirroring unittest.mock.patch / pytest monkeypatch conventions):
   - at first context entry, we snapshot the current math functions (whatever they are, including
     other packages' patches) and delegate through them while counting;
@@ -68,7 +92,16 @@ def _math_sumprod_unavailable(p: Iterable[float], q: Iterable[float], /) -> floa
 #  original math module functions
 #  (import-time values are only a default; re-captured on every 0->1 patch
 #   application by _capture_originals, see module docstring)
+#
+#  Written out one per line rather than generated, for one reason: the
+#  replacements below call these names directly, and a name conjured at
+#  runtime is a name the type checker cannot resolve. Their *values* are
+#  never maintained here -- _capture_originals rebinds every one of them --
+#  so what these lines really declare is which functions exist to delegate
+#  to, which a test holds against the patch table.
 # -------------------------------------------------------------------------
+_REFERENCE_PREFIX = "original_math_"
+
 original_math_sqrt = math.sqrt
 original_math_cbrt = math.cbrt
 original_math_log = math.log
@@ -837,6 +870,11 @@ _MATH_NOT_PATCHED: dict[str, str] = {
     "perm": _NOT_PATCHED_INTEGER_DOMAIN,
 }
 
+# the module-global holding each patched function's delegation target, resolved once at import so
+# re-capture does no string work of its own. Derived from _PATCHES, hence built after the
+# version-gated entries have been registered above.
+_REFERENCE_NAMES: dict[str, str] = {name: f"{_REFERENCE_PREFIX}{name}" for name in _PATCHES}
+
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
 
@@ -854,66 +892,30 @@ _patch_lock = threading.Lock()
 
 
 def _capture_originals() -> None:
-    """Snapshot the current math functions.
+    """Snapshot the current math functions, for delegation and for restoring on unpatch.
 
-    This way the replacements delegate through (and unpatching restores) whatever is current —
-    possibly another package's patches, not the stdlib originals.
+    Two views of the same snapshot, because they are read very differently. `_saved_originals` is a
+    dict, walked once per unpatch. The `original_math_*` module globals are what the replacements
+    themselves call, on every delegated call -- a module-global read, which measures meaningfully
+    cheaper than a dict lookup, and is why those names exist at all.
+
+    Rebinding them through `globals()` is what keeps that list of names from being written out a
+    second and third time here: `globals()` *is* this module's namespace, so an update to it is seen
+    by every already-defined replacement. Only the names in `_PATCHES` are re-captured, which is
+    also what makes the plain `getattr` safe -- a version-gated function absent from this
+    interpreter is absent from `_PATCHES` too, and keeps the stand-in bound at import.
+
+    The snapshot deliberately takes whatever is current rather than the stdlib original: another
+    package may have patched `math` after we were imported, and we delegate through -- and later
+    restore -- its patches rather than silently wiping them.
     """
-    global original_math_sqrt, original_math_cbrt, original_math_log, original_math_log2
-    global original_math_log10, original_math_exp, original_math_exp2, original_math_pow, original_math_fma
-    global original_math_sin, original_math_cos, original_math_tan
-    global original_math_asin, original_math_acos, original_math_atan, original_math_atan2
-    global original_math_hypot, original_math_expm1, original_math_log1p, original_math_fmod, original_math_fabs
-    global original_math_sinh, original_math_cosh, original_math_tanh
-    global original_math_asinh, original_math_acosh, original_math_atanh
-    global original_math_degrees, original_math_radians, original_math_dist
-    global original_math_prod, original_math_fsum, original_math_copysign
-    global original_math_gamma, original_math_lgamma, original_math_erf, original_math_erfc
-    global original_math_remainder, original_math_sumprod
-
-    original_math_sqrt = math.sqrt
-    original_math_cbrt = math.cbrt
-    original_math_log = math.log
-    original_math_log2 = math.log2
-    original_math_log10 = math.log10
-    original_math_exp = math.exp
-    original_math_exp2 = math.exp2
-    original_math_pow = math.pow
-    original_math_fma = getattr(math, "fma", _math_fma_unavailable)
-    original_math_sin = math.sin
-    original_math_cos = math.cos
-    original_math_tan = math.tan
-    original_math_asin = math.asin
-    original_math_acos = math.acos
-    original_math_atan = math.atan
-    original_math_atan2 = math.atan2
-    original_math_hypot = math.hypot
-    original_math_expm1 = math.expm1
-    original_math_log1p = math.log1p
-    original_math_fmod = math.fmod
-    original_math_fabs = math.fabs
-    original_math_sinh = math.sinh
-    original_math_cosh = math.cosh
-    original_math_tanh = math.tanh
-    original_math_asinh = math.asinh
-    original_math_acosh = math.acosh
-    original_math_atanh = math.atanh
-    original_math_degrees = math.degrees
-    original_math_radians = math.radians
-    original_math_dist = math.dist
-    original_math_prod = math.prod
-    original_math_fsum = math.fsum
-    original_math_copysign = math.copysign
-    original_math_gamma = math.gamma
-    original_math_lgamma = math.lgamma
-    original_math_erf = math.erf
-    original_math_erfc = math.erfc
-    original_math_remainder = math.remainder
-    original_math_sumprod = getattr(math, "sumprod", _math_sumprod_unavailable)
-
     _saved_originals.clear()
-    for name in _PATCHES:
-        _saved_originals[name] = getattr(math, name)
+    captured: dict[str, object] = {}
+    for name, reference in _REFERENCE_NAMES.items():
+        current = getattr(math, name)
+        _saved_originals[name] = current
+        captured[reference] = current
+    globals().update(captured)
 
 
 def apply_math_patches() -> None:

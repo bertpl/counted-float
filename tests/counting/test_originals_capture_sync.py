@@ -1,24 +1,17 @@
-"""The same list of `math` function names is written in four places; they must agree.
+"""Every patched `math` function must have a delegation reference, and re-capture must rebind it.
 
-The patching module keeps a module-level `original_math_<name>` reference per patched function, and
-re-points every one of them each time patching starts, so the replacements delegate through whatever
-is current -- possibly another package's patch rather than the stdlib original. That arrangement
-spells the same list of names four times: the import-time references, the `global` declarations in
-the re-capture step, the re-capture assignments themselves, and the patch table.
+The patching module keeps a module-level `original_math_<name>` per patched function, because the
+replacements call those names on every delegated call and a module-global read is measurably cheaper
+than a dict lookup. That leaves the list of names written in two places -- the declarations and the
+patch table -- which is one more than anybody would like, and as few as a type checker allows: the
+replacements reference those names directly, so conjuring them at runtime would make them
+unresolvable.
 
-Two ways to get it wrong, both invisible in normal operation:
-
-* a name in the patch table with no reference to delegate through, or one that is never re-captured,
-  leaves a stale reference -- correct until another package patches `math` first;
-* a name assigned in the re-capture step but missing from its `global` declaration is not an error
-  at all. Python simply makes it a function-local, so the assignment writes nothing anybody reads
-  and that function keeps its import-time reference forever.
-
-The second is the reason this test parses the source rather than only comparing the tables: the
-other three lists agree perfectly while it is wrong.
-
-The duplication is deliberate and stays. Reading a module-level name is what keeps delegation off a
-dict lookup on the hot path, so the guard goes on the invariant rather than on collapsing the lists.
+Everything downstream of the declarations is derived. Re-capture rebinds them in a loop over the
+patch table rather than name by name, so there is no third or fourth copy to drift. The two tests
+here cover exactly what remains: that the two lists agree, and that the loop really does move the
+references the replacements read -- the one thing no amount of reading the source can confirm,
+since rebinding through the module namespace is invisible to static analysis.
 """
 
 import ast
@@ -26,87 +19,28 @@ import math
 from pathlib import Path
 
 from counted_float._core.counting import _math_patching
-from counted_float._core.counting._math_patching import _PATCHES
-
-_REFERENCE_PREFIX = "original_math_"
-_CAPTURE_FUNCTION = "_capture_originals"
+from counted_float._core.counting._math_patching import _PATCHES, _REFERENCE_PREFIX
 
 
 # =================================================================================================
 #  Helpers
 # =================================================================================================
-def _module_tree() -> ast.Module:
-    """Parse the patching module's own source."""
-    return ast.parse(Path(_math_patching.__file__ or "").read_text(encoding="utf-8"))
-
-
-def _referenced_names(nodes: list[ast.stmt]) -> set[str]:
-    """The math function names assigned as `original_math_<name>` directly among `nodes`."""
+def _declared_reference_names() -> set[str]:
+    """The math function names declared as module-level `original_math_<name>` references."""
+    tree = ast.parse(Path(_math_patching.__file__ or "").read_text(encoding="utf-8"))
     return {
         target.id.removeprefix(_REFERENCE_PREFIX)
-        for node in nodes
+        for node in tree.body
         if isinstance(node, ast.Assign)
         for target in node.targets
         if isinstance(target, ast.Name) and target.id.startswith(_REFERENCE_PREFIX)
     }
 
 
-def _capture_function(tree: ast.Module) -> ast.FunctionDef:
-    """The re-capture function's node."""
-    for node in tree.body:
-        if isinstance(node, ast.FunctionDef) and node.name == _CAPTURE_FUNCTION:
-            return node
-    raise AssertionError(f"{_CAPTURE_FUNCTION} not found -- was it renamed?")
-
-
-def _declared_global(function: ast.FunctionDef) -> set[str]:
-    """The math function names declared global inside `function`."""
-    return {
-        name.removeprefix(_REFERENCE_PREFIX)
-        for node in ast.walk(function)
-        if isinstance(node, ast.Global)
-        for name in node.names
-        if name.startswith(_REFERENCE_PREFIX)
-    }
-
-
 # =================================================================================================
 #  Tests
 # =================================================================================================
-def test_the_import_time_references_match_the_recaptured_ones():
-    # --- arrange -----------------------------------------
-    tree = _module_tree()
-
-    # --- act ---------------------------------------------
-    at_import = _referenced_names(tree.body)
-    recaptured = _referenced_names(_capture_function(tree).body)
-
-    # --- assert ------------------------------------------
-    assert at_import, "no original_math_* references found -- was the naming changed?"
-    assert at_import == recaptured, (
-        f"never re-captured: {sorted(at_import - recaptured)}; "
-        f"re-captured without an import-time reference: {sorted(recaptured - at_import)}"
-    )
-
-
-def test_every_recaptured_reference_is_declared_global():
-    """Otherwise the assignment silently writes a function-local and re-capture does nothing."""
-    # --- arrange -----------------------------------------
-    capture = _capture_function(_module_tree())
-
-    # --- act ---------------------------------------------
-    recaptured = _referenced_names(capture.body)
-    declared = _declared_global(capture)
-
-    # --- assert ------------------------------------------
-    assert recaptured == declared, (
-        f"assigned but not declared global (the re-capture is a no-op for these): "
-        f"{sorted(recaptured - declared)}; "
-        f"declared global but never assigned: {sorted(declared - recaptured)}"
-    )
-
-
-def test_the_patch_table_matches_the_references():
+def test_the_patch_table_matches_the_declared_references():
     """Every patched function has a reference to delegate through, and vice versa.
 
     Compared over the functions this interpreter actually has: the references are declared
@@ -114,37 +48,40 @@ def test_the_patch_table_matches_the_references():
     the version-gated ones only when they exist.
     """
     # --- arrange -----------------------------------------
-    at_import = _referenced_names(_module_tree().body)
+    declared = _declared_reference_names()
 
     # --- act ---------------------------------------------
-    available = {name for name in at_import if hasattr(math, name)}
+    available = {name for name in declared if hasattr(math, name)}
 
     # --- assert ------------------------------------------
+    assert declared, "no original_math_* references found -- was the naming changed?"
     assert available == set(_PATCHES), (
-        f"referenced but not patched: {sorted(available - set(_PATCHES))}; "
+        f"declared but not patched: {sorted(available - set(_PATCHES))}; "
         f"patched with no reference to delegate through: {sorted(set(_PATCHES) - available)}"
     )
 
 
-def test_the_recapture_actually_rebinds_the_module_level_reference():
-    """The behavioral counterpart: re-capturing must move the reference the replacements read.
+def test_recapture_rebinds_every_delegation_reference():
+    """The loop must move all of them, not merely run.
 
-    The AST tests above cannot see a reference that is rebound somewhere other than where they
-    looked; this one just does it and checks.
+    Rebinding happens through this module's own namespace, which no static check can follow -- so
+    this points every reference at a sentinel, re-captures, and insists none survived.
     """
     # --- arrange -----------------------------------------
-    name = next(iter(_PATCHES))
-    reference = f"{_REFERENCE_PREFIX}{name}"
-    original = getattr(_math_patching, reference)
+    references = {
+        f"{_REFERENCE_PREFIX}{name}": getattr(_math_patching, f"{_REFERENCE_PREFIX}{name}") for name in _PATCHES
+    }
     sentinel = object()
-    setattr(_math_patching, reference, sentinel)
+    for reference in references:
+        setattr(_math_patching, reference, sentinel)
 
     # --- act ---------------------------------------------
     try:
         _math_patching._capture_originals()
-        recaptured = getattr(_math_patching, reference)
+        still_sentinel = [reference for reference in references if getattr(_math_patching, reference) is sentinel]
     finally:
-        setattr(_math_patching, reference, original)
+        for reference, original in references.items():
+            setattr(_math_patching, reference, original)
 
     # --- assert ------------------------------------------
-    assert recaptured is not sentinel, f"{reference} was not rebound by the re-capture"
+    assert not still_sentinel, f"never rebound by the re-capture: {sorted(still_sentinel)}"
