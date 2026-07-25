@@ -22,6 +22,42 @@ Keep counted algorithms in scalar `float`/`CountedFloat` code; hand values to
 numpy only after converting to plain `float` (e.g. `float(x)`), outside the
 counted region.
 
+## Constant folding keys on the operand's value, not on it being a literal
+
+The [cost model](cost_model.md) presents a plain `float` operand as a
+compile-time [constant](glossary.md#constant) — something the imaginary
+compiled program knows while being compiled. The implementation cannot see the
+source, so it applies that rule to the operand's **runtime value**: any plain
+`float` is treated as a constant, whether it was written as a literal or
+arrived from somewhere else.
+
+The two readings coincide for a value that really is fixed. They come apart when
+one call site meets *different* plain floats over its lifetime:
+
+```python
+x = CountedFloat(10.0)
+for divisor in (2.0, 3.0, 4.0, 5.0):
+    _ = x / divisor           # MUL, DIV, MUL, DIV
+```
+
+That single division counts **2 MUL + 2 DIV**: the powers of two fold to exact
+reciprocal multiplication, the others do not. No compiled port produces that
+mix — a real program has one instruction there, chosen once at compile time. The
+model's central premise is what quietly breaks, not merely a weight.
+
+The discipline that avoids it: **anything that varies while the algorithm runs
+should be a `CountedFloat`**, so it is priced as dynamic input rather than
+folded on whatever value it happens to hold. Reserve plain floats for values
+that are genuinely fixed.
+
+This is named rather than fixed: detecting it would mean inspecting the caller's
+syntax tree to see whether the operand was a literal, which is out of
+proportion to a modelling assumption that correct usage already avoids. It is
+observable, though — a counting context asked to
+[report what it counts](counting_flops.md#watching-what-gets-counted) logs each
+fold with the reason it was applied, so a site being folded inconsistently shows
+up in that output.
+
 ## Other limitations
 
 - the only uncounted Python built-in math operations are the
@@ -94,6 +130,15 @@ counted region.
   peak memory differs, and only while a context is active. (`math.hypot` takes
   its coordinates as separate positional arguments, already materialized as a
   tuple by the interpreter, so it does not diverge.)
+- the built-in `sum` counts one addition more than `math.fsum` over the same
+  values: it seeds the reduction with an integer `0`, so an n-element sum costs
+  n ADD where the mathematical reduction — and `math.fsum` — costs n−1. This
+  follows from the identity-fold rule rather than escaping it: adding zero is
+  not a no-op for signed zero (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted
+  exactly as a strict compiler would emit it. Passing a `0.0` seed explicitly
+  changes nothing for the same reason. Use `math.fsum(values)` when the count
+  should match the mathematical reduction, or seed from the sequence itself with
+  `sum(values[1:], values[0])`
 - flop weights should be taken with a grain of salt and should only provide
   relative ballpark estimates w.r.t. computational complexity. Production
   implementations in a compiled language could have vastly differing
