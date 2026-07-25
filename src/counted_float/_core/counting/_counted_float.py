@@ -138,15 +138,17 @@ class CountedFloat(float):
     # exact errors plain float gives (and instances shed 16 of their 32 bytes over plain float)
     __slots__ = ()
 
-    # sealed at runtime, not only for type checkers: every operator builds its result as a
-    # CountedFloat by name rather than from the operand's type, so a subtype does not survive a
-    # single operation — and while it exists it is read as a plain-float constant by the operand
-    # tests below, which prices its arithmetic as folded-away and silently undercounts
+    # subclassing is consciously unsupported, sealed at runtime and not only for type checkers,
+    # because that is what buys the hot-path optimizations below: with no subtype possible, the
+    # operand tests can ask `type(other) is CountedFloat` instead of isinstance (about twice as
+    # cheap for a plain-float operand, which is the constant-folding path every operator runs),
+    # and every result can be constructed as a CountedFloat by name rather than from the
+    # operand's type
     def __init_subclass__(cls, **kwargs: object) -> None:
-        """Refuse subclass creation, which the operators cannot support."""
+        """Refuse subclass creation, which the hot-path design deliberately rules out."""
         raise TypeError(
-            "CountedFloat cannot be subclassed: its operators return CountedFloat, so a subtype "
-            "would be lost on the first operation and its arithmetic counted as a constant"
+            "CountedFloat does not support subclassing: its operators trade that away for exact-type "
+            "operand tests on the counting hot path.  Hold a CountedFloat in your own type instead."
         )
 
     # numpy counting is an explicit non-goal; refusing numpy's ufunc protocol makes the boundary

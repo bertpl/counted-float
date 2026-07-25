@@ -85,7 +85,7 @@ def test_counted_float_refuses_weak_references_like_plain_float():
 def test_counted_float_refuses_subclassing():
     """Sealed for type checkers and at runtime: no operator can carry a subtype through."""
     # --- act / assert ------------------------------------
-    with pytest.raises(TypeError, match="cannot be subclassed"):
+    with pytest.raises(TypeError, match="does not support subclassing"):
         type("Tagged", (CountedFloat,), {"__slots__": ()})
     assert CountedFloat.__final__ is True  # the marker @final leaves for type checkers
 

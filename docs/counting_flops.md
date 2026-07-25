@@ -10,13 +10,16 @@ ensure results of math operations where at least one operand is a
 `CountedFloat` will also be a `CountedFloat`. This way we ensure flop counting
 is a 'closed system'.
 
-That closed system is also why `CountedFloat` is **final** — subclassing it
-raises `TypeError` at class-definition time. Every operator builds its result as
-a `CountedFloat` rather than as the operand's own type, so a subclass would lose
-its identity on its first operation; and for as long as it existed, the operand
-tests that drive constant folding would read it as a plain-float constant and
-price its arithmetic as folded away, undercounting silently. Hold a
-`CountedFloat` inside your own type rather than deriving from it.
+`CountedFloat` deliberately does **not** support subclassing — it is `final`,
+and deriving from it raises `TypeError` at class-definition time. That is a
+performance decision: with no subtype possible, every operator can tell a runtime
+value from a constant with an exact type check (`type(x) is CountedFloat`) rather
+than an `isinstance` test, which costs roughly twice as much on precisely the
+path that runs most — an operand that is a plain float, i.e. a constant to be
+folded. Supporting subclasses would also mean carrying the operand's own type
+through every result construction, on that same hot path.
+
+So hold a `CountedFloat` inside your own type rather than deriving from it.
 
 On top of this, `math` module functions that require counting (`sqrt`, `log2`,
 `pow`, ...) are also instrumented: while a `FlopCountingContext` is active
