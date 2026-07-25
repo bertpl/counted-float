@@ -236,15 +236,29 @@ class PauseFlopCounting:
 
     This acts on the calling thread, across all of that thread's active FlopCountingContext
     instances.  On exit the counter's prior state is restored (rather than counting being resumed
-    unconditionally), so a block can sit inside code that already paused counting, and blocks of
-    separate instances nest.
+    unconditionally), so a block can sit inside code that already paused counting.
 
-    One instance covers one open block: entering an instance whose block is still open raises
-    RuntimeError, since the state to restore has a single slot.  Construct the manager where the
-    block is rather than holding one to reuse, and nesting takes care of itself.  (FlopCountingContext
-    does re-enter on one instance, because it accumulates counts that are read off it afterwards -
-    an identity worth keeping while open, which a pause has no equivalent of.)  Reusing an instance
-    for a later, non-overlapping block is fine.
+    One instance covers one open block, so construct the manager where the block is:
+
+        with PauseFlopCounting():       # nested blocks of separate instances: fine
+            with PauseFlopCounting():
+                ...
+
+        pause = PauseFlopCounting()
+        with pause:
+            with pause:                 # re-entering an open block: RuntimeError
+                ...
+
+        pause = PauseFlopCounting()
+        with pause:
+            ...
+        with pause:                     # entering again once the block closed: fine
+            ...
+
+    The single slot holding the state to restore is what makes re-entry an error.
+    FlopCountingContext does re-enter on one instance: it accumulates counts that are read off it
+    afterwards, so its instance has an identity worth keeping while open - which a pause, holding
+    no result, has no equivalent of.
 
     Like FlopCountingContext, an instance is confined to the thread that entered it: exiting from
     another thread raises RuntimeError (it would silently resume the *caller's* thread counter).
@@ -260,8 +274,9 @@ class PauseFlopCounting:
 
     def __enter__(self) -> Self:
         if self.__owner_ident is not None:
-            # refused before anything is written, so the open block keeps the state it saved:
-            # catching this error still leaves its exit able to restore counting correctly
+            # guards against re-entering an instance whose block is still open, which would
+            # overwrite the single slot holding the state that block has to restore.  Refused
+            # before anything is written, so that state survives even if the error is caught
             raise RuntimeError(_PAUSE_REENTRY_MESSAGE)
         self.__owner_ident = threading.get_ident()
         self.__was_active = THREAD_COUNTER.is_active()
