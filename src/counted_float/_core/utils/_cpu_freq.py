@@ -1,7 +1,5 @@
 import math
 
-import psutil
-
 
 # =================================================================================================
 #  Get Min, Max, Current CPU frequency in MHz
@@ -28,7 +26,12 @@ def _get_psutil_cpu_freq_attribute_mhz(att_name: str) -> float | None:
     """Get an attribute from psutil.cpu_freq(), returning None for missing or 0 data.
 
     Applies heuristics to distinguish Mhz & GHz.
+
+    psutil is imported here rather than at module level: reading a CPU frequency only ever happens
+    while benchmarking, and the counting path reaches this module for its other helpers.
     """
+    import psutil
+
     try:
         value = getattr(psutil.cpu_freq(), att_name)
     except AttributeError:

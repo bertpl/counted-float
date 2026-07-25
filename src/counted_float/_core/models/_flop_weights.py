@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING, Literal
 
-import numpy as np
 from pydantic import field_serializer, field_validator
 
 from counted_float._core.utils import geo_mean, impute_missing_data, round_number
@@ -120,11 +119,9 @@ class FlopWeights(JsonReprModel):
         # --- prep ----------------------------------------
         all_flop_weights = list(all_flop_weights)
 
-        # put in numpy array for easier processing
-        w = np.zeros(shape=(len(FlopType), len(all_flop_weights)), dtype=float)
-        for i_row, flop_type in enumerate(FlopType):
-            for i_col, fw in enumerate(all_flop_weights):
-                w[i_row, i_col] = fw.weights[flop_type]
+        # one row per flop type, one column per contributing set of weights
+        flop_types = list(FlopType)
+        w = [[float(fw.weights[flop_type]) for fw in all_flop_weights] for flop_type in flop_types]
 
         # --- fill missing data ---------------------------
         if fill_missing_data and (len(all_flop_weights) > 1) and any(fw.has_missing_data() for fw in all_flop_weights):
@@ -133,10 +130,9 @@ class FlopWeights(JsonReprModel):
         # --- compute geo_mean ----------------------------
         return FlopWeights(
             weights={
-                flop_type: geo_mean(
-                    [float(w_i) for w_i in w[i, :]]
-                )  # take geo_mean of row (will return nan if any value is nan)
-                for i, flop_type in enumerate(FlopType)
+                # take geo_mean of row (will return nan if any value is nan)
+                flop_type: geo_mean(w[i])
+                for i, flop_type in enumerate(flop_types)
             }
         )
 

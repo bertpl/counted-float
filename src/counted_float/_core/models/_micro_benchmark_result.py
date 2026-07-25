@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import numpy as np
+from counted_float._core.utils import quantile
 
 from ._base import JsonReprModel
 
@@ -52,11 +52,11 @@ class MicroBenchmarkResult(JsonReprModel):
 
     def get_nsecs_per_exec_quantile(self, q: float) -> float:
         """Returns a specific quantile of all results in the 'benchmark_runs' category expressed as nsecs/execution."""
-        return float(np.quantile([el.nsecs_per_exec() for el in self.benchmark_runs], q))
+        return quantile([el.nsecs_per_exec() for el in self.benchmark_runs], q)
 
     def get_cycles_per_exec_quantile(self, q: float) -> float:
         """Returns a specific quantile of all results in the 'benchmark_runs' category expressed as cycles/execution."""
-        return float(np.quantile([el.cycles_per_exec() for el in self.benchmark_runs], q))
+        return quantile([el.cycles_per_exec() for el in self.benchmark_runs], q)
 
     def summary_stats_nsecs_per_exec(self) -> Quantiles:
         # summary statistics of nsecs_per_exec

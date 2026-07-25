@@ -3,8 +3,6 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from rich.console import Console
-
 from counted_float._core.models import FlopType, FlopWeights
 
 if TYPE_CHECKING:
@@ -75,6 +73,10 @@ class FlopWeightsTreeView:
     #  Visualization
     # -------------------------------------------------------------------------
     def show(self) -> None:
+        # rich is imported here rather than at module level: this module is reachable from the
+        # counting path, while rendering a tree only ever happens on an explicit show()
+        from rich.console import Console
+
         # --- prep ----------------------------------------
         console = Console()
         console_width = console.width

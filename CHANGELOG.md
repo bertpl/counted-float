@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- importing the package no longer pulls in numpy, rich, psutil or py-cpuinfo, cutting import time for counting-only use
+
 ### Deprecated
 
 ### Removed

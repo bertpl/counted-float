@@ -3,9 +3,6 @@ from __future__ import annotations
 import platform
 from importlib.metadata import PackageNotFoundError, version
 
-import cpuinfo
-import psutil
-
 from counted_float._core.utils import get_cpu_frequency_mhz_max, get_cpu_frequency_mhz_min
 
 from ._base import JsonReprModel
@@ -64,6 +61,12 @@ class ProcessorInfo(JsonReprModel):
 
     @classmethod
     def from_system(cls) -> ProcessorInfo:
+        """Describe the running machine's processor, as stamped onto a benchmark result."""
+        # both imported here rather than at module level: this is the only place either is used, and
+        # it runs while benchmarking -- whereas the model itself is loaded to parse the shipped data
+        import cpuinfo
+        import psutil
+
         cpu_info_dict = cpuinfo.get_cpu_info()
         return ProcessorInfo(
             description=cpu_info_dict.get("brand_raw", ""),
