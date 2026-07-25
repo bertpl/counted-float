@@ -99,3 +99,37 @@ def test_bare_import_stays_free_of_the_benchmarking_stack():
 
     # --- assert ------------------------------------------
     assert loaded == [], f"bare import loaded {loaded}"
+
+
+def test_bare_import_does_not_load_the_deferred_dependencies():
+    """A bare `import counted_float` must not load numpy, rich, psutil or py-cpuinfo.
+
+    None of the four is reachable from the counting path: numpy is used only by the benchmark
+    probes, rich only when something is rendered, and psutil / py-cpuinfo only when a benchmark
+    describes the machine it ran on. They are ordinary dependencies rather than extras -- so
+    nothing fails if one of them creeps back to module level, it just gets slower. Which is
+    exactly why the guard has to be a test.
+
+    Fresh interpreter for the same reason as the sibling test above.
+    """
+    # --- arrange -----------------------------------------
+    discover_loaded = textwrap.dedent(
+        """
+        import json, sys
+        import counted_float
+        watched = ("numpy", "rich", "psutil", "cpuinfo")
+        print(json.dumps([name for name in watched if name in sys.modules]))
+        """
+    )
+
+    # --- act ---------------------------------------------
+    result = subprocess.run(  # noqa: S603 -- fixed args, no user input
+        [sys.executable, "-c", discover_loaded],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    loaded = json.loads(result.stdout)
+
+    # --- assert ------------------------------------------
+    assert loaded == [], f"bare import loaded {loaded}"
