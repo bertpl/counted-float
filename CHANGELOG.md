@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - re-entering a `PauseFlopCounting` block that is already active now fails immediately with a clear message, instead of corrupting the pause state and silently leaving counting paused
+- subclassing `CountedFloat` now fails at class definition instead of silently producing wrong flop counts
 
 ### Security
 

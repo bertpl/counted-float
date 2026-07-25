@@ -3,7 +3,7 @@ from __future__ import annotations
 import operator
 from math import copysign as _copysign  # the raw builtin: math.copysign is patched inside contexts
 from math import frexp as _frexp  # the raw builtin: math.frexp may later carry a reporting wrapper
-from typing import TYPE_CHECKING, SupportsIndex
+from typing import TYPE_CHECKING, SupportsIndex, final
 
 from ._thread_counter import _TLS, _create_thread_state
 
@@ -131,11 +131,25 @@ def count_pow_with_constant_base(base: float) -> None:
         cnt.POW += 1
 
 
+@final
 class CountedFloat(float):
     # a drop-in float, enforced: empty slots suppress the per-instance __dict__ a slotless
     # subclass would carry, so attribute assignment and weak references are refused with the
     # exact errors plain float gives (and instances shed 16 of their 32 bytes over plain float)
     __slots__ = ()
+
+    # subclassing is consciously unsupported, sealed at runtime and not only for type checkers,
+    # because that is what buys the hot-path optimizations below: with no subtype possible, the
+    # operand tests can ask `type(other) is CountedFloat` instead of isinstance (about twice as
+    # cheap for a plain-float operand, which is the constant-folding path every operator runs),
+    # and every result can be constructed as a CountedFloat by name rather than from the
+    # operand's type
+    def __init_subclass__(cls, **kwargs: object) -> None:
+        """Refuse subclass creation, which the hot-path design deliberately rules out."""
+        raise TypeError(
+            "CountedFloat does not support subclassing: its operators trade that away for exact-type "
+            "operand tests on the counting hot path.  Hold a CountedFloat in your own type instead."
+        )
 
     # numpy counting is an explicit non-goal; refusing numpy's ufunc protocol makes the boundary
     # loud instead of silently uncounted. With the protocol refused, numpy's scalar operators
@@ -425,7 +439,10 @@ class CountedFloat(float):
         result = float.__mul__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        if type(other) is not CountedFloat and (other == 1.0 or other == -1.0):  # two compares: no set on the hot path
+        # two compares: no set on the hot path.  The type test short-circuits ahead of them, and the
+        # class is sealed, so the compares only ever see a plain float - never a counted __eq__,
+        # which would register a COMP the user never wrote
+        if type(other) is not CountedFloat and (other == 1.0 or other == -1.0):
             count_mul_with_identity_multiplier(other)
             return float.__new__(CountedFloat, result)
         try:
@@ -458,7 +475,7 @@ class CountedFloat(float):
         result = float.__truediv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             try:
                 _TLS.flop_counts.DIV += 1  # genuinely runtime divisor
             except AttributeError:  # first counted op on this thread
@@ -489,7 +506,7 @@ class CountedFloat(float):
         result = float.__floordiv__(self, other)
         if result is NotImplemented:
             return NotImplemented
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             try:
                 cnt: CountsTarget = _TLS.flop_counts
             except AttributeError:  # first counted op on this thread
@@ -533,7 +550,7 @@ class CountedFloat(float):
             cnt: CountsTarget = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
             cnt: CountsTarget = _create_thread_state()
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             cnt.DIV += 1
         else:
             count_div_with_constant_divisor(other)
@@ -572,7 +589,7 @@ class CountedFloat(float):
             cnt: CountsTarget = _TLS.flop_counts
         except AttributeError:  # first counted op on this thread
             cnt: CountsTarget = _create_thread_state()
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             cnt.DIV += 1
         else:
             count_div_with_constant_divisor(other)
@@ -615,7 +632,7 @@ class CountedFloat(float):
             return NotImplemented
         if not isinstance(result, float):
             return result
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             try:
                 _TLS.flop_counts.POW += 1  # genuinely runtime exponent
             except AttributeError:  # first counted op on this thread
@@ -641,7 +658,7 @@ class CountedFloat(float):
             return NotImplemented
         if not isinstance(result, float):
             return result
-        if isinstance(other, CountedFloat):
+        if type(other) is CountedFloat:
             try:
                 _TLS.flop_counts.POW += 1  # genuinely runtime base
             except AttributeError:  # first counted op on this thread
