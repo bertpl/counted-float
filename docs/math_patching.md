@@ -65,6 +65,7 @@ The full per-operation counting rules are in the
 
 Every commonly used `math` function, and how it participates in counting:
 
+<!-- BEGIN generated: math-coverage-table -->
 | Coverage | Functions |
 |---|---|
 | **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
@@ -72,6 +73,7 @@ Every commonly used `math` function, and how it participates in counting:
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | exactly the float-representation helpers — `frexp`, `ldexp`, `modf`, `nextafter`, `ulp` |
 | **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` — and truthiness (`bool(x)`, `if x:`, `assert x`), which a compiled port would test against zero. It is left uncounted because it appears constantly in ordinary control flow rather than in the arithmetic being measured; an *algorithmic* zero-test can be written `x != 0.0`, which counts `COMP` |
+<!-- END generated: math-coverage-table -->
 
 The not-instrumented set breaks contagion: the plain-`float` result silently
 stops all downstream counting, so convert back with `CountedFloat(...)` if a

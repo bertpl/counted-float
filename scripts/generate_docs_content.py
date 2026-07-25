@@ -46,6 +46,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from counted_float import BuiltInData
+from counted_float._core.counting._math_patching import (
+    _MATH_NOT_PATCHED,
+    _NOT_PATCHED_DUNDER,
+    _NOT_PATCHED_PREDICATE,
+    _PATCHES,
+    _UNCOUNTED_MATH,
+)
 from counted_float._core.models import FlopType
 from counted_float.config import (
     get_active_flop_weights,
@@ -307,6 +314,94 @@ def generate_builtin_data_table() -> str:
     return "\n".join(rows)
 
 
+# --------------------------------------------------------------------------
+#  math-coverage table
+# --------------------------------------------------------------------------
+# Membership comes from the patch tables in the library; what follows is only how each function is
+# presented and in what order.  Every currently patched function must appear in one of the two
+# instrumented buckets, so patching something new breaks this generator until its row is decided --
+# which is what keeps the table from drifting behind the code.
+#
+# The two arity-parametric and two version-gated entries carry a note; the rest render bare.
+_MATH_INSTRUMENTED_ORDER = [
+    "sqrt", "cbrt", "exp", "exp2", "expm1", "log", "log2", "log10", "log1p", "pow",
+    "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh",
+    "asinh", "acosh", "atanh", "hypot", "dist", "fmod", "remainder", "gamma", "lgamma",
+    "erf", "erfc", "fabs", "copysign", "fma", "sumprod",
+]  # fmt: skip
+_MATH_INSTRUMENTED_NOTES = {
+    "hypot": "(+ `HYPOT_XARG` per coordinate beyond the second)",
+    "dist": "(+ `DIST_XARG` likewise)",
+    "fma": "(Python 3.13+)",
+    "sumprod": (
+        "(Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are "
+        "unboxed so the extended-precision algorithm runs)"
+    ),
+}
+# patched, but presented by the decomposition each one counts rather than by a FlopType of its own.
+# 1-argument `hypot` also belongs to this row's prose; `hypot` itself is presented above.
+_MATH_DECOMPOSED = ["degrees", "radians", "prod", "fsum"]
+_MATH_DECOMPOSED_CELL = (
+    "`degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS"
+)
+# registered conditionally by the patch table, so they are absent from it on an older interpreter
+# while still belonging in the committed table -- the note on each says from which version
+_MATH_VERSION_GATED = {"fma", "sumprod"}
+# uncounted, but shaped like a predicate, so the docs group it with them rather than with the
+# float-representation helpers -- while saying that it alone performs real arithmetic
+_MATH_UNCOUNTED_SHOWN_WITH_PREDICATES = {"isclose"}
+
+
+def _math_names_by_reason(reason: str) -> list[str]:
+    """The unpatched `math` functions sharing one stated reason, in table order."""
+    return [name for name, entry_reason in _MATH_NOT_PATCHED.items() if entry_reason == reason]
+
+
+def generate_math_coverage_table() -> str:
+    """The `math`-coverage table in the patching docs, derived from the classification tables."""
+    presented_as_instrumented = set(_MATH_INSTRUMENTED_ORDER) | set(_MATH_DECOMPOSED)
+    if unpresented := set(_PATCHES) - presented_as_instrumented:
+        raise ValueError(f"patched but missing from the coverage table: {sorted(unpresented)}")
+    if fictional := presented_as_instrumented - set(_PATCHES) - _MATH_VERSION_GATED:
+        raise ValueError(f"presented as patched but not in the patch table: {sorted(fictional)}")
+
+    instrumented = ", ".join(
+        f"`{name}`" + (f" {note}" if (note := _MATH_INSTRUMENTED_NOTES.get(name)) else "")
+        for name in _MATH_INSTRUMENTED_ORDER
+    )
+    dunder = _math_names_by_reason(_NOT_PATCHED_DUNDER)
+    helpers = [name for name in _UNCOUNTED_MATH if name not in _MATH_UNCOUNTED_SHOWN_WITH_PREDICATES]
+    predicates = _math_names_by_reason(_NOT_PATCHED_PREDICATE) + sorted(_MATH_UNCOUNTED_SHOWN_WITH_PREDICATES)
+
+    rows = [
+        ("**Instrumented** (patched, counts its FlopType)", instrumented),
+        (
+            "**Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute)",
+            _MATH_DECOMPOSED_CELL,
+        ),
+        (
+            "**Counted via dunder** (no patch needed — do not expect these in the patch list)",
+            " / ".join(f"`math.{name}`" for name in dunder)
+            + " → F2I through "
+            + "/".join(f"`__{name}__`" for name in dunder)
+            + "; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders",
+        ),
+        (
+            "**Not instrumented** (returns a plain, uncounted `float`)",
+            "exactly the float-representation helpers — " + ", ".join(f"`{name}`" for name in helpers),
+        ),
+        (
+            "**Predicates** (uncounted, return a `bool`)",
+            ", ".join(f"`{name}`" for name in predicates)
+            + " — and truthiness (`bool(x)`, `if x:`, `assert x`), which a compiled port would test"
+            " against zero. It is left uncounted because it appears constantly in ordinary control"
+            " flow rather than in the arithmetic being measured; an *algorithmic* zero-test can be"
+            " written `x != 0.0`, which counts `COMP`",
+        ),
+    ]
+    return "\n".join(["| Coverage | Functions |", "|---|---|", *(f"| {left} | {right} |" for left, right in rows)])
+
+
 def _snippet_source(name: str) -> str:
     """The committed snippet's source, as the docs' input code block."""
     return f"```python\n{(SNIPPETS_DIR / name).read_text(encoding='utf-8').rstrip()}\n```"
@@ -337,6 +432,7 @@ TEXT_BLOCKS: dict[str, tuple[Path, Callable[[], str]]] = {
     "flop-weights-arm": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_arm),
     "cli-show-data-slice": (REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
     "builtin-data-table": (REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
+    "math-coverage-table": (REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
     "snippet-verbosity-info": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
     "snippet-verbosity-warning": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning),
     "snippet-verbosity-mixed": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_mixed),

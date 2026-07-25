@@ -810,6 +810,30 @@ if hasattr(math, "fma"):
 if hasattr(math, "sumprod"):
     # Python 3.12+ only; same conditional-registration reasoning as math.fma above.
     _PATCHES["sumprod"] = math_sumprod
+
+# Why each remaining public `math` callable needs no replacement of either kind.  Between this,
+# _PATCHES and _UNCOUNTED_MATH the whole module surface is accounted for, and a test holds them to
+# that -- so a float function a future CPython adds to `math` fails there rather than becoming a
+# silently uncounted hole.  The reason per entry is a judgment about the function's domain that
+# nothing about the callable itself reveals, which is why they are listed rather than detected.
+_NOT_PATCHED_PREDICATE = "predicate: returns a bool, performs no arithmetic of its own"
+_NOT_PATCHED_DUNDER = "counted already, through the CountedFloat dunder it dispatches to"
+_NOT_PATCHED_INTEGER_DOMAIN = "integer domain: never operates on floats"
+_MATH_NOT_PATCHED: dict[str, str] = {
+    "isnan": _NOT_PATCHED_PREDICATE,
+    "isinf": _NOT_PATCHED_PREDICATE,
+    "isfinite": _NOT_PATCHED_PREDICATE,
+    "floor": _NOT_PATCHED_DUNDER,
+    "ceil": _NOT_PATCHED_DUNDER,
+    "trunc": _NOT_PATCHED_DUNDER,
+    "comb": _NOT_PATCHED_INTEGER_DOMAIN,
+    "factorial": _NOT_PATCHED_INTEGER_DOMAIN,
+    "gcd": _NOT_PATCHED_INTEGER_DOMAIN,
+    "isqrt": _NOT_PATCHED_INTEGER_DOMAIN,
+    "lcm": _NOT_PATCHED_INTEGER_DOMAIN,
+    "perm": _NOT_PATCHED_INTEGER_DOMAIN,
+}
+
 # the math functions saved at patch time, to be restored at unpatch time
 _saved_originals: dict[str, object] = {}
 
