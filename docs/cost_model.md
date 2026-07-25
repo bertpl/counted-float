@@ -14,7 +14,11 @@ Two conventions anchor every rule below.
 [constant](glossary.md#constant)** — something the imaginary compiled program would know
 while being compiled — while a **`CountedFloat` operand is dynamic algorithm input**.
 Rules that treat constants specially (strength reduction, reciprocal multiplication) key
-on exactly this distinction.
+on exactly this distinction. They can only key on the operand's *value*, though, since
+nothing here sees the source — so a plain `float` that changes while the algorithm runs is
+folded on each value it takes, which is a
+[stated limitation](known_limitations.md#constant-folding-keys-on-the-operands-value-not-on-it-being-a-literal)
+rather than part of the model.
 
 **Second: the [port](glossary.md#compiled-port) is made in two stages, by two different
 actors, playing by two different rules.**
