@@ -28,16 +28,15 @@ if TYPE_CHECKING:
 # ISA series carry all of the color. Checked for colorblind separation: the worst adjacent pair sits
 # around ΔE 25 under both protanopia and tritanopia, far above the ΔE 8 target.
 #
-# The blue is chroma-matched to the peach (both ~0.133 in OKLab) rather than lightness-matched, which
-# is what makes the pair read as equally soft. Matching lightness instead is not available: sRGB blue
-# cannot hold that chroma at the peach's lightness, and the pale blue it forces drops to half the
-# chroma and to ΔE 18 separation.
+# The red and blue echo the splash image's two accent hues, and are matched to each other in both
+# chroma (0.126 / 0.133) and lightness (0.718 / 0.706), so neither reads as the louder series.
 #
-# The peach sits above the perceptual lightness band, which costs it contrast against white (roughly
-# 1.8:1) -- accepted deliberately, since the axis labels and legend carry identity anyway and a
-# band-compliant peach read muddy next to the blue.
+# The red cannot go deeper than this, which is a hard limit rather than a preference: protanopia
+# darkens red toward mid-grey, so a deeper red collapses onto the grey aggregate it sits next to.
+# Measured against this grey, protan separation runs ΔE 12 here, 9 one step deeper, and 6 -- a
+# failure -- one step beyond that.
 OVERALL_COLOR = "#707070"
-ARM_COLOR = "#FBB85C"
+ARM_COLOR = "#E8837A"
 X86_COLOR = "#6BA1F2"
 
 

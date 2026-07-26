@@ -40,89 +40,89 @@
 <line x1="666.000" y1="366" x2="714.000" y2="366" stroke="#AFB8C1" stroke-width="1" stroke-dasharray="4 4"/>
 <text x="690.000" y="382" font-size="8.5" fill="#8C959F" text-anchor="middle">28 more</text>
 <rect x="50.500" y="314.485" width="9" height="51.515" fill="#707070"/>
-<rect x="59.500" y="284.635" width="9" height="81.365" fill="#FBB85C"/>
+<rect x="59.500" y="284.635" width="9" height="81.365" fill="#E8837A"/>
 <rect x="68.500" y="344.336" width="9" height="21.664" fill="#6BA1F2"/>
 <text x="64.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 64.000 379)">MINUS</text>
 <rect x="86.500" y="291.831" width="9" height="74.169" fill="#707070"/>
-<rect x="95.500" y="273.939" width="9" height="92.061" fill="#FBB85C"/>
+<rect x="95.500" y="273.939" width="9" height="92.061" fill="#E8837A"/>
 <rect x="104.500" y="309.723" width="9" height="56.277" fill="#6BA1F2"/>
 <text x="100.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 100.000 379)">ABS</text>
 <rect x="122.500" y="275.876" width="9" height="90.124" fill="#707070"/>
-<rect x="131.500" y="297.303" width="9" height="68.697" fill="#FBB85C"/>
+<rect x="131.500" y="297.303" width="9" height="68.697" fill="#E8837A"/>
 <rect x="140.500" y="254.449" width="9" height="111.551" fill="#6BA1F2"/>
 <text x="136.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 136.000 379)">COMP</text>
 <rect x="158.500" y="274.757" width="9" height="91.243" fill="#707070"/>
-<rect x="167.500" y="274.757" width="9" height="91.243" fill="#FBB85C"/>
+<rect x="167.500" y="274.757" width="9" height="91.243" fill="#E8837A"/>
 <rect x="176.500" y="274.757" width="9" height="91.243" fill="#6BA1F2"/>
 <text x="172.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 172.000 379)">ADD</text>
 <rect x="194.500" y="274.721" width="9" height="91.279" fill="#707070"/>
-<rect x="203.500" y="274.671" width="9" height="91.329" fill="#FBB85C"/>
+<rect x="203.500" y="274.671" width="9" height="91.329" fill="#E8837A"/>
 <rect x="212.500" y="274.770" width="9" height="91.230" fill="#6BA1F2"/>
 <text x="208.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 208.000 379)">SUB</text>
 <rect x="230.500" y="267.617" width="9" height="98.383" fill="#707070"/>
-<rect x="239.500" y="249.980" width="9" height="116.020" fill="#FBB85C"/>
+<rect x="239.500" y="249.980" width="9" height="116.020" fill="#E8837A"/>
 <rect x="248.500" y="285.255" width="9" height="80.745" fill="#6BA1F2"/>
 <text x="244.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 244.000 379)">COPYSIGN</text>
 <rect x="266.500" y="258.541" width="9" height="107.459" fill="#707070"/>
-<rect x="275.500" y="255.588" width="9" height="110.412" fill="#FBB85C"/>
+<rect x="275.500" y="255.588" width="9" height="110.412" fill="#E8837A"/>
 <rect x="284.500" y="261.493" width="9" height="104.507" fill="#6BA1F2"/>
 <text x="280.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 280.000 379)">MUL</text>
 <rect x="302.500" y="249.228" width="9" height="116.772" fill="#707070"/>
-<rect x="311.500" y="244.347" width="9" height="121.653" fill="#FBB85C"/>
+<rect x="311.500" y="244.347" width="9" height="121.653" fill="#E8837A"/>
 <rect x="320.500" y="254.110" width="9" height="111.890" fill="#6BA1F2"/>
 <text x="316.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 316.000 379)">FMA</text>
 <rect x="338.500" y="246.533" width="9" height="119.467" fill="#707070"/>
-<rect x="347.500" y="251.668" width="9" height="114.332" fill="#FBB85C"/>
+<rect x="347.500" y="251.668" width="9" height="114.332" fill="#E8837A"/>
 <rect x="356.500" y="241.397" width="9" height="124.603" fill="#6BA1F2"/>
 <text x="352.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 352.000 379)">RND</text>
 <rect x="374.500" y="243.404" width="9" height="122.596" fill="#707070"/>
-<rect x="383.500" y="256.648" width="9" height="109.352" fill="#FBB85C"/>
+<rect x="383.500" y="256.648" width="9" height="109.352" fill="#E8837A"/>
 <rect x="392.500" y="230.160" width="9" height="135.840" fill="#6BA1F2"/>
 <text x="388.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 388.000 379)">F2I</text>
 <rect x="410.500" y="243.225" width="9" height="122.775" fill="#707070"/>
-<rect x="419.500" y="253.398" width="9" height="112.602" fill="#FBB85C"/>
+<rect x="419.500" y="253.398" width="9" height="112.602" fill="#E8837A"/>
 <rect x="428.500" y="233.052" width="9" height="132.948" fill="#6BA1F2"/>
 <text x="424.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 424.000 379)">I2F</text>
 <rect x="446.500" y="229.904" width="9" height="136.096" fill="#707070"/>
-<rect x="455.500" y="220.487" width="9" height="145.513" fill="#FBB85C"/>
+<rect x="455.500" y="220.487" width="9" height="145.513" fill="#E8837A"/>
 <rect x="464.500" y="239.321" width="9" height="126.679" fill="#6BA1F2"/>
 <text x="460.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 460.000 379)">HYPOT_XARG</text>
 <rect x="482.500" y="229.857" width="9" height="136.143" fill="#707070"/>
-<rect x="491.500" y="221.623" width="9" height="144.377" fill="#FBB85C"/>
+<rect x="491.500" y="221.623" width="9" height="144.377" fill="#E8837A"/>
 <rect x="500.500" y="238.090" width="9" height="127.910" fill="#6BA1F2"/>
 <text x="496.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 496.000 379)">DIST_XARG</text>
 <rect x="518.500" y="203.572" width="9" height="162.428" fill="#707070"/>
-<rect x="527.500" y="205.462" width="9" height="160.538" fill="#FBB85C"/>
+<rect x="527.500" y="205.462" width="9" height="160.538" fill="#E8837A"/>
 <rect x="536.500" y="201.682" width="9" height="164.318" fill="#6BA1F2"/>
 <text x="532.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 532.000 379)">SUMPROD_XELEM</text>
 <rect x="554.500" y="192.285" width="9" height="173.715" fill="#707070"/>
-<rect x="563.500" y="187.261" width="9" height="178.739" fill="#FBB85C"/>
+<rect x="563.500" y="187.261" width="9" height="178.739" fill="#E8837A"/>
 <rect x="572.500" y="197.309" width="9" height="168.691" fill="#6BA1F2"/>
 <text x="568.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 568.000 379)">DIV</text>
 <rect x="590.500" y="187.956" width="9" height="178.044" fill="#707070"/>
-<rect x="599.500" y="176.429" width="9" height="189.571" fill="#FBB85C"/>
+<rect x="599.500" y="176.429" width="9" height="189.571" fill="#E8837A"/>
 <rect x="608.500" y="199.484" width="9" height="166.516" fill="#6BA1F2"/>
 <text x="604.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 604.000 379)">FMOD</text>
 <rect x="626.500" y="180.481" width="9" height="185.519" fill="#707070"/>
-<rect x="635.500" y="179.280" width="9" height="186.720" fill="#FBB85C"/>
+<rect x="635.500" y="179.280" width="9" height="186.720" fill="#E8837A"/>
 <rect x="644.500" y="181.682" width="9" height="184.318" fill="#6BA1F2"/>
 <text x="640.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 640.000 379)">SQRT</text>
 <rect x="726.500" y="89.090" width="9" height="276.910" fill="#707070"/>
-<rect x="735.500" y="91.660" width="9" height="274.340" fill="#FBB85C"/>
+<rect x="735.500" y="91.660" width="9" height="274.340" fill="#E8837A"/>
 <rect x="744.500" y="86.520" width="9" height="279.480" fill="#6BA1F2"/>
 <text x="740.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 740.000 379)">SINH</text>
 <rect x="762.500" y="88.684" width="9" height="277.316" fill="#707070"/>
-<rect x="771.500" y="89.050" width="9" height="276.950" fill="#FBB85C"/>
+<rect x="771.500" y="89.050" width="9" height="276.950" fill="#E8837A"/>
 <rect x="780.500" y="88.318" width="9" height="277.682" fill="#6BA1F2"/>
 <text x="776.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 776.000 379)">TANH</text>
 <rect x="798.500" y="82.807" width="9" height="283.193" fill="#707070"/>
-<rect x="807.500" y="82.103" width="9" height="283.897" fill="#FBB85C"/>
+<rect x="807.500" y="82.103" width="9" height="283.897" fill="#E8837A"/>
 <rect x="816.500" y="83.510" width="9" height="282.490" fill="#6BA1F2"/>
 <text x="812.000" y="379" font-size="9" fill="#57606A" text-anchor="end" transform="rotate(-45 812.000 379)">GAMMA</text>
 <rect x="52.000" y="66.000" width="118.950" height="54.000" rx="4" fill="#F0F3F6" fill-opacity="0.8"/>
 <rect x="58" y="72.000" width="10" height="10" rx="1" fill="#707070"/>
 <text x="74.000" y="80.000" font-size="11" fill="#57606A">all architectures</text>
-<rect x="58" y="88.000" width="10" height="10" rx="1" fill="#FBB85C"/>
+<rect x="58" y="88.000" width="10" height="10" rx="1" fill="#E8837A"/>
 <text x="74.000" y="96.000" font-size="11" fill="#57606A">arm64</text>
 <rect x="58" y="104.000" width="10" height="10" rx="1" fill="#6BA1F2"/>
 <text x="74.000" y="112.000" font-size="11" fill="#57606A">x86</text>
