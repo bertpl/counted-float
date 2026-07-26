@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - the README and docs now show a bar chart of the built-in flop weights, comparing arm64 and x86 against the all-architecture consensus
+
 ## 2.0.4 (2026-07-25)
 
 ### Changed
@@ -33,17 +34,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - a benchmark slice that measures zero elapsed time no longer crashes the calibration; it now ramps up the execution count instead
+
 ## 2.0.3 (2026-07-25)
 
 ### Fixed
 
 - re-entering a `PauseFlopCounting` block that is already active now fails immediately with a clear message, instead of corrupting the pause state and silently leaving counting paused
 - subclassing `CountedFloat` now fails at class definition instead of silently producing wrong flop counts
+
 ## 2.0.2 (2026-07-24)
 
 ### Fixed
 
 - a `CountedFloat` construction or integer conversion that raises — an int too large to become a float, or `int()`/`floor()`/`ceil()`/`trunc()`/`round()` of `inf`/`nan` — no longer leaves a phantom flop counted
+
 ## 2.0.1 (2026-07-24)
 
 ### Changed
@@ -53,6 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - the built-in flop-weight data now loads under zipimport / zipapp / frozen installs (previously raised `AttributeError` there)
+
 ## 2.0.0 (2026-07-23)
 
 ### Added
@@ -83,6 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `math.sumprod` on counted values now computes the same extended-precision result as on plain floats, and no longer silently miscounts it as a naive multiply-add chain
 - `show-data` group headers are now legible on every terminal theme; the docs' screenshots and data-derived content are now regenerated from live output and drift-tested
+
 ## 1.7.0 (2026-07-17)
 
 ### Added
@@ -103,11 +109,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `math.hypot` with other than 2 arguments is now counted per its dimension instead of always as the 2-argument form
 - `math.prod` no longer counts an extra multiply for its implicit start value
+
 ## 1.6.3 (2026-07-16)
 
 ### Fixed
 
 - a micro-benchmark whose runs all measure zero elapsed time now omits the uncertainty from its report instead of crashing
+
 ## 1.6.2 (2026-07-16)
 
 ### Changed
@@ -120,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the flop-weight display no longer scatters missing weights among the measured ones
 - `FlopWeights.from_abs_flop_costs()` rejects a negative flop cost instead of silently producing a negative weight
 - the docs now list the `show-data` options and state the `Fraction` limitation accurately (it holds only with the `Fraction` on the right)
+
 ## 1.6.1 (2026-07-16)
 
 ### Changed
@@ -132,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `BuiltInData` is now exported from the package root, so star imports and strict type checkers recognize it
 - a `FlopCountingContext` that is re-entered, or resumed outside its `with` block, no longer produces silently wrong counts
 - `set_active_flop_weights()` now stores a copy, so mutating the object you passed no longer changes the configured weights
+
 ## 1.6.0 (2026-07-15)
 
 ### Added
@@ -146,11 +156,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - corrected a number of third-party instruction latencies that had been transcribed from the wrong table row, slightly adjusting the built-in flop weights
+
 ## 1.5.2 (2026-07-14)
 
 ### Changed
 
 - `CountedFloat` operations and patched `math` functions carry roughly a third less counting overhead (leaner dispatch and result wrapping); counts are unchanged
+
 ## 1.5.1 (2026-07-14)
 
 ### Added
@@ -160,6 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - patched `math` functions no longer leave a spurious flop count when the underlying call raises a domain or overflow error
+
 ## 1.5.0 (2026-07-14)
 
 ### Added
@@ -170,6 +183,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - the FLOPs benchmark's "numba not installed" notice is now a `RuntimeWarning` (filterable and catchable) instead of printed text
+
 ## 1.4.2 (2026-07-13)
 
 ### Changed
@@ -185,11 +199,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `counted_float` CLI now exits with a clear "install counted-float[cli]" message instead of a raw traceback when the optional `cli` extra is missing
 - the FLOPs benchmark now interleaves kernel execution and uses a low-quantile estimator, making measured weights robust to transient CPU contention and thermal drift (built-in M3 Max data re-measured accordingly)
 - benchmark-derived flop weights are now floored to a small positive value, so a noisy run can no longer produce negative or invalid weights
+
 ## 1.4.1 (2026-07-13)
 
 ### Changed
 
 - the package version is now derived from git at build time; development builds self-report PEP 440 dev versions (e.g. `1.4.1.devN+g<sha>`) instead of the previous release's version
+
 ## 1.4.0 (2026-07-12)
 
 ### Added
@@ -207,11 +223,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `%`, `//`, `divmod()`, and unary `+` on a `CountedFloat` now count and stay `CountedFloat` (they previously returned a plain, uncounted `float`, silently breaking downstream counting)
 - `FlopWeights.get_sorted_flop_types()` now orders types deterministically when some weights are missing (NaN)
+
 ## 1.3.0 (2026-07-12)
 
 ### Added
 
 - `counted_float benchmark` can write results to a JSON file via `--output`
+
 ## 1.2.2 (2026-07-09)
 
 ### Fixed
@@ -220,11 +238,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - corrected documentation errors (FLOP-type counting rules, configuration function names, default rounding mode, CPU coverage tables)
 - nested or pre-paused `PauseFlopCounting` no longer resumes counting too early
 - `CountedFloat` arithmetic and comparisons now delegate to the other operand like `float` does (e.g. `Fraction` interop no longer raises), and failed operations no longer pollute counts
+
 ## 1.2.1 (2026-07-06)
 
 ### Fixed
 
 - bullet lists in the methodology pages of the documentation site now render correctly
+
 ## 1.2.0 (2026-07-06)
 
 ### Added
@@ -234,16 +254,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - added a security policy (`SECURITY.md`) with a private vulnerability reporting channel
+
 ## 1.1.4 (2026-07-06)
 
 ### Security
 
 - release artifacts now ship with SLSA build provenance and a GitHub Release; provenance is verifiable with `gh attestation verify`
+
 ## 1.1.3 (2026-07-06)
 
 ### Changed
 
 - adopt the Keep a Changelog format for this file
+
 ## 1.1.2 (2026-07-05)
 
 ### Changed

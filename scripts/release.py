@@ -376,9 +376,13 @@ def step_9_finalize_changelog(version: str) -> None:
         else:
             new_body_lines.append(line)
             i += 1
-    new_body = "".join(new_body_lines).rstrip() + "\n"
+    # The trailing blank line matters: the match ends at the next '## ' heading, so
+    # without it the finalized section would butt straight up against the previous
+    # release's heading. Omitted at end-of-file, where there is nothing to separate from.
+    tail = text[m.end() :]
+    new_body = "".join(new_body_lines).rstrip() + ("\n\n" if tail else "\n")
     new_header = f"## {version} ({date.today().isoformat()})\n"
-    text = text[: m.start()] + new_header + new_body + text[m.end() :]
+    text = text[: m.start()] + new_header + new_body + tail
     CHANGELOG.write_text(text)
 
 
