@@ -26,23 +26,14 @@ _REMEDY = "run `make regen-docs`"
 # ==================================================================================================
 #  Findings
 # ==================================================================================================
-@dataclasses.dataclass(frozen=True)
-class Stale:
-    """One committed file that no longer agrees with what it should be."""
+class StaleFile:
+    """One committed file whose re-derived content no longer matches what is committed."""
 
-    artifact: DerivedFile
-
-    def describe(self) -> str:
-        """How this staleness is shown to a reader."""
-        raise NotImplementedError
-
-
-@dataclasses.dataclass(frozen=True)
-class StaleContent(Stale):
-    """A file whose re-derived content differs from what is committed."""
-
-    committed: str
-    intended: str
+    def __init__(self, artifact: DerivedFile, committed: str, intended: str) -> None:
+        """Record what was found on disk against what the generator now produces."""
+        self.artifact = artifact
+        self.committed = committed
+        self.intended = intended
 
     def describe(self) -> str:
         """A unified diff of what changed, rendered through the artifact's readable form."""
@@ -59,8 +50,8 @@ class StaleContent(Stale):
 
 
 @dataclasses.dataclass(frozen=True)
-class Regenerated:
-    """The outcome of a regeneration pass.
+class RegenerationOutcome:
+    """What one regeneration pass produced and what it had to rewrite.
 
     Attributes:
         intended: Every producible artifact's fresh content, by path — including files that were
@@ -89,7 +80,7 @@ class DocsArtifactManager:
     # --------------------------------------------------------------------------
     #  Checking
     # --------------------------------------------------------------------------
-    def check(self) -> list[Stale]:
+    def check(self) -> list[StaleFile]:
         """Compare every producible artifact against what is committed.
 
         An artifact that cannot be produced on this machine is skipped rather than reported: the
@@ -98,7 +89,7 @@ class DocsArtifactManager:
         Returns:
             One entry per stale file, in registry order; empty when everything is current.
         """
-        stale: list[Stale] = []
+        stale: list[StaleFile] = []
         for artifact in self._artifacts:
             if not artifact.can_produce_here():
                 continue
@@ -106,24 +97,24 @@ class DocsArtifactManager:
                 stale.append(finding)
         return stale
 
-    def stale_report(self, stale: Sequence[Stale]) -> str:
+    def stale_report(self, stale: Sequence[StaleFile]) -> str:
         """The full stderr report for a set of findings: one description each, then the remedy."""
         described = "".join(f"{finding.describe()}\n" for finding in stale)
         return f"{described}stale generated docs content -- {_REMEDY}\n"
 
     @staticmethod
-    def _compare_content(artifact: DerivedFile) -> StaleContent | None:
+    def _compare_content(artifact: DerivedFile) -> StaleFile | None:
         """Re-derive one artifact's content and compare it against what is committed."""
         intended = artifact.intended_content()
         committed = read_lf(artifact.path) if artifact.path.exists() else ""
         if committed == intended:
             return None
-        return StaleContent(artifact=artifact, committed=committed, intended=intended)
+        return StaleFile(artifact=artifact, committed=committed, intended=intended)
 
     # --------------------------------------------------------------------------
     #  Regenerating
     # --------------------------------------------------------------------------
-    def regenerate(self) -> Regenerated:
+    def regenerate(self) -> RegenerationOutcome:
         """Rewrite every producible artifact that is stale, leaving current ones untouched."""
         intended: dict[Path, str] = {}
         written: list[Path] = []
@@ -136,4 +127,4 @@ class DocsArtifactManager:
                 artifact.path.parent.mkdir(parents=True, exist_ok=True)
                 artifact.path.write_text(content, encoding="utf-8", newline="\n")
                 written.append(artifact.path)
-        return Regenerated(intended=intended, written=written)
+        return RegenerationOutcome(intended=intended, written=written)

@@ -1,20 +1,31 @@
-"""What a committed, derived file is, and how each kind knows its own intended content.
+"""The `DerivedFile` hierarchy: one committed file that is generated rather than written.
 
-Everything the docs show that is *derived* from the library is one of two shapes:
+`DerivedFile` is the abstract base. It defines the three questions the manager asks of every
+committed file, and answers two of them with defaults:
 
-  - **marked regions inside an authored file** — a block between `<!-- BEGIN/END generated: name -->`
-    markers. Regeneration rewrites only those regions; the surrounding prose is hand-written, and
-    several regions can share one file.
-  - **a whole generated file** — the terminal captures, whose committed bytes *are* the generator's
-    output.
+  - `intended_content()` — abstract, and the only thing every subclass must implement. It is what
+    the file *should* contain right now, re-derived from whatever the file is generated from.
+  - `can_produce_here()` — whether this machine can answer the first question at all. Default True.
+  - `readable(content)` — that content as it should appear in a diff. Default: unchanged.
 
-Both are checked the same way: re-derive the file's intended content and compare it to what is
-committed. They differ only in how that intended content is arrived at, which is exactly what the
-two `DerivedFile` implementations below encapsulate — so the driver never asks which kind it holds.
+Two concrete subclasses, differing only in how they answer the first question:
+
+  - **`MarkedBlockFile`** — an authored file with generated regions in it, between
+    `<!-- BEGIN/END generated: name -->` markers. Its intended content is the *committed* file with
+    each region replaced, so the hand-written prose around them survives by construction. One file
+    can hold several regions, which is why this subclass holds a mapping rather than one generator.
+  - **`GeneratedFile`** — a file with no authored part at all: its committed bytes *are* the
+    generator's output, so its intended content is simply that output. It also overrides the other
+    two defaults, since a whole-file generator may be unavailable on a given platform and its
+    output may not be readable as it stands.
+
+Both are checked the same way by the manager — re-derive, compare — which is the point of the base
+class: the manager asks, the subclass knows.
 """
 
 from __future__ import annotations
 
+import abc
 import dataclasses
 import re
 from typing import TYPE_CHECKING
@@ -36,24 +47,25 @@ def read_lf(file_path: Path) -> str:
 
 
 # ==================================================================================================
-#  DerivedFile
+#  DerivedFile -- abstract base of the hierarchy
 # ==================================================================================================
-@dataclasses.dataclass(frozen=True)
-class DerivedFile:
+class DerivedFile(abc.ABC):
     """One committed file whose content is derived, and how to tell whether it is current.
 
-    Subclasses supply `intended_content`; everything else the driver needs is answered here, so a
-    new kind of artifact is a new subclass rather than a new branch in the driver.
+    Subclasses implement `intended_content`; the other two answers have defaults that hold for the
+    common case, so a new kind of file is a new subclass rather than a new branch in the manager.
     """
 
-    path: Path
+    def __init__(self, path: Path) -> None:
+        """Bind the artifact to the committed file it describes."""
+        self.path = path
 
     # --------------------------------------------------------------------------
-    #  Driver interface
+    #  Manager interface
     # --------------------------------------------------------------------------
+    @abc.abstractmethod
     def intended_content(self) -> str:
         """The content this file should hold, re-derived from its current inputs."""
-        raise NotImplementedError
 
     def can_produce_here(self) -> bool:
         """Whether this machine can produce the intended content at all.
@@ -73,17 +85,28 @@ class DerivedFile:
 
 
 # ==================================================================================================
-#  MarkedBlockFile
+#  MarkedBlockFile -- authored file with generated regions
 # ==================================================================================================
 @dataclasses.dataclass(frozen=True)
-class MarkedBlockFile(DerivedFile):
-    """An authored file with one or more generated regions in it.
+class MarkedBlock:
+    """One generated region: the file it sits in, and what produces its content.
 
     Attributes:
-        blocks: Marker name -> the generator producing that region's content.
+        file: The authored file carrying this region's BEGIN/END markers.
+        generate: Returns the region's content, without the marker lines.
     """
 
-    blocks: dict[str, Callable[[], str]]
+    file: Path
+    generate: Callable[[], str]
+
+
+class MarkedBlockFile(DerivedFile):
+    """An authored file with one or more generated regions in it."""
+
+    def __init__(self, path: Path, blocks: dict[str, Callable[[], str]]) -> None:
+        """Bind the file to the generators for the regions it carries, by marker name."""
+        super().__init__(path)
+        self.blocks = blocks
 
     def intended_content(self) -> str:
         """The committed file with every marked region replaced by freshly generated content."""
@@ -143,35 +166,44 @@ def rewrite_marked_blocks(text: str, file_path: Path, replacements: dict[str, st
     return "".join(out)
 
 
-def marked_block_files(registry: dict[str, tuple[Path, Callable[[], str]]]) -> list[MarkedBlockFile]:
-    """Group a flat `name -> (file, generator)` registry into one artifact per file.
+def marked_block_files(registry: dict[str, MarkedBlock]) -> list[MarkedBlockFile]:
+    """Group a `marker name -> MarkedBlock` registry into one artifact per file.
 
-    Blocks are registered individually because that is how they are authored and read, but the
+    Regions are registered individually because that is how they are authored and read, but the
     unit that gets compared against disk is the file they share.
     """
     by_file: dict[Path, dict[str, Callable[[], str]]] = {}
-    for name, (file_path, generate) in registry.items():
-        by_file.setdefault(file_path, {})[name] = generate
+    for name, block in registry.items():
+        by_file.setdefault(block.file, {})[name] = block.generate
     return [MarkedBlockFile(path=path, blocks=blocks) for path, blocks in by_file.items()]
 
 
 # ==================================================================================================
-#  GeneratedFile
+#  GeneratedFile -- whole file, no authored part
 # ==================================================================================================
-@dataclasses.dataclass(frozen=True)
 class GeneratedFile(DerivedFile):
-    """A whole file produced by a generator, whose committed bytes are that generator's output.
+    """A whole file produced by a generator, whose committed bytes are that generator's output."""
 
-    Attributes:
-        produce: Returns the full intended content.
-        producible_here: False on a platform whose output would differ for reasons unrelated to
-            staleness — see the terminal captures, which are not comparable against Windows.
-        as_readable: Renders the content for a staleness diff, when the raw bytes are not readable.
-    """
+    def __init__(
+        self,
+        path: Path,
+        produce: Callable[[], str],
+        producible_here: bool = True,
+        as_readable: Callable[[str], str] | None = None,
+    ) -> None:
+        """Bind the file to its generator, plus the two overrides a whole-file kind may need.
 
-    produce: Callable[[], str]
-    producible_here: bool = True
-    as_readable: Callable[[str], str] | None = None
+        Args:
+            path: The committed file.
+            produce: Returns the full intended content.
+            producible_here: False on a platform whose output would differ for reasons unrelated to
+                staleness — see the terminal captures, which are not comparable against Windows.
+            as_readable: Renders the content for a diff, when the raw bytes are not readable.
+        """
+        super().__init__(path)
+        self.produce = produce
+        self.producible_here = producible_here
+        self.as_readable = as_readable
 
     def intended_content(self) -> str:
         """The generator's current output."""

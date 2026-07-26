@@ -50,6 +50,7 @@ from typing import TYPE_CHECKING
 from docs_artifacts import (
     DocsArtifactManager,
     GeneratedFile,
+    MarkedBlock,
     capture_env,
     crop_ansi_line,
     marked_block_files,
@@ -379,20 +380,24 @@ def generate_snippet_verbosity_mixed() -> str:
     return _snippet_source("verbosity_mixed.py")
 
 
-# Registry of every marked block: name -> (file containing it, generator producing its content).
-# The rewriting engine checks the two directions against each other: a marker in a file with no
-# generator here fails, and a generator whose marker is missing from its file fails too.
-MARKED_BLOCKS: dict[str, tuple[Path, Callable[[], str]]] = {
-    "source-counts": (REPO_ROOT / "README.md", generate_source_counts),
-    "flop-weights-active": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_active),
-    "flop-weights-consensus-raw": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_consensus_raw),
-    "flop-weights-arm": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_arm),
-    "cli-show-data-slice": (REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
-    "builtin-data-table": (REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
-    "math-coverage-table": (REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
-    "snippet-verbosity-info": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
-    "snippet-verbosity-warning": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning),
-    "snippet-verbosity-mixed": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_mixed),
+# Registry of every marked block, by marker name. The rewriting engine checks the two directions
+# against each other: a marker in a file with no generator here fails, and a generator whose marker
+# is missing from its file fails too.
+MARKED_BLOCKS: dict[str, MarkedBlock] = {
+    "source-counts": MarkedBlock(REPO_ROOT / "README.md", generate_source_counts),
+    "flop-weights-active": MarkedBlock(REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_active),
+    "flop-weights-consensus-raw": MarkedBlock(
+        REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_consensus_raw
+    ),
+    "flop-weights-arm": MarkedBlock(REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_arm),
+    "cli-show-data-slice": MarkedBlock(REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
+    "builtin-data-table": MarkedBlock(REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
+    "math-coverage-table": MarkedBlock(REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
+    "snippet-verbosity-info": MarkedBlock(REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
+    "snippet-verbosity-warning": MarkedBlock(
+        REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning
+    ),
+    "snippet-verbosity-mixed": MarkedBlock(REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_mixed),
 }
 
 
