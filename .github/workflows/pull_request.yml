@@ -91,6 +91,17 @@ jobs:
     needs: [preflight]
     uses: ./.github/workflows/_package_check.yml
 
+  # Static-analysis gate. Permissions are declared here because a called
+  # workflow cannot grant itself more than its caller has, and this file's
+  # default is `contents: read`.
+  codeql:
+    needs: [preflight]
+    permissions:
+      security-events: write  # upload analysis results to code scanning
+      contents: read          # checkout
+      actions: read           # read workflow run metadata (CodeQL requirement)
+    uses: ./.github/workflows/codeql.yml
+
   # Synchronous dependency-CVE gate: audits the locked runtime dependencies
   # against the advisory DB at PR time — the blocking complement to the async,
   # repo-level Dependabot alerts. Hard-fails on any advisory; accepted ones go
@@ -125,7 +136,7 @@ jobs:
     # `always()` is load-bearing — without it the gate is skipped when an
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
-    needs: [preflight, pre-commit, test, package, pip-audit]
+    needs: [preflight, pre-commit, test, package, codeql, pip-audit]
     runs-on: ubuntu-latest
     steps:
       - name: Fail if any required job did not succeed
