@@ -58,6 +58,8 @@ from docs_artifacts import (
     read_lf,
     strip_ansi,
 )
+from flop_weight_chart import THEMES as CHART_THEMES
+from flop_weight_chart import build_svg as build_chart_svg
 
 from counted_float import BuiltInData
 from counted_float._core.counting._math_patching import (
@@ -527,6 +529,23 @@ def _screenshot_render_inputs(name: str) -> list[str]:
     ]
 
 
+def chart_files() -> list[GeneratedFile]:
+    """The flop-weight chart, one committed SVG per theme.
+
+    Byte-reproducible -- pure Python, no renderer -- so these are re-derived and compared rather than
+    fingerprinted, which catches a generator change as well as a data change. One file per theme
+    because the surface has to be opaque for the chart to stay legible on any page; see the chart
+    module for why the themes differ in nothing but neutral inks.
+    """
+    return [
+        GeneratedFile(
+            path=IMAGES_DIR / f"flop_weights_{theme.name}.svg",
+            produce=partial(build_chart_svg, theme),
+        )
+        for theme in CHART_THEMES
+    ]
+
+
 def render_images(captures: dict[Path, str]) -> list[Path]:
     """Render each capture to its committed screenshot.
 
@@ -552,8 +571,8 @@ def render_images(captures: dict[Path, str]) -> list[Path]:
 #  Entry point
 # ==================================================================================================
 def derived_files() -> list[DerivedFile]:
-    """Every committed file this script owns: marked blocks, then captures, then screenshots."""
-    return [*marked_block_files(MARKED_BLOCKS), *capture_files(), *screenshot_images()]
+    """Every committed file this script owns: marked blocks, captures, screenshots, charts."""
+    return [*marked_block_files(MARKED_BLOCKS), *capture_files(), *screenshot_images(), *chart_files()]
 
 
 def main() -> int:

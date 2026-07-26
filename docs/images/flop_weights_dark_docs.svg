@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840.000 476" width="840.000" height="476" font-family="system-ui, -apple-system, sans-serif">
+<rect x="0" y="0" width="840.000" height="476" fill="#1E2129"/>
+<text x="46" y="26" font-size="15" font-weight="600" fill="#E6EDF3">Built-in flop weights</text>
+<text x="46" y="44" font-size="11" fill="#B1BAC4">relative to ADD = 1, log scale</text>
+<line x1="46" y1="352.622" x2="830.000" y2="352.622" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="355.622" font-size="8" fill="#8B949E" text-anchor="end">0.2</text>
+<line x1="46" y1="333.766" x2="830.000" y2="333.766" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="320.388" x2="830.000" y2="320.388" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="310.011" x2="830.000" y2="310.011" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="313.011" font-size="8" fill="#8B949E" text-anchor="end">0.5</text>
+<line x1="46" y1="301.533" x2="830.000" y2="301.533" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="294.364" x2="830.000" y2="294.364" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="288.155" x2="830.000" y2="288.155" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="282.678" x2="830.000" y2="282.678" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="245.544" x2="830.000" y2="245.544" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="248.544" font-size="8" fill="#8B949E" text-anchor="end">2</text>
+<line x1="46" y1="226.689" x2="830.000" y2="226.689" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="213.311" x2="830.000" y2="213.311" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="202.934" x2="830.000" y2="202.934" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="205.934" font-size="8" fill="#8B949E" text-anchor="end">5</text>
+<line x1="46" y1="194.456" x2="830.000" y2="194.456" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="187.287" x2="830.000" y2="187.287" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="181.077" x2="830.000" y2="181.077" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="175.600" x2="830.000" y2="175.600" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="138.467" x2="830.000" y2="138.467" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="141.467" font-size="8" fill="#8B949E" text-anchor="end">20</text>
+<line x1="46" y1="119.612" x2="830.000" y2="119.612" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="106.234" x2="830.000" y2="106.234" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="95.857" x2="830.000" y2="95.857" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<text x="38" y="98.857" font-size="8" fill="#8B949E" text-anchor="end">50</text>
+<line x1="46" y1="87.378" x2="830.000" y2="87.378" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="80.210" x2="830.000" y2="80.210" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="74.000" x2="830.000" y2="74.000" stroke="#444C56" stroke-width="0.75" stroke-dasharray="3 2"/>
+<line x1="46" y1="277.778" x2="830.000" y2="277.778" stroke="#636C76" stroke-width="1"/>
+<text x="38" y="281.278" font-size="10" fill="#B1BAC4" text-anchor="end">1</text>
+<line x1="46" y1="170.701" x2="830.000" y2="170.701" stroke="#636C76" stroke-width="1"/>
+<text x="38" y="174.201" font-size="10" fill="#B1BAC4" text-anchor="end">10</text>
+<line x1="46.000" y1="366" x2="666.000" y2="366" stroke="#6E7681" stroke-width="1"/>
+<line x1="714.000" y1="366" x2="830.000" y2="366" stroke="#6E7681" stroke-width="1"/>
+<line x1="666.000" y1="366" x2="714.000" y2="366" stroke="#6E7681" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="690.000" y="382" font-size="8.5" fill="#8B949E" text-anchor="middle">28 more</text>
+<rect x="50.500" y="316.191" width="9" height="49.809" fill="#707070"/>
+<rect x="59.500" y="287.329" width="9" height="78.671" fill="#FBB85C"/>
+<rect x="68.500" y="345.053" width="9" height="20.947" fill="#6BA1F2"/>
+<text x="64.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 64.000 379)">MINUS</text>
+<rect x="86.500" y="294.287" width="9" height="71.713" fill="#707070"/>
+<rect x="95.500" y="276.987" width="9" height="89.013" fill="#FBB85C"/>
+<rect x="104.500" y="311.587" width="9" height="54.413" fill="#6BA1F2"/>
+<text x="100.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 100.000 379)">ABS</text>
+<rect x="122.500" y="278.860" width="9" height="87.140" fill="#707070"/>
+<rect x="131.500" y="299.578" width="9" height="66.422" fill="#FBB85C"/>
+<rect x="140.500" y="258.142" width="9" height="107.858" fill="#6BA1F2"/>
+<text x="136.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 136.000 379)">COMP</text>
+<rect x="158.500" y="277.778" width="9" height="88.222" fill="#707070"/>
+<rect x="167.500" y="277.778" width="9" height="88.222" fill="#FBB85C"/>
+<rect x="176.500" y="277.778" width="9" height="88.222" fill="#6BA1F2"/>
+<text x="172.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 172.000 379)">ADD</text>
+<rect x="194.500" y="277.743" width="9" height="88.257" fill="#707070"/>
+<rect x="203.500" y="277.695" width="9" height="88.305" fill="#FBB85C"/>
+<rect x="212.500" y="277.791" width="9" height="88.209" fill="#6BA1F2"/>
+<text x="208.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 208.000 379)">SUB</text>
+<rect x="230.500" y="270.875" width="9" height="95.125" fill="#707070"/>
+<rect x="239.500" y="253.821" width="9" height="112.179" fill="#FBB85C"/>
+<rect x="248.500" y="287.928" width="9" height="78.072" fill="#6BA1F2"/>
+<text x="244.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 244.000 379)">COPYSIGN</text>
+<rect x="266.500" y="262.099" width="9" height="103.901" fill="#707070"/>
+<rect x="275.500" y="259.244" width="9" height="106.756" fill="#FBB85C"/>
+<rect x="284.500" y="264.953" width="9" height="101.047" fill="#6BA1F2"/>
+<text x="280.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 280.000 379)">MUL</text>
+<rect x="302.500" y="253.095" width="9" height="112.905" fill="#707070"/>
+<rect x="311.500" y="248.375" width="9" height="117.625" fill="#FBB85C"/>
+<rect x="320.500" y="257.815" width="9" height="108.185" fill="#6BA1F2"/>
+<text x="316.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 316.000 379)">FMA</text>
+<rect x="338.500" y="250.489" width="9" height="115.511" fill="#707070"/>
+<rect x="347.500" y="255.454" width="9" height="110.546" fill="#FBB85C"/>
+<rect x="356.500" y="245.523" width="9" height="120.477" fill="#6BA1F2"/>
+<text x="352.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 352.000 379)">RND</text>
+<rect x="374.500" y="247.463" width="9" height="118.537" fill="#707070"/>
+<rect x="383.500" y="260.269" width="9" height="105.731" fill="#FBB85C"/>
+<rect x="392.500" y="234.658" width="9" height="131.342" fill="#6BA1F2"/>
+<text x="388.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 388.000 379)">F2I</text>
+<rect x="410.500" y="247.290" width="9" height="118.710" fill="#707070"/>
+<rect x="419.500" y="257.126" width="9" height="108.874" fill="#FBB85C"/>
+<rect x="428.500" y="237.454" width="9" height="128.546" fill="#6BA1F2"/>
+<text x="424.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 424.000 379)">I2F</text>
+<rect x="446.500" y="234.411" width="9" height="131.589" fill="#707070"/>
+<rect x="455.500" y="225.305" width="9" height="140.695" fill="#FBB85C"/>
+<rect x="464.500" y="243.516" width="9" height="122.484" fill="#6BA1F2"/>
+<text x="460.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 460.000 379)">HYPOT_XARG</text>
+<rect x="482.500" y="234.365" width="9" height="131.635" fill="#707070"/>
+<rect x="491.500" y="226.404" width="9" height="139.596" fill="#FBB85C"/>
+<rect x="500.500" y="242.325" width="9" height="123.675" fill="#6BA1F2"/>
+<text x="496.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 496.000 379)">DIST_XARG</text>
+<rect x="518.500" y="208.951" width="9" height="157.049" fill="#707070"/>
+<rect x="527.500" y="210.778" width="9" height="155.222" fill="#FBB85C"/>
+<rect x="536.500" y="207.123" width="9" height="158.877" fill="#6BA1F2"/>
+<text x="532.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 532.000 379)">SUMPROD_XELEM</text>
+<rect x="554.500" y="198.037" width="9" height="167.963" fill="#707070"/>
+<rect x="563.500" y="193.180" width="9" height="172.820" fill="#FBB85C"/>
+<rect x="572.500" y="202.895" width="9" height="163.105" fill="#6BA1F2"/>
+<text x="568.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 568.000 379)">DIV</text>
+<rect x="590.500" y="193.852" width="9" height="172.148" fill="#707070"/>
+<rect x="599.500" y="182.706" width="9" height="183.294" fill="#FBB85C"/>
+<rect x="608.500" y="204.998" width="9" height="161.002" fill="#6BA1F2"/>
+<text x="604.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 604.000 379)">FMOD</text>
+<rect x="626.500" y="186.624" width="9" height="179.376" fill="#707070"/>
+<rect x="635.500" y="185.463" width="9" height="180.537" fill="#FBB85C"/>
+<rect x="644.500" y="187.785" width="9" height="178.215" fill="#6BA1F2"/>
+<text x="640.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 640.000 379)">SQRT</text>
+<rect x="726.500" y="98.259" width="9" height="267.741" fill="#707070"/>
+<rect x="735.500" y="100.744" width="9" height="265.256" fill="#FBB85C"/>
+<rect x="744.500" y="95.775" width="9" height="270.225" fill="#6BA1F2"/>
+<text x="740.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 740.000 379)">SINH</text>
+<rect x="762.500" y="97.867" width="9" height="268.133" fill="#707070"/>
+<rect x="771.500" y="98.221" width="9" height="267.779" fill="#FBB85C"/>
+<rect x="780.500" y="97.513" width="9" height="268.487" fill="#6BA1F2"/>
+<text x="776.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 776.000 379)">TANH</text>
+<rect x="798.500" y="92.184" width="9" height="273.816" fill="#707070"/>
+<rect x="807.500" y="91.503" width="9" height="274.497" fill="#FBB85C"/>
+<rect x="816.500" y="92.864" width="9" height="273.136" fill="#6BA1F2"/>
+<text x="812.000" y="379" font-size="9" fill="#B1BAC4" text-anchor="end" transform="rotate(-45 812.000 379)">GAMMA</text>
+<rect x="52.000" y="76.000" width="118.950" height="54.000" rx="4" fill="#333846" fill-opacity="0.8"/>
+<rect x="58" y="82.000" width="10" height="10" rx="1" fill="#707070"/>
+<text x="74.000" y="90.000" font-size="11" fill="#B1BAC4">all architectures</text>
+<rect x="58" y="98.000" width="10" height="10" rx="1" fill="#FBB85C"/>
+<text x="74.000" y="106.000" font-size="11" fill="#B1BAC4">arm64</text>
+<rect x="58" y="114.000" width="10" height="10" rx="1" fill="#6BA1F2"/>
+<text x="74.000" y="122.000" font-size="11" fill="#B1BAC4">x86</text>
+</svg>

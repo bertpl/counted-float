@@ -30,6 +30,11 @@ Flop weights are computed using a highly curated dataset spanning a wide range o
 <!-- END generated: source-counts -->
 - covering x86 (Intel, AMD) and ARM (Apple, AWS, Azure) architectures
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/flop_weights_dark.svg">
+  <img alt="Built-in flop weights, relative to ADD, per architecture" src="images/flop_weights_light.svg">
+</picture>
+
 **Full documentation: [counted-float.readthedocs.io](https://counted-float.readthedocs.io/)**
 
 ## Installation
