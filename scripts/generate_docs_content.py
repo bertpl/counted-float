@@ -1,7 +1,11 @@
 """Regenerate the dataset-derived content committed in README.md and docs/.
 
+This module is the *content* half: which blocks and screenshots exist, and how each one is
+produced. The kind-agnostic machinery underneath it — what a derived file is, and the single loop
+that checks or rewrites a set of them — lives in the `docs_artifacts` package next door.
+
 Run via `make regen-docs` whenever the built-in data, the weight aggregation, or the rendering
-code changes. Two kinds of content are generated:
+code changes. Three kinds of content are generated:
 
   - **marked text blocks** — regions of README.md and docs/*.md sitting between
     `<!-- BEGIN generated: <name> -->` and `<!-- END generated: <name> -->` markers. Only these
@@ -34,9 +38,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import dataclasses
-import difflib
 import io
-import re
 import shutil
 import subprocess
 import sys
@@ -44,6 +46,16 @@ import tempfile
 from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
+
+from docs_artifacts import (
+    DocsArtifactManager,
+    GeneratedFile,
+    MarkedBlock,
+    capture_env,
+    crop_ansi_line,
+    marked_block_files,
+    strip_ansi,
+)
 
 from counted_float import BuiltInData
 from counted_float._core.counting._math_patching import (
@@ -62,6 +74,8 @@ from counted_float.config import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from docs_artifacts import DerivedFile
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SNIPPETS_DIR = Path(__file__).resolve().parent / "docs_snippets"
@@ -86,13 +100,10 @@ SHOW_DATA_IMAGE_CROP_COLUMNS = 190
 # The committed cli.md slice keeps the flop-type columns through I2F, matching the docs prose.
 CLI_SLICE_LAST_COLUMN = "I2F"
 
-_MARKER_RE = re.compile(r"<!-- (BEGIN|END) generated: ([a-z0-9-]+) -->")
-_ANSI_RE = re.compile(r"\x1b\[[0-9;]*m")
-
 
 @dataclasses.dataclass(frozen=True)
-class ImageCapture:
-    """One screenshot's terminal capture: how to produce it, and how wide to render it.
+class Screenshot:
+    """One committed screenshot: the terminal capture behind it, and how wide to render it.
 
     Attributes:
         capture: Produces the raw ANSI, exactly as committed and as rendered.
@@ -102,45 +113,6 @@ class ImageCapture:
 
     capture: Callable[[], str]
     render_columns: Callable[[str], int]
-
-
-# ==================================================================================================
-#  ANSI helpers
-# ==================================================================================================
-def strip_ansi(text: str) -> str:
-    """Remove all ANSI style sequences from `text`."""
-    return _ANSI_RE.sub("", text)
-
-
-def crop_ansi_line(line: str, width: int) -> str:
-    """Crop one line to `width` *visible* columns, keeping every ANSI escape.
-
-    Escapes count zero columns, so styling state stays balanced across the cut. A line that
-    actually lost content gets a reset plus a dim ellipsis appended.
-    """
-    out: list[str] = []
-    visible = 0
-    pos = 0
-    truncated = False
-    for match in _ANSI_RE.finditer(line):
-        for ch in line[pos : match.start()]:
-            if visible >= width:
-                truncated = True
-                break
-            out.append(ch)
-            visible += 1
-        out.append(match.group())
-        pos = match.end()
-    for ch in line[pos:]:
-        if visible >= width:
-            truncated = True
-            break
-        out.append(ch)
-        visible += 1
-    result = "".join(out)
-    if truncated and line.strip():
-        result += "\x1b[0m\x1b[2m …\x1b[0m"
-    return result
 
 
 # ==================================================================================================
@@ -170,7 +142,7 @@ def capture_show_data_ansi() -> str:
         capture_output=True,
         encoding="utf-8",
         check=True,
-        env=_capture_env(SHOW_DATA_CAPTURE_COLUMNS),
+        env=capture_env(SHOW_DATA_CAPTURE_COLUMNS),
     )
     return result.stdout
 
@@ -183,23 +155,9 @@ def capture_snippet_stderr_ansi(snippet: Path) -> str:
         encoding="utf-8",
         check=True,
         cwd=snippet.parent,  # so the logged locations show the bare snippet file name
-        env=_capture_env(100),
+        env=capture_env(100),
     )
     return result.stderr
-
-
-def _capture_env(columns: int) -> dict[str, str]:
-    """Environment that makes rich emit truecolor ANSI at a fixed width without a real TTY."""
-    import os
-
-    # PYTHONUTF8 keeps the child's stdout/stderr UTF-8 on Windows, whose default locale
-    # encoding cannot represent the tree's box-drawing characters
-    return os.environ | {
-        "COLUMNS": str(columns),
-        "FORCE_COLOR": "1",
-        "COLORTERM": "truecolor",
-        "PYTHONUTF8": "1",
-    }
 
 
 # ==================================================================================================
@@ -422,91 +380,25 @@ def generate_snippet_verbosity_mixed() -> str:
     return _snippet_source("verbosity_mixed.py")
 
 
-# Registry of every marked block: name -> (file containing it, generator producing its content).
-# The rewriting engine checks the two directions against each other: a marker in a file with no
-# generator here fails, and a generator whose marker is missing from its file fails too.
-TEXT_BLOCKS: dict[str, tuple[Path, Callable[[], str]]] = {
-    "source-counts": (REPO_ROOT / "README.md", generate_source_counts),
-    "flop-weights-active": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_active),
-    "flop-weights-consensus-raw": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_consensus_raw),
-    "flop-weights-arm": (REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_arm),
-    "cli-show-data-slice": (REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
-    "builtin-data-table": (REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
-    "math-coverage-table": (REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
-    "snippet-verbosity-info": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
-    "snippet-verbosity-warning": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning),
-    "snippet-verbosity-mixed": (REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_mixed),
+# Registry of every marked block, by marker name. The rewriting engine checks the two directions
+# against each other: a marker in a file with no generator here fails, and a generator whose marker
+# is missing from its file fails too.
+MARKED_BLOCKS: dict[str, MarkedBlock] = {
+    "source-counts": MarkedBlock(REPO_ROOT / "README.md", generate_source_counts),
+    "flop-weights-active": MarkedBlock(REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_active),
+    "flop-weights-consensus-raw": MarkedBlock(
+        REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_consensus_raw
+    ),
+    "flop-weights-arm": MarkedBlock(REPO_ROOT / "docs" / "flop_weights.md", generate_flop_weights_arm),
+    "cli-show-data-slice": MarkedBlock(REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
+    "builtin-data-table": MarkedBlock(REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
+    "math-coverage-table": MarkedBlock(REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
+    "snippet-verbosity-info": MarkedBlock(REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
+    "snippet-verbosity-warning": MarkedBlock(
+        REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning
+    ),
+    "snippet-verbosity-mixed": MarkedBlock(REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_mixed),
 }
-
-
-# ==================================================================================================
-#  Marked-block rewriting
-# ==================================================================================================
-def rewrite_marked_blocks(text: str, file_path: Path, replacements: dict[str, str]) -> str:
-    """Replace every marked region in `text` with its regenerated content.
-
-    Markers must be well-formed: BEGIN/END strictly alternating, names matching per pair, no
-    nesting, every found name known, and every expected name found — anything else raises, so a
-    malformed or half-deleted marker can never silently freeze a block.
-
-    Args:
-        text: The file's current content.
-        file_path: Where the text came from, for error messages and registry validation.
-        replacements: block name -> regenerated content (without the marker lines).
-
-    Returns:
-        The rewritten file content.
-    """
-    out: list[str] = []
-    pos = 0
-    open_name: str | None = None
-    seen: set[str] = set()
-    for match in _MARKER_RE.finditer(text):
-        kind, name = match.groups()
-        if kind == "BEGIN":
-            if open_name is not None:
-                raise ValueError(f"{file_path}: nested BEGIN marker '{name}' inside '{open_name}'")
-            if name not in replacements:
-                raise ValueError(f"{file_path}: marker '{name}' has no registered generator")
-            if name in seen:
-                raise ValueError(f"{file_path}: duplicate marker '{name}'")
-            open_name = name
-            seen.add(name)
-            out.append(text[pos : match.end()])
-            out.append("\n" + replacements[name] + "\n")
-        else:
-            if open_name is None:
-                raise ValueError(f"{file_path}: END marker '{name}' without a BEGIN")
-            if name != open_name:
-                raise ValueError(f"{file_path}: END marker '{name}' closes BEGIN '{open_name}'")
-            open_name = None
-            out.append(match.group())
-        pos = match.end()
-    if open_name is not None:
-        raise ValueError(f"{file_path}: BEGIN marker '{open_name}' is never closed")
-    missing = set(replacements) - seen
-    if missing:
-        raise ValueError(f"{file_path}: expected markers not found: {sorted(missing)}")
-    out.append(text[pos:])
-    return "".join(out)
-
-
-def regenerate_text_blocks() -> dict[Path, str]:
-    """Regenerate all marked blocks; returns the intended full content per file."""
-    by_file: dict[Path, dict[str, str]] = {}
-    for name, (file_path, generator) in TEXT_BLOCKS.items():
-        by_file.setdefault(file_path, {})[name] = generator()
-    # CRLF-checkout normalization (Windows CI): blocks are generated with \n, so the
-    # comparison and the rewrite both happen in \n space regardless of what git checked out
-    return {
-        file_path: rewrite_marked_blocks(_read_lf(file_path), file_path, replacements)
-        for file_path, replacements in by_file.items()
-    }
-
-
-def _read_lf(file_path: Path) -> str:
-    r"""Read a text file as UTF-8 with line endings normalized to \n."""
-    return file_path.read_text(encoding="utf-8").replace("\r\n", "\n")
 
 
 # ==================================================================================================
@@ -573,24 +465,42 @@ def _widest_visible_line(ansi_text: str) -> int:
     return max(len(strip_ansi(line)) for line in ansi_text.splitlines()) + 2
 
 
+def _cropped_render_width(_ansi_text: str) -> int:
+    """Render width for the show-data capture: its crop width plus a margin.
+
+    Fixed rather than measured, because the capture was already cropped to exactly that width —
+    the argument is what the sibling widths need, not what this one uses.
+    """
+    return SHOW_DATA_IMAGE_CROP_COLUMNS + 4
+
+
 # Every committed screenshot, by name: how its terminal capture is produced, and how wide to render
 # it. The captures themselves are committed text (see CAPTURES_DIR) and drift-tested; the images are
 # rendered from exactly that text, so checking the capture is what keeps the images honest.
-IMAGE_CAPTURES: dict[str, ImageCapture] = {
-    "show_data": ImageCapture(_capture_show_data_cropped, lambda _ansi: SHOW_DATA_IMAGE_CROP_COLUMNS + 4),
+SCREENSHOTS: dict[str, Screenshot] = {
+    "show_data": Screenshot(_capture_show_data_cropped, _cropped_render_width),
 } | {
-    snippet.stem: ImageCapture(partial(capture_snippet_stderr_ansi, snippet), _widest_visible_line)
+    snippet.stem: Screenshot(partial(capture_snippet_stderr_ansi, snippet), _widest_visible_line)
     for snippet in sorted(SNIPPETS_DIR.glob("verbosity_*.py"))
 }
 
 
-def regenerate_captures() -> dict[Path, str]:
-    """Re-capture every screenshot's terminal output; returns the intended content per capture file.
+def capture_files() -> list[GeneratedFile]:
+    """Each screenshot's terminal capture, as a committed file the driver can check.
 
-    Pure text and free of any rendering tool, so this is part of the checked (and CI-verified)
-    content rather than of the image step.
+    Pure text and free of any rendering tool, so these are part of the checked (and CI-verified)
+    content rather than of the image step. Their raw ANSI is unreadable in a diff, hence
+    `as_readable`.
     """
-    return {CAPTURES_DIR / f"{name}.ansi": spec.capture() for name, spec in IMAGE_CAPTURES.items()}
+    return [
+        GeneratedFile(
+            path=CAPTURES_DIR / f"{name}.ansi",
+            produce=screenshot.capture,
+            producible_here=CAPTURES_ARE_COMPARABLE,
+            as_readable=strip_ansi,
+        )
+        for name, screenshot in SCREENSHOTS.items()
+    ]
 
 
 def render_images(captures: dict[Path, str]) -> list[Path]:
@@ -609,7 +519,7 @@ def render_images(captures: dict[Path, str]) -> list[Path]:
     for capture_path, ansi in captures.items():
         name = capture_path.stem
         out = IMAGES_DIR / f"{name}.webp"
-        render_ansi_to_image(ansi, IMAGE_CAPTURES[name].render_columns(ansi), out)
+        render_ansi_to_image(ansi, SCREENSHOTS[name].render_columns(ansi), out)
         written.append(out)
     return written
 
@@ -617,26 +527,9 @@ def render_images(captures: dict[Path, str]) -> list[Path]:
 # ==================================================================================================
 #  Entry point
 # ==================================================================================================
-def _report_stale(file_path: Path, current: str, intended: str) -> None:
-    """Write a readable diff of one stale file to stderr.
-
-    ANSI captures are compared byte-exact but *shown* with their escapes stripped: a diff of raw
-    escape sequences is unreadable, and what a reader needs to see is which output changed.
-    """
-    readable = strip_ansi if file_path.suffix == ".ansi" else (lambda text: text)
-    sys.stderr.write(
-        "\n".join(
-            difflib.unified_diff(
-                readable(current).splitlines(),
-                readable(intended).splitlines(),
-                lineterm="",
-                n=1,
-                fromfile=f"{file_path.name} (committed)",
-                tofile=f"{file_path.name} (regenerated)",
-            )
-        )
-        + "\n"
-    )
+def derived_files() -> list[DerivedFile]:
+    """Every committed file this script owns: the docs' marked blocks, then the captures."""
+    return [*marked_block_files(MARKED_BLOCKS), *capture_files()]
 
 
 def main() -> int:
@@ -646,33 +539,27 @@ def main() -> int:
     parser.add_argument("--text-only", action="store_true", help="skip rendering the images")
     args = parser.parse_args()
 
-    captures = regenerate_captures() if CAPTURES_ARE_COMPARABLE else {}
-    regenerated = regenerate_text_blocks() | captures
+    capture_paths = {artifact.path for artifact in capture_files()}
+    manager = DocsArtifactManager(derived_files())
 
     if args.check:
-        stale = [path for path, intended in regenerated.items() if _read_lf(path) != intended]
-        for path in stale:
-            _report_stale(path, _read_lf(path), regenerated[path])
-        if stale:
-            sys.stderr.write("stale generated docs content -- run `make regen-docs`\n")
+        if stale := manager.check():
+            sys.stderr.write(manager.stale_report(stale))
             return 1
         return 0
 
-    captures_changed = False
-    for file_path, intended in regenerated.items():
-        if not file_path.exists() or _read_lf(file_path) != intended:
-            file_path.parent.mkdir(parents=True, exist_ok=True)
-            file_path.write_text(intended, encoding="utf-8", newline="\n")
-            captures_changed |= file_path.suffix == ".ansi"
-            print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
+    regenerated = manager.regenerate()
+    for file_path in regenerated.written:
+        print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
 
     if not CAPTURES_ARE_COMPARABLE:
         print("captures and screenshots skipped on this platform -- see CAPTURES_ARE_COMPARABLE")
     elif args.text_only:
-        if captures_changed:
+        if any(file_path in capture_paths for file_path in regenerated.written):
             # the images are rendered from the captures, so stale-vs-capture is now possible
             print("captures changed -- re-run without --text-only to refresh the screenshots")
     else:
+        captures = {path: content for path, content in regenerated.intended.items() if path in capture_paths}
         for image in render_images(captures):
             print(f"rendered {image.relative_to(REPO_ROOT)}")
     return 0

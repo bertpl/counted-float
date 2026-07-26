@@ -37,9 +37,9 @@ from pathlib import Path
 
 import numpy as np
 
-# sibling script, not a package: make its marked-block engine importable
+# sibling package, not importable by default: make the marked-block engine reachable
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from generate_docs_content import _read_lf, rewrite_marked_blocks
+from docs_artifacts import read_lf, rewrite_marked_blocks
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MACHINE_CODE_DOCS_DIR = REPO_ROOT / "docs" / "machine_code"
@@ -484,14 +484,14 @@ def regenerate_pages() -> dict[Path, str]:
             ),
         }
         file_path = MACHINE_CODE_DOCS_DIR / f"{page.doc_name}.md"
-        regenerated[file_path] = rewrite_marked_blocks(_read_lf(file_path), file_path, replacements)
+        regenerated[file_path] = rewrite_marked_blocks(read_lf(file_path), file_path, replacements)
     index_path = MACHINE_CODE_DOCS_DIR / "index.md"
     regenerated[index_path] = rewrite_marked_blocks(
-        _read_lf(index_path), index_path, {"machine-code-page-list": render_page_list_block()}
+        read_lf(index_path), index_path, {"machine-code-page-list": render_page_list_block()}
     )
     cost_model_path = REPO_ROOT / "docs" / "cost_model.md"
     regenerated[cost_model_path] = rewrite_marked_blocks(
-        _read_lf(cost_model_path), cost_model_path, {"cost-model-flop-type-table": render_cost_model_table()}
+        read_lf(cost_model_path), cost_model_path, {"cost-model-flop-type-table": render_cost_model_table()}
     )
     return regenerated
 
@@ -514,7 +514,7 @@ def main() -> int:
 
     regenerated = regenerate_pages()
     if args.check:
-        stale = [path for path, intended in regenerated.items() if _read_lf(path) != intended]
+        stale = [path for path, intended in regenerated.items() if read_lf(path) != intended]
         for path in stale:
             sys.stderr.write(f"stale machine-code listings in {path.relative_to(REPO_ROOT)}\n")
         if stale:
@@ -523,7 +523,7 @@ def main() -> int:
         return 0
 
     for file_path, intended in regenerated.items():
-        if _read_lf(file_path) != intended:
+        if read_lf(file_path) != intended:
             file_path.write_text(intended, encoding="utf-8", newline="\n")
             print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
     return 0
