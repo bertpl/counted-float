@@ -3,19 +3,24 @@ name: CodeQL
 # Static analysis (SAST) for the Python package. Complements zizmor/actionlint
 # (which lint the workflows, not the package code).
 #
-# On pull requests this runs as a job of the PR pipeline rather than off its own
-# `pull_request` trigger, so it inherits the pipeline's lack of a base-branch
-# filter: a PR based on another feature branch is scanned while it is being
-# reviewed. The `CI gate` aggregation waits for it, so a merge can no longer
-# outrun its own scan — but the gate is not what acts on findings. This step
-# always exits 0; the check run that reports alerts introduced by a PR is
-# code scanning's own, which branch protection requires separately.
+# Every trigger lives here, and that is load-bearing rather than tidy. Code
+# scanning identifies a configuration by analysis key — `<workflow file>:<job>` —
+# and compares a pull request against the configurations recorded on its base
+# branch. Scanning pull requests from one workflow file and `main` from another
+# therefore produces two keys that never match, and every PR reports that the
+# alerts it introduced could not be determined. One file, one key, one comparison.
 #
-# The `main`-push and weekly triggers below stay standalone: they cover the
-# merged tip and new query packs, neither of which is review-time.
+# The `pull_request` trigger deliberately carries no base-branch filter, matching
+# the PR pipeline's own stance: a PR based on another feature branch is scanned
+# while it is being reviewed, which is the window that matters.
+#
+# This step exits 0 whether or not it finds anything, so it gates nothing by
+# itself. What acts on findings is code scanning's own check run, which branch
+# protection requires — and requiring it is also what makes a merge wait for the
+# scan, since a required check has to report before the merge button unlocks.
 
 on:
-  workflow_call:
+  pull_request:
   push:
     branches: [main]
   schedule:
@@ -25,11 +30,7 @@ permissions:
   contents: read
 
 concurrency:
-  # `github.workflow` resolves to the *caller's* name when this runs as a called
-  # workflow, so the literal prefix is what keeps the group distinct from the
-  # caller's own — sharing one would have this run cancel the pipeline waiting
-  # on it.
-  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -51,11 +52,8 @@ jobs:
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
-          # Code scanning matches a pull request's analysis against the base
-          # branch's by category, which otherwise defaults to the analysis key
-          # `<workflow file>:<job>`. A called workflow runs under the *caller's*
-          # file, so leaving it implicit gives the same scan two identities and
-          # code scanning reports that it cannot determine which alerts the PR
-          # introduced. Pinning it to a literal makes the identity independent
-          # of how the scan was invoked.
+          # A label, not a mechanism: it names the configuration in the code
+          # scanning UI instead of leaving it as a workflow path. Explicitly not
+          # what makes a pull request comparable to its base branch — the
+          # analysis key does that, and no category overrides it (see the header).
           category: python
