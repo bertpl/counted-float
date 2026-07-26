@@ -1,14 +1,16 @@
 """The `DerivedFile` hierarchy: one committed file that is generated rather than written.
 
-`DerivedFile` is the abstract base. It defines the three questions the manager asks of every
-committed file, and answers two of them with defaults:
+`DerivedFile` is the abstract base. It defines the four questions the manager asks of every
+committed file, and answers three of them with defaults:
 
   - `intended_content()` — abstract, and the only thing every subclass must implement. It is what
     the file *should* contain right now, re-derived from whatever the file is generated from.
   - `can_produce_here()` — whether this machine can answer the first question at all. Default True.
   - `readable(content)` — that content as it should appear in a diff. Default: unchanged.
+  - `fingerprint()` — a hash of the file's inputs, for kinds that cannot be re-derived here at all.
+    Default None, meaning "compare my content instead".
 
-Two concrete subclasses, differing only in how they answer the first question:
+Three concrete subclasses, differing mainly in how they answer the first question:
 
   - **`MarkedBlockFile`** — an authored file with generated regions in it, between
     `<!-- BEGIN/END generated: name -->` markers. Its intended content is the *committed* file with
@@ -18,20 +20,25 @@ Two concrete subclasses, differing only in how they answer the first question:
     generator's output, so its intended content is simply that output. It also overrides the other
     two defaults, since a whole-file generator may be unavailable on a given platform and its
     output may not be readable as it stands.
+  - **`RenderedFile`** — a file built by external tooling whose bytes no machine reproduces
+    identically. It cannot answer the first question at all, so it answers the fourth instead:
+    `fingerprint()`, a hash of everything its bytes are a function of.
 
-Both are checked the same way by the manager — re-derive, compare — which is the point of the base
-class: the manager asks, the subclass knows.
+The first two are checked the same way — re-derive, compare. The third cannot be, which is why the
+base carries a fingerprint question whose default is None: the manager asks both, and each subclass
+answers whichever one it can.
 """
 
 from __future__ import annotations
 
 import abc
 import dataclasses
+import hashlib
 import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from pathlib import Path
 
 _MARKER_RE = re.compile(r"<!-- (BEGIN|END) generated: ([a-z0-9-]+) -->")
@@ -70,8 +77,8 @@ class DerivedFile(abc.ABC):
     def can_produce_here(self) -> bool:
         """Whether this machine can produce the intended content at all.
 
-        A file that cannot be produced here is neither checked nor rewritten, because the only
-        honest answer available locally would be a false mismatch.
+        A file that cannot be produced here is never byte-compared, because the only honest answer
+        available locally would be a false mismatch.
         """
         return True
 
@@ -82,6 +89,14 @@ class DerivedFile(abc.ABC):
         override it, so a reader sees which *output* changed rather than which escape sequences.
         """
         return content
+
+    def fingerprint(self) -> str | None:
+        """A hash of everything this file is a function of, for files that cannot be re-derived here.
+
+        None means the file is checked by re-deriving and comparing its content, which is strictly
+        stronger — so a fingerprint exists only where that is impossible.
+        """
+        return None
 
 
 # ==================================================================================================
@@ -216,3 +231,43 @@ class GeneratedFile(DerivedFile):
     def readable(self, content: str) -> str:
         """The content as it should appear in a diff, per `as_readable`."""
         return content if self.as_readable is None else self.as_readable(content)
+
+
+# ==================================================================================================
+#  RenderedFile
+# ==================================================================================================
+class RenderedFile(DerivedFile):
+    """A file built by external tooling, whose bytes are not reproducible across machines.
+
+    Nothing here can be byte-compared: the renderer is absent in CI, and even where it is present
+    its output differs by tool version and platform. So the file is checked against a hash of its
+    inputs instead, which is platform-stable and needs no renderer to recompute.
+    """
+
+    def __init__(self, path: Path, inputs: Callable[[], Sequence[str]]) -> None:
+        """Bind the file to a description of everything its bytes are a function of.
+
+        Args:
+            path: The committed file.
+            inputs: Returns source content, the resolved render geometry, and the tool parameters,
+                in a canonical, stable order.
+        """
+        super().__init__(path)
+        self.inputs = inputs
+
+    def intended_content(self) -> str:
+        """Never called: a rendered file is checked by fingerprint, never by content."""
+        raise NotImplementedError(f"{self.path.name} is checked by fingerprint, not by content")
+
+    def can_produce_here(self) -> bool:
+        """Always False — that is what makes this a fingerprinted artifact rather than a compared one."""
+        return False
+
+    def fingerprint(self) -> str:
+        """A stable hash over this file's declared inputs."""
+        digest = hashlib.sha256()
+        for part in self.inputs():
+            # length-prefixed so that concatenation can never make two different input lists collide
+            digest.update(f"{len(part)}:".encode())
+            digest.update(part.encode("utf-8"))
+        return f"sha256:{digest.hexdigest()}"
