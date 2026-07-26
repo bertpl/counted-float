@@ -4,10 +4,13 @@ name: CodeQL
 # (which lint the workflows, not the package code).
 #
 # On pull requests this runs as a job of the PR pipeline rather than off its own
-# `pull_request` trigger, and the `CI gate` aggregation waits for it — so a
-# finding blocks the merge until it is fixed or dismissed. Being a job of that
-# pipeline also means it inherits the pipeline's lack of a base-branch filter,
-# so a PR based on another feature branch is scanned while it is being reviewed.
+# `pull_request` trigger, so it inherits the pipeline's lack of a base-branch
+# filter: a PR based on another feature branch is scanned while it is being
+# reviewed. The `CI gate` aggregation waits for it, so a merge can no longer
+# outrun its own scan — but the gate is not what acts on findings. This step
+# always exits 0; the check run that reports alerts introduced by a PR is
+# code scanning's own, which branch protection requires separately.
+#
 # The `main`-push and weekly triggers below stay standalone: they cover the
 # merged tip and new query packs, neither of which is review-time.
 
@@ -47,3 +50,12 @@ jobs:
           languages: python  # pure-Python package: no build step, CodeQL analyzes sources directly
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        with:
+          # Code scanning matches a pull request's analysis against the base
+          # branch's by category, which otherwise defaults to the analysis key
+          # `<workflow file>:<job>`. A called workflow runs under the *caller's*
+          # file, so leaving it implicit gives the same scan two identities and
+          # code scanning reports that it cannot determine which alerts the PR
+          # introduced. Pinning it to a literal makes the identity independent
+          # of how the scan was invoked.
+          category: python
