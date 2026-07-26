@@ -47,6 +47,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from builtin_data_sources import source_summary
 from docs_artifacts import (
     DocsArtifactManager,
     GeneratedFile,
@@ -178,31 +179,13 @@ def capture_snippet_stderr_ansi(snippet: Path) -> str:
 # ==================================================================================================
 #  Text-block generators
 # ==================================================================================================
-def _classified_source_keys() -> tuple[list[str], list[str], list[str]]:
-    """Split the built-in data keys into (benchmarks, spec sheets, third-party analyses)."""
-    benchmarks: list[str] = []
-    specs: list[str] = []
-    third_party: list[str] = []
-    for key in BuiltInData.get_flop_weights_dict():
-        source_type, entry = key.split(".")[-2], key.split(".")[-1]
-        if source_type == "benchmarks":
-            benchmarks.append(key)
-        elif source_type == "specs" or entry.startswith("specs"):
-            specs.append(key)
-        elif entry.startswith("analysis_"):
-            third_party.append(key)
-        else:
-            raise ValueError(f"cannot classify built-in data key: {key}")
-    return benchmarks, specs, third_party
-
-
 def generate_source_counts() -> str:
-    """The README bullet stating how many sources of each type back the shipped weights."""
-    benchmarks, specs, third_party = _classified_source_keys()
-    return (
-        f"- {len(benchmarks)} benchmarks, {len(specs)} spec sheets, "
-        f"{len(third_party)} third party measurements (Agner Fog, uops.info)"
-    )
+    """The README bullet stating how many sources of each type back the shipped weights.
+
+    The counts and their wording come from `source_summary`, which the chart's provenance subtitle
+    also uses; this only adds the projects the third-party figure refers to.
+    """
+    return f"- {source_summary()} (Agner Fog, uops.info)"
 
 
 def _show_block(import_line: str, call_line: str, show_call: Callable[[], None]) -> str:

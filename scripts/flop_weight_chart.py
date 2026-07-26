@@ -16,6 +16,8 @@ import dataclasses
 import math
 from typing import TYPE_CHECKING
 
+from builtin_data_sources import source_summary
+
 from counted_float.config import get_builtin_flop_weights, get_default_consensus_flop_weights
 
 if TYPE_CHECKING:
@@ -118,11 +120,19 @@ LEGEND_CHAR_W = 5.35
 # --- geometry ----------------------------------
 # Width is *derived* from the bar layout rather than fixed: a wider break or a wider bar silently
 # pushed the last group past a hardcoded right edge, where the viewBox clipped two bars away.
-HEIGHT = 476
+HEIGHT = 470
 PLOT_LEFT = 46
 RIGHT_MARGIN = 10
-PLOT_TOP = 74
+PLOT_TOP = 64
 PLOT_BOTTOM = 366
+
+# Provenance lives in a footnote rather than a third header line: the counts matter for trust, not for
+# reading the bars, so they belong out of the way with a marker pointing at them from the title.
+FOOTNOTE_MARKER = "1"
+FOOTNOTE_BASELINE = HEIGHT - 12
+# Tucked into the corner rather than aligned to the plot: it annotates the whole chart, not the axis.
+FOOTNOTE_LEFT = 12
+FOOTNOTE_MARKER_RISE = 3
 
 BAR_W = 9  # three touching bars per flop type -- the group reads as one unit
 GROUP_GAP = 9
@@ -231,6 +241,7 @@ def build_svg(theme: Theme) -> str:
     arm = get_builtin_flop_weights(key_filter="arm", rounding_mode=None).weights
     x86 = get_builtin_flop_weights(key_filter="x86", rounding_mode=None).weights
     cheapest, priciest = _shown_flop_types()
+    provenance = source_summary()
     series_by_name = [("all", overall), ("arm64", arm), ("x86", x86)]
     _check_within_axis(
         [
@@ -261,8 +272,11 @@ def build_svg(theme: Theme) -> str:
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {_n(width)} {HEIGHT}" '
         f'width="{_n(width)}" height="{HEIGHT}" font-family="system-ui, -apple-system, sans-serif">',
         f'<rect x="0" y="0" width="{_n(width)}" height="{HEIGHT}" fill="{theme.surface}"/>',
+        # the superscript marker points at the footnote at the foot of the chart; `dy` rather than
+        # `baseline-shift`, which renderers support unevenly
         f'<text x="{PLOT_LEFT}" y="26" font-size="15" font-weight="600" fill="{theme.title_ink}">'
-        f"Built-in flop weights</text>",
+        f'Built-in flop weights<tspan font-size="9" font-weight="400" dx="2" dy="-6" '
+        f'fill="{theme.muted_ink}">({FOOTNOTE_MARKER})</tspan></text>',
         f'<text x="{PLOT_LEFT}" y="44" font-size="11" fill="{theme.label_ink}">relative to ADD = 1, log scale</text>',
     ]
 
@@ -349,6 +363,16 @@ def build_svg(theme: Theme) -> str:
             f'<text x="{_n(legend_x + LEGEND_SWATCH + LEGEND_SWATCH_GAP)}" y="{_n(y)}" '
             f'font-size="{LEGEND_FONT}" fill="{theme.label_ink}">{label}</text>'
         )
+
+    # --- footnote -------------------------------
+    # The marker mirrors the one on the title -- raised and a step darker than the note itself, so it
+    # reads as a reference rather than as the first word of the sentence.
+    out.append(
+        f'<text x="{FOOTNOTE_LEFT}" y="{FOOTNOTE_BASELINE}" font-size="9" fill="{theme.muted_ink}">'
+        f'<tspan font-size="7.5" font-weight="600" dy="-{FOOTNOTE_MARKER_RISE}" '
+        f'fill="{theme.label_ink}">({FOOTNOTE_MARKER})</tspan>'
+        f'<tspan dx="3" dy="{FOOTNOTE_MARKER_RISE}">based on {provenance}</tspan></text>'
+    )
 
     out.append("</svg>")
     return "\n".join(out) + "\n"
