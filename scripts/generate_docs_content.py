@@ -51,9 +51,11 @@ from docs_artifacts import (
     DocsArtifactManager,
     GeneratedFile,
     MarkedBlock,
+    RenderedFile,
     capture_env,
     crop_ansi_line,
     marked_block_files,
+    read_lf,
     strip_ansi,
 )
 
@@ -81,8 +83,19 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 SNIPPETS_DIR = Path(__file__).resolve().parent / "docs_snippets"
 CAPTURES_DIR = Path(__file__).resolve().parent / "docs_captures"
 IMAGES_DIR = REPO_ROOT / "docs" / "images"
+# Build metadata rather than documentation, so it sits with the generator that writes it instead of
+# in docs/, where it would ship into the published site.
+IMAGE_MANIFEST = Path(__file__).resolve().parent / "image_manifest.json"
 
 TERMSHOT_PINNED_VERSION = "0.6.1"
+
+# The two render stages' parameters, named once and used both to build an image and to fingerprint
+# it -- so changing a parameter invalidates every image it affects, with nothing to remember to bump.
+TERMSHOT_FLAGS = ["--no-decoration", "--no-shadow"]
+MAGICK_FLAGS = ["-strip", "-resize", "40%", "-quality", "75", "-define", "webp:method=5"]
+# Bump when the *shape* of the pipeline changes -- a stage added, reordered, or swapped for another
+# tool. Parameter values need no bump: they are hashed above.
+RENDER_RECIPE_VERSION = "1"
 
 # Terminal captures are byte-exact ANSI, which is comparable across POSIX platforms but not against
 # Windows: rich decides its color support there through the Windows console API rather than the
@@ -422,33 +435,12 @@ def render_ansi_to_image(ansi_text: str, columns: int, out_path: Path) -> None:
         raw_png = Path(tmp) / "raw.png"
         ansi_file.write_text(ansi_text, encoding="utf-8")
         subprocess.run(
-            [
-                "termshot",
-                "--raw-read",
-                str(ansi_file),
-                "-C",
-                str(columns),
-                "--no-decoration",
-                "--no-shadow",
-                "-f",
-                str(raw_png),
-            ],
+            ["termshot", "--raw-read", str(ansi_file), "-C", str(columns), *TERMSHOT_FLAGS, "-f", str(raw_png)],
             check=True,
             capture_output=True,
         )
         subprocess.run(
-            [
-                "magick",
-                str(raw_png),
-                "-strip",
-                "-resize",
-                "40%",
-                "-quality",
-                "75",
-                "-define",
-                "webp:method=5",
-                str(out_path),
-            ],
+            ["magick", str(raw_png), *MAGICK_FLAGS, str(out_path)],
             check=True,
             capture_output=True,
         )
@@ -503,6 +495,38 @@ def capture_files() -> list[GeneratedFile]:
     ]
 
 
+def screenshot_images() -> list[RenderedFile]:
+    """Each committed screenshot, as an artifact checked against a hash of what it is built from.
+
+    A WebP cannot be byte-compared: `termshot` and `magick` are absent in CI, and their output
+    differs by tool version anyway. So each one declares its inputs instead — which is every
+    argument `render_ansi_to_image` receives plus the tool parameters it applies.
+    """
+    return [
+        RenderedFile(path=IMAGES_DIR / f"{name}.webp", inputs=partial(_screenshot_render_inputs, name))
+        for name in SCREENSHOTS
+    ]
+
+
+def _screenshot_render_inputs(name: str) -> list[str]:
+    """Everything one screenshot's bytes are a function of, in a fixed order.
+
+    The capture is read from disk rather than re-captured: it is fed to `termshot` verbatim, and it
+    is itself byte-checked as a `GeneratedFile`, so a stale capture is caught as a stale capture
+    rather than showing up here as a stale image. Reading it also keeps this computable on a machine
+    that cannot produce captures at all.
+    """
+    ansi = read_lf(CAPTURES_DIR / f"{name}.ansi")
+    return [
+        ansi,
+        str(SCREENSHOTS[name].render_columns(ansi)),
+        TERMSHOT_PINNED_VERSION,
+        *TERMSHOT_FLAGS,
+        *MAGICK_FLAGS,
+        RENDER_RECIPE_VERSION,
+    ]
+
+
 def render_images(captures: dict[Path, str]) -> list[Path]:
     """Render each capture to its committed screenshot.
 
@@ -528,8 +552,8 @@ def render_images(captures: dict[Path, str]) -> list[Path]:
 #  Entry point
 # ==================================================================================================
 def derived_files() -> list[DerivedFile]:
-    """Every committed file this script owns: the docs' marked blocks, then the captures."""
-    return [*marked_block_files(MARKED_BLOCKS), *capture_files()]
+    """Every committed file this script owns: marked blocks, then captures, then screenshots."""
+    return [*marked_block_files(MARKED_BLOCKS), *capture_files(), *screenshot_images()]
 
 
 def main() -> int:
@@ -540,7 +564,7 @@ def main() -> int:
     args = parser.parse_args()
 
     capture_paths = {artifact.path for artifact in capture_files()}
-    manager = DocsArtifactManager(derived_files())
+    manager = DocsArtifactManager(derived_files(), root=REPO_ROOT, manifest_path=IMAGE_MANIFEST)
 
     if args.check:
         if stale := manager.check():
@@ -554,14 +578,20 @@ def main() -> int:
 
     if not CAPTURES_ARE_COMPARABLE:
         print("captures and screenshots skipped on this platform -- see CAPTURES_ARE_COMPARABLE")
-    elif args.text_only:
+        return 0
+    if args.text_only:
         if any(file_path in capture_paths for file_path in regenerated.written):
             # the images are rendered from the captures, so stale-vs-capture is now possible
             print("captures changed -- re-run without --text-only to refresh the screenshots")
-    else:
-        captures = {path: content for path, content in regenerated.intended.items() if path in capture_paths}
-        for image in render_images(captures):
-            print(f"rendered {image.relative_to(REPO_ROOT)}")
+        return 0
+
+    captures = {path: content for path, content in regenerated.intended.items() if path in capture_paths}
+    for image in render_images(captures):
+        print(f"rendered {image.relative_to(REPO_ROOT)}")
+
+    # recorded last, so the manifest describes the images that were just written
+    manager.record_fingerprints()
+    print(f"recorded {IMAGE_MANIFEST.relative_to(REPO_ROOT)}")
     return 0
 
 

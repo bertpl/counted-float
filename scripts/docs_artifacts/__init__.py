@@ -9,6 +9,8 @@ Modules
   - `_artifact` — the `DerivedFile` hierarchy: one class per kind of generated file.
   - `_manager` — `DocsArtifactManager`, holding a set of them and offering the only two operations
     there are: check them, or regenerate them.
+  - `_manifest` — the committed record of what the files that cannot be re-derived here were last
+    built from.
   - `_ansi` — helpers for the files whose content is raw terminal output.
 
 The `DerivedFile` hierarchy
@@ -19,7 +21,8 @@ is allowed to ask; each subclass answers in its own terms, so the manager never 
 
     DerivedFile                (abstract: defines the questions)
     ├── MarkedBlockFile        an authored file with generated regions in it
-    └── GeneratedFile          a whole file that is nothing but generator output
+    ├── GeneratedFile          a whole file that is nothing but generator output
+    └── RenderedFile           a whole file built by external tooling, not reproducible here
 
 What the base asks, and what differs between the children:
 
@@ -33,8 +36,19 @@ What the base asks, and what differs between the children:
     rather than reported stale, because the only local answer would be a false mismatch.
   - **`readable(content)`** — how the content should appear in a diff. Only `GeneratedFile`
     overrides it, for the captures whose raw ANSI is unreadable as it stands.
+  - **`fingerprint()`** — a hash of the file's inputs, defaulting to None. Only `RenderedFile`
+    answers it, and it is the *only* question that class can answer: its bytes come from external
+    tooling that no two machines agree on, so there is nothing to re-derive and compare.
 
-Two flat value types sit beside the hierarchy and are deliberately not part of it: `MarkedBlock`
+Each file is therefore checked by the strongest means available to it — re-derived and compared byte
+for byte where that is possible, and against a hash of its inputs only where it is not. The manager
+asks both questions and takes whichever answer it gets.
+
+A second, smaller hierarchy lives in `_manager`: `Stale` with `StaleContent` and `StaleInputs`. It
+exists because the two ways a file goes stale read differently in a report — one can show a diff of
+what changed, the other only knows *that* the inputs moved.
+
+Two flat value types sit beside the hierarchies and are deliberately not part of them: `MarkedBlock`
 (one registered region: its file plus its generator) and `RegenerationOutcome` (what a regeneration
 pass produced). They carry data, answer no questions, and have no subclasses.
 
@@ -48,11 +62,12 @@ from ._artifact import (
     GeneratedFile,
     MarkedBlock,
     MarkedBlockFile,
+    RenderedFile,
     marked_block_files,
     read_lf,
     rewrite_marked_blocks,
 )
-from ._manager import DocsArtifactManager, RegenerationOutcome, StaleFile
+from ._manager import DocsArtifactManager, RegenerationOutcome, Stale, StaleContent, StaleInputs
 
 __all__ = [
     "DerivedFile",
@@ -61,7 +76,10 @@ __all__ = [
     "MarkedBlock",
     "MarkedBlockFile",
     "RegenerationOutcome",
-    "StaleFile",
+    "RenderedFile",
+    "Stale",
+    "StaleContent",
+    "StaleInputs",
     "capture_env",
     "crop_ansi_line",
     "marked_block_files",
