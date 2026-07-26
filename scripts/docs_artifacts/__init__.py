@@ -1,9 +1,16 @@
-"""Freshness machinery for the committed files that are derived from the library.
+"""Keeps the committed files that are generated from the library in step with what it produces.
 
-The kind-agnostic half of `generate_docs_content.py`: what a derived file is (`_artifact`) and the
-single loop that checks or rewrites a set of them (`_driver`). What those files actually *are* —
-which docs blocks exist, which screenshots exist, how each is produced — is content, and lives with
-the generators in the script itself.
+Parts of the docs are not written by hand — they are produced from the library and committed
+alongside it, which means they can quietly fall behind the code. This package is what notices.
+
+  - `_artifact` — what a derived file is: where it lives, how its intended content is produced,
+    and how it should read in a diff. One subclass per kind of file.
+  - `_manager` — `DocsArtifactManager`, holding the set of them and offering the only two
+    operations there are: check them, or regenerate them.
+  - `_ansi` — helpers for the files whose content is raw terminal output.
+
+Only the machinery lives here. *Which* files exist and how each one is produced is content, and
+stays with the generators in `generate_docs_content.py`.
 """
 
 from ._ansi import capture_env, crop_ansi_line, strip_ansi
@@ -15,22 +22,20 @@ from ._artifact import (
     read_lf,
     rewrite_marked_blocks,
 )
-from ._driver import REMEDY, Regenerated, StaleFile, check, format_stale_report, regenerate
+from ._manager import DocsArtifactManager, Regenerated, Stale, StaleContent
 
 __all__ = [
-    "REMEDY",
     "DerivedFile",
+    "DocsArtifactManager",
     "GeneratedFile",
     "MarkedBlockFile",
     "Regenerated",
-    "StaleFile",
+    "Stale",
+    "StaleContent",
     "capture_env",
-    "check",
     "crop_ansi_line",
-    "format_stale_report",
     "marked_block_files",
     "read_lf",
-    "regenerate",
     "rewrite_marked_blocks",
     "strip_ansi",
 ]

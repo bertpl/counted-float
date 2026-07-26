@@ -48,13 +48,11 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from docs_artifacts import (
+    DocsArtifactManager,
     GeneratedFile,
     capture_env,
-    check,
     crop_ansi_line,
-    format_stale_report,
     marked_block_files,
-    regenerate,
     strip_ansi,
 )
 
@@ -537,15 +535,15 @@ def main() -> int:
     args = parser.parse_args()
 
     capture_paths = {artifact.path for artifact in capture_files()}
-    artifacts = derived_files()
+    manager = DocsArtifactManager(derived_files())
 
     if args.check:
-        if stale := check(artifacts):
-            sys.stderr.write(format_stale_report(stale))
+        if stale := manager.check():
+            sys.stderr.write(manager.stale_report(stale))
             return 1
         return 0
 
-    regenerated = regenerate(artifacts)
+    regenerated = manager.regenerate()
     for file_path in regenerated.written:
         print(f"rewrote {file_path.relative_to(REPO_ROOT)}")
 
