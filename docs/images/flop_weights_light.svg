@@ -126,5 +126,5 @@
 <text x="74.000" y="96.000" font-size="11" fill="#57606A">arm64</text>
 <rect x="58" y="104.000" width="10" height="10" rx="1" fill="#6BA1F2"/>
 <text x="74.000" y="112.000" font-size="11" fill="#57606A">x86</text>
-<text x="12" y="458" font-size="9" fill="#8C959F"><tspan font-size="7.5" font-weight="600" dy="-3" fill="#57606A">(1)</tspan><tspan dx="3" dy="3">based on 21 benchmarks, 16 spec sheets, 12 third party measurements</tspan></text>
+<text x="12" y="458" font-size="9" fill="#8C959F"><tspan font-size="7.5" font-weight="600" dy="-3" fill="#57606A">(1)</tspan><tspan dx="3" dy="3">based on 21 benchmarks, 16 spec sheets, 12 third party measurements (Agner Fog, uops.info)</tspan></text>
 </svg>

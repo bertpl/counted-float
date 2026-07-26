@@ -182,10 +182,10 @@ def capture_snippet_stderr_ansi(snippet: Path) -> str:
 def generate_source_counts() -> str:
     """The README bullet stating how many sources of each type back the shipped weights.
 
-    The counts and their wording come from `source_summary`, which the chart's provenance subtitle
-    also uses; this only adds the projects the third-party figure refers to.
+    Comes from `source_summary`, which the chart's provenance footnote also uses -- counts, wording
+    and named projects alike -- so the two statements cannot drift apart.
     """
-    return f"- {source_summary()} (Agner Fog, uops.info)"
+    return f"- {source_summary()}"
 
 
 def _show_block(import_line: str, call_line: str, show_call: Callable[[], None]) -> str:

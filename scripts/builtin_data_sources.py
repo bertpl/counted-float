@@ -61,15 +61,23 @@ def source_counts() -> SourceCounts:
     )
 
 
+# Named rather than derived. The keys do carry the project as a prefix, but turning
+# `analysis_uops_info_zen3` into "uops.info" needs a hardcoded mapping either way -- one buried in
+# parsing rather than written down -- and the set changes far too rarely to earn that.
+THIRD_PARTY_PROJECTS = ["Agner Fog", "uops.info"]
+
+
 def source_summary() -> str:
     """The dataset's composition, phrased once for every place that states it.
 
-    Callers frame it -- the README as a bullet naming the third-party projects, the chart as a
-    parenthetical -- but the counts and the wording come from here, so two surfaces cannot end up
-    describing the same dataset in different terms.
+    Callers frame it -- the README as a bullet, the chart as a footnote -- but the counts, the
+    wording and the named projects all come from here, so no two surfaces can end up describing the
+    same dataset differently. The projects are named because the chart travels further than the
+    README does: on the docs page and on PyPI it is the only place that says where the third-party
+    figures came from.
     """
     counts = source_counts()
     return (
         f"{counts.benchmarks} benchmarks, {counts.spec_sheets} spec sheets, "
-        f"{counts.external_analyses} third party measurements"
+        f"{counts.external_analyses} third party measurements ({', '.join(THIRD_PARTY_PROJECTS)})"
     )
