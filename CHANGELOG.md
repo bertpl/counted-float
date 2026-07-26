@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- the README and docs now show a bar chart of the built-in flop weights, comparing arm64 and x86 against the all-architecture consensus
+
 ### Changed
 
 ### Deprecated

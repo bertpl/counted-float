@@ -19,16 +19,23 @@ This Python package provides functionality for...
 - **counting floating point operations** (FLOPs) of numerical algorithms implemented in plain Python, optionally weighted by their relative cost of execution
 - **running benchmarks** to estimate the relative cost of executing various floating-point operations (requires `numba` optional dependency for achieving accurate results)
 
-The target application area is evaluation of research prototypes of numerical algorithms where (weighted) flop counting can be
-useful for estimating total computational cost, in cases where benchmarking a compiled version (C, Rust, ...) is not
-feasible or desirable.
-
 Flop weights are computed using a highly curated dataset spanning a wide range of modern CPUs:
 
 <!-- BEGIN generated: source-counts -->
 - 21 benchmarks, 16 spec sheets, 12 third party measurements (Agner Fog, uops.info)
 <!-- END generated: source-counts -->
 - covering x86 (Intel, AMD) and ARM (Apple, AWS, Azure) architectures
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/flop_weights_dark.svg">
+    <img alt="Built-in flop weights, relative to ADD, per architecture" src="docs/images/flop_weights_light.svg">
+  </picture>
+</div>
+
+The target application area is evaluation of research prototypes of numerical algorithms where (weighted) flop counting can be
+useful for estimating total computational cost, in cases where benchmarking a compiled version (C, Rust, ...) is not
+feasible or desirable.
 
 **Full documentation: [counted-float.readthedocs.io](https://counted-float.readthedocs.io/)**
 

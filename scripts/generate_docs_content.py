@@ -47,6 +47,7 @@ from functools import partial
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from builtin_data_sources import source_summary
 from docs_artifacts import (
     DocsArtifactManager,
     GeneratedFile,
@@ -58,6 +59,8 @@ from docs_artifacts import (
     read_lf,
     strip_ansi,
 )
+from flop_weight_chart import THEMES as CHART_THEMES
+from flop_weight_chart import build_svg as build_chart_svg
 
 from counted_float import BuiltInData
 from counted_float._core.counting._math_patching import (
@@ -176,31 +179,13 @@ def capture_snippet_stderr_ansi(snippet: Path) -> str:
 # ==================================================================================================
 #  Text-block generators
 # ==================================================================================================
-def _classified_source_keys() -> tuple[list[str], list[str], list[str]]:
-    """Split the built-in data keys into (benchmarks, spec sheets, third-party analyses)."""
-    benchmarks: list[str] = []
-    specs: list[str] = []
-    third_party: list[str] = []
-    for key in BuiltInData.get_flop_weights_dict():
-        source_type, entry = key.split(".")[-2], key.split(".")[-1]
-        if source_type == "benchmarks":
-            benchmarks.append(key)
-        elif source_type == "specs" or entry.startswith("specs"):
-            specs.append(key)
-        elif entry.startswith("analysis_"):
-            third_party.append(key)
-        else:
-            raise ValueError(f"cannot classify built-in data key: {key}")
-    return benchmarks, specs, third_party
-
-
 def generate_source_counts() -> str:
-    """The README bullet stating how many sources of each type back the shipped weights."""
-    benchmarks, specs, third_party = _classified_source_keys()
-    return (
-        f"- {len(benchmarks)} benchmarks, {len(specs)} spec sheets, "
-        f"{len(third_party)} third party measurements (Agner Fog, uops.info)"
-    )
+    """The README bullet stating how many sources of each type back the shipped weights.
+
+    Comes from `source_summary`, which the chart's provenance footnote also uses -- counts, wording
+    and named projects alike -- so the two statements cannot drift apart.
+    """
+    return f"- {source_summary()}"
 
 
 def _show_block(import_line: str, call_line: str, show_call: Callable[[], None]) -> str:
@@ -527,6 +512,23 @@ def _screenshot_render_inputs(name: str) -> list[str]:
     ]
 
 
+def chart_files() -> list[GeneratedFile]:
+    """The flop-weight chart, one committed SVG per theme.
+
+    Byte-reproducible -- pure Python, no renderer -- so these are re-derived and compared rather than
+    fingerprinted, which catches a generator change as well as a data change. One file per theme
+    because the surface has to be opaque for the chart to stay legible on any page; see the chart
+    module for why the themes differ in nothing but neutral inks.
+    """
+    return [
+        GeneratedFile(
+            path=IMAGES_DIR / f"flop_weights_{theme.name}.svg",
+            produce=partial(build_chart_svg, theme),
+        )
+        for theme in CHART_THEMES
+    ]
+
+
 def render_images(captures: dict[Path, str]) -> list[Path]:
     """Render each capture to its committed screenshot.
 
@@ -552,8 +554,8 @@ def render_images(captures: dict[Path, str]) -> list[Path]:
 #  Entry point
 # ==================================================================================================
 def derived_files() -> list[DerivedFile]:
-    """Every committed file this script owns: marked blocks, then captures, then screenshots."""
-    return [*marked_block_files(MARKED_BLOCKS), *capture_files(), *screenshot_images()]
+    """Every committed file this script owns: marked blocks, captures, screenshots, charts."""
+    return [*marked_block_files(MARKED_BLOCKS), *capture_files(), *screenshot_images(), *chart_files()]
 
 
 def main() -> int:

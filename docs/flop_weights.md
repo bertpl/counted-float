@@ -10,6 +10,13 @@ See [Methodology](analysis_methodology.md) for the rationale behind the choice
 of data sources and methodology, and
 [CPU architecture scope](cpu_architectures_scope.md) for the CPUs covered.
 
+The cheapest and priciest operations, with the two architectures shown against
+the all-architecture consensus. Note the log scale: the range spans more than
+two decades, and the two ISAs disagree most at the cheap end.
+
+![Built-in flop weights, relative to ADD, per architecture](images/flop_weights_light.svg#only-light)
+![Built-in flop weights, relative to ADD, per architecture](images/flop_weights_dark_docs.svg#only-dark)
+
 <!-- BEGIN generated: flop-weights-active -->
 ```python
 >>> from counted_float.config import get_active_flop_weights

@@ -1,0 +1,11 @@
+/* Light/dark image switching, completed.
+ *
+ * Material hides `#only-dark` images under the light scheme, but ships no counterpart rule for
+ * `#only-light` under the dark scheme -- so without this, a dark page shows both variants stacked.
+ *
+ * This keys on `data-md-color-scheme`, which is what the palette toggle sets. That matters: a
+ * `prefers-color-scheme` media query would follow the reader's operating system instead, and so would
+ * ignore the toggle in the header. */
+[data-md-color-scheme="slate"] img[src$="#only-light"] {
+  display: none;
+}
