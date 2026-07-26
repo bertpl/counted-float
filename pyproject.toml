@@ -125,7 +125,7 @@ replacement = '](https://raw.githubusercontent.com/bertpl/counted-float/v$HFPR_V
 # `<picture>`, whose paths live in attributes and so are invisible to the markdown pattern above.
 # PyPI's sanitiser drops `<picture>`/`<source>` and keeps the `<img>`, so PyPI shows the light
 # variant -- which is what it should, having no dark mode -- but only if this URL is absolute.
-pattern = '(src|srcset)="(images/[^"]+)"'
+pattern = '(src|srcset)="((?:docs/)?images/[^"]+)"'
 replacement = '\1="https://raw.githubusercontent.com/bertpl/counted-float/v$HFPR_VERSION/\2"'
 
 [[tool.hatch.metadata.hooks.fancy-pypi-readme.substitutions]]
