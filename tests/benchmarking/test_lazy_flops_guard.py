@@ -70,17 +70,24 @@ def test_counting_works_without_the_benchmarking_modules():
 
 
 def test_the_benchmarking_package_still_imports_without_them():
-    # the overhead benchmark and the result model must survive the flops suite becoming unreachable
+    # the result model and the deprecated alias must survive the flops suite becoming unreachable --
+    # the package has to stay importable for its own guard to be able to report anything
     # --- act ---------------------------------------------
     result = _run_without_benchmarking_modules("""
-        from counted_float.benchmarking import FlopsBenchmarkResults, run_counted_float_benchmark
+        import warnings
+
+        from counted_float.benchmarking import FlopsBenchmarkResults
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from counted_float.benchmarking import run_counted_float_benchmark
 
         print(FlopsBenchmarkResults.__name__, run_counted_float_benchmark.__name__)
     """)
 
     # --- assert ------------------------------------------
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "FlopsBenchmarkResults run_counted_float_benchmark"
+    assert result.stdout.strip() == "FlopsBenchmarkResults evaluate_counting_overhead"
 
 
 def test_the_shipped_benchmark_data_still_parses_without_them():
@@ -146,3 +153,10 @@ def test_an_unknown_attribute_still_raises_attribute_error():
     # --- act / assert ------------------------------------
     with pytest.raises(AttributeError, match="NoSuchThing"):
         _ = benchmarking.NoSuchThing
+
+
+def test_dir_advertises_the_lazily_resolved_name():
+    # the hook makes FlopsBenchmarkSuite invisible to introspection unless __dir__ says otherwise,
+    # which is what tab-completion and `help()` read
+    # --- act / assert ------------------------------------
+    assert "FlopsBenchmarkSuite" in dir(benchmarking)

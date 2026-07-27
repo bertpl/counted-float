@@ -1,5 +1,5 @@
-from counted_float._core.benchmarking.micro import MicroBenchmark
 from counted_float._core.counting import CountedFloat
+from counted_float._core.micro import MicroBenchmark
 from counted_float._core.models import JsonReprModel
 from counted_float._core.utils import format_time_duration
 

@@ -1,13 +1,14 @@
 import random
 from abc import ABC, abstractmethod
 
-from counted_float._core.benchmarking._output import console
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 from counted_float._core.utils import (
     Timer,
     convert_nsecs_to_cycles,
     format_time_duration,
 )
+
+from ._output import console
 
 
 # =================================================================================================

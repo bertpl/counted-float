@@ -1,15 +1,13 @@
-"""The two benchmark entry points.
+"""The flops benchmark entry point.
 
-These live beside the package facade rather than inside it on purpose. A module-level ``__getattr__``
+It lives beside the package facade rather than inside it on purpose. A module-level ``__getattr__``
 only fires for attribute access from *outside* the module that defines it, so a runner sitting in
 ``__init__`` could not reach the flops suite through the same hook every other caller uses — it
 would need a second way in, and a second way in is a second thing that can miss the guard.
 """
 
+from counted_float._core.micro import console, output_quiet
 from counted_float._core.models import FlopsBenchmarkResults
-
-from ._output import console, output_quiet
-from .counted_float import BenchmarkCountedFloat, BenchmarkFloat, CountedFloatBenchmarkResults
 
 
 def run_flops_benchmark(
@@ -38,33 +36,3 @@ def run_flops_benchmark(
         console.print()
 
     return benchmark_results
-
-
-def run_counted_float_benchmark(t_target_sec: float = 0.1, verbose: bool = True) -> CountedFloatBenchmarkResults:
-    """Run benchmark to compare performance of float vs CountedFloat.
-
-    Progress output is printed unless verbose is False.
-    """
-    with output_quiet(not verbose):
-        console.print("-" * 120, soft_wrap=True)
-        console.print("Running CountedFloat benchmark...")
-        console.print()
-
-        result_float = BenchmarkFloat().run_many(
-            n_runs_total=50,
-            n_runs_warmup=15,
-            n_seconds_per_run_target=t_target_sec,
-        )
-        result_counted_float = BenchmarkCountedFloat().run_many(
-            n_runs_total=50,
-            n_runs_warmup=15,
-            n_seconds_per_run_target=t_target_sec,
-        )
-
-        console.print("-" * 120, soft_wrap=True)
-        console.print()
-
-    return CountedFloatBenchmarkResults(
-        float_time_nsec=result_float.summary_stats_nsecs_per_exec().q50,
-        counted_float_time_nsec=result_counted_float.summary_stats_nsecs_per_exec().q50,
-    )

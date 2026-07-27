@@ -6,7 +6,7 @@ reports absolute per-op cost supplies a clock, and one that reports a ratio does
 
 import pytest
 
-from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner, MicroBenchmark
+from counted_float._core.micro import InterleavedBenchmarkRunner, MicroBenchmark
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 
 # patched to prove the timing layer never reaches it; it lives behind the benchmarking extra

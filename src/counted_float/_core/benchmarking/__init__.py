@@ -1,23 +1,20 @@
-"""Benchmarking facade, with the flops suite reached lazily.
+"""The flops benchmark suite: what this package means, gated end to end.
 
-The flops suite is the only part of this package that needs the benchmarking extra, so it resolves
-on first use rather than on import — which keeps the overhead benchmark next door, and everything
-that merely reads a stored result, working on an install without that extra. FlopsBenchmarkResults
-is a plain model rather than part of the suite, so it comes straight from its own package and stays
-eagerly available.
+Everything under here needs the benchmarking extra, so the sub-package resolves on first use rather
+than on import. This module deliberately stays importable without it: a guard has to be reachable to
+be able to report anything, and the public package re-exports through here on installs with no
+extras at all.
 
-The hook below is the only way into the flops sub-package; the entry points live in `_runners` so
-that they reach it the same way any outside caller does.
+FlopsBenchmarkResults is a plain model rather than part of the suite, so it comes straight from its
+own package and stays eagerly available: reading a stored result needs no extra.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from counted_float._core.compatibility import Capability
 from counted_float._core.models import FlopsBenchmarkResults
 
-from ._output import console, output_quiet
-from ._runners import run_counted_float_benchmark, run_flops_benchmark
-from .counted_float import BenchmarkCountedFloat, BenchmarkFloat, CountedFloatBenchmarkResults
+from ._runner import run_flops_benchmark
 
 if TYPE_CHECKING:
     from .flops import FlopsBenchmarkSuite
@@ -32,3 +29,10 @@ def __getattr__(name: str) -> object:
         from . import flops
 
     return flops.FlopsBenchmarkSuite
+
+
+__all__ = ["FlopsBenchmarkResults", "run_flops_benchmark"]
+
+
+def __dir__() -> list[Any]:
+    return [*__all__, "FlopsBenchmarkSuite"]

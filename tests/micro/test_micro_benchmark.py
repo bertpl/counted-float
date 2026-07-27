@@ -12,8 +12,8 @@ import time
 
 import pytest
 
-from counted_float._core.benchmarking._output import output_quiet
-from counted_float._core.benchmarking.micro import MicroBenchmark
+from counted_float._core.micro import MicroBenchmark
+from counted_float._core.micro._output import output_quiet
 from counted_float._core.models import MicroBenchmarkResult
 
 

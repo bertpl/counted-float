@@ -3,7 +3,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-from counted_float._core.benchmarking.micro import MicroBenchmark
+from counted_float._core.micro import MicroBenchmark
 
 from ._array_generator import ArrayGenerator
 
