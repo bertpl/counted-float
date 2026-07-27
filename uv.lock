@@ -202,21 +202,29 @@ wheels = [
 name = "counted-float"
 source = { editable = "." }
 dependencies = [
-    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
-    { name = "psutil" },
-    { name = "py-cpuinfo" },
     { name = "pydantic" },
     { name = "rich" },
 ]
 
 [package.optional-dependencies]
+benchmarking = [
+    { name = "numba", version = "0.62.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numba", version = "0.66.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "psutil" },
+    { name = "py-cpuinfo" },
+]
 cli = [
     { name = "click" },
 ]
 numba = [
     { name = "numba", version = "0.62.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
     { name = "numba", version = "0.66.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "numpy", version = "2.3.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' or platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "psutil" },
+    { name = "py-cpuinfo" },
 ]
 
 [package.dev-dependencies]
@@ -255,23 +263,34 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "click", marker = "extra == 'cli'", specifier = ">=8.0.0" },
+    { name = "numba", marker = "python_full_version == '3.12.*' and extra == 'benchmarking'", specifier = ">=0.59" },
     { name = "numba", marker = "python_full_version == '3.12.*' and extra == 'numba'", specifier = ">=0.59" },
+    { name = "numba", marker = "python_full_version < '3.12' and extra == 'benchmarking'", specifier = ">=0.57" },
     { name = "numba", marker = "python_full_version < '3.12' and extra == 'numba'", specifier = ">=0.57" },
+    { name = "numba", marker = "python_full_version == '3.13.*' and extra == 'benchmarking'", specifier = ">=0.61" },
     { name = "numba", marker = "python_full_version == '3.13.*' and extra == 'numba'", specifier = ">=0.61" },
+    { name = "numba", marker = "python_full_version >= '3.14' and extra == 'benchmarking'", specifier = ">=0.63" },
     { name = "numba", marker = "python_full_version >= '3.14' and extra == 'numba'", specifier = ">=0.63" },
-    { name = "numpy", marker = "python_full_version < '3.12'", specifier = ">=1.23.2" },
-    { name = "numpy", marker = "python_full_version == '3.12.*'", specifier = ">=1.26.0" },
-    { name = "numpy", marker = "python_full_version == '3.13.*'", specifier = ">=2.1.0" },
-    { name = "numpy", marker = "python_full_version >= '3.14'", specifier = ">=2.3.2" },
-    { name = "psutil", marker = "python_full_version < '3.13'", specifier = ">=5.9.4" },
-    { name = "psutil", marker = "python_full_version >= '3.13'", specifier = ">=7.1.2" },
-    { name = "py-cpuinfo", specifier = ">=9.0.0" },
+    { name = "numpy", marker = "python_full_version == '3.12.*' and extra == 'benchmarking'", specifier = ">=1.26.0" },
+    { name = "numpy", marker = "python_full_version == '3.12.*' and extra == 'numba'", specifier = ">=1.26.0" },
+    { name = "numpy", marker = "python_full_version < '3.12' and extra == 'benchmarking'", specifier = ">=1.23.2" },
+    { name = "numpy", marker = "python_full_version < '3.12' and extra == 'numba'", specifier = ">=1.23.2" },
+    { name = "numpy", marker = "python_full_version == '3.13.*' and extra == 'benchmarking'", specifier = ">=2.1.0" },
+    { name = "numpy", marker = "python_full_version == '3.13.*' and extra == 'numba'", specifier = ">=2.1.0" },
+    { name = "numpy", marker = "python_full_version >= '3.14' and extra == 'benchmarking'", specifier = ">=2.3.2" },
+    { name = "numpy", marker = "python_full_version >= '3.14' and extra == 'numba'", specifier = ">=2.3.2" },
+    { name = "psutil", marker = "python_full_version >= '3.13' and extra == 'benchmarking'", specifier = ">=7.1.2" },
+    { name = "psutil", marker = "python_full_version >= '3.13' and extra == 'numba'", specifier = ">=7.1.2" },
+    { name = "psutil", marker = "python_full_version < '3.13' and extra == 'benchmarking'", specifier = ">=5.9.4" },
+    { name = "psutil", marker = "python_full_version < '3.13' and extra == 'numba'", specifier = ">=5.9.4" },
+    { name = "py-cpuinfo", marker = "extra == 'benchmarking'", specifier = ">=9.0.0" },
+    { name = "py-cpuinfo", marker = "extra == 'numba'", specifier = ">=9.0.0" },
     { name = "pydantic", marker = "python_full_version < '3.13'", specifier = ">=2.7" },
     { name = "pydantic", marker = "python_full_version == '3.13.*'", specifier = ">=2.9" },
     { name = "pydantic", marker = "python_full_version >= '3.14'", specifier = ">=2.12" },
     { name = "rich", specifier = ">=13.0.0" },
 ]
-provides-extras = ["cli", "numba"]
+provides-extras = ["benchmarking", "cli", "numba"]
 
 [package.metadata.requires-dev]
 dev = [

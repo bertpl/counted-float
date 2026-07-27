@@ -17,7 +17,7 @@ jobs:
         # detection (psutil) and system-info collection (cpuinfo) paths are OS-dependent, and a
         # dependency bump can change their behavior on macOS or Windows -- so one leg on each keeps
         # those paths on the pull-request gate rather than only in the manual benchmark workflows.
-        # Combos cover every axis (all four Pythons, both resolution ends, numba on/off, all three
+        # Combos cover every axis (all four Pythons, both resolution ends, extras on/off, all three
         # OSes) strategically rather than as a full product.
         include:
           - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "true"  }

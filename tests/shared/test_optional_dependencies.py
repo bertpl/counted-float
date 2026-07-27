@@ -59,10 +59,13 @@ def test_required_distributions_are_read_from_the_extra_that_installs_them():
 
 
 def test_required_distributions_collapse_an_extra_declared_once_per_python_version():
-    # the numba requirement is spelled four times, one per interpreter range; what a caller needs is
-    # the distribution, not the four version-pinned spellings of it
-    # --- act / assert ------------------------------------
-    assert Capability.FLOPS_BENCHMARKING.required_distributions() == {"numba"}
+    # several of these are spelled once per interpreter range; what a caller needs is the set of
+    # distributions, not the version-pinned spellings of each
+    # --- act ---------------------------------------------
+    required = Capability.FLOPS_BENCHMARKING.required_distributions()
+
+    # --- assert ------------------------------------------
+    assert required == {"numba", "numpy", "psutil", "py-cpuinfo"}
 
 
 # =================================================================================================

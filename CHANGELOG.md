@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - running the flops benchmark suite now requires the `numba` extra; without it the suite says what to install instead of producing results it already warned were unusable
 - evaluating counting overhead has moved to `counted_float.evaluation.evaluate_counting_overhead`, since it measures the library rather than the machine; its printed report says "counting overhead" rather than "benchmark" to match
+- the base install is now counting-only; running the flops benchmark suite needs the new `benchmarking` extra, which cuts an install that only counts from ~181 MB to ~17 MB
 
 ### Deprecated
 
 - `counted_float.benchmarking.run_counted_float_benchmark` still resolves but now warns; it will be dropped at the next major
+- the `numba` extra is renamed `benchmarking`; the old name still resolves to the same set but will be dropped at the next major
 
 ### Removed
 

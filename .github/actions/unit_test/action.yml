@@ -16,7 +16,7 @@ inputs:
         default: "highest"
     include_all_extra_deps:
         required: false
-        description: "'true' (default) installs all optional extras (numba, cli); 'false' installs none."
+        description: "'true' (default) installs all optional extras (benchmarking, cli); 'false' installs none."
         default: "true"
     coverage:
         required: false

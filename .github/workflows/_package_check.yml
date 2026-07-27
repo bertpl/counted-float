@@ -61,7 +61,7 @@ jobs:
           name: dist
           path: dist
 
-      # Blind environment: test deps come lockfile-pinned from the dev group
+      # Blind environment: test deps come lockfile-pinned from the test group
       # (--no-emit-project keeps the project itself out), and counted_float can
       # only come from the built wheel — never an editable/source install.
       - name: Install the built wheel into a bare environment
@@ -70,7 +70,58 @@ jobs:
           uv venv blind-venv
           uv pip install --python blind-venv/bin/python -r requirements.txt
           WHEEL=(dist/*.whl)
-          uv pip install --python blind-venv/bin/python "counted-float[numba,cli] @ file://$PWD/${WHEEL[0]}"
+          uv pip install --python blind-venv/bin/python "counted-float[benchmarking,cli] @ file://$PWD/${WHEEL[0]}"
+
+      # A second blind environment with no extras at all: the claim this package makes about its
+      # base install, checked rather than assumed. The absence assertion is what stops this passing
+      # on an environment that quietly still carries them -- which is how it would fail silently.
+      - name: Install the built wheel base-only, and check what that install can do
+        run: |
+          uv venv base-venv
+          WHEEL=(dist/*.whl)
+          uv pip install --python base-venv/bin/python "counted-float @ file://$PWD/${WHEEL[0]}"
+          base-venv/bin/python -c "
+          from importlib.metadata import PackageNotFoundError, distribution
+
+          for name in ('numba', 'numpy', 'psutil', 'py-cpuinfo', 'click'):
+              try:
+                  distribution(name)
+              except PackageNotFoundError:
+                  continue
+              raise SystemExit(f'{name} is installed in a base-only environment; this check proves nothing')
+          print('OK: none of the optional distributions are present')
+
+          from counted_float import BuiltInData, CountedFloat, FlopCountingContext
+          with FlopCountingContext() as ctx:
+              _ = CountedFloat(2.0) * CountedFloat(3.0) + CountedFloat(1.0)
+          assert ctx.flop_counts().ADD == 1 and ctx.flop_counts().MUL == 1
+          assert len(BuiltInData.benchmarks()) > 0
+          print('OK: counting works and the shipped data parses')
+
+          from counted_float.evaluation import evaluate_counting_overhead
+          evaluate_counting_overhead(t_target_sec=0.01, verbose=False)
+          print('OK: counting overhead can be evaluated')
+
+          from counted_float._core import benchmarking
+          try:
+              benchmarking.FlopsBenchmarkSuite
+          except ImportError as e:
+              assert 'counted-float[benchmarking]' in str(e), e
+              print(f'OK: the flops suite reports what to install -- {e}')
+          else:
+              raise SystemExit('the flops suite resolved without its extra')
+          "
+
+      - name: Check the deprecated extra name still resolves
+        run: |
+          uv venv alias-venv
+          WHEEL=(dist/*.whl)
+          uv pip install --python alias-venv/bin/python "counted-float[numba] @ file://$PWD/${WHEEL[0]}"
+          alias-venv/bin/python -c "
+          from importlib.metadata import distribution
+          distribution('numba')
+          print('OK: the numba extra still installs the benchmarking set')
+          "
 
       - name: Assert the environment is blind
         run: |

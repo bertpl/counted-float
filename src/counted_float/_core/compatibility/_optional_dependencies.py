@@ -55,7 +55,7 @@ class Capability(StrEnum):
     """
 
     CLI = "cli"
-    FLOPS_BENCHMARKING = "numba"
+    FLOPS_BENCHMARKING = "benchmarking"
 
     # -------------------------------------------------------------------------
     #  Main API
