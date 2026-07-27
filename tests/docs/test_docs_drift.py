@@ -11,10 +11,14 @@ import subprocess
 import sys
 from pathlib import Path
 
+from counted_float._core.compatibility import CAP_CLI
+from tests._capabilities import needs
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 GENERATOR = REPO_ROOT / "scripts" / "generate_docs_content.py"
 
 
+@needs(CAP_CLI)  # the generator renders its blocks by invoking the CLI
 def test_generated_docs_blocks_match_committed_content():
     """Fails when a generated docs block changed and `make regen-docs` was not re-run."""
     # --- act ---------------------------------------------

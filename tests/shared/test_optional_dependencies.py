@@ -1,5 +1,6 @@
+import re
 import tomllib
-from importlib.metadata import metadata
+from importlib.metadata import distributions, metadata
 from pathlib import Path
 
 import pytest
@@ -75,11 +76,16 @@ def test_every_guarded_capability_is_actually_declared(capability):
 # =================================================================================================
 @pytest.mark.parametrize("capability", _GUARDED_CAPABILITIES)
 def test_availability_follows_whether_the_distributions_are_installed(capability):
+    # the expected value is derived by enumerating the environment rather than by asking about each
+    # distribution one at a time, so this stays a check and does not become a second copy of the
+    # implementation. Names are normalized per PEP 503, since `py-cpuinfo` and `py_cpuinfo` are one
+    # distribution spelled two ways.
     # --- arrange -----------------------------------------
-    every_one_present = all(
-        metadata(name) is not None  # raises PackageNotFoundError when absent
-        for name in required_distributions(capability)
-    )
+    def normalized(name: str) -> str:
+        return re.sub(r"[-_.]+", "-", name).lower()
+
+    installed = {normalized(dist.metadata["Name"]) for dist in distributions()}
+    every_one_present = {normalized(name) for name in required_distributions(capability)} <= installed
 
     # --- act / assert ------------------------------------
     assert is_available(capability) is every_one_present
@@ -111,7 +117,10 @@ def test_the_message_names_the_extra_to_install():
 # =================================================================================================
 #  requires
 # =================================================================================================
-def test_requires_is_transparent_when_the_capability_is_installed():
+def test_requires_is_transparent_when_the_capability_is_installed(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(optional_dependencies, "is_available", lambda _: True)
+
     # --- act ---------------------------------------------
     with requires(CAP_CLI):
         outcome = "ran"
@@ -135,9 +144,12 @@ def test_requires_refuses_to_enter_the_block_without_the_extra(monkeypatch):
     assert entered is False
 
 
-def test_requires_lets_a_genuine_error_inside_the_block_surface_as_itself():
+def test_requires_lets_a_genuine_error_inside_the_block_surface_as_itself(monkeypatch):
     # a precondition rather than a translated failure: once the extra is known to be present, a
     # problem inside the block is a bug, not a packaging story, and must not be relabelled as one
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(optional_dependencies, "is_available", lambda _: True)
+
     # --- act / assert ------------------------------------
     with pytest.raises(ModuleNotFoundError, match="counted_float_no_such_module"), requires(CAP_CLI):
         import counted_float_no_such_module  # noqa: F401
