@@ -1,7 +1,12 @@
 """The flops suite is reached lazily, so an install without the extra gets guidance, not a traceback.
 
-The subprocess cases run in a fresh interpreter with the benchmarking modules made unimportable,
-which is the only way to exercise the guard from an environment that does have them installed.
+Two techniques, because two different things are being claimed:
+
+- **Subprocess with the modules blocked** — proves what stays *reachable* on an install that does
+  not carry them. Import-time reachability is the claim, so it has to be a fresh interpreter.
+- **Patched availability** — proves the guard fires. A capability is absent when its distribution is
+  not installed, which cannot be faked by blocking an import, so the availability lookup is what
+  gets replaced. CI exercises the real thing on the legs installed without the extra.
 """
 
 import subprocess
@@ -10,6 +15,7 @@ import textwrap
 
 import pytest
 
+import counted_float._core.compatibility._optional_dependencies as optional_dependencies
 from counted_float._core import benchmarking
 from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, MissingCapabilityError
 from tests._capabilities import needs
@@ -38,6 +44,12 @@ def _run_without_benchmarking_modules(body: str) -> subprocess.CompletedProcess[
     return subprocess.run(  # noqa: S603
         [sys.executable, "-c", script], capture_output=True, text=True, check=False
     )
+
+
+@pytest.fixture
+def extra_not_installed(monkeypatch):
+    """Make every capability read as absent, as it would be on an install without the extra."""
+    monkeypatch.setattr(optional_dependencies, "is_available", lambda _: False)
 
 
 # =================================================================================================
@@ -88,56 +100,32 @@ def test_the_shipped_benchmark_data_still_parses_without_them():
 # =================================================================================================
 #  what is guarded
 # =================================================================================================
-def test_reaching_the_flops_suite_names_the_extra_that_installs_it():
-    # --- act ---------------------------------------------
-    result = _run_without_benchmarking_modules("""
-        from counted_float._core import benchmarking
-
-        try:
-            benchmarking.FlopsBenchmarkSuite
-        except ImportError as e:
-            print(e)
-    """)
-
-    # --- assert ------------------------------------------
-    assert result.returncode == 0, result.stderr
-    assert "counted-float[" in result.stdout
+def test_reaching_the_flops_suite_names_the_extra_that_installs_it(extra_not_installed):
+    # --- act / assert ------------------------------------
+    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
+        _ = benchmarking.FlopsBenchmarkSuite
 
 
-def test_running_the_flops_benchmark_reports_the_same_guidance():
+def test_running_the_flops_benchmark_reports_the_same_guidance(extra_not_installed):
     # the wrapper resolves the suite itself rather than through the module hook, so it is guarded
     # separately from plain attribute access above
-    # --- act ---------------------------------------------
-    result = _run_without_benchmarking_modules("""
-        from counted_float._core import benchmarking
-
-        try:
-            benchmarking.run_flops_benchmark()
-        except ImportError as e:
-            print(e)
-    """)
-
-    # --- assert ------------------------------------------
-    assert result.returncode == 0, result.stderr
-    assert "counted-float[" in result.stdout
+    # --- act / assert ------------------------------------
+    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
+        benchmarking.run_flops_benchmark()
 
 
-def test_the_module_that_was_missing_stays_visible_behind_the_guidance():
-    # the guidance answers "what do I install"; the chained cause answers "what was actually absent",
-    # which is what keeps a genuine bug inside the guarded import diagnosable
-    # --- act ---------------------------------------------
-    result = _run_without_benchmarking_modules("""
-        from counted_float._core import benchmarking
+def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkeypatch):
+    # a precondition, not a rescued failure: with the extra absent the import is never attempted, so
+    # a heavy sub-package is not half-loaded on the way to an error
+    # --- arrange -----------------------------------------
+    monkeypatch.delattr(benchmarking, "flops", raising=False)
+    monkeypatch.delitem(sys.modules, "counted_float._core.benchmarking.flops", raising=False)
 
-        try:
-            benchmarking.FlopsBenchmarkSuite
-        except ImportError as e:
-            print(type(e.__cause__).__name__, e.__cause__.name)
-    """)
+    # --- act / assert ------------------------------------
+    with pytest.raises(MissingCapabilityError):
+        benchmarking.import_flops()
 
-    # --- assert ------------------------------------------
-    assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "ModuleNotFoundError numpy"
+    assert "counted_float._core.benchmarking.flops" not in sys.modules
 
 
 # =================================================================================================
@@ -145,7 +133,6 @@ def test_the_module_that_was_missing_stays_visible_behind_the_guidance():
 # =================================================================================================
 @needs(CAP_FLOPS_BENCHMARKING)
 def test_the_hook_resolves_the_real_suite():
-    # the happy path of the lazy hook: everything else here exercises it while something is missing
     # --- act ---------------------------------------------
     suite = benchmarking.FlopsBenchmarkSuite
 
@@ -158,17 +145,3 @@ def test_an_unknown_attribute_still_raises_attribute_error():
     # --- act / assert ------------------------------------
     with pytest.raises(AttributeError, match="NoSuchThing"):
         _ = benchmarking.NoSuchThing
-
-
-def test_a_broken_sub_package_is_reported_as_a_missing_extra(monkeypatch):
-    # `requires` attributes any import failure in the block to the extra, because the block wraps
-    # exactly the import that needs it. A None entry makes that import fail without disturbing the
-    # already-imported package; the parent attribute goes too, since `from . import flops` resolves
-    # straight off the parent once the sub-package has been imported anywhere.
-    # --- arrange -----------------------------------------
-    monkeypatch.delattr(benchmarking, "flops", raising=False)
-    monkeypatch.setitem(sys.modules, "counted_float._core.benchmarking.flops", None)
-
-    # --- act / assert ------------------------------------
-    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
-        benchmarking.import_flops()

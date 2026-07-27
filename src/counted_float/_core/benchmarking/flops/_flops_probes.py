@@ -7,9 +7,8 @@ than the CPU's ability to overlap independent work.
 
 import math
 
+import numba  # ty: ignore[unresolved-import] -- numba comes with the benchmarking extra, which this sub-package requires
 import numpy as np
-
-from counted_float._core.compatibility import numba
 
 from ._libm_bindings import libm_cbrt, libm_remainder
 from ._sumprod_port import tl_fma, tl_to_d

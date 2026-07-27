@@ -58,6 +58,11 @@ runs:
           # on several OSes (ubuntu/macOS/windows), whose data files would otherwise share a name
           # and overwrite each other at combine time -- silently dropping those legs' coverage
           COVERAGE_FILE: .coverage.${{ runner.os }}-${{ inputs.python_version }}-${{ inputs.dependency_resolution }}-${{ inputs.include_all_extra_deps }}
+          # The benchmark probes only ever execute compiled, so coverage.py cannot see inside them --
+          # numba reports the compiled source lines itself instead. Older numba does not know this
+          # variable and ignores it, so the legs pinned to a floor release are unaffected; the legs
+          # that do support it are what supply the probe coverage the cumulative gate unions.
+          NUMBA_JIT_COVERAGE: "1"
         run: |
           EXTRA_FLAG=""
           [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"

@@ -1,112 +1,117 @@
+import tomllib
 from importlib.metadata import metadata
+from pathlib import Path
 
 import pytest
 
+import counted_float._core.compatibility._optional_dependencies as optional_dependencies
 from counted_float._core.compatibility import (
     CAP_CLI,
     CAP_FLOPS_BENCHMARKING,
-    Capability,
     MissingCapabilityError,
-    is_importable,
+    UnknownCapabilityError,
+    capabilities,
+    is_available,
+    missing_message,
+    required_distributions,
     requires,
 )
 
-_ALL_CAPABILITIES = [CAP_CLI, CAP_FLOPS_BENCHMARKING]
+_GUARDED_CAPABILITIES = [CAP_CLI, CAP_FLOPS_BENCHMARKING]
+_PYPROJECT = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
 
 
 # =================================================================================================
-#  is_importable
+#  Derived from the declared extras
 # =================================================================================================
-def test_is_importable_true_for_a_module_of_the_standard_library():
-    # --- act ---------------------------------------------
-    result = is_importable("math")
-
-    # --- assert ------------------------------------------
-    assert result is True
-
-
-def test_is_importable_false_for_a_module_that_does_not_exist():
-    # --- act ---------------------------------------------
-    result = is_importable("counted_float_no_such_module")
-
-    # --- assert ------------------------------------------
-    assert result is False
-
-
-def test_is_importable_reports_a_module_that_raises_on_import_as_absent(tmp_path, monkeypatch):
-    # a distribution can be installed and still unusable -- a broken wheel, an ABI mismatch. What the
-    # caller can act on is whether the import works, so an importable-but-raising module reads False.
+def test_the_capabilities_are_exactly_the_declared_extras():
     # --- arrange -----------------------------------------
-    module_name = "counted_float_raises_on_import"
-    (tmp_path / f"{module_name}.py").write_text("raise ImportError('deliberately unimportable')\n")
-    monkeypatch.syspath_prepend(str(tmp_path))
-
-    # --- act ---------------------------------------------
-    result = is_importable(module_name)
-
-    # --- assert ------------------------------------------
-    assert result is False
-
-
-def test_is_importable_caches_its_answer():
-    # --- arrange -----------------------------------------
-    is_importable("math")
-
-    # --- act ---------------------------------------------
-    hits_before = is_importable.cache_info().hits
-    is_importable("math")
-
-    # --- assert ------------------------------------------
-    assert is_importable.cache_info().hits == hits_before + 1
-
-
-# =================================================================================================
-#  Capability declarations
-# =================================================================================================
-@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
-def test_every_capability_names_an_extra_the_package_actually_declares(capability):
-    # the extra's name is the one packaging fact these declarations restate, so it is the one that
-    # can drift -- renaming it in pyproject without touching this module would leave every guard
-    # telling users to install something that no longer exists
-    # --- arrange -----------------------------------------
-    declared_extras = metadata("counted-float").get_all("Provides-Extra") or []
+    declared = set(metadata("counted-float").get_all("Provides-Extra") or [])
 
     # --- act / assert ------------------------------------
-    assert capability.extra in declared_extras
+    assert capabilities() == declared
 
 
-@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
-def test_every_capability_probes_a_module_of_ours(capability):
-    # probing one of our own modules rather than a third-party one is what keeps the package list out
-    # of the code; a probe pointing elsewhere would quietly reintroduce it
+def test_the_capabilities_match_pyproject_itself():
+    # the runtime reads installed metadata; this pins that metadata against the file it is built
+    # from, so a stale install cannot make the derivation look right while it is answering from
+    # yesterday's extras
+    # --- arrange -----------------------------------------
+    declared_in_source = set(tomllib.loads(_PYPROJECT.read_text())["project"]["optional-dependencies"])
+
     # --- act / assert ------------------------------------
-    assert capability.probe.startswith("counted_float.")
+    assert capabilities() == declared_in_source
 
 
-@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
-def test_the_message_names_the_capability_and_its_install_string(capability):
+def test_required_distributions_are_read_from_the_extra_that_installs_them():
     # --- act ---------------------------------------------
-    message = capability.missing_message()
+    for_cli = required_distributions(CAP_CLI)
 
     # --- assert ------------------------------------------
-    assert capability.name in message
-    assert f"counted-float[{capability.extra}]" in message
+    assert for_cli == {"click"}
 
 
-def test_availability_follows_the_probe():
+def test_required_distributions_collapse_an_extra_declared_once_per_python_version():
+    # the numba requirement is spelled four times, one per interpreter range; what the caller needs
+    # is the distribution, not the four version-pinned spellings of it
+    # --- act ---------------------------------------------
+    for_benchmarking = required_distributions(CAP_FLOPS_BENCHMARKING)
+
+    # --- assert ------------------------------------------
+    assert for_benchmarking == {"numba"}
+
+
+@pytest.mark.parametrize("capability", _GUARDED_CAPABILITIES)
+def test_every_guarded_capability_is_actually_declared(capability):
+    # the one packaging fact the code states is which extra covers which feature; renaming an extra
+    # without updating it would otherwise leave a guard pointing at an install string that no longer
+    # resolves
+    # --- act / assert ------------------------------------
+    assert capability in capabilities()
+
+
+# =================================================================================================
+#  Availability
+# =================================================================================================
+@pytest.mark.parametrize("capability", _GUARDED_CAPABILITIES)
+def test_availability_follows_whether_the_distributions_are_installed(capability):
     # --- arrange -----------------------------------------
-    absent = Capability(name="Something", extra="something", probe="counted_float_no_such_module")
-    present = Capability(name="Something", extra="something", probe="counted_float")
+    every_one_present = all(
+        metadata(name) is not None  # raises PackageNotFoundError when absent
+        for name in required_distributions(capability)
+    )
 
     # --- act / assert ------------------------------------
-    assert absent.is_available() is False
-    assert present.is_available() is True
+    assert is_available(capability) is every_one_present
+
+
+def test_a_distribution_that_is_not_installed_reads_as_absent():
+    # the branch every guard depends on, exercised directly rather than left to whichever CI leg
+    # happens to run without an extra
+    # --- act / assert ------------------------------------
+    assert optional_dependencies._is_installed("counted-float") is True
+    assert optional_dependencies._is_installed("no-such-distribution-anywhere") is False
+
+
+def test_an_undeclared_capability_is_rejected_rather_than_reported_absent():
+    # reporting False would let a typo'd name silently guard nothing at all
+    # --- act / assert ------------------------------------
+    with pytest.raises(UnknownCapabilityError, match="no-such-extra"):
+        is_available("no-such-extra")
+
+
+def test_the_message_names_the_extra_to_install():
+    # --- act ---------------------------------------------
+    message = missing_message(CAP_CLI)
+
+    # --- assert ------------------------------------------
+    assert f"counted-float[{CAP_CLI}]" in message
 
 
 # =================================================================================================
 #  requires
 # =================================================================================================
-def test_requires_is_transparent_when_nothing_fails():
+def test_requires_is_transparent_when_the_capability_is_installed():
     # --- act ---------------------------------------------
     with requires(CAP_CLI):
         outcome = "ran"
@@ -115,29 +120,33 @@ def test_requires_is_transparent_when_nothing_fails():
     assert outcome == "ran"
 
 
-def test_requires_turns_a_failed_import_into_install_guidance():
+def test_requires_refuses_to_enter_the_block_without_the_extra(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(
+        "counted_float._core.compatibility._optional_dependencies.is_available",
+        lambda _: False,
+    )
+    entered = False
+
     # --- act / assert ------------------------------------
     with pytest.raises(MissingCapabilityError, match=r"counted-float\[cli\]"), requires(CAP_CLI):
-        import counted_float_no_such_module  # noqa: F401
+        entered = True  # pragma: no cover -- the guard must raise before the block runs
+
+    assert entered is False
 
 
-def test_requires_chains_the_original_error_rather_than_hiding_it():
-    # the guidance answers "what do I install"; the chained cause answers "what was actually missing",
-    # which is what makes a genuine bug inside the guarded import still diagnosable
-    # --- act ---------------------------------------------
-    with pytest.raises(MissingCapabilityError) as excinfo, requires(CAP_FLOPS_BENCHMARKING):
-        import counted_float_no_such_module  # noqa: F401
-
-    # --- assert ------------------------------------------
-    assert isinstance(excinfo.value.__cause__, ModuleNotFoundError)
-    assert excinfo.value.__cause__.name == "counted_float_no_such_module"
-
-
-def test_requires_lets_unrelated_failures_through():
-    # only import problems are a packaging story; anything else must surface as itself
+def test_requires_lets_a_genuine_error_inside_the_block_surface_as_itself():
+    # a precondition rather than a translated failure: once the extra is known to be present, a
+    # problem inside the block is a bug, not a packaging story, and must not be relabelled as one
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError, match="unrelated"), requires(CAP_CLI):
-        raise ValueError("unrelated")
+    with pytest.raises(ModuleNotFoundError, match="counted_float_no_such_module"), requires(CAP_CLI):
+        import counted_float_no_such_module  # noqa: F401
+
+
+def test_requires_rejects_an_undeclared_capability():
+    # --- act / assert ------------------------------------
+    with pytest.raises(UnknownCapabilityError), requires("no-such-extra"):
+        pass  # pragma: no cover -- the guard must raise before the block runs
 
 
 def test_missing_capability_is_an_import_error():

@@ -15,14 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from counted_float._core.compatibility import is_importable
+from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, is_available
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 GENERATOR = REPO_ROOT / "scripts" / "generate_machine_code_docs.py"
 
 
 @pytest.mark.skipif(
-    platform.machine() != "arm64" or not is_importable("numba") or os.environ.get("CI") is not None,
+    platform.machine() != "arm64" or not is_available(CAP_FLOPS_BENCHMARKING) or os.environ.get("CI") is not None,
     reason="listings are ARM64 machine code, need numba to regenerate, and are pinned to the "
     "regen machine's toolchain -- CI's macos runners are arm64 too, but their LLVM/numba may "
     "legitimately generate different code",

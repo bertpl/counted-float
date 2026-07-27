@@ -1,35 +1,14 @@
-"""Skip markers keyed on what the running environment can actually import.
+"""Skip markers keyed on the same capability check the runtime guards use.
 
-Tests come in three shapes here, and each gets a marker rather than an inline condition, so that a
-reader sees *why* a test is conditional without decoding a boolean:
-
-- needs an optional capability          -> ``@needs(CAP_X)``
-- needs numba specifically              -> ``@needs_numba`` / ``@needs_no_numba``
-
-numba gets its own pair because it is not a capability: it is shimmed, so its absence changes how
-fast and how accurate the benchmarks are, not whether they run. Both directions exist because the
-shim's own code paths are only reachable when the real thing is absent.
+A test that needs an optional feature asks the question exactly the way production asks it, so a
+test can never skip in an environment where the feature works, or run in one where it does not.
 """
 
 import pytest
 
-from counted_float._core.compatibility import Capability, is_importable
+from counted_float._core.compatibility import is_available, missing_message
 
 
-def needs(capability: Capability) -> pytest.MarkDecorator:
+def needs(capability: str) -> pytest.MarkDecorator:
     """Skip unless the extra behind this capability is installed."""
-    return pytest.mark.skipif(
-        not capability.is_available(),
-        reason=f'needs the "{capability.extra}" extra',
-    )
-
-
-needs_numba = pytest.mark.skipif(
-    not is_importable("numba"),
-    reason="needs real numba timings, not the identity-decorator shim",
-)
-
-needs_no_numba = pytest.mark.skipif(
-    is_importable("numba"),
-    reason="exercises the shim, which only stands in when numba is absent",
-)
+    return pytest.mark.skipif(not is_available(capability), reason=missing_message(capability))

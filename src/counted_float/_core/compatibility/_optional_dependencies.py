@@ -1,103 +1,120 @@
-"""Optional capabilities: what they are, whether they are available, and what to say when they are not.
+"""Optional capabilities, derived from the extras this package declares.
 
-A capability is a slice of this package that only works when an extra was installed. Each one is
-declared once below, and everything else — the runtime guards and the tests' skip conditions — goes
-through that declaration.
+A **capability** is an extra. `pyproject.toml` is the single source of truth for what capabilities
+exist and what each one needs, and this module reads that back from the installed distribution's own
+metadata rather than restating any of it:
 
-Two things are deliberately *not* declared here:
+- `Provides-Extra` -> the set of capabilities
+- the ``extra == '<name>'`` markers on `Requires-Dist` -> the distributions each capability needs
 
-- **Which third-party packages an extra installs.** That list lives in `pyproject.toml`, and
-  restating it in code would be a second copy to keep in sync, in the one place where being wrong is
-  silent. A capability instead names the module of *ours* that pulls those packages in, and asking
-  whether the capability is available means asking whether that module imports. It stays correct
-  when an extra gains or loses a package, because it never knew the packages to begin with.
-- **Which failure counts as a missing dependency.** `requires()` owns the one try/except in the
-  codebase; call sites state what they need and stay free of import bookkeeping.
+So adding a package to an extra needs no change here, and renaming an extra cannot leave a guard
+telling users to install something that no longer resolves. Guard sites name a capability and
+nothing else; `requires()` owns the only translation from a failed import into install guidance.
 
-The question a capability answers is importability, not packaging state. Someone who installs the
-base package and acquires the modules by another route has a working capability, and there is no
-reason to deny it because an extra was never named on the install line.
+**What is checked is installation, not importability.** The metadata names *distributions*, and an
+absent distribution cannot be mapped to the module names an import check would need — `py-cpuinfo`
+provides `cpuinfo`, and nothing on the system knows that once the package is gone. A distribution
+that is installed but broken therefore reads as present. Someone who acquires a package by a route
+other than our extra is unaffected: it is installed either way, which is the case that matters.
 """
 
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
-from dataclasses import dataclass
 from functools import cache
+from importlib.metadata import PackageNotFoundError, distribution, metadata
+
+_DISTRIBUTION_NAME = "counted-float"
+
+# The capabilities this codebase guards, so that a guard site names one of these rather than spelling
+# an extra out inline. These are the only packaging facts stated here: which extra covers which part
+# of the code, which is a statement no metadata can make for us. Every one is checked against the
+# declared extras before use, so a rename in pyproject.toml fails loudly instead of guarding nothing.
+CAP_CLI = "cli"
+CAP_FLOPS_BENCHMARKING = "numba"
+
+# `numpy>=2.1; (python_version == '3.13') and extra == 'benchmarking'` -> name `numpy`, extra
+# `benchmarking`. Version specifiers and environment markers are deliberately dropped: this answers
+# "is it here", and a leg-specific marker would make the answer depend on the interpreter.
+_REQUIREMENT_NAME = re.compile(r"^\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
+_EXTRA_MARKER = re.compile(r"""extra\s*==\s*['"]([^'"]+)['"]""")
 
 
 # =================================================================================================
-#  Importability
-# =================================================================================================
-@cache
-def is_importable(module_name: str) -> bool:
-    """Whether a module can actually be imported, cached for the life of the process.
-
-    Imports the module rather than looking for its spec: a distribution that is installed but
-    unimportable — a broken wheel, an ABI mismatch against the running interpreter — is not a
-    capability the caller can use, and reporting it as present would only move the failure later.
-    """
-    try:
-        __import__(module_name)
-    except ImportError:
-        return False
-    return True
-
-
-# =================================================================================================
-#  Capabilities
+#  Reading the declared extras
 # =================================================================================================
 class MissingCapabilityError(ImportError):
     """A capability was reached without the extra that makes it work."""
 
 
-@dataclass(frozen=True)
-class Capability:
-    """A part of this package that an extra has to be installed for."""
-
-    name: str
-    """Human-facing name, as it appears at the front of the guard message."""
-
-    extra: str
-    """The extra that makes this capability work, as declared in the project metadata."""
-
-    probe: str
-    """The module of ours whose import needs that extra — the capability in one importable name."""
-
-    def is_available(self) -> bool:
-        """Whether this capability can be used in the running environment."""
-        return is_importable(self.probe)
-
-    def missing_message(self) -> str:
-        """The actionable install line shown when the capability is reached without its extra."""
-        return f'{self.name} requires the "{self.extra}" extra: pip install "counted-float[{self.extra}]"'
+class UnknownCapabilityError(LookupError):
+    """A capability was named that this package does not declare as an extra."""
 
 
-CAP_CLI = Capability(
-    name="The counted_float CLI",
-    extra="cli",
-    probe="counted_float._core._cli",
-)
+@cache
+def capabilities() -> frozenset[str]:
+    """Every capability this package declares, i.e. every extra it can be installed with."""
+    return frozenset(metadata(_DISTRIBUTION_NAME).get_all("Provides-Extra") or ())
 
-CAP_FLOPS_BENCHMARKING = Capability(
-    name="The flops benchmark suite",
-    extra="numba",
-    probe="counted_float._core.benchmarking.flops",
-)
+
+@cache
+def required_distributions(capability: str) -> frozenset[str]:
+    """The distributions a capability needs, as named by the extra that installs them."""
+    _check_declared(capability)
+    requirements = metadata(_DISTRIBUTION_NAME).get_all("Requires-Dist") or []
+    return frozenset(
+        name.group(1)
+        for requirement in requirements
+        if (marker := _EXTRA_MARKER.search(requirement)) and marker.group(1) == capability
+        if (name := _REQUIREMENT_NAME.match(requirement))
+    )
+
+
+def _check_declared(capability: str) -> None:
+    """Reject a capability this package does not declare, rather than silently guarding nothing."""
+    if capability not in capabilities():
+        declared = ", ".join(sorted(capabilities()))
+        raise UnknownCapabilityError(f"{capability!r} is not a declared extra; this package has: {declared}")
+
+
+# =================================================================================================
+#  Asking whether a capability is usable
+# =================================================================================================
+@cache
+def _is_installed(distribution_name: str) -> bool:
+    """Whether a distribution is present in the running environment."""
+    try:
+        distribution(distribution_name)
+    except PackageNotFoundError:
+        return False
+    return True
+
+
+@cache
+def is_available(capability: str) -> bool:
+    """Whether every distribution this capability needs is installed."""
+    return all(_is_installed(name) for name in required_distributions(capability))
+
+
+def missing_message(capability: str) -> str:
+    """The actionable install line shown when a capability is reached without its extra."""
+    _check_declared(capability)
+    return f'This feature requires the "{capability}" extra: pip install "{_DISTRIBUTION_NAME}[{capability}]"'
 
 
 # =================================================================================================
 #  Guarding a capability's entry point
 # =================================================================================================
 @contextmanager
-def requires(capability: Capability) -> Iterator[None]:
-    """Turn a failed import inside the block into this capability's install guidance.
+def requires(capability: str) -> Iterator[None]:
+    """Refuse to enter the block unless the capability is installed, naming what to install if not.
 
-    Wrap the import that reaches the capability, and nothing else — everything inside is code that
-    only runs when the extra is present, so any import that fails there is that extra missing. The
-    original error is chained rather than discarded, so the module that was actually absent stays
-    one line down the traceback.
+    A precondition rather than a translated failure: the block runs only once the extra is known to
+    be present, so a genuine error inside it surfaces as itself instead of being relabelled as a
+    packaging problem.
     """
-    try:
-        yield
-    except ImportError as e:
-        raise MissingCapabilityError(capability.missing_message()) from e
+    _check_declared(capability)
+    if not is_available(capability):
+        raise MissingCapabilityError(missing_message(capability))
+
+    yield

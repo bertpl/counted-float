@@ -51,7 +51,7 @@ def run_flops_benchmark(
     """Run the flops benchmark suite (round-robin interleaved) and return a FlopsBenchmarkResults object.
 
     An optional seed makes input pools and per-round shuffles reproducible. Progress output is
-    printed unless verbose is False; a missing-numba RuntimeWarning is emitted regardless.
+    printed unless verbose is False.
     """
     flops_benchmark_suite: type[FlopsBenchmarkSuite] = import_flops().FlopsBenchmarkSuite
 
