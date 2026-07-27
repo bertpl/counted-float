@@ -69,7 +69,7 @@ runs:
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
-          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev pytest ./tests $COV_FLAG --durations=20
+          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --no-default-groups --group test pytest ./tests $COV_FLAG --durations=20
 
       - name: Dump collected node-ids (for the cross-combo test-count union)
         if: inputs.coverage == 'true'
@@ -83,7 +83,7 @@ runs:
           [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
           # -o addopts="" clears `-n auto`, so collection runs single-process (xdist off);
           # each combo records its own collected set so the coverage job can union them.
-          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --group dev \
+          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --no-default-groups --group test \
             pytest ./tests --collect-only -q -o addopts="" \
             | grep '::' > "test-ids-${RUNNER_OS}-${PY}-${RES}-${EXTRAS}.txt"
 
