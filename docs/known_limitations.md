@@ -112,7 +112,7 @@ up in that output.
   process-wide); plain-float calls still take the fast path, and counts always
   land in the thread performing the operation. Free-threaded builds (3.14t) are
   supported and covered by CI; counting there needs no lock, since each thread
-  mutates only its own state. Note that the `numba` extra requires **numba
+  mutates only its own state. Note that the `benchmarking` extra requires **numba
   0.65 or newer** on a free-threaded build — earlier versions ship no
   free-threaded wheels
 - dict/set membership of `CountedFloat` keys inflates `COMP`: hash-bucket

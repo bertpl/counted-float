@@ -12,16 +12,31 @@ computational cost in cases where benchmarking a compiled version (C, Rust,
 
 ## Installation
 
-Use your favorite package manager such as `uv` or `pip`:
+Use your favorite package manager such as `uv` or `pip`. What you install decides which of
+the three capabilities you get:
 
 ```
-pip install counted-float           # install without numba optional dependency
-pip install counted-float[numba]    # install with numba optional dependency
+pip install counted-float                  # counting
+pip install counted-float[benchmarking]    # + measure this machine's flop costs
+pip install counted-float[cli]             # + the counted_float command
 ```
 
-Numba is optional due to its relatively large size (40-50MB, including
-llvmlite), but without it, benchmarks will not be reliable (they will still
-run, but not in jit-compiled form).
+**Counting** is the base install and needs nothing else. Building `CountedFloat`
+values, counting contexts, the built-in flop weights, reading benchmark results
+shipped with the package, and evaluating what counting costs you on your own
+workload all work here. It is about 17 MB installed.
+
+**Benchmarking** measures *your machine* — running the flop benchmark suite to
+derive weights for the hardware you are on, rather than using the shipped
+consensus ones. It needs compiled probes and the packages that describe a CPU,
+which is most of the install size: with it, expect roughly 180 MB. Without the
+extra, reaching the suite tells you what to install rather than failing
+obscurely, and nothing else is affected.
+
+**The CLI** adds the `counted_float` command. The command is always installed;
+without the extra it reports what to install instead of producing a traceback.
+
+Extras compose, so `counted-float[benchmarking,cli]` gets you everything.
 
 ## Where to go next
 

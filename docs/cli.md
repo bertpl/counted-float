@@ -6,8 +6,8 @@ An alternative way of using (parts of) the functionality is installing the
 package as a stand-alone command-line tool using `uv` or `pipx`:
 
 ```
-uv tool install git+https://github.com/bertpl/counted-float@main[numba,cli]         # latest official release
-uv tool install git+https://github.com/bertpl/counted-float@develop[numba,cli]      # or latest develop version
+uv tool install git+https://github.com/bertpl/counted-float@main[benchmarking,cli]         # latest official release
+uv tool install git+https://github.com/bertpl/counted-float@develop[benchmarking,cli]      # or latest develop version
 ```
 
 This installs the `counted_float` command-line tool, which can be used to e.g.
