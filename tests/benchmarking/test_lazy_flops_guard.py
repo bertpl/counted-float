@@ -15,9 +15,8 @@ import textwrap
 
 import pytest
 
-import counted_float._core.compatibility._optional_dependencies as optional_dependencies
 from counted_float._core import benchmarking
-from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, MissingCapabilityError
+from counted_float._core.compatibility import Capability, MissingCapabilityError
 from tests._capabilities import needs
 
 _BLOCK_BENCHMARKING_MODULES = """
@@ -49,7 +48,7 @@ def _run_without_benchmarking_modules(body: str) -> subprocess.CompletedProcess[
 @pytest.fixture
 def extra_not_installed(monkeypatch):
     """Make every capability read as absent, as it would be on an install without the extra."""
-    monkeypatch.setattr(optional_dependencies, "is_available", lambda _: False)
+    monkeypatch.setattr(Capability, "is_available", lambda _: False)
 
 
 # =================================================================================================
@@ -123,7 +122,7 @@ def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkey
 
     # --- act / assert ------------------------------------
     with pytest.raises(MissingCapabilityError):
-        benchmarking.import_flops()
+        _ = benchmarking.FlopsBenchmarkSuite
 
     assert "counted_float._core.benchmarking.flops" not in sys.modules
 
@@ -131,13 +130,15 @@ def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkey
 # =================================================================================================
 #  with the extra present
 # =================================================================================================
-@needs(CAP_FLOPS_BENCHMARKING)
+@needs(Capability.FLOPS_BENCHMARKING)
 def test_the_hook_resolves_the_real_suite():
     # --- act ---------------------------------------------
     suite = benchmarking.FlopsBenchmarkSuite
 
     # --- assert ------------------------------------------
-    assert suite is benchmarking.import_flops().FlopsBenchmarkSuite
+    from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite
+
+    assert suite is FlopsBenchmarkSuite
 
 
 def test_an_unknown_attribute_still_raises_attribute_error():

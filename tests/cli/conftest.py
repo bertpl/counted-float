@@ -5,6 +5,6 @@ time rather than as a skip marker. `test_cli_main.py` stays: the entry point is 
 unconditionally, and most of what it asserts is what happens when the extra is absent.
 """
 
-from counted_float._core.compatibility import CAP_CLI, is_available
+from counted_float._core.compatibility import Capability
 
-collect_ignore = [] if is_available(CAP_CLI) else ["test_cli.py"]
+collect_ignore = [] if Capability.CLI.is_available() else ["test_cli.py"]

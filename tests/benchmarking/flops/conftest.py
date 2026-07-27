@@ -5,6 +5,6 @@ would come too late — the import has already failed by then. Hence a collectio
 glob matches every test module in this directory.
 """
 
-from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, is_available
+from counted_float._core.compatibility import Capability
 
-collect_ignore_glob = [] if is_available(CAP_FLOPS_BENCHMARKING) else ["*.py"]
+collect_ignore_glob = [] if Capability.FLOPS_BENCHMARKING.is_available() else ["*.py"]

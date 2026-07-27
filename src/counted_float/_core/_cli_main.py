@@ -8,13 +8,13 @@ instead of a raw traceback.
 
 import sys
 
-from counted_float._core.compatibility import CAP_CLI, MissingCapabilityError, requires
+from counted_float._core.compatibility import Capability, MissingCapabilityError
 
 
 def main() -> None:
     """Run the click-based CLI, or exit with install guidance when click is missing."""
     try:
-        with requires(CAP_CLI):
+        with Capability.CLI.required():
             from counted_float._core._cli import cli
     except MissingCapabilityError as e:
         # a console script printing a traceback is a worse answer than the message itself

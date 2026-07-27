@@ -6,9 +6,9 @@ test can never skip in an environment where the feature works, or run in one whe
 
 import pytest
 
-from counted_float._core.compatibility import is_available, missing_message
+from counted_float._core.compatibility import Capability
 
 
-def needs(capability: str) -> pytest.MarkDecorator:
+def needs(capability: Capability) -> pytest.MarkDecorator:
     """Skip unless the extra behind this capability is installed."""
-    return pytest.mark.skipif(not is_available(capability), reason=missing_message(capability))
+    return pytest.mark.skipif(not capability.is_available(), reason=capability.missing_message())
