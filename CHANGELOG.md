@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- the float-vs-`CountedFloat` benchmark no longer prints a cycles column that silently reported nanoseconds whenever the CPU frequency could not be read
+
 ### Security
 
 ## 2.0.5 (2026-07-26)

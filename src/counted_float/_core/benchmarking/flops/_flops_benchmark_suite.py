@@ -12,7 +12,7 @@ from counted_float._core.models import (
     Quantiles,
     SystemInfo,
 )
-from counted_float._core.utils import get_cpu_frequency_mhz_current
+from counted_float._core.utils import NOMINAL_CPU_FREQ_MHZ, get_cpu_frequency_mhz_current
 
 from ._array_generator import ArrayGenerator
 from ._flops_micro_benchmark import FlopsMicroBenchmark
@@ -80,6 +80,10 @@ class FlopsBenchmarkSuite:
             n_rounds_measure=n_rounds_measure,
             n_rounds_warmup=n_rounds_warmup,
             seed=seed,
+            # absolute per-op cost is this suite's deliverable, so it is the caller that wants cycles --
+            # and the one that accepts the nominal stand-in when the real clock cannot be read, having
+            # warned about it above
+            cpu_freq_source=lambda: get_cpu_frequency_mhz_current() or NOMINAL_CPU_FREQ_MHZ,
         )
         raw_results = runner.run()
 

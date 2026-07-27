@@ -10,13 +10,15 @@ class SingleRunResult(JsonReprModel):
 
     n_executions: int
     t_nsecs: float  # total elapsed time in nanoseconds
-    t_cycles: float  # total elapsed time in cpu cycles (using psutil.cpu_freq().current)
+    # total elapsed time in cpu cycles, or None when the caller supplied no CPU frequency --
+    # timing is what this records, and cycles are a view only a caller that knows the clock can ask for
+    t_cycles: float | None
 
     def nsecs_per_exec(self) -> float:
         return self.t_nsecs / self.n_executions
 
-    def cycles_per_exec(self) -> float:
-        return self.t_cycles / self.n_executions
+    def cycles_per_exec(self) -> float | None:
+        return None if self.t_cycles is None else self.t_cycles / self.n_executions
 
 
 class Quantiles(JsonReprModel):
@@ -55,8 +57,15 @@ class MicroBenchmarkResult(JsonReprModel):
         return quantile([el.nsecs_per_exec() for el in self.benchmark_runs], q)
 
     def get_cycles_per_exec_quantile(self, q: float) -> float:
-        """Returns a specific quantile of all results in the 'benchmark_runs' category expressed as cycles/execution."""
-        return quantile([el.cycles_per_exec() for el in self.benchmark_runs], q)
+        """Returns a specific quantile of all results in the 'benchmark_runs' category expressed as cycles/execution.
+
+        Only meaningful when every run carries a CPU frequency; asking otherwise is a caller error
+        rather than a reason to invent a nominal clock.
+        """
+        per_exec = [el.cycles_per_exec() for el in self.benchmark_runs]
+        if any(value is None for value in per_exec):
+            raise ValueError("these runs were measured without a CPU frequency, so they have no cycle counts")
+        return quantile([value for value in per_exec if value is not None], q)
 
     def summary_stats_nsecs_per_exec(self) -> Quantiles:
         # summary statistics of nsecs_per_exec
@@ -66,6 +75,10 @@ class MicroBenchmarkResult(JsonReprModel):
             q50=self.get_nsecs_per_exec_quantile(q=0.50),
             q75=self.get_nsecs_per_exec_quantile(q=0.75),
         )
+
+    def has_cycle_counts(self) -> bool:
+        """Whether these runs were measured against a known CPU frequency."""
+        return all(el.t_cycles is not None for el in self.benchmark_runs)
 
     def summary_stats_cycles_per_exec(self) -> Quantiles:
         # summary statistics of cycles_per_exec

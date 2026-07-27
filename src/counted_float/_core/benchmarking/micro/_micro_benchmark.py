@@ -6,9 +6,7 @@ from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 from counted_float._core.utils import (
     Timer,
     convert_nsecs_to_cycles,
-    format_latency,
     format_time_duration,
-    get_cpu_frequency_mhz_current,
 )
 
 
@@ -90,10 +88,8 @@ class MicroBenchmark(ABC):
 
         # display duration estimates
         stats_nsecs = benchmark_result.summary_stats_nsecs_per_exec()
-        stats_cycles = benchmark_result.summary_stats_cycles_per_exec()
         s_time_duration = f"{format_time_duration(stats_nsecs.q50)}{stats_nsecs.format_uncertainty_suffix()}"
-        s_latency = f"{format_latency(stats_cycles.q50)}{stats_cycles.format_uncertainty_suffix()}"
-        console.print(f"   [{s_time_duration} | {s_latency} ]  /  {self.single_execution}")
+        console.print(f"   [{s_time_duration} ]  /  {self.single_execution}")
 
         # return final result
         return benchmark_result
@@ -126,7 +122,9 @@ class MicroBenchmark(ABC):
         return SingleRunResult(
             n_executions=n_executions,
             t_nsecs=t.t_elapsed_nsec(),
-            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=cpu_freq_mhz),
+            t_cycles=None
+            if cpu_freq_mhz is None
+            else convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=cpu_freq_mhz),
         )
 
     def run_once(self, n_executions: int) -> SingleRunResult:
@@ -145,7 +143,7 @@ class MicroBenchmark(ABC):
         return SingleRunResult(
             n_executions=n_executions,
             t_nsecs=t.t_elapsed_nsec(),
-            t_cycles=convert_nsecs_to_cycles(nsec=t.t_elapsed_nsec(), cpu_freq_mhz=get_cpu_frequency_mhz_current()),
+            t_cycles=None,
         )
 
     @abstractmethod
