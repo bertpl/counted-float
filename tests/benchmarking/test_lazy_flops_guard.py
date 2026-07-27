@@ -8,6 +8,11 @@ import subprocess
 import sys
 import textwrap
 
+import pytest
+
+from counted_float._core import benchmarking
+from counted_float._core.compatibility import FLOPS_BENCHMARKING
+
 _BLOCK_BENCHMARKING_MODULES = """
     import sys
 
@@ -114,6 +119,38 @@ def test_running_the_flops_benchmark_reports_the_same_guidance():
     # --- assert ------------------------------------------
     assert result.returncode == 0, result.stderr
     assert "counted-float[" in result.stdout
+
+
+@pytest.mark.skipif(
+    not FLOPS_BENCHMARKING.is_importable(),
+    reason="the resolving path needs the modules present; the guarded paths are covered above",
+)
+def test_the_hook_resolves_the_real_suite_when_the_modules_are_there():
+    # the happy path of the lazy hook: everything else here exercises it while something is missing
+    # --- act ---------------------------------------------
+    suite = benchmarking.FlopsBenchmarkSuite
+
+    # --- assert ------------------------------------------
+    assert suite is benchmarking.import_flops().FlopsBenchmarkSuite
+
+
+def test_an_unrelated_import_failure_passes_through_untranslated(monkeypatch):
+    # only a missing benchmarking dependency earns the install message; anything else that goes wrong
+    # while importing the sub-package must surface as itself, not be relabelled as a packaging problem
+    # --- arrange -----------------------------------------
+    # a None entry makes the import machinery raise for this module and nothing else, and monkeypatch
+    # puts the real entry back afterwards -- no purging of the already-imported package. The parent's
+    # attribute goes too: once the sub-package has been imported anywhere, `from . import flops`
+    # resolves it straight off the parent and never reaches sys.modules at all.
+    monkeypatch.delattr(benchmarking, "flops", raising=False)
+    monkeypatch.setitem(sys.modules, "counted_float._core.benchmarking.flops", None)
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ModuleNotFoundError) as excinfo:
+        benchmarking.import_flops()
+
+    assert "counted-float[" not in str(excinfo.value)
+    assert excinfo.value.name == "counted_float._core.benchmarking.flops"
 
 
 def test_an_unknown_attribute_still_raises_attribute_error():

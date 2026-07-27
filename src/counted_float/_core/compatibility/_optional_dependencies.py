@@ -72,8 +72,13 @@ CLI = OptionalCapability(
 FLOPS_BENCHMARKING = OptionalCapability(
     name="The flops benchmark suite",
     extra="numba",
-    # numpy, psutil and cpuinfo are still base dependencies, so only numba can be missing today.
-    # They are named here because this is what the capability reaches, independently of which
-    # install tier currently ships them.
-    modules=("numba", "numpy", "psutil", "cpuinfo"),
+    # Deliberately without numba, even though the same extra installs it: numba is shimmed, so its
+    # absence costs accuracy rather than availability -- the suite still imports and still runs, and
+    # the shim's own code paths are exercised precisely by running these tests without it. Listing
+    # it here would make the capability read as unavailable whenever numba is missing, which silently
+    # takes the shim's test coverage with it. Its absence is asked about via is_numba_importable().
+    #
+    # These three are still base dependencies, so none of them can be missing today. They are named
+    # because this is what the capability reaches, independently of which tier currently ships them.
+    modules=("numpy", "psutil", "cpuinfo"),
 )

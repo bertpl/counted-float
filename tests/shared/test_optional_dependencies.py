@@ -90,4 +90,12 @@ def test_the_declared_capabilities_cover_the_modules_their_guards_translate():
     # silently turn its actionable message back into a raw ModuleNotFoundError
     # --- act / assert ------------------------------------
     assert CLI.modules == ("click",)
-    assert set(FLOPS_BENCHMARKING.modules) == {"numba", "numpy", "psutil", "cpuinfo"}
+    assert set(FLOPS_BENCHMARKING.modules) == {"numpy", "psutil", "cpuinfo"}
+
+
+def test_the_flops_capability_does_not_hinge_on_numba():
+    # numba is shimmed, so the suite is available without it -- only less accurate. Listing it as a
+    # required module would report the capability as absent on every numba-free run, and the shim's
+    # own paths are exactly what those runs exist to cover.
+    # --- act / assert ------------------------------------
+    assert "numba" not in FLOPS_BENCHMARKING.modules
