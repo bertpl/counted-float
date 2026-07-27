@@ -4,7 +4,7 @@ from importlib.metadata import version
 
 from counted_float._core.benchmarking._output import console
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner
-from counted_float._core.compatibility import is_numba_importable
+from counted_float._core.compatibility import is_importable
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkResults,
@@ -56,7 +56,7 @@ class FlopsBenchmarkSuite:
         """
         # a missing numba yields unusable results -- always surface it (regardless of console
         # verbosity) through the warnings machinery, so callers can filter or escalate it
-        if not is_numba_importable():
+        if not is_importable("numba"):
             warnings.warn(
                 "'numba' is not installed; FLOPS benchmark results will be wildly inaccurate "
                 "and unusable. Install the optional dependency with pip install 'counted-float[numba]'.",

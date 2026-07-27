@@ -1,15 +1,15 @@
-"""Skip this directory whole when the flops benchmarking modules are not importable.
+"""Drop this directory from collection when the flops benchmarking extra is not installed.
 
-Every module here imports the flops sub-package at module level, and that sub-package is exactly
-what the benchmarking extra gates — so the condition belongs at the directory rather than being
-restated in each file. Collection-time ignoring rather than a skip marker, because the import that
-would fail happens while the module is being collected.
+Every module here imports the flops sub-package while it is being *collected*, so a skip marker
+would come too late — the import has already failed by the time markers are consulted. Hence a
+collection-time ignore: the glob below matches every test module in this directory.
 
-The condition deliberately does not include numba. These tests must keep running without it: the
-shim that stands in for it is only exercised here, so skipping on its absence would drop the shim's
-coverage rather than protect anything.
+Availability is the capability's own question, which is "does the flops sub-package import" — so
+this stays right when the extra gains or loses a package. It is deliberately not a question about
+numba: numba is shimmed, and the shim's code paths are exercised precisely by the runs that have no
+numba, so keying on it would drop that coverage rather than protect anything.
 """
 
-from counted_float._core.compatibility import FLOPS_BENCHMARKING
+from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING
 
-collect_ignore_glob = [] if FLOPS_BENCHMARKING.is_importable() else ["*.py"]
+collect_ignore_glob = [] if CAP_FLOPS_BENCHMARKING.is_available() else ["*.py"]

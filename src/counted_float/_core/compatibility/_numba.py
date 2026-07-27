@@ -33,8 +33,3 @@ else:
         njit = dummy_decorator
 
     numba = Numba  # ty: ignore[invalid-assignment] -- module-shaped stand-in for the absent optional module
-
-
-def is_numba_importable() -> bool:
-    """Whether the real numba is in use, as opposed to the identity-decorator shim above."""
-    return is_importable("numba")

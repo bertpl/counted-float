@@ -1,7 +1,7 @@
-"""The flops suite is reached lazily, so an install without its modules gets guidance, not a traceback.
+"""The flops suite is reached lazily, so an install without the extra gets guidance, not a traceback.
 
-These run in a subprocess with the benchmarking modules made unimportable, which is the only way to
-exercise the guard from an environment that does have them installed.
+The subprocess cases run in a fresh interpreter with the benchmarking modules made unimportable,
+which is the only way to exercise the guard from an environment that does have them installed.
 """
 
 import subprocess
@@ -11,7 +11,8 @@ import textwrap
 import pytest
 
 from counted_float._core import benchmarking
-from counted_float._core.compatibility import FLOPS_BENCHMARKING
+from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, MissingCapabilityError
+from tests._capabilities import needs
 
 _BLOCK_BENCHMARKING_MODULES = """
     import sys
@@ -40,7 +41,7 @@ def _run_without_benchmarking_modules(body: str) -> subprocess.CompletedProcess[
 
 
 # =================================================================================================
-#  what stays reachable
+#  what stays reachable without the extra
 # =================================================================================================
 def test_counting_works_without_the_benchmarking_modules():
     # --- act ---------------------------------------------
@@ -94,7 +95,7 @@ def test_reaching_the_flops_suite_names_the_extra_that_installs_it():
 
         try:
             benchmarking.FlopsBenchmarkSuite
-        except ModuleNotFoundError as e:
+        except ImportError as e:
             print(e)
     """)
 
@@ -112,7 +113,7 @@ def test_running_the_flops_benchmark_reports_the_same_guidance():
 
         try:
             benchmarking.run_flops_benchmark()
-        except ModuleNotFoundError as e:
+        except ImportError as e:
             print(e)
     """)
 
@@ -121,11 +122,29 @@ def test_running_the_flops_benchmark_reports_the_same_guidance():
     assert "counted-float[" in result.stdout
 
 
-@pytest.mark.skipif(
-    not FLOPS_BENCHMARKING.is_importable(),
-    reason="the resolving path needs the modules present; the guarded paths are covered above",
-)
-def test_the_hook_resolves_the_real_suite_when_the_modules_are_there():
+def test_the_module_that_was_missing_stays_visible_behind_the_guidance():
+    # the guidance answers "what do I install"; the chained cause answers "what was actually absent",
+    # which is what keeps a genuine bug inside the guarded import diagnosable
+    # --- act ---------------------------------------------
+    result = _run_without_benchmarking_modules("""
+        from counted_float._core import benchmarking
+
+        try:
+            benchmarking.FlopsBenchmarkSuite
+        except ImportError as e:
+            print(type(e.__cause__).__name__, e.__cause__.name)
+    """)
+
+    # --- assert ------------------------------------------
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "ModuleNotFoundError numpy"
+
+
+# =================================================================================================
+#  with the extra present
+# =================================================================================================
+@needs(CAP_FLOPS_BENCHMARKING)
+def test_the_hook_resolves_the_real_suite():
     # the happy path of the lazy hook: everything else here exercises it while something is missing
     # --- act ---------------------------------------------
     suite = benchmarking.FlopsBenchmarkSuite
@@ -134,37 +153,22 @@ def test_the_hook_resolves_the_real_suite_when_the_modules_are_there():
     assert suite is benchmarking.import_flops().FlopsBenchmarkSuite
 
 
-def test_an_unrelated_import_failure_passes_through_untranslated(monkeypatch):
-    # only a missing benchmarking dependency earns the install message; anything else that goes wrong
-    # while importing the sub-package must surface as itself, not be relabelled as a packaging problem
+def test_an_unknown_attribute_still_raises_attribute_error():
+    # the hook must not turn every miss into an import attempt
+    # --- act / assert ------------------------------------
+    with pytest.raises(AttributeError, match="NoSuchThing"):
+        _ = benchmarking.NoSuchThing
+
+
+def test_a_broken_sub_package_is_reported_as_a_missing_extra(monkeypatch):
+    # `requires` attributes any import failure in the block to the extra, because the block wraps
+    # exactly the import that needs it. A None entry makes that import fail without disturbing the
+    # already-imported package; the parent attribute goes too, since `from . import flops` resolves
+    # straight off the parent once the sub-package has been imported anywhere.
     # --- arrange -----------------------------------------
-    # a None entry makes the import machinery raise for this module and nothing else, and monkeypatch
-    # puts the real entry back afterwards -- no purging of the already-imported package. The parent's
-    # attribute goes too: once the sub-package has been imported anywhere, `from . import flops`
-    # resolves it straight off the parent and never reaches sys.modules at all.
     monkeypatch.delattr(benchmarking, "flops", raising=False)
     monkeypatch.setitem(sys.modules, "counted_float._core.benchmarking.flops", None)
 
     # --- act / assert ------------------------------------
-    with pytest.raises(ModuleNotFoundError) as excinfo:
+    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
         benchmarking.import_flops()
-
-    assert "counted-float[" not in str(excinfo.value)
-    assert excinfo.value.name == "counted_float._core.benchmarking.flops"
-
-
-def test_an_unknown_attribute_still_raises_attribute_error():
-    # the hook must not turn every miss into an import attempt
-    # --- act ---------------------------------------------
-    result = _run_without_benchmarking_modules("""
-        from counted_float._core import benchmarking
-
-        try:
-            benchmarking.NoSuchThing
-        except AttributeError as e:
-            print(e)
-    """)
-
-    # --- assert ------------------------------------------
-    assert result.returncode == 0, result.stderr
-    assert "NoSuchThing" in result.stdout

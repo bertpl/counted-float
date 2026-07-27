@@ -8,16 +8,17 @@ instead of a raw traceback.
 
 import sys
 
-from counted_float._core.compatibility import CLI
+from counted_float._core.compatibility import CAP_CLI, MissingCapabilityError, requires
 
 
 def main() -> None:
     """Run the click-based CLI, or exit with install guidance when click is missing."""
     try:
-        from counted_float._core._cli import cli
-    except ModuleNotFoundError as e:
-        if CLI.explains(e):
-            sys.stderr.write(f"{CLI.missing_dependency_message()}\n")
-            raise SystemExit(1) from None
-        raise
+        with requires(CAP_CLI):
+            from counted_float._core._cli import cli
+    except MissingCapabilityError as e:
+        # a console script printing a traceback is a worse answer than the message itself
+        sys.stderr.write(f"{e}\n")
+        raise SystemExit(1) from None
+
     cli()

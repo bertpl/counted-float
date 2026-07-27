@@ -10,7 +10,7 @@ its own package and stays eagerly available.
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from counted_float._core.compatibility import FLOPS_BENCHMARKING
+from counted_float._core.compatibility import CAP_FLOPS_BENCHMARKING, requires
 from counted_float._core.models import FlopsBenchmarkResults
 
 from ._output import console, output_quiet
@@ -30,17 +30,14 @@ def __getattr__(name: str) -> object:
 
 
 def import_flops() -> ModuleType:
-    """Import the flops sub-package, translating its missing dependencies into install guidance.
+    """Import the flops sub-package, reporting a missing extra as install guidance.
 
     The hook above only fires for attribute access from *outside* this module, so callers within it
     go through this function instead of naming the export directly.
     """
-    try:
+    with requires(CAP_FLOPS_BENCHMARKING):
         from . import flops
-    except ModuleNotFoundError as e:
-        if FLOPS_BENCHMARKING.explains(e):
-            raise ModuleNotFoundError(FLOPS_BENCHMARKING.missing_dependency_message(), name=e.name) from None
-        raise
+
     return flops
 
 

@@ -22,7 +22,7 @@ def test_run_flops_benchmark_warns_when_numba_missing(monkeypatch):
     """The missing-numba notice is a RuntimeWarning and fires even with progress silenced."""
 
     # --- arrange ----------------------
-    monkeypatch.setattr(_flops_benchmark_suite, "is_numba_importable", lambda: False)
+    monkeypatch.setattr(_flops_benchmark_suite, "is_importable", lambda _: False)
 
     # --- act / assert -----------------
     with pytest.warns(RuntimeWarning, match="numba"):

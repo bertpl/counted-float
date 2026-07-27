@@ -22,12 +22,12 @@ because the no-numba fallback path already warns that its results are unusable.
 import math
 from collections.abc import Callable
 
-from counted_float._core.compatibility import is_numba_importable, numba
+from counted_float._core.compatibility import is_importable, numba
 
 
 def _make_fma_single() -> Callable[[float, float, float], float]:
     """Build the fused multiply-add usable inside (or, without numba, instead of) an njit probe."""
-    if not is_numba_importable():
+    if not is_importable("numba"):
         if hasattr(math, "fma"):
             return math.fma
         return lambda x, y, z: x * y + z

@@ -1,4 +1,17 @@
-from counted_float._core.compatibility import CLI, FLOPS_BENCHMARKING, OptionalCapability, is_importable
+from importlib.metadata import metadata
+
+import pytest
+
+from counted_float._core.compatibility import (
+    CAP_CLI,
+    CAP_FLOPS_BENCHMARKING,
+    Capability,
+    MissingCapabilityError,
+    is_importable,
+    requires,
+)
+
+_ALL_CAPABILITIES = [CAP_CLI, CAP_FLOPS_BENCHMARKING]
 
 
 # =================================================================================================
@@ -48,54 +61,86 @@ def test_is_importable_caches_its_answer():
 
 
 # =================================================================================================
-#  OptionalCapability
+#  Capability declarations
 # =================================================================================================
-def test_capability_is_importable_requires_every_module():
+@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
+def test_every_capability_names_an_extra_the_package_actually_declares(capability):
+    # the extra's name is the one packaging fact these declarations restate, so it is the one that
+    # can drift -- renaming it in pyproject without touching this module would leave every guard
+    # telling users to install something that no longer exists
     # --- arrange -----------------------------------------
-    partly_present = OptionalCapability(
-        name="Something",
-        extra="something",
-        modules=("math", "counted_float_no_such_module"),
-    )
+    declared_extras = metadata("counted-float").get_all("Provides-Extra") or []
 
     # --- act / assert ------------------------------------
-    assert partly_present.is_importable() is False
+    assert capability.extra in declared_extras
 
 
-def test_capability_is_importable_true_when_all_modules_resolve():
-    # --- arrange -----------------------------------------
-    all_present = OptionalCapability(name="Something", extra="something", modules=("math", "json"))
-
+@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
+def test_every_capability_probes_a_module_of_ours(capability):
+    # probing one of our own modules rather than a third-party one is what keeps the package list out
+    # of the code; a probe pointing elsewhere would quietly reintroduce it
     # --- act / assert ------------------------------------
-    assert all_present.is_importable() is True
+    assert capability.probe.startswith("counted_float.")
 
 
-def test_capability_explains_only_its_own_missing_modules():
-    # --- act / assert ------------------------------------
-    assert CLI.explains(ModuleNotFoundError(name="click")) is True
-    assert CLI.explains(ModuleNotFoundError(name="something_unrelated")) is False
-
-
-def test_capability_message_names_the_extra_that_installs_it():
+@pytest.mark.parametrize("capability", _ALL_CAPABILITIES, ids=lambda c: c.extra)
+def test_the_message_names_the_capability_and_its_install_string(capability):
     # --- act ---------------------------------------------
-    message = FLOPS_BENCHMARKING.missing_dependency_message()
+    message = capability.missing_message()
 
     # --- assert ------------------------------------------
-    assert FLOPS_BENCHMARKING.name in message
-    assert f"counted-float[{FLOPS_BENCHMARKING.extra}]" in message
+    assert capability.name in message
+    assert f"counted-float[{capability.extra}]" in message
 
 
-def test_the_declared_capabilities_cover_the_modules_their_guards_translate():
-    # the guards match a failed import against these tuples, so a module dropping out of one would
-    # silently turn its actionable message back into a raw ModuleNotFoundError
+def test_availability_follows_the_probe():
+    # --- arrange -----------------------------------------
+    absent = Capability(name="Something", extra="something", probe="counted_float_no_such_module")
+    present = Capability(name="Something", extra="something", probe="counted_float")
+
     # --- act / assert ------------------------------------
-    assert CLI.modules == ("click",)
-    assert set(FLOPS_BENCHMARKING.modules) == {"numpy", "psutil", "cpuinfo"}
+    assert absent.is_available() is False
+    assert present.is_available() is True
 
 
-def test_the_flops_capability_does_not_hinge_on_numba():
-    # numba is shimmed, so the suite is available without it -- only less accurate. Listing it as a
-    # required module would report the capability as absent on every numba-free run, and the shim's
-    # own paths are exactly what those runs exist to cover.
+# =================================================================================================
+#  requires
+# =================================================================================================
+def test_requires_is_transparent_when_nothing_fails():
+    # --- act ---------------------------------------------
+    with requires(CAP_CLI):
+        outcome = "ran"
+
+    # --- assert ------------------------------------------
+    assert outcome == "ran"
+
+
+def test_requires_turns_a_failed_import_into_install_guidance():
     # --- act / assert ------------------------------------
-    assert "numba" not in FLOPS_BENCHMARKING.modules
+    with pytest.raises(MissingCapabilityError, match=r"counted-float\[cli\]"), requires(CAP_CLI):
+        import counted_float_no_such_module  # noqa: F401
+
+
+def test_requires_chains_the_original_error_rather_than_hiding_it():
+    # the guidance answers "what do I install"; the chained cause answers "what was actually missing",
+    # which is what makes a genuine bug inside the guarded import still diagnosable
+    # --- act ---------------------------------------------
+    with pytest.raises(MissingCapabilityError) as excinfo, requires(CAP_FLOPS_BENCHMARKING):
+        import counted_float_no_such_module  # noqa: F401
+
+    # --- assert ------------------------------------------
+    assert isinstance(excinfo.value.__cause__, ModuleNotFoundError)
+    assert excinfo.value.__cause__.name == "counted_float_no_such_module"
+
+
+def test_requires_lets_unrelated_failures_through():
+    # only import problems are a packaging story; anything else must surface as itself
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="unrelated"), requires(CAP_CLI):
+        raise ValueError("unrelated")
+
+
+def test_missing_capability_is_an_import_error():
+    # callers that already catch ImportError around an optional feature keep working
+    # --- act / assert ------------------------------------
+    assert issubclass(MissingCapabilityError, ImportError)
