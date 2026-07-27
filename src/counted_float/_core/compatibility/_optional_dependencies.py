@@ -90,7 +90,7 @@ class Capability(StrEnum):
 #  Reading the installed metadata
 # =================================================================================================
 @cache
-def declared_extras() -> frozenset[str]:
+def _declared_extras() -> frozenset[str]:
     """Every extra this package declares, i.e. every capability it can be installed with."""
     return frozenset(metadata(_DISTRIBUTION_NAME).get_all("Provides-Extra") or ())
 

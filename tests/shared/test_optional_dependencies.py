@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from counted_float._core.compatibility import Capability, MissingCapabilityError, declared_extras
+from counted_float._core.compatibility import Capability, MissingCapabilityError
+from counted_float._core.compatibility._optional_dependencies import _declared_extras
 
 _PYPROJECT = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
 
@@ -18,7 +19,7 @@ def test_the_declared_extras_are_read_from_the_installed_metadata():
     declared = set(metadata("counted-float").get_all("Provides-Extra") or [])
 
     # --- act / assert ------------------------------------
-    assert declared_extras() == declared
+    assert _declared_extras() == declared
 
 
 def test_the_declared_extras_match_pyproject_itself():
@@ -29,7 +30,7 @@ def test_the_declared_extras_match_pyproject_itself():
     declared_in_source = set(tomllib.loads(_PYPROJECT.read_text())["project"]["optional-dependencies"])
 
     # --- act / assert ------------------------------------
-    assert declared_extras() == declared_in_source
+    assert _declared_extras() == declared_in_source
 
 
 @pytest.mark.parametrize("capability", list(Capability), ids=lambda c: c.name)
@@ -38,7 +39,7 @@ def test_every_capability_names_an_extra_the_package_declares(capability):
     # Renaming an extra without updating them would leave a guard naming an install string that no
     # longer resolves.
     # --- act / assert ------------------------------------
-    assert capability.value in declared_extras()
+    assert capability.value in _declared_extras()
 
 
 def test_a_capability_can_be_looked_up_by_the_extra_name():
