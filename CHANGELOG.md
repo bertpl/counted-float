@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- running the flops benchmark suite now requires the `numba` extra; without it the suite says what to install instead of producing results it already warned were unusable
+
 ### Deprecated
 
 ### Removed

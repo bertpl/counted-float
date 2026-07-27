@@ -4,7 +4,6 @@ from importlib.metadata import version
 
 from counted_float._core.benchmarking._output import console
 from counted_float._core.benchmarking.micro import InterleavedBenchmarkRunner
-from counted_float._core.compatibility import is_numba_installed
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkResults,
@@ -51,19 +50,8 @@ class FlopsBenchmarkSuite:
         too-low CPU-frequency sample cannot select the worst conversion outlier).
         An optional seed makes input pools and round shuffles reproducible.
 
-        Progress goes to the shared benchmark console (silenced via output_quiet); the
-        missing-numba RuntimeWarning is emitted regardless of console verbosity.
+        Progress goes to the shared benchmark console (silenced via output_quiet).
         """
-        # a missing numba yields unusable results -- always surface it (regardless of console
-        # verbosity) through the warnings machinery, so callers can filter or escalate it
-        if not is_numba_installed():
-            warnings.warn(
-                "'numba' is not installed; FLOPS benchmark results will be wildly inaccurate "
-                "and unusable. Install the optional dependency with pip install 'counted-float[numba]'.",
-                RuntimeWarning,
-                stacklevel=2,
-            )
-
         # a missing CPU-frequency reading makes the ns->cycles conversion fall back to a nominal
         # 1 GHz (see convert_nsecs_to_cycles), so the reported per-op "cycle" figures are then really
         # nanoseconds -- surface that; only the derived flop-weight ratios (scale-invariant) stay valid

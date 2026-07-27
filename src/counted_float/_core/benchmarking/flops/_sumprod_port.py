@@ -14,24 +14,18 @@ contraction and turns the error term into a computed zero.  Declaring the LLVM i
 directly emits the fused instruction inline, with no fastmath flags involved, so contraction
 stays scoped to the FMA probes.
 
-Without numba the probes run as plain Python, so the fma degrades to ``math.fma`` where it
-exists (Python 3.13+) and to the double-rounded ``x * y + z`` before that -- acceptable only
-because the no-numba fallback path already warns that its results are unusable.
+That intrinsic is callable only from compiled code, which is one reason this sub-package requires
+numba outright rather than degrading without it: a plain-Python stand-in would have to substitute a
+double-rounded product and would then be measuring a different algorithm from the one it reports.
 """
 
-import math
 from collections.abc import Callable
 
-from counted_float._core.compatibility import is_numba_installed, numba
+import numba  # ty: ignore[unresolved-import] -- numba comes with the benchmarking extra, which this sub-package requires
 
 
 def _make_fma_single() -> Callable[[float, float, float], float]:
-    """Build the fused multiply-add usable inside (or, without numba, instead of) an njit probe."""
-    if not is_numba_installed():
-        if hasattr(math, "fma"):
-            return math.fma
-        return lambda x, y, z: x * y + z
-
+    """Build the fused multiply-add used inside the njit probes."""
     from llvmlite import ir  # ty: ignore[unresolved-import] -- ships with the optional numba dependency
     from numba.core import types  # ty: ignore[unresolved-import] -- numba is an optional dependency
     from numba.extending import intrinsic  # ty: ignore[unresolved-import] -- numba is an optional dependency
@@ -47,8 +41,8 @@ def _make_fma_single() -> Callable[[float, float, float], float]:
 
         return sig, codegen
 
-    # an @intrinsic object is only callable from numba-compiled code; the declared signature is
-    # the plain-Python contract the fallbacks above satisfy
+    # an @intrinsic object is only callable from numba-compiled code; the declared signature is the
+    # contract it satisfies there
     return fma_intrinsic  # ty: ignore[invalid-return-type]
 
 

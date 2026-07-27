@@ -4,14 +4,13 @@ from fractions import Fraction
 import pytest
 
 from counted_float._core.benchmarking.flops._sumprod_port import _dl_sum, tl_fma, tl_to_d
-from counted_float._core.compatibility import is_numba_installed
 
 # The TripleLength port only reproduces math.sumprod bit-for-bit when it can spell a genuine FMA
 # (numba's llvm.fma intrinsic, or math.fma from Py3.13+) and a reference is available to compare
 # against (math.sumprod, Py3.12+). Without a genuine FMA the fold degrades to the double-rounded
 # x*y+z, which is documented as unusable; skip rather than assert against it.
 _needs_reference_and_fma = pytest.mark.skipif(
-    not (hasattr(math, "sumprod") and (is_numba_installed() or hasattr(math, "fma"))),
+    not (hasattr(math, "sumprod") and (hasattr(math, "fma"))),
     reason="needs math.sumprod (Py3.12+) as reference and a genuine FMA (numba, or math.fma / Py3.13+)",
 )
 

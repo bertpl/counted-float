@@ -10,10 +10,11 @@ subclass ``float`` raise ``TypeError`` instead of silently producing uncounted r
 import operator
 from collections.abc import Callable
 
-import numpy as np
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext
+
+np = pytest.importorskip("numpy", reason="this module tests numpy interop specifically")
 
 _ARITHMETIC_OPS = [
     (operator.add, "ADD"),

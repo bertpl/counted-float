@@ -18,17 +18,6 @@ def test_run_flops_benchmark_verbose_false_is_silent(capsys):
     assert capsys.readouterr().out == ""
 
 
-def test_run_flops_benchmark_warns_when_numba_missing(monkeypatch):
-    """The missing-numba notice is a RuntimeWarning and fires even with progress silenced."""
-
-    # --- arrange ----------------------
-    monkeypatch.setattr(_flops_benchmark_suite, "is_numba_installed", lambda: False)
-
-    # --- act / assert -----------------
-    with pytest.warns(RuntimeWarning, match="numba"):
-        run_flops_benchmark(t_slice_target_ms=0.1, n_rounds_measure=5, n_rounds_warmup=1, seed=42, verbose=False)
-
-
 def test_run_flops_benchmark_warns_when_cpu_freq_unavailable(monkeypatch):
     """A missing CPU-frequency reading is surfaced as a RuntimeWarning, even with progress silenced."""
 

@@ -1,6 +1,5 @@
 from types import SimpleNamespace
 
-import psutil
 import pytest
 
 from counted_float._core.utils import (
@@ -9,6 +8,8 @@ from counted_float._core.utils import (
     get_cpu_frequency_mhz_min,
 )
 from counted_float._core.utils._cpu_freq import _get_psutil_cpu_freq_attribute_mhz
+
+psutil = pytest.importorskip("psutil", reason="these helpers read their frequencies through psutil")
 
 
 def test_get_cpu_frequency_mhz_min_max_current():

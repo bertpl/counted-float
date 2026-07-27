@@ -1,1 +1,1 @@
-from ._numba import is_numba_installed, numba
+from ._optional_dependencies import Capability, MissingCapabilityError

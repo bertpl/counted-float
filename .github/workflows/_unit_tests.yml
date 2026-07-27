@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   core:
-    name: py${{ matrix.python }} / ${{ matrix.resolution }} / numba-${{ matrix.all_extras }} / ${{ matrix.os }}
+    name: py${{ matrix.python }} / ${{ matrix.resolution }} / extras-${{ matrix.all_extras }} / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -26,8 +26,8 @@ jobs:
           - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,  python: "3.11", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-latest,  python: "3.14", resolution: lowest-direct, all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "false" }  # numba-absent shim
-          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "false" }  # numba-absent shim
+          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "false" }  # base install: no extras
+          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: macos-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest, python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           # Free-threaded build: counting state is per-thread, so this leg is where the
