@@ -5,18 +5,20 @@ from everything the counting path can reach. Keeping the two bit-identical is wh
 substitution rather than a change: previously collected results summarize to the same numbers, and
 the shipped weights derived from them stay reproducible.
 
-numpy is still available in the test environment, so the equivalence can be pinned against the real
-thing rather than against a table of expected values.
+Wherever numpy is available the equivalence is pinned against the real thing rather than against a
+table of expected values; where it is not, there is nothing left to compare against and the module
+skips.
 """
 
 import math
 
-import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
 from counted_float._core.utils import quantile
+
+np = pytest.importorskip("numpy", reason="the equivalence is pinned against the real numpy")
 
 _QUANTILES_USED = [0.10, 0.25, 0.50, 0.75]
 

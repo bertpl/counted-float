@@ -1,8 +1,7 @@
 import platform
 from importlib.metadata import PackageNotFoundError
 
-import cpuinfo
-import psutil
+import pytest
 
 import counted_float._core.models._flops_benchmark_meta_data as meta
 from counted_float._core.models._flops_benchmark_meta_data import (
@@ -13,6 +12,11 @@ from counted_float._core.models._flops_benchmark_meta_data import (
     PythonInfo,
     SystemInfo,
 )
+
+# the models themselves parse the shipped data without either module; only stamping the *running*
+# machine onto a fresh benchmark reads them, which is what this module exercises
+cpuinfo = pytest.importorskip("cpuinfo", reason="describing the running machine reads py-cpuinfo")
+psutil = pytest.importorskip("psutil", reason="describing the running machine reads psutil")
 
 
 # =================================================================================================

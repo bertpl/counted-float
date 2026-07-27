@@ -17,12 +17,13 @@ import operator
 from collections.abc import Callable
 from math import frexp
 
-import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from counted_float import CountedFloat, FlopCountingContext, FlopCounts
+
+np = pytest.importorskip("numpy", reason="the np.float64 operand arm needs numpy")
 
 # --- strategies ----------------------------------------------------------------------------------
 _nonzero_finite = st.floats(allow_nan=False, allow_infinity=False, width=64).filter(lambda v: v != 0.0)

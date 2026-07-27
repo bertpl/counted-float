@@ -4,6 +4,11 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
+# the generator drives numba probes, so it imports the benchmarking modules at module level
+pytest.importorskip("numpy", reason="the machine-code generator imports numpy at module level")
+
 _GENERATOR = Path(__file__).resolve().parent.parent.parent / "scripts" / "generate_machine_code_docs.py"
 _spec = importlib.util.spec_from_file_location("generate_machine_code_docs", _GENERATOR)
 generate_machine_code_docs = importlib.util.module_from_spec(_spec)

@@ -6,7 +6,7 @@ import pytest
 
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
 from counted_float._core.benchmarking.flops import _flops_probes as probes
-from counted_float._core.compatibility import is_numba_installed
+from counted_float._core.compatibility import is_numba_importable
 from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType, FlopType, FlopWeights
 
 
@@ -49,7 +49,7 @@ def test_flops_benchmarking_suite_rejects_too_small_arrays():
         suite.get_flops_benchmarking_suite(size=FlopsBenchmarkSuite.MIN_ARRAY_SIZE - 1)
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="arity-slope values need real numba timings, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="arity-slope values need real numba timings, not the shim")
 def test_suite_measures_the_arity_flop_types():
     """The arity probe pairs feed the base + per-extra-element flop types with sane, ordered latencies."""
     # --- arrange -----------------------------------------
@@ -70,7 +70,7 @@ def test_suite_measures_the_arity_flop_types():
     assert efl[FlopType.SUMPROD_XELEM] < efl[FlopType.SUMPROD]
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="probe execution needs real numba, not the shim")
 def test_remainder_probe_matches_math_remainder():
     """The ctypes-bound libm call must compute exactly what math.remainder computes.
 
@@ -92,7 +92,7 @@ def test_remainder_probe_matches_math_remainder():
         assert out_f[i] == tmp
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="probe execution needs real numba, not the shim")
 def test_cbrt_probe_matches_math_cbrt():
     """The ctypes-bound libm call must compute exactly what math.cbrt computes.
 
@@ -115,7 +115,7 @@ def test_cbrt_probe_matches_math_cbrt():
         assert out_f[i] == tmp
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="probe execution needs real numba, not the shim")
 @pytest.mark.skipif(not hasattr(math, "sumprod"), reason="the reference value needs math.sumprod (Python 3.12+)")
 @pytest.mark.parametrize("arity", [2, 8])
 def test_sumprod_probes_match_math_sumprod(arity: int):
@@ -145,7 +145,7 @@ def test_sumprod_probes_match_math_sumprod(arity: int):
         assert out_f[i] == tmp
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="probe execution needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="probe execution needs real numba, not the shim")
 @pytest.mark.parametrize("probe", [probes.f_add_gammabase_gamma, probes.f_add_gammabase_lgamma])
 def test_gamma_probes_never_overflow_even_on_a_wild_input_range(probe):
     """The sin bound must keep the gamma/lgamma chain finite regardless of the input magnitudes.
@@ -182,7 +182,7 @@ def _probe_assembly(benchmark: FlopsMicroBenchmark) -> str:
     return "\n".join(benchmark.f.inspect_asm().values())
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="assembly inspection needs real numba, not the shim")
 @pytest.mark.parametrize("benchmark_type", [FlopsBenchmarkType.FMA, FlopsBenchmarkType.FMA_FMA])
 def test_fma_probes_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmarkType):
     """Each multiply-add in the FMA probes must collapse into one fused instruction, leaving none behind.
@@ -205,7 +205,7 @@ def test_fma_probes_compile_to_fused_multiply_adds(benchmark_type: FlopsBenchmar
     assert not _UNFUSED_MUL_ADD.search(asm), "an unfused multiply or add survived in an FMA probe"
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="assembly inspection needs real numba, not the shim")
 @pytest.mark.parametrize("benchmark_type", [FlopsBenchmarkType.ADD_SUMPROD2, FlopsBenchmarkType.ADD_SUMPROD8])
 def test_sumprod_probes_emit_fused_error_terms(benchmark_type: FlopsBenchmarkType):
     """The sumprod probes' per-element error term must compile to a fused multiply-add.
@@ -225,7 +225,7 @@ def test_sumprod_probes_emit_fused_error_terms(benchmark_type: FlopsBenchmarkTyp
     assert _FUSED.search(asm), "the error term did not fuse: the probe is not the TripleLength algorithm"
 
 
-@pytest.mark.skipif(not is_numba_installed(), reason="assembly inspection needs real numba, not the shim")
+@pytest.mark.skipif(not is_numba_importable(), reason="assembly inspection needs real numba, not the shim")
 @pytest.mark.parametrize(
     "benchmark_type",
     [FlopsBenchmarkType.ADD, FlopsBenchmarkType.ADD_ADD, FlopsBenchmarkType.MUL, FlopsBenchmarkType.MUL_MUL],

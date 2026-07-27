@@ -1,15 +1,13 @@
 from collections.abc import Callable
 from typing import TypeVar, overload
 
+from ._optional_dependencies import is_importable
+
 _ProbeFn = TypeVar("_ProbeFn", bound=Callable[..., object])
 
-try:
+if is_importable("numba"):
     import numba  # ty: ignore[unresolved-import] -- numba is an optional dependency; shimmed below if absent
-
-    NUMBA_AVAILABLE = True
-except ImportError:
-    NUMBA_AVAILABLE = False
-
+else:
     # dummy decorator replacing numba.jit / numba.njit: identity in both call forms, so that
     # without numba the decorated probe keeps its original callable type rather than `object`
     @overload
@@ -37,5 +35,6 @@ except ImportError:
     numba = Numba  # ty: ignore[invalid-assignment] -- module-shaped stand-in for the absent optional module
 
 
-def is_numba_installed() -> bool:
-    return NUMBA_AVAILABLE
+def is_numba_importable() -> bool:
+    """Whether the real numba is in use, as opposed to the identity-decorator shim above."""
+    return is_importable("numba")
