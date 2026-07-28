@@ -24,7 +24,10 @@ runs:
 
       - name: Install dependencies
         shell: bash
-        run: uv sync --group dev
+        # --all-extras matters for ty rather than for the linters: it type-checks the code behind
+        # every extra, so a package sitting behind one still has to be resolvable here. This is what
+        # keeps CI's lint run equivalent to the local one, which syncs the same way.
+        run: uv sync --group dev --all-extras
 
       - name: Run pre-commit
         shell: bash

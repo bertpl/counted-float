@@ -29,7 +29,7 @@ build:
 	uv build;
 
 test:
-	# run all tests - with numba & just 1 python version. --exact prunes whatever a previous target
+	# run all tests - with all extras & just 1 python version. --exact prunes whatever a previous target
 	# installed, so this environment matches CI's rather than merely satisfying it; --no-default-groups
 	# is what actually narrows, since --group alone only adds to the default set.
 	uv run --exact --no-default-groups --group test --all-extras --python 3.13 pytest ./tests
