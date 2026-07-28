@@ -267,22 +267,12 @@ addopts = "-n auto --dist worksteal"
 # `mutants/` sandbox, so anything omitted becomes unimportable and test collection fails. The set of
 # files actually mutated is scoped by only_mutate below.
 source_paths = ["src/counted_float"]
-# Everything under _core except the hardware-timed benchmark loops; the pure-Python benchmark ports
-# are fast and tested, so they are in. (mutmut's globs match recursively, but the subfolders are
-# listed explicitly so the intent survives a version whose globbing is literal.)
-only_mutate = [
-    "src/counted_float/_core/counting/*.py",
-    "src/counted_float/_core/counting/config/*.py",
-    "src/counted_float/_core/counting/verbosity/*.py",
-    "src/counted_float/_core/compatibility/*.py",
-    "src/counted_float/_core/models/*.py",
-    "src/counted_float/_core/utils/*.py",
-    "src/counted_float/_core/_cli.py",
-    "src/counted_float/_core/_cli_main.py",
-    "src/counted_float/_core/benchmarking/flops/_sumprod_port.py",
-    "src/counted_float/_core/benchmarking/flops/_array_generator.py",
-    "src/counted_float/_core/benchmarking/flops/_libm_bindings.py",
-]
+# Mutation scope is defined by exclusion, never by inclusion. An inclusion list answers "what is in"
+# once, at the moment it is written, and then silently keeps answering it as the package moves
+# underneath -- a package added or renamed later is simply absent, and nothing anywhere says so. An
+# exclusion list rots the safe way instead: new code is in scope by default, and staying out costs
+# an entry with a reason next to it. The same rule governs the test selection further down.
+#
 # Excluded from mutation -- every surviving mutant here is a false signal, not a real gap:
 #   - _callsite.py is pure call-stack introspection, and mutmut runs tests through a trampoline that
 #     becomes the reported call site, so no test can exercise it.
@@ -292,31 +282,31 @@ only_mutate = [
 #     never exercises) by tests/counting/test_flop_weights_tree_view.py. What remains is purely
 #     cosmetic (color constants, column-packing widths) or equivalent (overwritten list inits, no-op
 #     strict= on always-equal-length zips), so pinning it would add churn, not signal.
+#   - _flops_probes.py holds the hardware-timed loops, which only ever execute compiled under numba.
+#     A mutant there changes what is measured rather than whether anything is correct, and no test
+#     can observe it -- the probes are vouched for by the machine-code drift test instead.
 do_not_mutate = [
     "src/counted_float/_core/counting/verbosity/_callsite.py",
     "src/counted_float/_core/counting/_flop_weights_tree_view.py",
+    "src/counted_float/_core/benchmarking/flops/_flops_probes.py",
 ]
 # -n 0 runs the suite serially (mutmut parallelizes across mutants itself); it overrides the
 # addopts `-n auto` -- `-p no:xdist` would instead make `-n` unrecognized and pytest refuse to start.
 # The --ignore/--deselect drop the tests that assert on the *real* call-site filename, which the
-# trampoline reports as `trampoline.py` (they pass under a normal `make test`).
+# trampoline reports as `trampoline.py` (they pass under a normal `make test`), plus tests/docs/,
+# which reads scripts/ and docs/ files mutmut does not copy into the sandbox.
 pytest_add_cli_args = [
     "-n", "0",
+    "--ignore=tests/docs",
     "--ignore=tests/counting/verbosity/test_callsite.py",
     "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_the_logged_line_reports_the_incrementing_location",
     "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_lines_without_a_note_carry_no_rationale",
     "--deselect=tests/counting/verbosity/test_info_counting.py::test_logged_lines_locate_the_user_expression_not_the_library",
     "--deselect=tests/counting/verbosity/test_uncounted_warnings.py::test_each_call_site_is_reported_separately",
 ]
-# Sandbox-safe unit tests only: tests/docs/ reads scripts/ and docs/ files mutmut does not copy in,
-# and the slow real-benchmark tests under tests/benchmarking/ are excluded (only the fast port tests).
-pytest_add_cli_args_test_selection = [
-    "tests/counting",
-    "tests/models",
-    "tests/utils",
-    "tests/shared",
-    "tests/cli",
-    "tests/benchmarking/flops/test_sumprod_port.py",
-    "tests/benchmarking/flops/test_array_generator.py",
-    "tests/benchmarking/flops/test_libm_bindings.py",
-]
+# The whole suite, minus what the sandbox genuinely cannot run (see --ignore above). Exclusion, not
+# inclusion, for the reason given at only_mutate's old home: a listed set of directories stops being
+# true the moment one is added, and it fails silently -- tests/evaluation/ and
+# tests/micro_benchmarking/ were invisible to mutmut from the day they were created, which is how
+# code with tests came to be reported as having none.
+pytest_add_cli_args_test_selection = ["tests"]
