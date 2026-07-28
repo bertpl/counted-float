@@ -22,13 +22,18 @@ def test_run_counted_float_benchmark_verbose_false_is_silent(capsys):
 # =================================================================================================
 #  the deprecated home
 # =================================================================================================
-def test_the_old_benchmarking_name_still_resolves_to_the_moved_function():
+def test_the_old_benchmarking_name_still_resolves_to_the_moved_function(monkeypatch):
     # what keeps this a minor version: an existing import line must not stop working
+    # --- arrange -----------------------------------------
+    import counted_float.benchmarking as public_benchmarking
+
+    # the alias binds itself on first use so it warns once per process; drop that binding so this
+    # test sees the warning regardless of whether something earlier in the session already tripped it
+    monkeypatch.delattr(public_benchmarking, "run_counted_float_benchmark", raising=False)
+
     # --- act ---------------------------------------------
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
-        import counted_float.benchmarking as public_benchmarking
-
         alias = public_benchmarking.run_counted_float_benchmark
 
     # --- assert ------------------------------------------
