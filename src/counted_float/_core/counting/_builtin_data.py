@@ -3,9 +3,9 @@ from __future__ import annotations
 import json
 from functools import cache
 from importlib.resources import files
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ValidationError
+from pydantic import TypeAdapter
 
 from counted_float._core.models import (
     FlopsBenchmarkResults,
@@ -16,10 +16,7 @@ from counted_float._core.models import (
 from ._flop_weights_tree_view import FlopWeightsTreeView
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
     from importlib.resources.abc import Traversable
-
-PydanticModelT = TypeVar("PydanticModelT", bound=BaseModel)
 
 DATA_PACKAGE = "counted_float.data"
 
@@ -33,6 +30,12 @@ PRECOMPUTED_WEIGHTS_FILE = "consensus_flop_weights.json"
 # a source tree is str-keyed all the way down: each level maps a name to either a deeper level or a
 # leaf FlopWeights. Recursive so the isinstance-driven descent below type-checks against itself.
 NestedFlopWeights = dict[str, "NestedFlopWeights | FlopWeights"]
+
+# Every source file is one of these two shapes. Their field sets are disjoint, so pydantic's
+# smart union resolves them on its own, and a file matching neither raises an error naming what
+# failed in each branch -- which a try-each-class loop can only approximate.
+_SourceFile = FlopsBenchmarkResults | InstructionLatencies
+_SOURCE_FILE_ADAPTER: TypeAdapter[_SourceFile] = TypeAdapter(_SourceFile)
 
 
 def _data_sources_root() -> Traversable:
@@ -99,7 +102,7 @@ class BuiltInData:
     @classmethod
     def benchmarks(cls) -> dict[str, FlopsBenchmarkResults]:
         return {
-            key: _deserialize_as_any_pydantic_class(json_str, [FlopsBenchmarkResults])
+            key: FlopsBenchmarkResults.model_validate_json(json_str)
             for key, json_str in _load_json_files_as_dict(_data_sources_root()).items()
             if "benchmark" in key
         }
@@ -205,25 +208,4 @@ def _construct_flop_weights_from_json_str(json_str: str) -> FlopWeights:
         FlopWeights instance extracted from the input data.
     """
     # try all supported classes, all of which have a .flop_weights property
-    return _deserialize_as_any_pydantic_class(
-        json_str,
-        [
-            FlopsBenchmarkResults,
-            InstructionLatencies,
-        ],
-    ).flop_weights()
-
-
-def _deserialize_as_any_pydantic_class(
-    json_str: str,
-    pydantic_classes: Sequence[type[PydanticModelT]],
-) -> PydanticModelT:
-    # try all supported classes
-    for pydantic_cls in pydantic_classes:
-        try:
-            return pydantic_cls.model_validate_json(json_str)
-        except ValidationError:
-            continue
-
-    # none of the supported classes worked
-    raise ValueError("Input JSON string does not represent a known data structure.")
+    return _SOURCE_FILE_ADAPTER.validate_json(json_str).flop_weights()

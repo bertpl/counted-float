@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from counted_float._core.counting._builtin_data import (
     BuiltInData,
@@ -167,10 +168,14 @@ def test_load_json_files_as_dict_uses_only_the_traversable_contract():
 
 
 def test_construct_flop_weights_rejects_unknown_json():
-    # JSON that matches none of the supported data schemas raises rather than degrading silently
+    # JSON matching none of the supported schemas raises rather than degrading silently, and the
+    # error says what failed in each of them rather than only that nothing matched
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError, match="known data structure"):
+    with pytest.raises(ValidationError) as excinfo:
         _construct_flop_weights_from_json_str('{"not": "a known schema"}')
+
+    assert "FlopsBenchmarkResults" in str(excinfo.value)
+    assert "InstructionLatencies" in str(excinfo.value)
 
 
 def test_show_renders_integer_weights():
