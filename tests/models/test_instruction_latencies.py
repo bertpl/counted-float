@@ -71,36 +71,41 @@ def test_latency_consensus_is_the_larger_of_min_and_max_cycles():
 
 
 # =================================================================================================
-#  The two architectures must price the same set of flop types
+#  Cross-architecture flop-type coverage
 # =================================================================================================
-def test_both_architectures_price_the_same_flop_types():
-    """Neither architecture may price an operation the other does not.
+def test_sse2_and_arm_model_the_same_set_of_flop_types():
+    """Ensure InstructionLatencies_SSE2 and InstructionLatencies_ARM model the same flop types.
 
     Each class maps flop types onto its own architecture's instruction fields, and the two maps are
-    independent literals -- nothing compares them. Add a flop type to one and forget the other and
-    no existing test fails: the two simply cover different operations, and the all-architecture
-    consensus is then aggregated from inputs that do not span the same ground.
+    independent literals that nothing compares. A flop type added to one and not the other leaves
+    the architectures covering different operations, with the all-architecture consensus then
+    aggregated over inputs that do not span the same ground.
 
-    No mutant corresponds to this. The defect it guards is a missing entry rather than a wrong
-    expression, so mutation testing cannot reach it and a test is the only thing that can.
+    Giving every instruction a distinct latency checks the mapping rather than only its key set: two
+    flop types wired to one instruction, or a swapped pair, show up as a wrong weight here.
     """
 
     # --- arrange -----------------------------------------
-    # every instruction field given the same finite latency: the weights are irrelevant here, only
-    # which flop types come out, and a default-constructed model has no finite ADD to normalize by
-    def _filled(model_cls):
-        fields = {
-            name: Latency(min_cycles=1.0, max_cycles=1.0) for name in model_cls.model_fields if name != "architecture"
-        }
-        return model_cls(**fields)
+    # distinct cycles per field, so each flop type's weight identifies the instruction behind it.
+    # Only the mapped types get a value: `weights` spans every FlopType, with NaN meaning "this
+    # architecture says nothing about it", so comparing raw key sets would compare nothing.
+    def _weights_by_flop_type(model_cls) -> dict:
+        fields = [name for name in model_cls.model_fields if name != "architecture"]
+        model = model_cls(
+            **{name: Latency(min_cycles=float(i), max_cycles=float(i)) for i, name in enumerate(fields, start=1)}
+        )
+        return {flop_type: w for flop_type, w in model.flop_weights().weights.items() if not math.isnan(w)}
 
     # --- act ---------------------------------------------
-    sse2_types = set(_filled(InstructionLatencies_SSE2).flop_weights().weights)
-    arm_types = set(_filled(InstructionLatencies_ARM).flop_weights().weights)
+    sse2 = _weights_by_flop_type(InstructionLatencies_SSE2)
+    arm = _weights_by_flop_type(InstructionLatencies_ARM)
 
     # --- assert ------------------------------------------
-    assert sse2_types == arm_types, (
-        f"only in sse2: {sorted(t.name for t in sse2_types - arm_types)}; "
-        f"only in arm: {sorted(t.name for t in arm_types - sse2_types)}"
+    assert set(sse2) == set(arm), (
+        f"only in sse2: {sorted(t.name for t in set(sse2) - set(arm))}; "
+        f"only in arm: {sorted(t.name for t in set(arm) - set(sse2))}"
     )
-    assert sse2_types, "both maps are empty -- this test would pass over nothing"
+    assert sse2, "neither architecture modelled anything -- this test would pass over nothing"
+    # a distinct instruction per flop type must stay distinct through the mapping
+    assert len(set(sse2.values())) == len(sse2), f"two flop types share an instruction in sse2: {sse2}"
+    assert len(set(arm.values())) == len(arm), f"two flop types share an instruction in arm: {arm}"

@@ -309,24 +309,8 @@ def test_slice_controller_target_is_the_common_target_before_per_exec_timing():
 
 
 # =================================================================================================
-#  SliceController - the calibration decisions themselves
+#  SliceController - calibration decisions
 # =================================================================================================
-# The controller decides three things from a measured slice time: whether the slice counts as
-# on-target, whether two on-target slices in a row mean calibration is done, and -- once
-# calibrated -- whether the slice fell far enough outside the deadband to re-adjust.  All three
-# were reachable only through a full runner, so the boundaries of each went unchecked: the
-# tolerance comparison, the deadband bounds and the consecutive counter could all be altered
-# without a test noticing, and what that costs is measurement quality rather than a crash.
-#
-# Nothing here needs a clock.  The controller is *told* how long a slice took, so feeding it a
-# sequence of synthetic times drives every decision directly -- and a test that used real timings
-# would be measuring the machine again, which is the confusion this package spent a version
-# separating out.
-# n_executions starts high on purpose: the effective target is floored at N_MIN_EXECUTIONS whole
-# executions, so with a per-execution cost anywhere near the target that floor -- not the common
-# target -- is what the slice is compared against, and these boundary cases would be probing a
-# moving number. A thousand executions puts the per-execution cost far enough below the target that
-# the floor stays inactive throughout.
 _TARGET = 1_000.0
 _N_EXEC = 1_000
 

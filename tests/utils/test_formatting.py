@@ -106,39 +106,21 @@ def test_format_time_duration(nsec: float, expected_result: str) -> None:
         (123000.00000000, " 123K cpu cycles"),
         (1230000.0000000, "1.23M cpu cycles"),
         (9999.9999999999, "10.0K cpu cycles"),
+        # each threshold, from the last value that still belongs to a branch to the first that does not
+        (9.99, " 9.99 cpu cycles"),  # round(_, 2) < 10
+        (10.0, " 10.0 cpu cycles"),  # round(_, 2) >= 10
+        (99.9, " 99.9 cpu cycles"),  # round(_, 1) < 100
+        (100.0, "  100 cpu cycles"),  # round(_, 1) >= 100
+        (999.0, "  999 cpu cycles"),  # round(_, 0) < 1_000
+        (1_000.0, "1.00K cpu cycles"),  # round(_, 0) >= 1_000
+        (9_990.0, "9.99K cpu cycles"),  # round(_, -1) < 10_000
+        (9_999.0, "10.0K cpu cycles"),  # round(_, -1) >= 10_000 -- the rounding crosses it, not the value
+        (10_000.0, "10.0K cpu cycles"),  # round(_, -1) >= 10_000
+        (99_900.0, "99.9K cpu cycles"),  # round(_, -2) < 100_000
+        (100_000.0, " 100K cpu cycles"),  # round(_, -2) >= 100_000
+        (999_000.0, " 999K cpu cycles"),  # round(_, -3) < 1_000_000
+        (1_000_000.0, "1.00M cpu cycles"),  # round(_, -3) >= 1_000_000
     ],
 )
 def test_format_latency(n_cycles: float, expected_result: str):
     assert format_latency(n_cycles) == expected_result
-
-
-# =================================================================================================
-#  format_latency - the unit/scale boundaries
-# =================================================================================================
-# format_latency picks its unit by comparing a *rounded* cycle count against six thresholds, each
-# rounded to a different precision.  Nothing sat on any of those thresholds, so every one of them
-# could be moved -- or its rounding precision changed -- without a test noticing.
-#
-# Each pair below straddles one threshold: the value that still belongs to the branch, and the one
-# that has crossed into the next.  The 9_999 case is the interesting one -- rounding to the nearest
-# ten carries it to 10_000, so it leaves its branch before reaching the branch's own limit.
-@pytest.mark.parametrize(
-    ("n_cycles", "expected"),
-    [
-        (9.99, " 9.99 cpu cycles"),  # round(_, 2) < 10
-        (10.0, " 10.0 cpu cycles"),  # ... crossed
-        (99.9, " 99.9 cpu cycles"),  # round(_, 1) < 100
-        (100.0, "  100 cpu cycles"),  # ... crossed
-        (999.0, "  999 cpu cycles"),  # round(_, 0) < 1_000
-        (1_000.0, "1.00K cpu cycles"),  # ... crossed
-        (9_990.0, "9.99K cpu cycles"),  # round(_, -1) < 10_000
-        (9_999.0, "10.0K cpu cycles"),  # ... crossed by the rounding, not by the value
-        (10_000.0, "10.0K cpu cycles"),  # ... crossed
-        (99_900.0, "99.9K cpu cycles"),  # round(_, -2) < 100_000
-        (100_000.0, " 100K cpu cycles"),  # ... crossed
-        (999_000.0, " 999K cpu cycles"),  # round(_, -3) < 1_000_000
-        (1_000_000.0, "1.00M cpu cycles"),  # ... crossed
-    ],
-)
-def test_format_latency_switches_unit_at_each_threshold(n_cycles: float, expected: str):
-    assert format_latency(n_cycles) == expected
