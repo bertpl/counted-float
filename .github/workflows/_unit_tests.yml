@@ -81,10 +81,10 @@ jobs:
           merge-multiple: true
       - name: Combine and report (fails below the [tool.coverage.report] floor)
         run: |
-          uv run --group dev coverage combine
-          uv run --group dev coverage report
+          uv run --no-default-groups --group test coverage combine
+          uv run --no-default-groups --group test coverage report
       - name: Compute release metrics (coverage % + test count)
-        run: uv run --group dev python .github/scripts/ci_compute_metrics.py metrics.json
+        run: uv run --no-default-groups --group test python .github/scripts/ci_compute_metrics.py metrics.json
       - name: Upload release metrics
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

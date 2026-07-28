@@ -77,20 +77,35 @@ constraint-dependencies = [
 ]
 
 [dependency-groups]
-dev = [
-    "check-wheel-contents>=0.6.2",
-    "genbadge[all]>=1.1.2",
+# Split by activity, so what each consumer needs is a stated fact rather than a shared pile. The
+# test matrix installs no linters and no packaging tools, which matters beyond tidiness here: those
+# tools brought `click` into every environment, so a leg installed *without* the cli extra still had
+# click importable and could not exercise the guard that extra exists for.
+test = [
     # floor raised off 6.0: older 6.x calls entry_points().get(), which importlib.metadata
     # removed in Python 3.14 (breaks the lowest-direct resolution there).
     "hypothesis>=6.156",
-    "pre-commit>=4.0",
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "pytest-xdist>=3.5.0",
-    # exact tool versions are pinned by the tracked uv.lock (used by pre-commit,
-    # `make lint`, and CI); these ranges just set the floor.
+]
+# ruff and ty run as local `uv run` hooks from .pre-commit-config.yaml rather than as pinned
+# pre-commit environments, so both belong here alongside pre-commit itself. Exact versions are
+# pinned by the tracked uv.lock; these ranges only set floors.
+lint = [
+    "pre-commit>=4.0",
     "ruff>=0.15.11",
     "ty>=0.0.56",
+]
+package = [
+    "check-wheel-contents>=0.6.2",
+]
+# Union only -- never add a requirement here directly. `dev` is what a developer syncs and what the
+# lint path installs, and it stays a derived fact so it cannot disagree with the groups above.
+dev = [
+    { include-group = "test" },
+    { include-group = "lint" },
+    { include-group = "package" },
 ]
 docs = [
     "mkdocs>=1.6",
