@@ -10,6 +10,28 @@ _MAX_ITER = 100
 _TOL = 1e-12
 
 
+def _axis_corrections(matrix: list[list[float]], own: list[float], other: list[float]) -> list[float]:
+    """Geometric-mean correction factor per row of `matrix`, against the current rank-1 estimate.
+
+    Rows of `matrix` are scaled by `own` and its columns by `other`, so passing the transpose with
+    the two factor lists swapped performs the column-wise pass: it is the same computation with the
+    axes exchanged, which is why it is written once. Rows whose own factor is unknown, and entries
+    whose value or opposing factor is unknown, carry no information and are skipped; a row left with
+    nothing to compare against gets a NaN correction.
+    """
+    corrections: list[float] = []
+    for i, row in enumerate(matrix):
+        own_is_missing = math.isnan(own[i])
+        factors = [
+            value / (own[i] * other[j])
+            for j, value in enumerate(row)
+            if not (own_is_missing or math.isnan(value) or math.isnan(other[j]))
+        ]
+        # the exact correction is the geometric mean of those factors, applied at step _E_STEP
+        corrections.append(geo_mean(factors) ** _E_STEP if factors else math.nan)
+    return corrections
+
+
 def impute_missing_data(data: list[list[float]]) -> list[list[float]]:
     """Impute missing values in a NON-NEGATIVE matrix using a rank-1 approximation.
 
@@ -35,32 +57,17 @@ def impute_missing_data(data: list[list[float]]) -> list[list[float]]:
     n_rows, n_cols = len(data), len(data[0])
     c_rows, c_cols = [1.0] * n_rows, [1.0] * n_cols
 
+    # loop-invariant: `data` is documented as unmodified, so transposing once outside the loop
+    # rather than per iteration costs one copy instead of _MAX_ITER of them
+    transposed = [list(column) for column in zip(*data, strict=True)]
+
     for _i in range(_MAX_ITER):
-        # compute correction factors for c_rows
-        c_row_correct = [0.0] * n_rows
-        for i_row in range(n_rows):
-            # compare actual row to rank-1 approximation of row
-            factors: list[float] = [
-                data[i_row][i_col] / (c_rows[i_row] * c_cols[i_col])
-                for i_col in range(n_cols)
-                if not (math.isnan(data[i_row][i_col]) or math.isnan(c_cols[i_col]) or math.isnan(c_rows[i_row]))
-            ]
-
-            # overall exact correction is geo_mean of these factors, which we'll apply with step _E_STEP
-            c_row_correct[i_row] = geo_mean(factors) ** _E_STEP if factors else math.nan
-
-        # compute correction factors for c_cols
-        c_col_correct = [0.0] * n_cols
-        for i_col in range(n_cols):
-            # compare actual col to rank-1 approximation of col
-            factors = [
-                data[i_row][i_col] / (c_rows[i_row] * c_cols[i_col])
-                for i_row in range(n_rows)
-                if not (math.isnan(data[i_row][i_col]) or math.isnan(c_cols[i_col]) or math.isnan(c_rows[i_row]))
-            ]
-
-            # overall exact correction is geo_mean of these factors, which we'll apply with step _E_STEP
-            c_col_correct[i_col] = geo_mean(factors) ** _E_STEP if factors else math.nan
+        # the two passes are one computation with the axes exchanged: rows scaled by c_rows against
+        # c_cols, then the transpose scaled by c_cols against c_rows. Both read the factors as they
+        # were at the top of the iteration -- a symmetric update -- so neither pass may apply its
+        # corrections before the other has been computed.
+        c_row_correct = _axis_corrections(data, c_rows, c_cols)
+        c_col_correct = _axis_corrections(transposed, c_cols, c_rows)
 
         # apply corrections
         c_rows = [c * correction for c, correction in zip(c_rows, c_row_correct, strict=True)]
@@ -68,10 +75,13 @@ def impute_missing_data(data: list[list[float]]) -> list[list[float]]:
 
         # converged once the multiplicative corrections stop moving the factors: at the rank-1
         # fixed point every correction is 1.0. Rows/cols with no data carry a NaN correction by
-        # construction and are excluded from the test; an all-NaN pass (degenerate matrix) just
-        # runs to _MAX_ITER.
+        # construction and are excluded from the test.
         finite = [c for c in (c_row_correct + c_col_correct) if not math.isnan(c)]
-        if finite and max(abs(c - 1.0) for c in finite) < _TOL:
+        if not finite:
+            # nothing anywhere to fit against: every factor is now NaN and no later pass can undo
+            # that, so the remaining iterations would recompute the same nothing
+            break
+        if max(abs(c - 1.0) for c in finite) < _TOL:
             break
 
     # --- fill missing data -------------------------------
