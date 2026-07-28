@@ -306,3 +306,102 @@ def test_slice_controller_target_is_the_common_target_before_per_exec_timing():
 
     # --- assert ------------------------------------------
     assert controller.t_slice_target_nsecs == 1234.0
+
+
+# =================================================================================================
+#  SliceController - calibration decisions
+# =================================================================================================
+_TARGET = 1_000.0
+_N_EXEC = 1_000
+
+
+def _fresh_controller() -> SliceController:
+    controller = SliceController(_TARGET)
+    controller.n_executions = _N_EXEC
+    return controller
+
+
+def _calibrated_controller() -> SliceController:
+    """A controller driven to the calibrated state by two consecutive exactly-on-target slices."""
+    controller = _fresh_controller()
+    controller.record_slice(_TARGET)
+    controller.record_slice(_TARGET)
+    assert controller.is_calibrated
+    assert not controller.execution_floor_active
+    return controller
+
+
+@pytest.mark.parametrize(
+    ("t_nsecs", "on_target"),
+    [
+        (_TARGET * 1.20, True),  # exactly CALIBRATION_TOLERANCE away, inclusive
+        (_TARGET * 0.80, True),  # ... and symmetric below
+        (_TARGET * 1.21, False),  # just outside
+        (_TARGET * 0.79, False),
+    ],
+)
+def test_calibration_tolerance_is_inclusive_at_its_boundary(t_nsecs: float, on_target: bool):
+    """Two consecutive slices count as calibrated only while each is within the tolerance."""
+    # --- arrange -----------------------------------------
+    controller = _fresh_controller()
+
+    # --- act ---------------------------------------------
+    controller.record_slice(t_nsecs)
+    controller.record_slice(t_nsecs)
+
+    # --- assert ------------------------------------------
+    assert controller.is_calibrated is on_target
+
+
+def test_calibration_needs_two_consecutive_on_target_slices():
+    """One on-target slice is not enough, and an off-target slice resets the run."""
+    # --- arrange -----------------------------------------
+    controller = _fresh_controller()
+
+    # --- act & assert ------------------------------------
+    controller.record_slice(_TARGET)
+    assert not controller.is_calibrated  # one is not enough
+
+    controller.record_slice(_TARGET * 5.0)  # off target: the run restarts from zero
+    assert not controller.is_calibrated
+
+    controller.record_slice(_TARGET)
+    assert not controller.is_calibrated  # the earlier on-target slice does not still count
+
+    controller.record_slice(_TARGET)
+    assert controller.is_calibrated
+
+
+@pytest.mark.parametrize(
+    ("t_nsecs", "expect_adjustment"),
+    [
+        (_TARGET * 0.70, False),  # exactly DEADBAND_LOW: inside, left alone
+        (_TARGET * 1.40, False),  # exactly DEADBAND_HIGH: inside, left alone
+        (_TARGET * 0.69, True),  # below the band
+        (_TARGET * 1.41, True),  # above the band
+    ],
+)
+def test_calibrated_controller_only_readjusts_outside_the_deadband(t_nsecs: float, expect_adjustment: bool):
+    """Noise inside the deadband must not feed back into the next round's workload."""
+    # --- arrange -----------------------------------------
+    controller = _calibrated_controller()
+    n_before = controller.n_executions
+
+    # --- act ---------------------------------------------
+    controller.record_slice(t_nsecs)
+
+    # --- assert ------------------------------------------
+    assert (controller.n_executions != n_before) is expect_adjustment
+
+
+def test_a_slice_too_short_to_time_ramps_by_the_maximum_step():
+    """A zero-length slice has no ratio to take, so it asks for the largest allowed increase."""
+    # --- arrange -----------------------------------------
+    controller = SliceController(_TARGET)
+    controller.n_executions = 10
+
+    # --- act ---------------------------------------------
+    controller.record_slice(0.0)
+
+    # --- assert ------------------------------------------
+    assert controller.n_executions == 10 * int(SliceController.MAX_ADJUST_FACTOR_CALIBRATION)
