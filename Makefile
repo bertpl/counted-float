@@ -27,7 +27,7 @@ help:
 	@echo '  build		                    (Re)build package using uv.'
 	@echo ''
 	@echo '  test		                    Run pytest unit tests.'
-	@echo '  test-collect-ids              List the collected test node-ids (CI unions these across matrix legs).'
+	@echo '  test-collect-ids               List the collected test node-ids (CI unions these across matrix legs).'
 	@echo '  lint		                    Run all pre-commit hooks on all files.'
 	@echo '  mutation		                Run local mutation testing (mutmut). MODULE=<substr> scopes it.'
 	@echo '  mutation-results	            List the surviving mutants from the last mutation run.'
