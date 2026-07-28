@@ -209,3 +209,22 @@ def test_a_cell_with_no_row_or_column_evidence_stays_missing():
 
     # --- assert ------------------------------------------
     assert all(math.isnan(value) for value in filled[0])  # unfillable cells are left as-is, not invented
+
+
+def test_a_fully_missing_matrix_is_returned_unchanged():
+    """With nothing anywhere to fit against, every cell stays missing.
+
+    This is the degenerate input the fitting loop exits early on: no row and no column carries a
+    usable value, so every correction factor is unknown from the first pass onward and no later
+    pass can change that.
+    """
+    # --- arrange -----------------------------------------
+    data = [[math.nan] * 3 for _ in range(2)]
+
+    # --- act ---------------------------------------------
+    result = impute_missing_data(data)
+
+    # --- assert ------------------------------------------
+    assert all(math.isnan(value) for row in result for value in row)
+    assert len(result) == 2
+    assert all(len(row) == 3 for row in result)
