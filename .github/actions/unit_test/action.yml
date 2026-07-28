@@ -47,7 +47,7 @@ runs:
         run: rm -f uv.lock  # with the tracked lock present, uv reuses its pins and ignores --resolution
 
       # make needs no setup step on any runner: ubuntu and macOS carry it, and the Windows image
-      # provides GNU Make 4.4.1 on PATH through the mingw64 toolchain that also supplies its gcc.
+      # provides GNU make on PATH through the mingw64 toolchain that also supplies its gcc.
       - name: Run tests
         shell: bash
         env:
