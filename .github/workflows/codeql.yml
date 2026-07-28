@@ -4,23 +4,15 @@ name: CodeQL
 # (which lint the workflows, not the package code).
 #
 # Pull requests reach this through the PR pipeline, which calls it as a reusable
-# workflow so that pipeline's gate can depend on the result. That placement moves
-# the code-scanning analysis key from this file to the caller's, which retires an
-# earlier rule that every trigger had to live here to keep one key. The key's only
-# job was code scanning's introduced-versus-inherited comparison, and that
-# comparison has never worked on this repo: its check run is posted a second or two
-# before the analysis registers and is never re-evaluated, so it reported `neutral`
-# on eight consecutive pull requests. Nothing here consults it.
+# workflow so that pipeline's gate can depend on the result. Pushes to main and the
+# weekly schedule run it directly.
 #
-# What gates a merge is the last step below: it reads back the alerts this analysis
-# just uploaded and fails on any of them. `github/codeql-action/analyze` has no
-# fail-on-alerts input and exits 0 regardless, so without that step the scan runs
-# and nothing acts on it.
+# `github/codeql-action/analyze` exits 0 whether or not it finds anything, and code
+# scanning's own check run cannot be relied on to block a merge. The last step below
+# is what gates: it reads back the alerts this analysis uploaded and fails on any.
 #
-# Scope note, measured rather than assumed: the queries below report syntactic
-# findings reliably, but taint-tracking ones did not fire on planted argv-to-shell
-# and shell=True cases under either the default or the extended suite. Do not read
-# a green gate as evidence that injection-class defects are absent.
+# The queries report syntactic findings reliably. They are not a guarantee about
+# injection-class defects: a green result here is not evidence that none are present.
 
 on:
   workflow_call:
@@ -55,10 +47,7 @@ jobs:
         uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
           languages: python  # pure-Python package: no build step, CodeQL analyzes sources directly
-          # measured on this codebase: 43 rules -> 50, and zero findings either way, so the wider
-          # suite costs no false positives. It is taken as a free superset, not as a fix -- see the
-          # scope note in the header for what neither suite catches.
-          queries: security-extended
+          queries: security-extended  # superset of the default suite, at no false-positive cost here
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
@@ -68,15 +57,14 @@ jobs:
           # analysis key does that, and no category overrides it (see the header).
           category: python
 
-      # The gate. `analyze` above exits 0 whether or not it found anything, and code scanning's own
-      # check run is posted before the upload registers and never re-evaluated -- so neither can
-      # block a merge. This reads the alerts back and fails on any of them.
+      # The gate: neither `analyze` above nor code scanning's own check run can fail a build on
+      # findings, so this reads the alerts back and does it.
       #
-      # Filtered to CodeQL because Scorecard publishes to the same alert store and currently has
-      # open findings there; an unfiltered gate would be red on every pull request from day one.
-      # Gating on any open alert for the ref, rather than on the ones this PR introduced, because
-      # the introduced-versus-inherited comparison is exactly what does not work -- and any-open is
-      # already how pip-audit behaves in this pipeline.
+      # Filtered to CodeQL: Scorecard publishes to the same alert store, and what it reports is
+      # repository posture rather than anything this gate is answering for.
+      #
+      # Gating on any open alert for the ref rather than on the ones a pull request introduced,
+      # which is also how pip-audit behaves in this pipeline.
       - name: Fail on CodeQL findings
         shell: bash
         env:
