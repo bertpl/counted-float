@@ -20,7 +20,7 @@ name: CodeQL
 # scan, since a required check has to report before the merge button unlocks.
 
 on:
-  pull_request:
+  workflow_call:  # the PR pipeline calls this, so its gate can depend on the result
   push:
     branches: [main]
   schedule:
@@ -30,7 +30,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # deliberately not ${{ github.workflow }}: when called, that resolves to the CALLER's name, so
+  # this would share a group with the PR pipeline and the two would cancel each other
+  group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -57,3 +59,35 @@ jobs:
           # what makes a pull request comparable to its base branch — the
           # analysis key does that, and no category overrides it (see the header).
           category: python
+
+      # `analyze` exits 0 whether or not it found anything, and code scanning's own check run is
+      # posted before the upload registers and never re-evaluated -- so neither of them can gate a
+      # merge. This step is what does: it reads back the alerts the analysis just uploaded and
+      # fails on any of them. Filtered to CodeQL because Scorecard publishes to the same alert
+      # store, and its findings are not this gate's business.
+      - name: Fail on CodeQL findings
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+        run: |
+          # the alerts lag the upload by a second or two, so a first empty read means "not yet"
+          # rather than "clean" -- poll briefly before believing it
+          for attempt in 1 2 3 4 5; do
+            alerts=$(gh api "repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=${REF}&state=open&per_page=100" \
+                       --jq '[.[] | select(.tool.name == "CodeQL")]' 2>/dev/null || echo "unavailable")
+            [ "$alerts" != "unavailable" ] && break
+            echo "code scanning has no data for ${REF} yet (attempt ${attempt}); waiting."
+            sleep 10
+          done
+          if [ "$alerts" = "unavailable" ]; then
+            echo "::error::could not read code scanning alerts for ${REF}"
+            exit 1
+          fi
+          count=$(echo "$alerts" | jq 'length')
+          if [ "$count" -gt 0 ]; then
+            echo "$alerts" | jq -r '.[] | "::error::CodeQL: \(.rule.id) — \(.rule.description) (\(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line))"'
+            echo "::error::${count} open CodeQL alert(s) on ${REF}"
+            exit 1
+          fi
+          echo "No open CodeQL alerts on ${REF}."
