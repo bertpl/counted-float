@@ -5,9 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
+## 2.1.0 (2026-07-28)
 
 ### Changed
 
@@ -22,13 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - the `benchmark-counted-float` CLI command is renamed `evaluate-overhead`; the old name still runs but warns, and will be dropped at the next major
 - the `numba` extra is renamed `benchmarking`; the old name still resolves to the same set but will be dropped at the next major
 
-### Removed
-
 ### Fixed
 
 - evaluating counting overhead no longer prints a cycles column that silently reported nanoseconds whenever the CPU frequency could not be read
-
-### Security
 
 ## 2.0.5 (2026-07-26)
 
