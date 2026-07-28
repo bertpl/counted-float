@@ -6,7 +6,7 @@ only fires for attribute access from *outside* the module that defines it, so a 
 would need a second way in, and a second way in is a second thing that can miss the guard.
 """
 
-from counted_float._core.micro import console, output_quiet
+from counted_float._core.micro_benchmarking import console, output_quiet
 from counted_float._core.models import FlopsBenchmarkResults
 
 

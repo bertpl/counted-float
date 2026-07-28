@@ -17,7 +17,7 @@ __all__ = [
 
 
 def __getattr__(name: str) -> object:
-    """Serve the deprecated overhead alias, warning once, from the surface a user actually imports."""
+    """Serve `run_counted_float_benchmark`, warning once, from the surface a user actually imports."""
     if name == "run_counted_float_benchmark":
         from counted_float.evaluation import evaluate_counting_overhead
 

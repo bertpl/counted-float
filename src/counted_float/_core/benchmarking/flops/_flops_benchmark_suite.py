@@ -2,8 +2,8 @@ import sys
 import warnings
 from importlib.metadata import version
 
-from counted_float._core.micro import InterleavedBenchmarkRunner
-from counted_float._core.micro._output import console
+from counted_float._core.micro_benchmarking import InterleavedBenchmarkRunner
+from counted_float._core.micro_benchmarking._output import console
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkResults,

@@ -31,8 +31,15 @@ def __getattr__(name: str) -> object:
     return flops.FlopsBenchmarkSuite
 
 
+# FlopsBenchmarkSuite is deliberately absent: `from ... import *` would getattr every advertised
+# name, firing the guard and turning a wildcard import into an error on an install without the extra.
 __all__ = ["FlopsBenchmarkResults", "run_flops_benchmark"]
 
 
 def __dir__() -> list[Any]:
+    """Advertise the lazily resolved name, which `__all__` cannot carry (see above).
+
+    Without this, FlopsBenchmarkSuite is invisible to `dir()` and everything reading it --
+    tab-completion, `help()` -- because nothing binds it until someone asks for it.
+    """
     return [*__all__, "FlopsBenchmarkSuite"]

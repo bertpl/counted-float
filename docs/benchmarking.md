@@ -102,15 +102,15 @@ an Apple M3 Max with counted-float 2.1.0:
 
 ```
 ------------------------------------------------------------------------------------------------------------------------
-Running CountedFloat benchmark...
+Evaluating counting overhead...
 
-float                              : wwwwwwwwwwwwwww...................................   [  12.50 µs ±  2.1% ]  /  execution
-CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 275.19 µs ±  0.6% ]  /  execution
+float                              : wwwwwwwwwwwwwww...................................   [  12.62 µs ±  0.9% ]  /  execution
+CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 271.80 µs ±  0.6% ]  /  execution
 ------------------------------------------------------------------------------------------------------------------------
 
-CountedFloat Benchmark Results:
-  Bisection using float        :   12.50 µs / execution
-  Bisection using CountedFloat :  275.19 µs / execution
+Counting overhead:
+  Bisection using float        :   12.62 µs / execution
+  Bisection using CountedFloat :  271.80 µs / execution
 
-CountedFloat is 22.0x slower than float
+CountedFloat is 21.5x slower than float
 ```
