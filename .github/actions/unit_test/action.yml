@@ -46,13 +46,8 @@ runs:
         shell: bash
         run: rm -f uv.lock  # with the tracked lock present, uv reuses its pins and ignores --resolution
 
-      # The Windows runner image ships no GNU make, and the invocation this action runs lives in
-      # the Makefile so it cannot drift from the local one. ubuntu and macOS already have it.
-      - name: Install GNU make
-        if: runner.os == 'Windows'
-        shell: bash
-        run: choco install make --no-progress --yes
-
+      # make needs no setup step on any runner: ubuntu and macOS carry it, and the Windows image
+      # provides GNU make on PATH through the mingw64 toolchain that also supplies its gcc.
       - name: Run tests
         shell: bash
         env:
