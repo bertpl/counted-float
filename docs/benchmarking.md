@@ -2,7 +2,7 @@
 
 ## Benchmarking your own hardware
 
-If the package is installed with the optional `numba` dependency, it provides
+If the package is installed with the optional `benchmarking` dependency, it provides
 the ability to micro-benchmark floating point operations as follows:
 
 The run below is a frozen example, captured on an Apple M3 Max; your own

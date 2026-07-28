@@ -17,7 +17,7 @@
 This Python package provides functionality for...
 
 - **counting floating point operations** (FLOPs) of numerical algorithms implemented in plain Python, optionally weighted by their relative cost of execution
-- **running benchmarks** to estimate the relative cost of executing various floating-point operations (requires `numba` optional dependency for achieving accurate results)
+- **running benchmarks** to estimate the relative cost of executing various floating-point operations (requires the `benchmarking` optional dependency)
 
 Flop weights are computed using a highly curated dataset spanning a wide range of modern CPUs:
 
@@ -41,16 +41,31 @@ feasible or desirable.
 
 ## Installation
 
-Use your favorite package manager such as `uv` or `pip`:
+Use your favorite package manager such as `uv` or `pip`. What you install decides which of
+the three capabilities you get:
 
 ```
-pip install counted-float           # install without optional dependencies
-pip install counted-float[numba]    # install with numba optional dependency
-pip install counted-float[cli]      # install with CLI support (click)
+pip install counted-float                  # counting
+pip install counted-float[benchmarking]    # + measure this machine's flop costs
+pip install counted-float[cli]             # + the counted_float command
 ```
 
-Numba is optional due to its relatively large size (40-50MB, including llvmlite), but without it, benchmarks will
-not be reliable (but will still run, but not in jit-compiled form).
+**Counting** is the base install and needs nothing else. Building `CountedFloat`
+values, counting contexts, the built-in flop weights, reading benchmark results
+shipped with the package, and evaluating what counting costs you on your own
+workload all work here. It is about 17 MB installed.
+
+**Benchmarking** measures *your machine* — running the flop benchmark suite to
+derive weights for the hardware you are on, rather than using the shipped
+consensus ones. It needs compiled probes (numba) and the packages that describe
+a CPU (psutil, py-cpuinfo), which is most of the install size: with it, expect
+roughly 180 MB. Without the extra, calling the benchmark suite tells you what to
+install instead of failing obscurely, and nothing else is affected.
+
+**The CLI** adds the `counted_float` command. The command is always installed;
+without the extra it reports what to install instead of producing a traceback.
+
+Extras compose, so `counted-float[benchmarking,cli]` gets you everything.
 
 ## Quick start
 
