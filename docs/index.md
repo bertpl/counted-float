@@ -28,10 +28,10 @@ workload all work here. It is about 17 MB installed.
 
 **Benchmarking** measures *your machine* — running the flop benchmark suite to
 derive weights for the hardware you are on, rather than using the shipped
-consensus ones. It needs compiled probes and the packages that describe a CPU,
-which is most of the install size: with it, expect roughly 180 MB. Without the
-extra, reaching the suite tells you what to install rather than failing
-obscurely, and nothing else is affected.
+consensus ones. It needs compiled probes (numba) and the packages that describe
+a CPU (psutil, py-cpuinfo), which is most of the install size: with it, expect
+roughly 180 MB. Without the extra, calling the benchmark suite tells you what to
+install instead of failing obscurely, and nothing else is affected.
 
 **The CLI** adds the `counted_float` command. The command is always installed;
 without the extra it reports what to install instead of producing a traceback.
