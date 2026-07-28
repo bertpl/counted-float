@@ -1,6 +1,6 @@
 name: Pre-commit
 author: Bert Pluymers
-description: Set up uv and run the full pre-commit hook suite over all files (mirrors `make lint`).
+description: Set up uv and run the full pre-commit hook suite over all files, via `make lint`.
 
 inputs:
     uv_version:
@@ -22,13 +22,7 @@ runs:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Install dependencies
-        shell: bash
-        # --all-extras matters for ty rather than for the linters: it type-checks the code behind
-        # every extra, so a package sitting behind one still has to be resolvable here. This is what
-        # keeps CI's lint run equivalent to the local one, which syncs the same way.
-        run: uv sync --group dev --all-extras
-
       - name: Run pre-commit
         shell: bash
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+        # the target owns both the sync and the hook run, so CI cannot drift from `make lint`
+        run: make lint PRE_COMMIT_ARGS=--show-diff-on-failure

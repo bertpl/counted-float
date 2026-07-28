@@ -1,5 +1,24 @@
 file_path=
 
+# Comments sit above their target rather than inside the recipe: CI runs the test targets on
+# Windows too, where make drives cmd.exe, which does not understand `#`.
+
+# Knobs for the test and lint targets. CI varies these per matrix leg by passing them on the
+# make command line; a bare `make test` / `make lint` uses the defaults.
+PYTHON ?= 3.13
+RESOLUTION ?= highest
+ALL_EXTRAS ?= true
+PYTEST_ARGS ?=
+PRE_COMMIT_ARGS ?=
+
+# The single definition of the environment the suite runs in, shared by both test targets.
+# --exact prunes whatever a previous target installed, so this environment matches CI's rather
+# than merely satisfying it; --no-default-groups is what actually narrows, since --group alone
+# only adds to the default set.
+UV_RUN_TEST = uv run --exact --no-default-groups --group test \
+              --python $(PYTHON) --resolution $(RESOLUTION) \
+              $(if $(filter true,$(ALL_EXTRAS)),--all-extras,)
+
 help:
 	@echo 'Commands:'
 	@echo ''
@@ -8,6 +27,7 @@ help:
 	@echo '  build		                    (Re)build package using uv.'
 	@echo ''
 	@echo '  test		                    Run pytest unit tests.'
+	@echo '  test-collect-ids              List the collected test node-ids (CI unions these across matrix legs).'
 	@echo '  lint		                    Run all pre-commit hooks on all files.'
 	@echo '  mutation		                Run local mutation testing (mutmut). MODULE=<substr> scopes it.'
 	@echo '  mutation-results	            List the surviving mutants from the last mutation run.'
@@ -24,21 +44,27 @@ help:
 	@echo 'Options:'
 	@echo ''
 	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'
+	@echo '  test, test-collect-ids         - accept PYTHON=<x.y>, RESOLUTION=highest|lowest-direct, ALL_EXTRAS=true|false, PYTEST_ARGS=<args>.'
+	@echo '  lint                           - accepts PRE_COMMIT_ARGS=<args>.'
 
 build:
 	uv build;
 
 test:
-	# run all tests - with all extras & just 1 python version. --exact prunes whatever a previous target
-	# installed, so this environment matches CI's rather than merely satisfying it; --no-default-groups
-	# is what actually narrows, since --group alone only adds to the default set.
-	uv run --exact --no-default-groups --group test --all-extras --python 3.13 pytest ./tests
+	$(UV_RUN_TEST) pytest ./tests $(PYTEST_ARGS)
 
+# -o addopts= clears `-n auto`, so collection runs single-process (xdist off) and prints one
+# node-id per line.
+test-collect-ids:
+	$(UV_RUN_TEST) pytest ./tests --collect-only -q -o addopts=
+
+# uv sync reconciles the venv to the lockfile first, so the hooks run the pinned ruff/ty -- not
+# whatever a prior `uv run --exact` or interpreter switch left behind. --all-extras matters for ty
+# rather than for the linters: it type-checks the code behind every extra, so a package sitting
+# behind one still has to be resolvable.
 lint:
-	# reconcile the venv to the lockfile first, so the hooks run the pinned ruff/ty -- not whatever a
-	# prior `uv run --exact` or interpreter switch left behind, which would drift make lint from CI
 	uv sync --locked --all-extras
-	uv run pre-commit run --all-files
+	uv run pre-commit run --all-files $(PRE_COMMIT_ARGS)
 
 format:
 	uv run ruff format .;
@@ -48,15 +74,15 @@ format-single-file:
 	uv run ruff format ${file_path};
 	uv run ruff check --fix ${file_path};
 
+# local mutation testing over _core (config in [tool.mutmut]); MODULE=<substr> scopes to matching mutants
 mutation:
-	# local mutation testing over _core (config in [tool.mutmut]); MODULE=<substr> scopes to matching mutants
 	uv run --group mutation --all-extras --python 3.13 mutmut run $(if $(MODULE),"*$(MODULE)*",)
 
 mutation-results:
 	uv run --group mutation --all-extras --python 3.13 mutmut results
 
+# machine-readable killed/survived/total of the last run -> mutants/mutmut-cicd-stats.json (release.py reads it)
 mutation-stats:
-	# machine-readable killed/survived/total of the last run -> mutants/mutmut-cicd-stats.json (release.py reads it)
 	uv run --group mutation --all-extras --python 3.13 mutmut export-cicd-stats
 
 precompute-weights:
@@ -68,8 +94,8 @@ regen-docs:
 regen-machine-code:
 	uv run --all-extras python scripts/generate_machine_code_docs.py
 
+# DRY_RUN=1 stops after the preconditions (mutation measurement included), writing nothing
 release:
-	# DRY_RUN=1 stops after the preconditions (mutation measurement included), writing nothing
 	@test -n "$(VERSION)" || (echo "Usage: make release VERSION=X.Y.Z [DRY_RUN=1]" && exit 1)
 	$(MAKE) test
 	uv run python scripts/release.py $(VERSION) $(if $(DRY_RUN),--dry-run,)

@@ -46,6 +46,13 @@ runs:
         shell: bash
         run: rm -f uv.lock  # with the tracked lock present, uv reuses its pins and ignores --resolution
 
+      # The Windows runner image ships no GNU make, and the invocation this action runs lives in
+      # the Makefile so it cannot drift from the local one. ubuntu and macOS already have it.
+      - name: Install GNU make
+        if: runner.os == 'Windows'
+        shell: bash
+        run: choco install make --no-progress --yes
+
       - name: Run tests
         shell: bash
         env:
@@ -64,12 +71,10 @@ runs:
           # that do support it are what supply the probe coverage the cumulative gate unions.
           NUMBA_JIT_COVERAGE: "1"
         run: |
-          EXTRA_FLAG=""
-          [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
           COV_FLAG=""
           # --cov-fail-under=0: the gate is cumulative (coverage job), not per-combo
           [ "$COV" = "true" ] && COV_FLAG="--cov --cov-report= --cov-fail-under=0"
-          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --no-default-groups --group test pytest ./tests $COV_FLAG --durations=20
+          make test PYTHON="$PY" RESOLUTION="$RES" ALL_EXTRAS="$EXTRAS" PYTEST_ARGS="$COV_FLAG --durations=20"
 
       - name: Dump collected node-ids (for the cross-combo test-count union)
         if: inputs.coverage == 'true'
@@ -79,12 +84,9 @@ runs:
           RES: ${{ inputs.dependency_resolution }}
           EXTRAS: ${{ inputs.include_all_extra_deps }}
         run: |
-          EXTRA_FLAG=""
-          [ "$EXTRAS" = "true" ] && EXTRA_FLAG="--all-extras"
-          # -o addopts="" clears `-n auto`, so collection runs single-process (xdist off);
-          # each combo records its own collected set so the coverage job can union them.
-          uv run --python "$PY" --resolution "$RES" $EXTRA_FLAG --no-default-groups --group test \
-            pytest ./tests --collect-only -q -o addopts="" \
+          # each combo records its own collected set so the coverage job can union them; the
+          # `::` filter drops make's own echo of the recipe along with pytest's summary line.
+          make test-collect-ids PYTHON="$PY" RESOLUTION="$RES" ALL_EXTRAS="$EXTRAS" \
             | grep '::' > "test-ids-${RUNNER_OS}-${PY}-${RES}-${EXTRAS}.txt"
 
       - name: Upload coverage + node-id data
