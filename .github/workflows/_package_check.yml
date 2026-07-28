@@ -102,14 +102,14 @@ jobs:
           evaluate_counting_overhead(t_target_sec=0.01, verbose=False)
           print('OK: counting overhead can be evaluated')
 
-          from counted_float._core import benchmarking
+          from counted_float.benchmarking import run_flops_benchmark
           try:
-              benchmarking.FlopsBenchmarkSuite
+              run_flops_benchmark()
           except ImportError as e:
               assert 'counted-float[benchmarking]' in str(e), e
               print(f'OK: the flops suite reports what to install -- {e}')
           else:
-              raise SystemExit('the flops suite resolved without its extra')
+              raise SystemExit('the flops suite ran without its extra')
           "
 
       - name: Check the deprecated extra name still resolves
