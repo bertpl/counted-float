@@ -3,24 +3,27 @@ name: CodeQL
 # Static analysis (SAST) for the Python package. Complements zizmor/actionlint
 # (which lint the workflows, not the package code).
 #
-# Every trigger lives here, and that is load-bearing rather than tidy. Code
-# scanning identifies a configuration by analysis key — `<workflow file>:<job>` —
-# and compares a pull request against the configurations recorded on its base
-# branch. Scanning pull requests from one workflow file and `main` from another
-# therefore produces two keys that never match, and every PR reports that the
-# alerts it introduced could not be determined. One file, one key, one comparison.
+# Pull requests reach this through the PR pipeline, which calls it as a reusable
+# workflow so that pipeline's gate can depend on the result. That placement moves
+# the code-scanning analysis key from this file to the caller's, which retires an
+# earlier rule that every trigger had to live here to keep one key. The key's only
+# job was code scanning's introduced-versus-inherited comparison, and that
+# comparison has never worked on this repo: its check run is posted a second or two
+# before the analysis registers and is never re-evaluated, so it reported `neutral`
+# on eight consecutive pull requests. Nothing here consults it.
 #
-# The `pull_request` trigger deliberately carries no base-branch filter, matching
-# the PR pipeline's own stance: a PR based on another feature branch is scanned
-# while it is being reviewed, which is the window that matters.
+# What gates a merge is the last step below: it reads back the alerts this analysis
+# just uploaded and fails on any of them. `github/codeql-action/analyze` has no
+# fail-on-alerts input and exits 0 regardless, so without that step the scan runs
+# and nothing acts on it.
 #
-# This step exits 0 whether or not it finds anything, so it gates nothing by
-# itself. What acts on findings is code scanning's own check run, which branch
-# protection requires — and requiring it is also what makes a merge wait for the
-# scan, since a required check has to report before the merge button unlocks.
+# Scope note, measured rather than assumed: the queries below report syntactic
+# findings reliably, but taint-tracking ones did not fire on planted argv-to-shell
+# and shell=True cases under either the default or the extended suite. Do not read
+# a green gate as evidence that injection-class defects are absent.
 
 on:
-  pull_request:
+  workflow_call:
   push:
     branches: [main]
   schedule:
@@ -30,7 +33,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # deliberately not ${{ github.workflow }}: when called, that resolves to the CALLER's
+  # name, so this would share a group with the PR pipeline and the two would cancel
+  # each other on every push.
+  group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -49,6 +55,10 @@ jobs:
         uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
           languages: python  # pure-Python package: no build step, CodeQL analyzes sources directly
+          # measured on this codebase: 43 rules -> 50, and zero findings either way, so the wider
+          # suite costs no false positives. It is taken as a free superset, not as a fix -- see the
+          # scope note in the header for what neither suite catches.
+          queries: security-extended
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
@@ -57,3 +67,40 @@ jobs:
           # what makes a pull request comparable to its base branch — the
           # analysis key does that, and no category overrides it (see the header).
           category: python
+
+      # The gate. `analyze` above exits 0 whether or not it found anything, and code scanning's own
+      # check run is posted before the upload registers and never re-evaluated -- so neither can
+      # block a merge. This reads the alerts back and fails on any of them.
+      #
+      # Filtered to CodeQL because Scorecard publishes to the same alert store and currently has
+      # open findings there; an unfiltered gate would be red on every pull request from day one.
+      # Gating on any open alert for the ref, rather than on the ones this PR introduced, because
+      # the introduced-versus-inherited comparison is exactly what does not work -- and any-open is
+      # already how pip-audit behaves in this pipeline.
+      - name: Fail on CodeQL findings
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+        run: |
+          # the alerts lag the upload by a second or two, so a first unavailable read means "not
+          # yet" rather than "clean" -- poll briefly before believing it
+          alerts="unavailable"
+          for attempt in 1 2 3 4 5; do
+            alerts=$(gh api "repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=${REF}&state=open&per_page=100" \
+                       --jq '[.[] | select(.tool.name == "CodeQL")]' 2>/dev/null || echo "unavailable")
+            [ "$alerts" != "unavailable" ] && break
+            echo "code scanning has no data for ${REF} yet (attempt ${attempt}); waiting."
+            sleep 10
+          done
+          if [ "$alerts" = "unavailable" ]; then
+            echo "::error::could not read code scanning alerts for ${REF}"
+            exit 1
+          fi
+          count=$(echo "$alerts" | jq 'length')
+          if [ "$count" -gt 0 ]; then
+            echo "$alerts" | jq -r '.[] | "::error::CodeQL: \(.rule.id) — \(.rule.description) (\(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line))"'
+            echo "::error::${count} open CodeQL alert(s) on ${REF}"
+            exit 1
+          fi
+          echo "No open CodeQL alerts on ${REF}."
