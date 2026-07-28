@@ -1,11 +1,6 @@
-"""The flops benchmark entry point.
+"""The flops benchmark entry point: the one place the suite is reached from."""
 
-It lives beside the package facade rather than inside it on purpose. A module-level ``__getattr__``
-only fires for attribute access from *outside* the module that defines it, so a runner sitting in
-``__init__`` could not reach the flops suite through the same hook every other caller uses — it
-would need a second way in, and a second way in is a second thing that can miss the guard.
-"""
-
+from counted_float._core.compatibility import Capability
 from counted_float._core.micro_benchmarking import console, output_quiet
 from counted_float._core.models import FlopsBenchmarkResults
 
@@ -22,9 +17,10 @@ def run_flops_benchmark(
     An optional seed makes input pools and per-round shuffles reproducible. Progress output is
     printed unless verbose is False.
     """
-    # deliberately through the package rather than `from .flops import ...`: that is what puts this
-    # call through the guarded hook, so it reports the missing extra instead of a raw import error
-    from counted_float._core.benchmarking import FlopsBenchmarkSuite
+    # imported here, behind the guard, so that importing this module costs nothing and an install
+    # without the extra is told what to install rather than shown a raw import error
+    with Capability.FLOPS_BENCHMARKING.required():
+        from .flops import FlopsBenchmarkSuite
 
     with output_quiet(not verbose):
         benchmark_results = FlopsBenchmarkSuite().run(
