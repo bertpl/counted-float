@@ -5,11 +5,12 @@ import json
 import subprocess
 import sys
 import textwrap
+import warnings
 
 import pytest
 
 PACKAGE = "counted_float"
-PUBLIC_MODULE_NAMES = [PACKAGE, f"{PACKAGE}.config", f"{PACKAGE}.benchmarking"]
+PUBLIC_MODULE_NAMES = [PACKAGE, f"{PACKAGE}.config", f"{PACKAGE}.benchmarking", f"{PACKAGE}.evaluation"]
 
 # Discovers the public names a module binds from our own package. Runs in a fresh interpreter on
 # purpose: importing any submodule anywhere in a process injects it as an attribute of its parent,
@@ -40,8 +41,12 @@ def test_every_name_in_all_resolves(module_name: str):
     module = importlib.import_module(module_name)
 
     # --- act / assert ------------------------------------
-    for name in module.__all__:
-        assert getattr(module, name, None) is not None, f"{module_name}.__all__ advertises unresolvable '{name}'"
+    # a deprecated re-export is still an advertised name that has to resolve, and touching it is the
+    # whole point here -- so its warning is expected rather than a finding
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        for name in module.__all__:
+            assert getattr(module, name, None) is not None, f"{module_name}.__all__ advertises unresolvable '{name}'"
 
 
 @pytest.mark.parametrize("module_name", PUBLIC_MODULE_NAMES)

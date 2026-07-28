@@ -3,7 +3,8 @@ from pathlib import Path
 import click
 
 from counted_float import BuiltInData
-from counted_float._core.benchmarking import run_counted_float_benchmark, run_flops_benchmark
+from counted_float._core.benchmarking import run_flops_benchmark
+from counted_float._core.evaluation import evaluate_counting_overhead
 
 
 # -------------------------------------------------------------------------
@@ -49,5 +50,5 @@ def show_data(key_filter: str) -> None:
 
 @cli.command(short_help="run benchmark of float vs CountedFloat performance")
 def benchmark_counted_float() -> None:
-    result = run_counted_float_benchmark()
+    result = evaluate_counting_overhead()
     result.show()

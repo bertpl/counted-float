@@ -1,14 +1,15 @@
-"""The flops suite is reached lazily, so an install without the extra gets guidance, not a traceback.
+"""Running the flops suite without its extra reports what to install, rather than failing obscurely.
 
 Two techniques, because two different things are being claimed:
 
-- **Subprocess with the modules blocked** — proves what stays *reachable* on an install that does
-  not carry them. Import-time reachability is the claim, so it has to be a fresh interpreter.
+- **Subprocess with the modules blocked** — proves what stays *importable* on an install that does
+  not carry them. Import-time reachability is the claim, so it needs a fresh interpreter.
 - **Patched availability** — proves the guard fires. A capability is absent when its distribution is
   not installed, which cannot be faked by blocking an import, so the availability lookup is what
   gets replaced. CI exercises the real thing on the legs installed without the extra.
 """
 
+import re
 import subprocess
 import sys
 import textwrap
@@ -70,17 +71,24 @@ def test_counting_works_without_the_benchmarking_modules():
 
 
 def test_the_benchmarking_package_still_imports_without_them():
-    # the overhead benchmark and the result model must survive the flops suite becoming unreachable
+    # the result model and the deprecated alias must survive the flops suite becoming unreachable --
+    # the package has to stay importable for its own guard to be able to report anything
     # --- act ---------------------------------------------
     result = _run_without_benchmarking_modules("""
-        from counted_float.benchmarking import FlopsBenchmarkResults, run_counted_float_benchmark
+        import warnings
+
+        from counted_float.benchmarking import FlopsBenchmarkResults
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from counted_float.benchmarking import run_counted_float_benchmark
 
         print(FlopsBenchmarkResults.__name__, run_counted_float_benchmark.__name__)
     """)
 
     # --- assert ------------------------------------------
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip() == "FlopsBenchmarkResults run_counted_float_benchmark"
+    assert result.stdout.strip() == "FlopsBenchmarkResults evaluate_counting_overhead"
 
 
 def test_the_shipped_benchmark_data_still_parses_without_them():
@@ -96,20 +104,19 @@ def test_the_shipped_benchmark_data_still_parses_without_them():
     assert result.stdout.strip() == "True"
 
 
+def test_holding_the_entry_point_costs_nothing_without_the_extra(extra_not_installed):
+    # the guard sits inside the call rather than at module level, so having the function in hand is
+    # free: nothing raises until someone actually asks for a benchmark
+    # --- act / assert ------------------------------------
+    assert callable(benchmarking.run_flops_benchmark)
+
+
 # =================================================================================================
 #  what is guarded
 # =================================================================================================
-def test_reaching_the_flops_suite_names_the_extra_that_installs_it(extra_not_installed):
+def test_running_the_flops_benchmark_names_the_extra_that_installs_it(extra_not_installed):
     # --- act / assert ------------------------------------
-    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
-        _ = benchmarking.FlopsBenchmarkSuite
-
-
-def test_running_the_flops_benchmark_reports_the_same_guidance(extra_not_installed):
-    # the wrapper resolves the suite itself rather than through the module hook, so it is guarded
-    # separately from plain attribute access above
-    # --- act / assert ------------------------------------
-    with pytest.raises(MissingCapabilityError, match=r"counted-float\[numba\]"):
+    with pytest.raises(MissingCapabilityError, match=re.escape(f"counted-float[{Capability.FLOPS_BENCHMARKING}]")):
         benchmarking.run_flops_benchmark()
 
 
@@ -122,7 +129,7 @@ def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkey
 
     # --- act / assert ------------------------------------
     with pytest.raises(MissingCapabilityError):
-        _ = benchmarking.FlopsBenchmarkSuite
+        benchmarking.run_flops_benchmark()
 
     assert "counted_float._core.benchmarking.flops" not in sys.modules
 
@@ -131,18 +138,11 @@ def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkey
 #  with the extra present
 # =================================================================================================
 @needs(Capability.FLOPS_BENCHMARKING)
-def test_the_hook_resolves_the_real_suite():
+def test_the_suite_runs_when_the_extra_is_there():
     # --- act ---------------------------------------------
-    suite = benchmarking.FlopsBenchmarkSuite
+    result = benchmarking.run_flops_benchmark(
+        t_slice_target_ms=0.1, n_rounds_measure=5, n_rounds_warmup=1, seed=42, verbose=False
+    )
 
     # --- assert ------------------------------------------
-    from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite
-
-    assert suite is FlopsBenchmarkSuite
-
-
-def test_an_unknown_attribute_still_raises_attribute_error():
-    # the hook must not turn every miss into an import attempt
-    # --- act / assert ------------------------------------
-    with pytest.raises(AttributeError, match="NoSuchThing"):
-        _ = benchmarking.NoSuchThing
+    assert result is not None

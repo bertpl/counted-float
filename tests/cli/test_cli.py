@@ -54,7 +54,7 @@ def test_benchmark_counted_float_invokes_the_benchmark(monkeypatch):
         calls.append(True)
         return _FakeResult()
 
-    monkeypatch.setattr(_cli, "run_counted_float_benchmark", _fake_benchmark)
+    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_benchmark)
 
     # --- act ---------------------------------------------
     result = CliRunner().invoke(benchmark_counted_float)

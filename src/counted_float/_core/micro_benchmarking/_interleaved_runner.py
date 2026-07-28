@@ -16,8 +16,9 @@ from typing import TYPE_CHECKING, Generic, TypeVar
 
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 
-from counted_float._core.benchmarking._output import console
 from counted_float._core.models import MicroBenchmarkResult
+
+from ._output import console
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
