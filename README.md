@@ -104,7 +104,7 @@ counts.total_count()         # 2
 
 `CountedFloat` adds counting overhead in two forms — the price of Python-level
 operator dispatch and result wrapping. Measured on an Apple M3 Max (measure your
-own machine with `counted_float benchmark-counted-float`):
+own machine with `counted_float evaluate-overhead`):
 
 - **native float ops** (`+`, `-`, `*`, `/`, comparisons): roughly **20–40×**
   slower than plain `float` per operation, environment-dependent (~21× on the M3

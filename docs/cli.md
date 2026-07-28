@@ -66,10 +66,10 @@ ALL                                                                      0.44   
 ```
 <!-- END generated: cli-show-data-slice -->
 
-## Test performance of `CountedFloat` vs `float`
+## Evaluate the counting overhead of `CountedFloat` vs `float`
 
 ```
-[~] counted_float benchmark-counted-float
+[~] counted_float evaluate-overhead
 ```
 
 See [Performance impact](benchmarking.md#performance-impact) for example

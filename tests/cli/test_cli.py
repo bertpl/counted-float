@@ -6,7 +6,7 @@ from click.testing import CliRunner
 
 from counted_float import BuiltInData
 from counted_float._core import _cli
-from counted_float._core._cli import benchmark, benchmark_counted_float, show_data
+from counted_float._core._cli import benchmark, benchmark_counted_float, evaluate_overhead, show_data
 from counted_float._core.models import FlopsBenchmarkResults
 
 
@@ -39,30 +39,61 @@ def test_show_data_key_filter_spellings(flag: str, monkeypatch) -> None:
     assert seen == ["arm"]
 
 
-def test_benchmark_counted_float_invokes_the_benchmark(monkeypatch):
-    """`benchmark-counted-float` runs the comparison benchmark and shows its result."""
+def test_evaluate_overhead_invokes_the_evaluation(monkeypatch):
+    """`evaluate-overhead` runs the counting-overhead evaluation and shows its result."""
 
     # --- arrange -----------------------------------------
-    # replace the real (slow) benchmark with a fast fake, and prove the command actually calls it
+    # replace the real (slow) evaluation with a fast fake, and prove the command actually calls it
     calls: list[bool] = []
 
     class _FakeResult:
         def show(self) -> None:
-            click.echo("fake benchmark shown")
+            click.echo("fake evaluation shown")
 
-    def _fake_benchmark() -> _FakeResult:
+    def _fake_evaluation() -> _FakeResult:
         calls.append(True)
         return _FakeResult()
 
-    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_benchmark)
+    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_evaluation)
+
+    # --- act ---------------------------------------------
+    result = CliRunner().invoke(evaluate_overhead)
+
+    # --- assert ------------------------------------------
+    assert result.exit_code == 0
+    assert calls == [True]  # the command invoked the (patched) evaluation exactly once
+    assert "fake evaluation shown" in result.output  # and rendered its result via .show()
+
+
+def test_the_old_command_name_still_runs_and_warns(monkeypatch):
+    """`benchmark-counted-float` still does the work, but says what to move to."""
+
+    # --- arrange -----------------------------------------
+    class _FakeResult:
+        def show(self) -> None:
+            click.echo("fake evaluation shown")
+
+    def _fake_evaluation() -> _FakeResult:
+        return _FakeResult()
+
+    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_evaluation)
 
     # --- act ---------------------------------------------
     result = CliRunner().invoke(benchmark_counted_float)
 
     # --- assert ------------------------------------------
     assert result.exit_code == 0
-    assert calls == [True]  # the command invoked the (patched) benchmark exactly once
-    assert "fake benchmark shown" in result.output  # and rendered its result via .show()
+    assert "fake evaluation shown" in result.output  # the alias still does the work
+    assert "deprecated" in result.output
+    assert "evaluate-overhead" in result.output  # and names its replacement
+
+
+def test_the_old_command_name_is_hidden_from_help():
+    """The alias exists for install strings already in use, not for new readers to discover."""
+    result = CliRunner().invoke(_cli.cli, ["--help"])
+    assert result.exit_code == 0
+    assert "evaluate-overhead" in result.output
+    assert "benchmark-counted-float" not in result.output
 
 
 def test_benchmark_output_round_trip(tmp_path: Path, monkeypatch):

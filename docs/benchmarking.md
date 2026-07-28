@@ -96,7 +96,7 @@ advised to use `CountedFloat` for production code, but just for research code
 for which you want to estimate the floating-point operation count.
 
 Micro-benchmarking of a bisection algorithm using
-`counted_float benchmark-counted-float` (see the
+`counted_float evaluate-overhead` (see the
 [CLI reference](cli.md)) teaches us this — again a frozen example, captured on
 an Apple M3 Max with counted-float 2.1.0:
 

@@ -48,7 +48,21 @@ def show_data(key_filter: str) -> None:
     )
 
 
-@cli.command(short_help="run benchmark of float vs CountedFloat performance")
-def benchmark_counted_float() -> None:
+@cli.command(short_help="evaluate the counting overhead of CountedFloat vs float")
+def evaluate_overhead() -> None:
     result = evaluate_counting_overhead()
     result.show()
+
+
+# `benchmark` is what the flops suite does to a machine; this measures the library, so it is named
+# for evaluation instead. Hidden rather than listed: the alias is for install strings already in
+# use, not something a new reader should discover and pick.
+@cli.command(name="benchmark-counted-float", hidden=True)
+@click.pass_context
+def benchmark_counted_float(ctx: click.Context) -> None:
+    click.echo(
+        "'benchmark-counted-float' is deprecated and will be removed in the next major version; "
+        "use 'evaluate-overhead' instead.",
+        err=True,
+    )
+    ctx.invoke(evaluate_overhead)
