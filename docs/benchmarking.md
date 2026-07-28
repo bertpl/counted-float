@@ -98,19 +98,19 @@ for which you want to estimate the floating-point operation count.
 Micro-benchmarking of a bisection algorithm using
 `counted_float benchmark-counted-float` (see the
 [CLI reference](cli.md)) teaches us this — again a frozen example, captured on
-an Apple M3 Max with counted-float 1.7.0:
+an Apple M3 Max with counted-float 2.1.0:
 
 ```
 ------------------------------------------------------------------------------------------------------------------------
 Running CountedFloat benchmark...
 
-float                              : wwwwwwwwwwwwwww...................................   [  12.35 µs ±  2.4% | 50.1K cpu cycles ±  2.4% ]  /  execution
-CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 290.57 µs ±  0.4% | 1.18M cpu cycles ±  0.4% ]  /  execution
+float                              : wwwwwwwwwwwwwww...................................   [  12.50 µs ±  2.1% ]  /  execution
+CountedFloat                       : wwwwwwwwwwwwwww...................................   [ 275.19 µs ±  0.6% ]  /  execution
 ------------------------------------------------------------------------------------------------------------------------
 
 CountedFloat Benchmark Results:
-  Bisection using float        :   12.35 µs / execution
-  Bisection using CountedFloat :  290.57 µs / execution
+  Bisection using float        :   12.50 µs / execution
+  Bisection using CountedFloat :  275.19 µs / execution
 
-CountedFloat is 23.5x slower than float
+CountedFloat is 22.0x slower than float
 ```

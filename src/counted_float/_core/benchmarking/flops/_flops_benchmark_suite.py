@@ -12,9 +12,10 @@ from counted_float._core.models import (
     Quantiles,
     SystemInfo,
 )
-from counted_float._core.utils import get_cpu_frequency_mhz_current
+from counted_float._core.utils import FALLBACK_CPU_FREQ_MHZ
 
 from ._array_generator import ArrayGenerator
+from ._cpu_freq import get_cpu_frequency_mhz_current
 from ._flops_micro_benchmark import FlopsMicroBenchmark
 
 FBT = FlopsBenchmarkType
@@ -52,8 +53,8 @@ class FlopsBenchmarkSuite:
 
         Progress goes to the shared benchmark console (silenced via output_quiet).
         """
-        # a missing CPU-frequency reading makes the ns->cycles conversion fall back to a nominal
-        # 1 GHz (see convert_nsecs_to_cycles), so the reported per-op "cycle" figures are then really
+        # a missing CPU-frequency reading makes the ns->cycles conversion fall back to 1 GHz
+        # (see convert_nsecs_to_cycles), so the reported per-op "cycle" figures are then really
         # nanoseconds -- surface that; only the derived flop-weight ratios (scale-invariant) stay valid
         if get_cpu_frequency_mhz_current() is None:
             warnings.warn(
@@ -80,6 +81,10 @@ class FlopsBenchmarkSuite:
             n_rounds_measure=n_rounds_measure,
             n_rounds_warmup=n_rounds_warmup,
             seed=seed,
+            # absolute per-op cost is this suite's deliverable, so it is the caller that wants cycles --
+            # and the one that accepts the fallback clock when the real one cannot be read, having
+            # warned about it above
+            cpu_freq_source=lambda: get_cpu_frequency_mhz_current() or FALLBACK_CPU_FREQ_MHZ,
         )
         raw_results = runner.run()
 

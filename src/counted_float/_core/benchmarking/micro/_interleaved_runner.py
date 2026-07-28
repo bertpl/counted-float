@@ -18,10 +18,9 @@ from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextC
 
 from counted_float._core.benchmarking._output import console
 from counted_float._core.models import MicroBenchmarkResult
-from counted_float._core.utils import get_cpu_frequency_mhz_current
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from counted_float._core.models import SingleRunResult
 
@@ -140,12 +139,15 @@ class InterleavedBenchmarkRunner(Generic[K]):
         n_rounds_measure: int = 200,
         n_rounds_warmup: int = 3,
         seed: int | None = None,
+        cpu_freq_source: Callable[[], float | None] | None = None,
     ) -> None:
         self.benchmarks = benchmarks
         self.t_slice_target_ms = t_slice_target_ms
         self.n_rounds_measure = n_rounds_measure
         self.n_rounds_warmup = n_rounds_warmup
         self.seed = seed
+        # supplied by callers that report absolute per-op cost; left unset, slices carry timings only
+        self.cpu_freq_source = cpu_freq_source
 
     def run(self) -> dict[K, MicroBenchmarkResult]:
         """Run all phases and return one MicroBenchmarkResult per benchmark."""
@@ -170,7 +172,7 @@ class InterleavedBenchmarkRunner(Generic[K]):
 
             # --- phase 2: JIT pass -----------------------
             task = progress.add_task("jit", total=len(self.benchmarks))
-            cpu_freq_mhz = get_cpu_frequency_mhz_current()
+            cpu_freq_mhz = self._sample_cpu_freq_mhz()
             for key, benchmark in self.benchmarks.items():
                 result = benchmark.run_slice(n_executions=1, round_index=0, cpu_freq_mhz=cpu_freq_mhz)
                 controllers[key].record_slice(result.t_nsecs)
@@ -217,7 +219,7 @@ class InterleavedBenchmarkRunner(Generic[K]):
         """Run one round: every benchmark exactly once, in a freshly shuffled order."""
         keys = list(self.benchmarks.keys())
         rng.shuffle(keys)
-        cpu_freq_mhz = get_cpu_frequency_mhz_current()  # once per round, stamped onto all its slices
+        cpu_freq_mhz = self._sample_cpu_freq_mhz()  # once per round, stamped onto all its slices
         for key in keys:
             controller = controllers[key]
             result = self.benchmarks[key].run_slice(
@@ -228,6 +230,10 @@ class InterleavedBenchmarkRunner(Generic[K]):
             controller.record_slice(result.t_nsecs)
             if record_into is not None:
                 record_into[key].append(result)
+
+    def _sample_cpu_freq_mhz(self) -> float | None:
+        """The clock rate to stamp onto this round's slices, or None when no caller asked for one."""
+        return None if self.cpu_freq_source is None else self.cpu_freq_source()
 
     def _make_progress(self) -> Progress:
         """One bar per phase, rendered strictly from the orchestrating thread.

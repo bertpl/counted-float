@@ -3,8 +3,6 @@ from __future__ import annotations
 import platform
 from importlib.metadata import PackageNotFoundError, version
 
-from counted_float._core.utils import get_cpu_frequency_mhz_max, get_cpu_frequency_mhz_min
-
 from ._base import JsonReprModel
 
 
@@ -66,6 +64,11 @@ class ProcessorInfo(JsonReprModel):
         # it runs while benchmarking -- whereas the model itself is loaded to parse the shipped data
         import cpuinfo
         import psutil
+
+        from counted_float._core.benchmarking.flops._cpu_freq import (
+            get_cpu_frequency_mhz_max,
+            get_cpu_frequency_mhz_min,
+        )
 
         cpu_info_dict = cpuinfo.get_cpu_info()
         return ProcessorInfo(

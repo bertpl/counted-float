@@ -2,12 +2,12 @@ from types import SimpleNamespace
 
 import pytest
 
-from counted_float._core.utils import (
+from counted_float._core.benchmarking.flops._cpu_freq import (
+    _get_psutil_cpu_freq_attribute_mhz,
     get_cpu_frequency_mhz_current,
     get_cpu_frequency_mhz_max,
     get_cpu_frequency_mhz_min,
 )
-from counted_float._core.utils._cpu_freq import _get_psutil_cpu_freq_attribute_mhz
 
 psutil = pytest.importorskip("psutil", reason="these helpers read their frequencies through psutil")
 

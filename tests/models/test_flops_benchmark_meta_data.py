@@ -17,6 +17,10 @@ from counted_float._core.models._flops_benchmark_meta_data import (
 # machine onto a fresh benchmark reads them, which is what this module exercises
 cpuinfo = pytest.importorskip("cpuinfo", reason="describing the running machine reads py-cpuinfo")
 psutil = pytest.importorskip("psutil", reason="describing the running machine reads psutil")
+cpu_freq = pytest.importorskip(
+    "counted_float._core.benchmarking.flops._cpu_freq",
+    reason="the frequency helpers live with the flops suite, behind its extra",
+)
 
 
 # =================================================================================================
@@ -98,8 +102,8 @@ def test_processor_info_maps_each_host_fact_to_its_field(monkeypatch):
         lambda: {"brand_raw": "Test CPU", "arch_string_raw": "x86_64", "arch": "X86_64", "bits": 64},
     )
     monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: 8 if logical else 4)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: 1000.0)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: 3000.0)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_min", lambda: 1000.0)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_max", lambda: 3000.0)
 
     # --- act ---------------------------------------------
     info = ProcessorInfo.from_system()
@@ -121,8 +125,8 @@ def test_processor_info_architecture_drops_absent_parts_and_freq_none_stays_none
         lambda: {"brand_raw": "CPU", "arch_string_raw": "arm64", "arch": None, "bits": None},
     )
     monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: 1)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: None)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: None)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_min", lambda: None)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_max", lambda: None)
 
     # --- act ---------------------------------------------
     info = ProcessorInfo.from_system()
@@ -137,8 +141,8 @@ def test_processor_info_defaults_description_and_architecture_to_empty(monkeypat
     # --- arrange -----------------------------------------
     monkeypatch.setattr(cpuinfo, "get_cpu_info", dict)  # nothing detected
     monkeypatch.setattr(psutil, "cpu_count", lambda logical=True: None)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_min", lambda: 500.0)
-    monkeypatch.setattr(meta, "get_cpu_frequency_mhz_max", lambda: 500.0)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_min", lambda: 500.0)
+    monkeypatch.setattr(cpu_freq, "get_cpu_frequency_mhz_max", lambda: 500.0)
 
     # --- act ---------------------------------------------
     info = ProcessorInfo.from_system()
