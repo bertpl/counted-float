@@ -3,24 +3,19 @@ name: CodeQL
 # Static analysis (SAST) for the Python package. Complements zizmor/actionlint
 # (which lint the workflows, not the package code).
 #
-# Every trigger lives here, and that is load-bearing rather than tidy. Code
-# scanning identifies a configuration by analysis key — `<workflow file>:<job>` —
-# and compares a pull request against the configurations recorded on its base
-# branch. Scanning pull requests from one workflow file and `main` from another
-# therefore produces two keys that never match, and every PR reports that the
-# alerts it introduced could not be determined. One file, one key, one comparison.
+# Pull requests reach this through the PR pipeline, which calls it as a reusable
+# workflow so that pipeline's gate can depend on the result. Pushes to main and the
+# weekly schedule run it directly.
 #
-# The `pull_request` trigger deliberately carries no base-branch filter, matching
-# the PR pipeline's own stance: a PR based on another feature branch is scanned
-# while it is being reviewed, which is the window that matters.
+# `github/codeql-action/analyze` exits 0 whether or not it finds anything, and code
+# scanning's own check run cannot be relied on to block a merge. The last step below
+# is what gates: it reads back the alerts this analysis uploaded and fails on any.
 #
-# This step exits 0 whether or not it finds anything, so it gates nothing by
-# itself. What acts on findings is code scanning's own check run, which branch
-# protection requires — and requiring it is also what makes a merge wait for the
-# scan, since a required check has to report before the merge button unlocks.
+# The queries report syntactic findings reliably. They are not a guarantee about
+# injection-class defects: a green result here is not evidence that none are present.
 
 on:
-  pull_request:
+  workflow_call:
   push:
     branches: [main]
   schedule:
@@ -30,7 +25,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # deliberately not ${{ github.workflow }}: when called, that resolves to the CALLER's
+  # name, so this would share a group with the PR pipeline and the two would cancel
+  # each other on every push.
+  group: codeql-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -49,6 +47,7 @@ jobs:
         uses: github/codeql-action/init@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
           languages: python  # pure-Python package: no build step, CodeQL analyzes sources directly
+          queries: security-extended  # superset of the default suite, at no false-positive cost here
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
         with:
@@ -57,3 +56,39 @@ jobs:
           # what makes a pull request comparable to its base branch — the
           # analysis key does that, and no category overrides it (see the header).
           category: python
+
+      # The gate: neither `analyze` above nor code scanning's own check run can fail a build on
+      # findings, so this reads the alerts back and does it.
+      #
+      # Filtered to CodeQL: Scorecard publishes to the same alert store, and what it reports is
+      # repository posture rather than anything this gate is answering for.
+      #
+      # Gating on any open alert for the ref rather than on the ones a pull request introduced,
+      # which is also how pip-audit behaves in this pipeline.
+      - name: Fail on CodeQL findings
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
+        run: |
+          # the alerts lag the upload by a second or two, so a first unavailable read means "not
+          # yet" rather than "clean" -- poll briefly before believing it
+          alerts="unavailable"
+          for attempt in 1 2 3 4 5; do
+            alerts=$(gh api "repos/${GITHUB_REPOSITORY}/code-scanning/alerts?ref=${REF}&state=open&per_page=100" \
+                       --jq '[.[] | select(.tool.name == "CodeQL")]' 2>/dev/null || echo "unavailable")
+            [ "$alerts" != "unavailable" ] && break
+            echo "code scanning has no data for ${REF} yet (attempt ${attempt}); waiting."
+            sleep 10
+          done
+          if [ "$alerts" = "unavailable" ]; then
+            echo "::error::could not read code scanning alerts for ${REF}"
+            exit 1
+          fi
+          count=$(echo "$alerts" | jq 'length')
+          if [ "$count" -gt 0 ]; then
+            echo "$alerts" | jq -r '.[] | "::error::CodeQL: \(.rule.id) — \(.rule.description) (\(.most_recent_instance.location.path):\(.most_recent_instance.location.start_line))"'
+            echo "::error::${count} open CodeQL alert(s) on ${REF}"
+            exit 1
+          fi
+          echo "No open CodeQL alerts on ${REF}."
