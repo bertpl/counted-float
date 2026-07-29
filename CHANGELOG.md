@@ -5,21 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 2.1.1 (2026-07-29)
 
 ### Fixed
 
 - aggregating flop weights no longer stops the missing-value fit short of convergence without saying so, which could leave imputed weights inaccurate for sparsely populated key filters
-
-### Security
 
 ## 2.1.0 (2026-07-28)
 
