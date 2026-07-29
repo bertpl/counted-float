@@ -1,9 +1,10 @@
 import math
 
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from counted_float._core.utils import impute_missing_data
+from counted_float._core.utils import _missing_data, impute_missing_data
 
 Matrix = list[list[float]]
 
@@ -228,3 +229,76 @@ def test_a_fully_missing_matrix_is_returned_unchanged():
     assert all(math.isnan(value) for row in result for value in row)
     assert len(result) == 2
     assert all(len(row) == 3 for row in result)
+
+
+# =================================================================================================
+#  Convergence
+# =================================================================================================
+# each sweep is an exact alternating fit, so even weakly-connected observation patterns must be
+# recovered well inside the sweep budget; these pin that against regressions to damped or
+# stale-update schemes, which crawl on exactly such patterns.
+
+
+def _two_blocks_with_thin_coupling(n: int = 10) -> tuple[Matrix, Matrix]:
+    """An exact rank-1 matrix observed as two blocks that share only two columns.
+
+    The top rows are observed on the left columns, the bottom rows on the right columns, with an
+    overlap of two shared columns: all information linking the two blocks flows through that
+    overlap. This mirrors the structure of the built-in weights matrix (spec-only vs
+    benchmark-only sources), the pattern on which a damped simultaneous-update scheme previously
+    exhausted its sweep budget.
+    """
+    rows = [1.5**i for i in range(n)]
+    cols = [0.5 * 1.8**j for j in range(n)]
+    full = _outer(rows, cols)
+    half = n // 2
+    holed = [
+        [
+            value if ((i < half and j <= half) or (i >= half and j >= half - 1)) else math.nan
+            for j, value in enumerate(row)
+        ]
+        for i, row in enumerate(full)
+    ]
+    return holed, full
+
+
+def test_a_thinly_coupled_block_pattern_is_recovered_within_75_sweeps(monkeypatch):
+    # --- arrange -----------------------------------------
+    holed, full = _two_blocks_with_thin_coupling()
+    monkeypatch.setattr(_missing_data, "_MAX_ITER", 75)
+
+    # --- act ---------------------------------------------
+    filled = impute_missing_data(holed)
+
+    # --- assert ------------------------------------------
+    assert _same(filled, full, rel_tol=1e-8)
+
+
+def test_exceeding_the_sweep_budget_warns_instead_of_truncating_silently(monkeypatch):
+    # --- arrange -----------------------------------------
+    # a single sweep can never satisfy the convergence test: its corrections *are* the initial fit
+    holed, _ = _two_blocks_with_thin_coupling()
+    monkeypatch.setattr(_missing_data, "_MAX_ITER", 1)
+
+    # --- act / assert ------------------------------------
+    with pytest.warns(RuntimeWarning, match="did not reach tolerance"):
+        impute_missing_data(holed)
+
+
+@given(matrix=_rank1_matrices(), mask=st.data())
+def test_any_pattern_anchored_by_a_full_row_and_column_is_recovered(matrix: Matrix, mask):
+    """With row 0 and column 0 fully observed, every cell stays linked to one evidence group, so
+    arbitrary further missingness must still be recovered exactly for rank-1 input."""
+    # --- arrange -----------------------------------------
+    n_rows, n_cols = len(matrix), len(matrix[0])
+    holed = [row[:] for row in matrix]
+    for i in range(1, n_rows):
+        for j in range(1, n_cols):
+            if mask.draw(st.booleans()):
+                holed[i][j] = math.nan
+
+    # --- act ---------------------------------------------
+    filled = impute_missing_data(holed)
+
+    # --- assert ------------------------------------------
+    assert _same(filled, matrix, rel_tol=1e-6)

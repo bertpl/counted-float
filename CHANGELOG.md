@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- aggregating flop weights no longer stops the missing-value fit short of convergence without saying so, which could leave imputed weights inaccurate for sparsely populated key filters
+
 ### Security
 
 ## 2.1.0 (2026-07-28)
