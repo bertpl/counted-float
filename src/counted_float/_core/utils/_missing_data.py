@@ -11,17 +11,12 @@ _MAX_ITER = 250
 
 
 def _reachable_tolerance(n_rows: int, n_cols: int) -> float:
-    """Convergence floor for a matrix of this size: one ulp per averaged term, near enough.
+    """Return a worst-case bound on the rounding floor, chosen so the fit can always reach it.
 
-    Every correction is a geometric mean over at most one full row or column, so rounding can
-    accumulate on the order of one ulp per term averaged -- bounded by the larger dimension, since
-    a row correction averages across columns and a column correction across rows. Below that the
-    corrections are floating-point noise rather than signal, and no number of further sweeps
-    reduces them.
-
-    Derived rather than fixed because a constant cannot be right for every size: too loose and a
-    small matrix stops early, too tight and a large one can never satisfy it and would spin to the
-    sweep cap on every call.
+    Each correction is a geometric mean over at most one full row or column, so rounding can
+    accumulate on the order of one ulp per averaged term -- bounded by the larger dimension. The
+    real floor sits well below this; the margin is the point, since a fixed constant is either too
+    loose for a small matrix or unreachable for a large one.
     """
     return max(n_rows, n_cols) * sys.float_info.epsilon
 
