@@ -7,7 +7,9 @@ permissions:
 
 jobs:
   run_benchmark:
-    runs-on: ubuntu-latest
+    # pinned rather than ubuntu-latest: this is the x86 half of an architecture pair, so it must
+    # keep measuring x86 even if the default runner label moves to arm
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
