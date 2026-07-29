@@ -1,4 +1,5 @@
 import math
+import sys
 import warnings
 
 from ._geo_mean import geo_mean
@@ -6,9 +7,23 @@ from ._geo_mean import geo_mean
 # hard cap on fitting sweeps; each sweep below is an exact alternating fit, so this is only ever
 # reached for pathologically weakly-connected observation patterns -- in which case a
 # RuntimeWarning is raised rather than truncating silently
-_MAX_ITER = 100
-# converged once the corrections stop moving the factors (see the break below)
-_TOL = 1e-12
+_MAX_ITER = 250
+
+
+def _reachable_tolerance(n_rows: int, n_cols: int) -> float:
+    """Convergence floor for a matrix of this size: one ulp per averaged term, near enough.
+
+    Every correction is a geometric mean over at most one full row or column, so rounding can
+    accumulate on the order of one ulp per term averaged -- bounded by the larger dimension, since
+    a row correction averages across columns and a column correction across rows. Below that the
+    corrections are floating-point noise rather than signal, and no number of further sweeps
+    reduces them.
+
+    Derived rather than fixed because a constant cannot be right for every size: too loose and a
+    small matrix stops early, too tight and a large one can never satisfy it and would spin to the
+    sweep cap on every call.
+    """
+    return max(n_rows, n_cols) * sys.float_info.epsilon
 
 
 def _axis_corrections(matrix: list[list[float]], own: list[float], other: list[float]) -> list[float]:
@@ -68,6 +83,7 @@ def impute_missing_data(data: list[list[float]]) -> list[list[float]]:
     # loop-invariant: `data` is documented as unmodified, so transposing once outside the loop
     # rather than per iteration costs one copy instead of _MAX_ITER of them
     transposed = [list(column) for column in zip(*data, strict=True)]
+    tolerance = _reachable_tolerance(n_rows, n_cols)
 
     for _i in range(_MAX_ITER):
         # alternating exact fits (coordinate descent in log space): fit the row factors against the
@@ -89,11 +105,11 @@ def impute_missing_data(data: list[list[float]]) -> list[list[float]]:
             # nothing anywhere to fit against: every factor is now NaN and no later pass can undo
             # that, so the remaining iterations would recompute the same nothing
             break
-        if max(abs(c - 1.0) for c in finite) < _TOL:
+        if max(abs(c - 1.0) for c in finite) < tolerance:
             break
     else:
         warnings.warn(
-            f"rank-1 imputation did not reach tolerance {_TOL:g} within {_MAX_ITER} sweeps; "
+            f"rank-1 imputation did not reach tolerance {tolerance:g} within {_MAX_ITER} sweeps; "
             f"imputed values may be inaccurate. This indicates an extremely weakly-connected "
             f"pattern of observed cells.",
             RuntimeWarning,

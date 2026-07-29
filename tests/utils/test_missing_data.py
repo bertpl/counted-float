@@ -1,4 +1,5 @@
 import math
+import warnings
 
 import pytest
 from hypothesis import given
@@ -262,13 +263,19 @@ def _two_blocks_with_thin_coupling(n: int = 10) -> tuple[Matrix, Matrix]:
     return holed, full
 
 
-def test_a_thinly_coupled_block_pattern_is_recovered_within_75_sweeps(monkeypatch):
+def test_a_thinly_coupled_block_pattern_is_recovered_within_120_sweeps(monkeypatch):
+    # A budget that separates the two schemes on this pattern: alternating exact fits reach the
+    # tolerance in 84 sweeps, while computing both halves from stale factors needs 208. Raising the
+    # warning to an error is what makes the name true -- without it the case would still pass on a
+    # truncated fit that happened to land close enough.
     # --- arrange -----------------------------------------
     holed, full = _two_blocks_with_thin_coupling()
-    monkeypatch.setattr(_missing_data, "_MAX_ITER", 75)
+    monkeypatch.setattr(_missing_data, "_MAX_ITER", 120)
 
     # --- act ---------------------------------------------
-    filled = impute_missing_data(holed)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        filled = impute_missing_data(holed)
 
     # --- assert ------------------------------------------
     assert _same(filled, full, rel_tol=1e-8)
