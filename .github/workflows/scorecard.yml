@@ -19,8 +19,6 @@ permissions:
 jobs:
   analysis:
     name: Scorecard analysis
-    # x86 on purpose: this uploads its results through the CodeQL action, whose CLI does not
-    # support linux/arm64.
     runs-on: ubuntu-latest
     permissions:
       security-events: write  # upload SARIF results to code scanning

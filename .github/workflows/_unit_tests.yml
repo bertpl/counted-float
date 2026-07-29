@@ -64,7 +64,7 @@ jobs:
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
     # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
     if: always()
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     steps:
       - name: Require every matrix combo to have succeeded
         if: needs.core.result != 'success'
