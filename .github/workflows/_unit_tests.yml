@@ -19,23 +19,28 @@ jobs:
         # those paths on the pull-request gate rather than only in the manual benchmark workflows.
         # Combos cover every axis (all four Pythons, both resolution ends, extras on/off, all three
         # OSes) strategically rather than as a full product.
+        #
+        # The ubuntu legs run on arm runners, which are materially faster. One is deliberately left
+        # on x86: this package exists to price instructions per architecture, and the FMA probes are
+        # checked by inspecting the machine code numba emits for them -- so the gate keeps a leg on
+        # each of the two architectures whose costs it ships data for.
         include:
-          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.12", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.13", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.11", resolution: lowest-direct, all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.14", resolution: lowest-direct, all_extras: "true"  }
-          - { os: ubuntu-latest,  python: "3.11", resolution: highest,       all_extras: "false" }  # base install: no extras
-          - { os: ubuntu-latest,  python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
-          - { os: macos-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
-          - { os: windows-latest, python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          - { os: ubuntu-24.04-arm, python: "3.11", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,    python: "3.13", resolution: highest,       all_extras: "true"  }  # the x86 leg
+          - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.11", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.11", resolution: highest,       all_extras: "false" }  # base install: no extras
+          - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
+          - { os: macos-latest,     python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          - { os: windows-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           # Free-threaded build: counting state is per-thread, so this leg is where the
           # concurrency tests can actually fail for the reason they were written -- without the
           # GIL serializing the increments they guard. `highest` resolution is required: the
           # numba floor for 3.14 predates free-threaded wheels (first shipped in numba 0.65),
           # and no PEP 508 marker can raise that floor for free-threaded builds only.
-          - { os: ubuntu-latest,  python: "3.14t", resolution: highest,      all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.14t", resolution: highest,      all_extras: "true"  }
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -59,7 +64,7 @@ jobs:
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
     # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Require every matrix combo to have succeeded
         if: needs.core.result != 'success'

@@ -16,7 +16,7 @@ jobs:
   # Skip the suite when the branch already has an open PR: the Pull Request
   # workflow covers it there. Branches without a PR yet still get full CI.
   check-open-pr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       pull-requests: read
@@ -34,7 +34,7 @@ jobs:
   pre-commit:
     needs: [check-open-pr]
     if: needs.check-open-pr.outputs.has_pr == 'false'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -48,7 +48,7 @@ jobs:
   test:  # latest-only here; the full matrix runs on PR / push-to-main / release
     needs: [check-open-pr]
     if: needs.check-open-pr.outputs.has_pr == 'false'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:

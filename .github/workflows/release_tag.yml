@@ -9,7 +9,7 @@ permissions:
 jobs:
   validate-tag-version:
     name: Validate tag name matches package version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -53,7 +53,7 @@ jobs:
 
   publish-to-prod:
     needs: package-check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     environment: prod
     permissions:
       contents: read       # job-level perms replace the top-level block, so re-list read for checkout
@@ -102,7 +102,7 @@ jobs:
 
   github-release:
     needs: publish-to-prod
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: write  # create the GitHub Release (implies the read the checkout needs)
     steps:

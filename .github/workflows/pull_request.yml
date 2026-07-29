@@ -18,7 +18,7 @@ jobs:
   # Cheap PR-metadata gates bundled into one job, so the expensive jobs fail
   # fast behind a single check.
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       # Dependabot's `dependabot/...` branch prefix is not configurable, so it
       # gets an actor-based exemption — branch names are ephemeral (deleted on
@@ -69,7 +69,7 @@ jobs:
 
   pre-commit:
     needs: [preflight]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -108,7 +108,7 @@ jobs:
   # in `ignore-vulns` below with a justification.
   pip-audit:
     needs: [preflight]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
@@ -137,7 +137,7 @@ jobs:
     # upstream job fails, and GitHub treats a skipped required check as passing.
     if: always()
     needs: [preflight, pre-commit, test, package, pip-audit, codeql]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Fail if any required job did not succeed
         if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}

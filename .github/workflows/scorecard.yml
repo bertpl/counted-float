@@ -19,7 +19,7 @@ permissions:
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     permissions:
       security-events: write  # upload SARIF results to code scanning
       id-token: write         # publish results to the public Scorecard API (OIDC)
