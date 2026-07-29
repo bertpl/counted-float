@@ -20,15 +20,10 @@ jobs:
         # Combos cover every axis (all four Pythons, both resolution ends, extras on/off, all three
         # OSes) strategically rather than as a full product.
         #
-        # The ubuntu legs run on arm runners, which are materially faster. One is deliberately left
-        # on x86, because two things are only reachable from a Linux leg and are architecture-
-        # specific: libm is located through `ctypes.util.find_library("m")`, whose multiarch path
-        # differs per architecture (Windows takes an entirely separate ucrtbase branch), and the
-        # FMA probes are checked by inspecting the machine code numba emits for them. So the gate
-        # keeps one leg on each of the two architectures whose costs this package ships data for.
-        # It runs the default Python, matching the other single-purpose legs, and deliberately not
-        # an older one: the interpreter has got faster with each release, and pairing the slower
-        # runner with a slower interpreter compounds the cost this change exists to reduce.
+        # The ubuntu legs run on arm runners, which are faster. One stays on x86: libm is found
+        # through a lookup whose path is architecture-specific, and the FMA probes are checked
+        # against emitted machine code -- both want a leg per architecture. It runs the default
+        # Python, like the other single-purpose legs.
         include:
           - { os: ubuntu-24.04-arm, python: "3.11", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
