@@ -34,7 +34,9 @@ concurrency:
 jobs:
   analyze:
     name: Analyze (python)
-    runs-on: ubuntu-24.04-arm
+    # x86 on purpose: the CodeQL CLI does not support linux/arm64, so this job cannot move to
+    # the faster arm runners the rest of the pipeline uses.
+    runs-on: ubuntu-latest
     permissions:
       security-events: write  # upload analysis results to code scanning
       contents: read          # checkout

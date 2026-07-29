@@ -19,7 +19,9 @@ permissions:
 jobs:
   analysis:
     name: Scorecard analysis
-    runs-on: ubuntu-24.04-arm
+    # x86 on purpose: this uploads its results through the CodeQL action, whose CLI does not
+    # support linux/arm64.
+    runs-on: ubuntu-latest
     permissions:
       security-events: write  # upload SARIF results to code scanning
       id-token: write         # publish results to the public Scorecard API (OIDC)
