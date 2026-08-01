@@ -63,6 +63,7 @@ from flop_weight_chart import THEMES as CHART_THEMES
 from flop_weight_chart import build_svg as build_chart_svg
 
 from counted_float import BuiltInData
+from counted_float._core.counting._float_surface import _FLOAT_DEFINED_UNPATCHED, _OBJECT_DEFINED_UNPATCHED
 from counted_float._core.counting._math_patching import (
     _MATH_NOT_PATCHED,
     _NOT_PATCHED_DUNDER,
@@ -353,6 +354,17 @@ def generate_math_coverage_table() -> str:
     return "\n".join(["| Coverage | Functions |", "|---|---|", *(f"| {left} | {right} |" for left, right in rows)])
 
 
+def generate_float_surface_table() -> str:
+    """The float-surface classification table, derived from the classification tables."""
+    rows = ["| Member | Why it needs no override |", "|---|---|"]
+    rows += [f"| `{name}` | {_FLOAT_DEFINED_UNPATCHED[name]} |" for name in sorted(_FLOAT_DEFINED_UNPATCHED)]
+    rows += [
+        f"| `{name}` *(object plumbing)* | {_OBJECT_DEFINED_UNPATCHED[name]} |"
+        for name in sorted(_OBJECT_DEFINED_UNPATCHED)
+    ]
+    return "\n".join(rows)
+
+
 def _snippet_source(name: str) -> str:
     """The committed snippet's source, as the docs' input code block."""
     return f"```python\n{(SNIPPETS_DIR / name).read_text(encoding='utf-8').rstrip()}\n```"
@@ -386,6 +398,7 @@ MARKED_BLOCKS: dict[str, MarkedBlock] = {
     "cli-show-data-slice": MarkedBlock(REPO_ROOT / "docs" / "cli.md", generate_cli_show_data_slice),
     "builtin-data-table": MarkedBlock(REPO_ROOT / "docs" / "builtin_data.md", generate_builtin_data_table),
     "math-coverage-table": MarkedBlock(REPO_ROOT / "docs" / "math_patching.md", generate_math_coverage_table),
+    "float-surface-table": MarkedBlock(REPO_ROOT / "docs" / "float_surface.md", generate_float_surface_table),
     "snippet-verbosity-info": MarkedBlock(REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_info),
     "snippet-verbosity-warning": MarkedBlock(
         REPO_ROOT / "docs" / "counting_flops.md", generate_snippet_verbosity_warning

@@ -60,13 +60,13 @@ up in that output.
 
 ## Other limitations
 
-- the only uncounted Python built-in math operations are the
-  float-representation helpers (`frexp`, `ldexp`, `modf`, `nextafter`,
-  `ulp`), which manipulate rather than compute; see the
-  [`math` coverage table](math_patching.md#coverage-of-the-math-module) for
-  the full per-function status and the
-  [FLOP types reference](flop_types.md) for per-operation counting rules. A
-  counting context can be asked to report such calls as it meets them, so a
+- the uncounted built-in operations are cataloged per surface: the `math`
+  module's not-instrumented set (`frexp`, `ldexp`, `modf`, `nextafter`,
+  `ulp` — the port emits no floating-point instruction for them; see the
+  [`math` coverage table](math_patching.md#coverage-of-the-math-module)) and
+  `float`'s own uncounted members (`hex()`, `as_integer_ratio()`, formatting,
+  truthiness — see [the float surface](float_surface.md)). A counting context
+  can be asked to report the contagion-relevant ones as it meets them, so a
   count that is quietly missing them says so — see
   [watching what gets counted](counting_flops.md#watching-what-gets-counted)
 - operator-level fused multiply-add is not modeled: `a*b + c` counts as separate

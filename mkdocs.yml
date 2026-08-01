@@ -32,6 +32,7 @@ nav:
   - Home: index.md
   - Counting FLOPs: counting_flops.md
   - Math patching semantics: math_patching.md
+  - The float surface: float_surface.md
   - FLOP weights: flop_weights.md
   - Benchmarking: benchmarking.md
   - CLI reference: cli.md
