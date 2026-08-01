@@ -130,6 +130,10 @@ is active. Operator-based contagion (`+`, `*`, `**`, ...) works everywhere,
 but counts are meant to be read through a context — so the practical rule is
 simply: run your measured algorithm inside one.
 
+The account of `float`'s *own* attribute surface — which methods count, which
+are reported, which are deliberately uncounted, and the presentation and
+pickling contracts — is on [The float surface](float_surface.md).
+
 ### What the library will and will not instrument
 
 The library's side of the contract counts what a compiled port would execute —
