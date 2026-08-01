@@ -26,7 +26,11 @@ from fractions import Fraction
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext, Verbosity
-from counted_float._core.counting._float_surface import _FLOAT_DEFINED_UNPATCHED, _OBJECT_DEFINED_UNPATCHED
+from counted_float._core.counting._float_surface import (
+    _FLOAT_DEFINED_UNPATCHED,
+    _OBJECT_DEFINED_UNPATCHED,
+    _PROVENANCE_VARIES_BY_VERSION,
+)
 
 _TABLES = {
     "_FLOAT_DEFINED_UNPATCHED (inherited from float - say why no override is needed)": _FLOAT_DEFINED_UNPATCHED,
@@ -109,9 +113,17 @@ def test_every_entry_carries_a_reason():
 
 
 def test_classified_members_have_their_stated_provenance():
+    # members whose defining class moved across supported interpreters are exempt by name, so the
+    # pin holds one arrangement to account without encoding a single version's layout
     # --- arrange / act -------------------------
-    not_float_defined = sorted(name for name in _FLOAT_DEFINED_UNPATCHED if name not in vars(float))
-    not_object_defined = sorted(name for name in _OBJECT_DEFINED_UNPATCHED if name in vars(float))
+    not_float_defined = sorted(
+        name
+        for name in _FLOAT_DEFINED_UNPATCHED
+        if name not in vars(float) and name not in _PROVENANCE_VARIES_BY_VERSION
+    )
+    not_object_defined = sorted(
+        name for name in _OBJECT_DEFINED_UNPATCHED if name in vars(float) and name not in _PROVENANCE_VARIES_BY_VERSION
+    )
 
     # --- assert --------------------------------
     assert not not_float_defined, f"classified as float-defined but not in float.__dict__: {not_float_defined}"
@@ -119,6 +131,12 @@ def test_classified_members_have_their_stated_provenance():
         f"classified as object plumbing but defined by float itself: {not_object_defined} — "
         "a member migrating to float-defined changes behavior (e.g. what str(x) prints) and "
         "must be re-triaged, not re-labeled"
+    )
+    # the exemptions are names, so a typo would silently exempt nothing forever
+    classified = set(_FLOAT_DEFINED_UNPATCHED) | set(_OBJECT_DEFINED_UNPATCHED)
+    unclassified_exemptions = sorted(_PROVENANCE_VARIES_BY_VERSION - classified)
+    assert not unclassified_exemptions, (
+        f"exempted from the provenance pin but not classified: {unclassified_exemptions}"
     )
 
 
