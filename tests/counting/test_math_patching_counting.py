@@ -781,6 +781,10 @@ _ACCUMULATING_MATH_OPS = [
     ("fabs", lambda: math.fabs(CountedFloat(-2.0)), {"ABS": 1}),
     ("fmod", lambda: math.fmod(CountedFloat(5.0), CountedFloat(3.0)), {"FMOD": 1}),
     ("remainder", lambda: math.remainder(CountedFloat(5.0), CountedFloat(3.0)), {"REMAINDER": 1}),
+    ("isnan", lambda: math.isnan(CountedFloat(2.0)), {"COMP": 1}),
+    ("isinf", lambda: math.isinf(CountedFloat(2.0)), {"ABS": 1, "COMP": 1}),
+    ("isfinite", lambda: math.isfinite(CountedFloat(2.0)), {"ABS": 1, "COMP": 1}),
+    ("isclose", lambda: math.isclose(CountedFloat(2.0), 2.5), {"SUB": 1, "ABS": 3, "MUL": 1, "COMP": 3}),
     ("hypot_abs", lambda: math.hypot(CountedFloat(-3.0)), {"ABS": 1}),
     ("hypot2", lambda: math.hypot(CountedFloat(3.0), CountedFloat(4.0)), {"HYPOT": 1}),
     (

@@ -19,6 +19,11 @@ Each case here spawns a pristine thread whose first action is exactly one op, an
 counts what the same op counts on the (warm) main thread -- so the ``except`` branch is checked
 against the ``try`` branch, per site.  The op list is the arithmetic/comparison/unary operators
 and the patch registry's own keys, so a newly instrumented op or patch is covered automatically.
+
+One half of the handler stays invisible even to that: since ``_create_thread_state()`` hands back
+a zeroed counter, ``<field> = 1`` there would behave exactly like ``<field> += 1``.  The last
+section makes the difference observable by handing the site a counter that already holds counts,
+which is the only way to check that the branch accumulates rather than overwrites.
 """
 
 import math
@@ -27,8 +32,8 @@ from collections.abc import Callable
 
 import pytest
 
-from counted_float import CountedFloat, FlopCountingContext
-from counted_float._core.counting import _math_patching
+from counted_float import CountedFloat, FlopCountingContext, FlopCounts
+from counted_float._core.counting import _counted_float, _math_patching
 from counted_float._core.counting._thread_counter import THREAD_COUNTER
 
 CF = CountedFloat
@@ -236,3 +241,73 @@ def test_math_patch_alternate_path_first_op_on_fresh_thread(case_id: str, call: 
     # --- assert -----------------------------
     assert reference, f"{case_id} counted nothing"
     assert fresh == reference
+
+
+# =================================================================================================
+#  The lazy-init handler accumulates onto the counter it is given
+# =================================================================================================
+# The handler's `except` branch reads `_create_thread_state().<field> += 1`, and in production that
+# helper returns a freshly zeroed counter -- which makes `+= 1` and a plain `= 1` produce the same
+# state, so no ordinary test can tell them apart (the branch also fires only once per thread, so
+# repeating the op cannot separate them either).  The distinction is real all the same: the site's
+# contract is to ACCUMULATE onto whatever counter the helper hands back, and an assignment there
+# would clobber existing counts the moment that helper returns anything but a zeroed counter.  The
+# cases below make the contract observable by handing the site a counter that already holds counts.
+_LAZY_INIT_MODULES = (_counted_float, _math_patching)
+_PRELOAD = 7
+
+
+def _lazy_init_counts_with_preloaded_state(call: Callable[[], object]) -> dict[str, int]:
+    """Run ``call`` as a pristine thread's first counted op, with a NON-fresh lazy-init counter.
+
+    Args:
+        call: The operation to run; it must be the thread's first counter access.
+
+    Returns:
+        The preloaded counter's fields after the call, so the caller can check each one grew by
+        the op's own count instead of being overwritten.
+    """
+    preloaded = FlopCounts()
+    for field in FlopCounts.field_names():
+        setattr(preloaded, field, _PRELOAD)
+    captured: dict[str, object] = {}
+
+    def target() -> None:
+        try:
+            call()
+        except BaseException as exc:  # noqa: BLE001 -- surfaced on the main thread below
+            captured["error"] = exc
+
+    # the helper is imported into each counting module's own namespace, so the replacement is
+    # installed per module -- both of them, since a patch may count through an operator (math.prod
+    # multiplies) and so reach the site in _counted_float rather than its own
+    originals = {m: m._create_thread_state for m in _LAZY_INIT_MODULES}
+    for m in _LAZY_INIT_MODULES:
+        m._create_thread_state = lambda: preloaded
+    try:
+        thread = threading.Thread(target=target)
+        thread.start()
+        thread.join()
+    finally:
+        for m, original in originals.items():
+            m._create_thread_state = original
+    if "error" in captured:
+        raise captured["error"]  # type: ignore[misc]
+    return {name: getattr(preloaded, name) for name in FlopCounts.field_names()}
+
+
+@pytest.mark.parametrize("fname", _PATCH_NAMES)
+def test_math_patch_lazy_init_accumulates_onto_a_preloaded_counter(fname: str) -> None:
+    def call() -> object:
+        return getattr(math, fname)(*_PATCH_ARGS[fname])
+
+    # --- arrange / act (a context installs the patch module-wide, so the pristine thread sees it) ---
+    with FlopCountingContext() as ctx:
+        call()  # reference on the warm main thread
+        reference = _counts_as_dict(ctx.flop_counts())
+        accumulated = _lazy_init_counts_with_preloaded_state(call)
+
+    # --- assert -----------------------------
+    assert reference, f"math.{fname} counted nothing -- its argument fixture may be wrong"
+    for field, per_call in reference.items():
+        assert accumulated[field] == _PRELOAD + per_call, f"math.{fname} overwrote {field} instead of adding to it"
