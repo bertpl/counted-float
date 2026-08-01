@@ -46,25 +46,40 @@ actors, playing by two different rules.**
   switched off (`-ffp-contract=off`), so the priced instruction stream is the same on
   every architecture.
 
-**Third: zero cost and countedness are independent axes.** A float-valued result that
-*depends on* a `CountedFloat` operand stays a `CountedFloat` even when the port emits no
-instruction for it (`+x`, `x * 1.0`, `x ** 1`) — the preserved type is what keeps
-downstream counting alive, and a container of floats carries countedness in its elements
-(`divmod` returns two `CountedFloat`s). The converse is a result whose **bits the
-operation's own semantics fix for every possible counted operand** — nan payloads and
-signed zeros included: that is a compile-time constant of the port, so it comes back as a
-**plain float**, and downstream folds keyed on its value mirror the port's constant
-propagation. The constant cases are enumerated, like the identity folds of rule 1.7:
-`x ** 0` (`pow(x, 0)` is `1.0` for every `x`), `1.0 ** x` (`pow(1, y)` likewise), and
-`float`'s `.imag` (`+0.0` for every receiver). Near-misses stay counted because they fail
-at bit level — `x * 0.0` is sign- and nan-dependent, `x + nan` carries a nan receiver's
-payload — and un-enumerated degeneracies stay conservatively counted as written.
-Countedness otherwise ends only where the *value* leaves the float domain (`bool`, `int`,
-`str` — priced where the port pays, e.g. F2I, COMP), through the one documented exit
-`float(x)` (safe because leaving the counted world is the explicit point of the call), or
-as a WARNING-reported gap (see the
-[`math` coverage table](math_patching.md#coverage-of-the-math-module)); a *silent*
-plain-float return from a counted operand is a defect in the model, not a judgment call.
+**Third: zero cost and countedness are independent axes.** Cost says what the port
+executes; countedness says what the result's *type* is. Which type a float-valued result
+gets turns on one question — does it depend on a counted operand?
+
+- **Depends on one → `CountedFloat`**, even at zero cost (`+x`, `x * 1.0`, `x ** 1`): the
+  preserved type is what keeps downstream counting alive. A container carries countedness
+  in its elements (`divmod` returns two `CountedFloat`s).
+- **Independent of every one → plain `float`**: the port knows this value at compile time,
+  so downstream folds keyed on it mirror the port's own constant propagation.
+
+"Independent" is a **bit-level** test — nan payloads and signed zeros included — and the
+cases are enumerated, like the identity folds of rule 1.7:
+
+| Constant case | Why the bits are fixed |
+|---|---|
+| `x ** 0` | IEEE 754 / C99 define `pow(x, 0)` as `1.0` for every `x`, nan and infinities included |
+| `1.0 ** x` | likewise, `pow(1, y)` is `1.0` for every `y` |
+| `float`'s `.imag` | `+0.0` for every receiver |
+
+Near-misses stay counted because they fail that test: `x * 0.0` is sign- and
+nan-dependent, `x + nan` carries a nan receiver's payload. Degeneracies outside the table
+stay conservatively counted as written.
+
+Countedness otherwise ends in exactly three places:
+
+- the *value* leaves the float domain (`bool`, `int`, `str`), priced where the port pays
+  (e.g. F2I, COMP);
+- the one documented exit, `float(x)` — safe because leaving the counted world is the
+  explicit point of the call;
+- a WARNING-reported gap (see the
+  [`math` coverage table](math_patching.md#coverage-of-the-math-module)).
+
+A *silent* plain-float return from a counted operand is none of those — it is a defect in
+the model, not a judgment call.
 
 Every pricing decision below is an application of one question: **who produced this
 operation — the author, writing it into the source, or the compiler, translating the

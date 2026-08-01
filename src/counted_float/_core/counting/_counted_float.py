@@ -15,8 +15,9 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
     """Register the flops a compiled port would execute for ``x ** exponent`` with a constant exponent.
 
     Constants are folded by value (an int and an equal-valued plain float compile identically):
-      - 0                        -> nothing (pow(x, 0) is 1.0 for every x, nan and inf included,
-                                    so the port ships the constant -- __pow__ returns it plain)
+      - 0                        -> nothing (IEEE 754 and C99 define pow(x, 0) as 1.0 for every
+                                    x, nan and infinities included, so the port ships the
+                                    constant -- __pow__ returns it plain)
       - 1                        -> nothing (the expression folds away to x itself, still counted)
       - 0.5 / -0.5               -> SQRT / SQRT + DIV
       - -1                       -> DIV (reciprocal)
@@ -118,9 +119,9 @@ def count_pow_with_constant_base(base: float) -> None:
 
     Constants are folded by value: base 2 -> EXP2, base 10 -> EXP10, anything else -> POW.
 
-    Base 1 never arrives here: pow(1, y) is 1.0 for every y (nan included), so the callers
-    return that constant as a plain float without counting, the way __pow__ handles a constant
-    exponent of 0.
+    Base 1 never arrives here: IEEE 754 and C99 make pow(1, y) 1.0 for every y (nan included),
+    so the callers return that constant as a plain float without counting, the way __pow__
+    handles a constant exponent of 0.
     """
     value = float(base)
     try:
@@ -637,10 +638,11 @@ class CountedFloat(float):
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
 
-        A constant exponent 0 is the one absorbing case: pow(x, 0) is 1.0 for every x (nan and
-        inf included), so the result is a compile-time constant of the port and comes back as a
-        plain float — downstream folds keyed on its value then mirror the port's constant
-        propagation. A CountedFloat exponent of 0.0 stays the runtime-POW path above.
+        A constant exponent 0 is the one absorbing case: IEEE 754 and C99 define pow(x, 0) as
+        1.0 for every x (nan and infinities included), so the result is a compile-time constant
+        of the port and comes back as a plain float — downstream folds keyed on its value then
+        mirror the port's constant propagation. A CountedFloat exponent of 0.0 stays the
+        runtime-POW path above.
         """
         result = float.__pow__(self, other)
         if result is NotImplemented:
@@ -670,9 +672,9 @@ class CountedFloat(float):
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
 
-        A constant base 1 is the one absorbing case: pow(1, y) is 1.0 for every y (nan
-        included), so the result is a compile-time constant of the port and comes back as a
-        plain float. A CountedFloat base of 1.0 stays the runtime-POW path above.
+        A constant base 1 is the one absorbing case: IEEE 754 and C99 make pow(1, y) 1.0 for
+        every y (nan included), so the result is a compile-time constant of the port and comes
+        back as a plain float. A CountedFloat base of 1.0 stays the runtime-POW path above.
         """
         result = float.__rpow__(self, other)
         if result is NotImplemented:

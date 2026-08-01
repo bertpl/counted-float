@@ -87,9 +87,9 @@ patched `math` functions:
    | `x / c`, power-of-two `c` | MUL — `x * (1/c)` is bit-identical exactly there, so a compiler folds it; any other constant divisor stays DIV |
    | `x ** 0.5` / `x ** -0.5` | SQRT / SQRT + DIV |
    | `x ** 1` | nothing (folds away to `x` itself; result stays `CountedFloat`) |
-   | `x ** 0` | nothing — `pow(x, 0)` is `1.0` for *every* `x` (nan and inf included), so the result is the port's compile-time constant and comes back as a **plain float** |
+   | `x ** 0` | nothing — IEEE 754 and C99 define `pow(x, 0)` as `1.0` for *every* `x` (nan and infinities included), so the result is the port's compile-time constant and comes back as a **plain float** |
    | `x ** c`, other values | POW |
-   | `1.0 ** x` | nothing — `pow(1, y)` is `1.0` for *every* `y`, the same absorbing case as `x ** 0`: a **plain float** constant |
+   | `1.0 ** x` | nothing — the same standards make `pow(1, y)` `1.0` for *every* `y`: the absorbing case on the other operand, likewise a **plain float** constant |
    | `2 ** x` / `10 ** x` | EXP2 / EXP10 (POW for other constant bases) |
    | `math.log(x, 2)` / `math.log(x, 10)` | LOG2 / LOG10 |
    | `math.log(x, c)`, other values | LOG + MUL (`1/log(c)` folds to a constant multiplier) |
