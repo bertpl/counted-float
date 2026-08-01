@@ -62,6 +62,13 @@ def test_logged_lines_locate_the_user_expression_not_the_library(logged_lines):
         (lambda x: math.log(x, 10), "LOG10", "const base 10 -> log10"),
         (lambda x: math.log(x, 7.0), "LOG", "const base -> log(x) * 1/log(base)"),
         (lambda x: math.log(x, CountedFloat(7.0)), "LOG", "runtime base -> log(x)/log(base)"),
+        (lambda x: x**-0.5, "SQRT", "const exponent -0.5 -> sqrt + reciprocal"),
+        (lambda x: x**-3, "MUL", "const exponent -> square-and-multiply"),
+        (lambda x: x / -1.0, "MINUS", "constant divisor -1.0 -> sign flip"),
+        (lambda x: x / 4.0, "MUL", "power-of-two constant divisor -> reciprocal multiply"),
+        (lambda x: x * -1.0, "MINUS", "constant multiplier -1.0 -> sign flip"),
+        (lambda x: -0.0 - x, "MINUS", "constant minuend -0.0 -> sign flip"),
+        (lambda x: round(x, 2), "MUL", "nonzero ndigits -> scale, round, unscale"),
     ],
 )
 def test_strength_reductions_are_explained(logged_lines, expression, flop_type, rationale):
