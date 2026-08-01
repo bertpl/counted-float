@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `math.isclose`, `math.isnan`, `math.isinf` and `math.isfinite` now count the comparisons a compiled port executes; they were previously uncounted predicates
+- `math.isclose`, `math.isnan`, `math.isinf` and `math.isfinite` now count the comparisons a compiled port executes; they were previously uncounted predicates — this includes calls made by stdlib code on a counted value, e.g. the guards inside `Fraction` comparisons
 
 ### Deprecated
 

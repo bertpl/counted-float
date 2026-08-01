@@ -896,19 +896,20 @@ def test_math_isinf_and_isfinite_count_abs_and_comp(thread_counter, classifier_n
     ],
     ids=repr,
 )
-def test_math_isclose_counts_its_deterministic_core(thread_counter, arguments):
+def test_math_isclose_counts_its_defining_formula(thread_counter, arguments):
     # --- act ---------------------------------------------
     result = math.isclose(*arguments)
 
     # --- assert ------------------------------------------
     assert result is math.isclose(*(float(a) for a in arguments))
-    # the full weak-test expression: diff = fabs(b - a), two scaled-tolerance comparisons, and
-    # the abs_tol comparison -- short-circuit savings and guards are the stated gap
+    # the documented formula |a-b| <= max(rel_tol * max(|a|, |b|), abs_tol), transcribed symbol
+    # by symbol (max -> COMP) -- guards, short-circuit savings and the implementation's weak-test
+    # respelling are the stated gap, so the charge is identical on every regime
     assert thread_counter.SUB == 1
     assert thread_counter.ABS == 3
-    assert thread_counter.MUL == 2
+    assert thread_counter.MUL == 1
     assert thread_counter.COMP == 3
-    assert thread_counter.total_count() == 9
+    assert thread_counter.total_count() == 8
 
 
 def test_math_isclose_without_counted_operands_counts_nothing(thread_counter):

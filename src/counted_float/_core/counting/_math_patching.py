@@ -805,14 +805,16 @@ def math_isfinite(x: float) -> bool:
 
 
 def math_isclose(a: float, b: float, **kwargs: float) -> bool:
-    """Patch math.isclose: counted as its deterministic core, the full weak-test expression.
+    """Patch math.isclose: counted as the transcription of its documented defining formula.
 
-    CPython's math_isclose_impl computes `diff = fabs(b - a)` and then the Boost weak test --
-    `diff <= fabs(rel_tol * b) || diff <= fabs(rel_tol * a) || diff <= abs_tol` -- which is the
-    complete mathematical predicate the docs promise: SUB + 3 ABS + 2 MUL + 3 COMP. Stated gap
-    under the cost model's input-dependent rule: the `a == b` and infinity guards and the
-    `||` short-circuit savings are regime fast paths, not priced. Tolerances arrive by keyword
-    (mirrored here), and a CountedFloat anywhere among the operands counts the call.
+    The stdlib contract is `abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)`, which
+    transcribes symbol by symbol (max -> COMP, the model's min/max price) to
+    SUB + 3 ABS + MUL + 3 COMP -- fixed per call by construction, charged whatever branch the
+    implementation actually takes. Stated gaps under the cost model's formula rule: the
+    `a == b` and infinity guards, the `||` short-circuit savings, and the implementation's
+    weak-test respelling (CPython multiplies twice, `fabs(rel_tol*b)` and `fabs(rel_tol*a)`,
+    where the formula's max-then-multiply does once). Tolerances arrive by keyword (mirrored
+    here), and a CountedFloat anywhere among the operands counts the call.
     """
     # computed first: a non-numeric operand or negative tolerance raises before counting
     result = original_math_isclose(a, b, **kwargs)
@@ -827,7 +829,7 @@ def math_isclose(a: float, b: float, **kwargs: float) -> bool:
             cnt: CountsTarget = _create_thread_state()
         cnt.SUB += 1
         cnt.ABS += 3
-        cnt.MUL += 2
+        cnt.MUL += 1
         cnt.COMP += 3
     return result
 

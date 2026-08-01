@@ -87,9 +87,14 @@ up in that output.
   and uncounted — `float` result (downstream counting stops). The reverse order
   counts normally: `Fraction` hands the operation back, and the `CountedFloat`
   performs it. A `decimal.Decimal` operand raises `TypeError` just as with plain
-  `float`, in either order. Numerical algorithms should use
-  `float`/`CountedFloat` values throughout, rather than relying on which side an
-  operand happens to sit.
+  `float`, in either order. *Comparisons* with a `Fraction` register 1 ABS +
+  2 COMP even though the comparison is delegated: `Fraction`'s own float
+  handling guards with `math.isnan` and `math.isinf`, and the classifiers count
+  for a counted operand whoever calls them — the same honest-count stance as the
+  dict-membership note below. Counting properly in the presence of `Fraction` or
+  `Decimal` values is a non-goal (a compiled port has no such types to price);
+  numerical algorithms should use `float`/`CountedFloat` values throughout,
+  rather than relying on which side an operand happens to sit.
 - counting state is **per OS thread** (created lazily, freed with the thread):
   a `FlopCountingContext` measures only the thread that opened it, is confined
   to that thread while open (cross-thread use raises `RuntimeError`), and

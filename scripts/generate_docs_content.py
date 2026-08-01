@@ -292,8 +292,8 @@ _MATH_INSTRUMENTED_NOTES = {
     "isinf": "(ABS + COMP)",
     "isfinite": "(ABS + COMP)",
     "isclose": (
-        "(SUB + 3 ABS + 2 MUL + 3 COMP — the full weak-test expression; the equality/infinity "
-        "guards and short-circuit savings are a stated gap)"
+        "(SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, "
+        "short-circuit savings and the implementation's respelling are a stated gap)"
     ),
     "fma": "(Python 3.13+)",
     "sumprod": (
