@@ -100,6 +100,15 @@ text) and `as_integer_ratio()` (a bit-field read plus an integer shift) count no
 it — carries a benchmarked weight: the boundary is the *domain of the operation*, not
 whether its machine code looks like manipulation or computation.
 
+The same precondition places Python's other numeric types outside the model:
+`decimal.Decimal` and `fractions.Fraction` are software towers a compiled port has no
+counterpart for, so nothing about them is priced. Converting one into the counting model
+(`CountedFloat(Decimal("1.5"))`) therefore counts nothing, where an `int` source counts the
+`I2F` its port instruction costs — a stated gap rather than an oversight. Mixing them into
+counted arithmetic is likewise outside the model; see
+[known limitations](known_limitations.md#other-limitations) for what each mixed operation
+does today.
+
 ## The rules
 
 **Rule 1 — operations that compile to CPU instructions only (no library call) are priced
