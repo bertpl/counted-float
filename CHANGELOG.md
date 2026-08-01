@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.2.0 (2026-08-01)
 
 ### Added
 
@@ -15,10 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `math.isclose`, `math.isnan`, `math.isinf` and `math.isfinite` now count the comparisons a compiled port executes; they were previously uncounted predicates — this includes calls made by stdlib code on a counted value, e.g. the guards inside `Fraction` comparisons
 
-### Deprecated
-
-### Removed
-
 ### Fixed
 
 - `conjugate()` and `.real` on a counted value now preserve countedness instead of silently dropping it
@@ -26,8 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `from_number()` (Python 3.14) now counts the int-to-float conversion for integer sources, like the constructor
 - `round(x, n)` on a counted value no longer returns a plain float, which silently stopped all downstream counting
 - `x ** 0` and `1.0 ** x` now fold to a plain-float constant the way a compiled port would, instead of producing a counted result that over-counted downstream work
-
-### Security
 
 ## 2.1.1 (2026-07-29)
 
