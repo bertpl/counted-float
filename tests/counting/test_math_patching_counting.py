@@ -854,3 +854,74 @@ def test_repeated_sumprod_accumulates_its_counts(thread_counter, n_calls: int):
     assert n_calls == thread_counter.SUMPROD
     assert n_calls == thread_counter.SUMPROD_XELEM
     assert thread_counter.total_count() == 2 * n_calls
+
+
+@pytest.mark.parametrize("value", [1.5, 0.0, math.inf, -math.inf, math.nan], ids=repr)
+def test_math_isnan_counts_one_comp(thread_counter, value):
+    # --- act ---------------------------------------------
+    result = math.isnan(CountedFloat(value))
+
+    # --- assert ------------------------------------------
+    assert result is math.isnan(value)
+    assert type(result) is bool
+    assert thread_counter.COMP == 1  # the self-compare a port emits; charged on every regime
+    assert thread_counter.total_count() == 1
+
+
+@pytest.mark.parametrize("classifier_name", ["isinf", "isfinite"])
+@pytest.mark.parametrize("value", [1.5, math.inf, math.nan], ids=repr)
+def test_math_isinf_and_isfinite_count_abs_and_comp(thread_counter, classifier_name, value):
+    # --- arrange -----------------------------------------
+    classifier = getattr(math, classifier_name)  # resolved inside the context, where the patch is installed
+
+    # --- act ---------------------------------------------
+    result = classifier(CountedFloat(value))
+
+    # --- assert ------------------------------------------
+    assert result is classifier(value)
+    assert thread_counter.ABS == 1  # the FP-canonical fabs-then-compare against infinity
+    assert thread_counter.COMP == 1
+    assert thread_counter.total_count() == 2
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        (CountedFloat(2.0), 2.5),
+        (2.0, CountedFloat(2.0)),
+        (CountedFloat(1e300), CountedFloat(-1e300)),
+        (CountedFloat(math.nan), 1.0),
+        (CountedFloat(math.inf), 1.0),  # the infinity guard is a regime fast path: same price
+        (CountedFloat(2.0), 2.0),  # the equality guard likewise
+    ],
+    ids=repr,
+)
+def test_math_isclose_counts_its_defining_formula(thread_counter, arguments):
+    # --- act ---------------------------------------------
+    result = math.isclose(*arguments)
+
+    # --- assert ------------------------------------------
+    assert result is math.isclose(*(float(a) for a in arguments))
+    # the documented formula |a-b| <= max(rel_tol * max(|a|, |b|), abs_tol), transcribed symbol
+    # by symbol (max -> COMP) -- guards, short-circuit savings and the implementation's weak-test
+    # respelling are the stated gap, so the charge is identical on every regime
+    assert thread_counter.SUB == 1
+    assert thread_counter.ABS == 3
+    assert thread_counter.MUL == 1
+    assert thread_counter.COMP == 3
+    assert thread_counter.total_count() == 8
+
+
+def test_math_isclose_without_counted_operands_counts_nothing(thread_counter):
+    # --- act ---------------------------------------------
+    _ = math.isclose(2.0, 2.5, rel_tol=0.5)
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == 0
+
+
+def test_math_isclose_negative_tolerance_counts_nothing(thread_counter):
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="tolerances must be non-negative"):
+        math.isclose(CountedFloat(2.0), 2.5, rel_tol=-1.0)
+    assert thread_counter.total_count() == 0  # compute-first contract: a raised call counts nothing

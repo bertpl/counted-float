@@ -9,7 +9,7 @@ from counted_float._core.counting import _math_patching
 UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
 
 # what each of them needs after its first (counted) argument
-EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,), "isclose": (2.5,)}
+EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,)}
 
 
 # ==================================================================================================
@@ -30,16 +30,18 @@ def test_every_uncounted_math_function_is_reported(logged_lines, function_name):
     assert line.split()[:2] == ["WARN", function_name]
 
 
-def test_a_counted_value_in_a_keyword_argument_is_reported(logged_lines):
+def test_isclose_is_counted_not_reported(logged_lines):
+    # isclose graduated from the uncounted list: it counts its deterministic core, so at WARNING
+    # verbosity a counted isclose call must produce no report -- a CountedFloat tolerance
+    # arriving by keyword counts the call exactly like a positional operand
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING):
+    with FlopCountingContext(verbosity=Verbosity.WARNING) as ctx:
+        _ = math.isclose(CountedFloat(2.0), 2.5)
         _ = math.isclose(2.0, 2.5, rel_tol=CountedFloat(0.1))
 
     # --- assert ------------------------------------------
-    (line,) = logged_lines()
-    assert line.split()[:2] == ["WARN", "isclose"], (
-        "A CountedFloat tolerance is as unseen by the count as a positional operand."
-    )
+    assert logged_lines() == []
+    assert ctx.flop_counts().SUB == 2
 
 
 @pytest.mark.skipif(not hasattr(math, "sumprod"), reason="math.sumprod exists from Python 3.12")
@@ -73,12 +75,10 @@ def test_the_original_result_is_returned(logged_lines):
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         ulp = math.ulp(x)
         mantissa, exponent = math.frexp(x)
-        close = math.isclose(x, x)
 
     # --- assert ------------------------------------------
     assert ulp == math.ulp(2.5)
     assert (mantissa, exponent) == math.frexp(2.5)
-    assert close is True
 
 
 def test_reported_calls_are_not_counted():

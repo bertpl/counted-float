@@ -324,7 +324,7 @@ cf = CountedFloat(2.5)
 with FlopCountingContext(verbosity=Verbosity.WARNING):
     for _ in range(1000):
         _ = math.ldexp(cf, 3)
-    _ = math.isclose(cf, 2.5)
+    _ = math.frexp(cf)
 ```
 <!-- END generated: snippet-verbosity-warning -->
 
@@ -336,9 +336,9 @@ writes:
 count missing something?". It reports calls that met a `CountedFloat` and could
 not be counted — the
 [not-instrumented `math` functions](math_patching.md#coverage-of-the-math-module),
-whose plain-`float` results also stop counting downstream, plus `math.isclose`,
-the one predicate that does real arithmetic. The pure classifiers (`isnan`,
-`isinf`, `isfinite`) compute nothing, so they are not reported. Unlike `INFO`,
+whose plain-`float` results also stop counting downstream, and
+`as_integer_ratio()`, whose integer parts can silently re-enter float math.
+Unlike `INFO`,
 each call site is reported only once — the thousand-iteration loop above reports
 once, and so does a second run in the same process, exactly as Python's own
 warnings behave. That is what keeps this level usable on a full run. And like

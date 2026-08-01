@@ -66,7 +66,6 @@ from counted_float import BuiltInData
 from counted_float._core.counting._math_patching import (
     _MATH_NOT_PATCHED,
     _NOT_PATCHED_DUNDER,
-    _NOT_PATCHED_PREDICATE,
     _PATCHES,
     _UNCOUNTED_MATH,
 )
@@ -283,11 +282,19 @@ _MATH_INSTRUMENTED_ORDER = [
     "sqrt", "cbrt", "exp", "exp2", "expm1", "log", "log2", "log10", "log1p", "pow",
     "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh",
     "asinh", "acosh", "atanh", "hypot", "dist", "fmod", "remainder", "gamma", "lgamma",
-    "erf", "erfc", "fabs", "copysign", "fma", "sumprod",
+    "erf", "erfc", "fabs", "copysign", "isnan", "isinf", "isfinite", "isclose", "fma",
+    "sumprod",
 ]  # fmt: skip
 _MATH_INSTRUMENTED_NOTES = {
     "hypot": "(+ `HYPOT_XARG` per coordinate beyond the second)",
     "dist": "(+ `DIST_XARG` likewise)",
+    "isnan": "(COMP — the self-compare a port emits)",
+    "isinf": "(ABS + COMP)",
+    "isfinite": "(ABS + COMP)",
+    "isclose": (
+        "(SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, "
+        "short-circuit savings and the implementation's respelling are a stated gap)"
+    ),
     "fma": "(Python 3.13+)",
     "sumprod": (
         "(Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are "
@@ -303,9 +310,6 @@ _MATH_DECOMPOSED_CELL = (
 # registered conditionally by the patch table, so they are absent from it on an older interpreter
 # while still belonging in the committed table -- the note on each says from which version
 _MATH_VERSION_GATED = {"fma", "sumprod"}
-# uncounted, but shaped like a predicate, so the docs group it with them rather than with the
-# float-representation helpers -- while saying that it alone performs real arithmetic
-_MATH_UNCOUNTED_SHOWN_WITH_PREDICATES = {"isclose"}
 
 
 def _math_names_by_reason(reason: str) -> list[str]:
@@ -326,8 +330,7 @@ def generate_math_coverage_table() -> str:
         for name in _MATH_INSTRUMENTED_ORDER
     )
     dunder = _math_names_by_reason(_NOT_PATCHED_DUNDER)
-    helpers = [name for name in _UNCOUNTED_MATH if name not in _MATH_UNCOUNTED_SHOWN_WITH_PREDICATES]
-    predicates = _math_names_by_reason(_NOT_PATCHED_PREDICATE) + sorted(_MATH_UNCOUNTED_SHOWN_WITH_PREDICATES)
+    helpers = list(_UNCOUNTED_MATH)
 
     rows = [
         ("**Instrumented** (patched, counts its FlopType)", instrumented),
@@ -345,14 +348,6 @@ def generate_math_coverage_table() -> str:
         (
             "**Not instrumented** (returns a plain, uncounted `float`)",
             "exactly the float-representation helpers — " + ", ".join(f"`{name}`" for name in helpers),
-        ),
-        (
-            "**Predicates** (uncounted, return a `bool`)",
-            ", ".join(f"`{name}`" for name in predicates)
-            + " — and truthiness (`bool(x)`, `if x:`, `assert x`), which a compiled port would test"
-            " against zero. It is left uncounted because it appears constantly in ordinary control"
-            " flow rather than in the arithmetic being measured; an *algorithmic* zero-test can be"
-            " written `x != 0.0`, which counts `COMP`",
         ),
     ]
     return "\n".join(["| Coverage | Functions |", "|---|---|", *(f"| {left} | {right} |" for left, right in rows)])

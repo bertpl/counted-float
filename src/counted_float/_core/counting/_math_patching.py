@@ -137,6 +137,10 @@ original_math_dist = math.dist
 original_math_prod = math.prod
 original_math_fsum = math.fsum
 original_math_copysign = math.copysign
+original_math_isnan = math.isnan
+original_math_isinf = math.isinf
+original_math_isfinite = math.isfinite
+original_math_isclose = math.isclose
 original_math_gamma = math.gamma
 original_math_lgamma = math.lgamma
 original_math_erf = math.erf
@@ -745,14 +749,98 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
     return original_math_copysign(x, y)
 
 
+def math_isnan(x: float) -> bool:
+    """Patch math.isnan: counted as the one FP self-compare a port emits.
+
+    The C classifier compiles to `ucomisd x, x` / `fcmp d, d` plus a flag read on both priced
+    architectures -- exactly the compare-and-select machinery the COMP weight measures, and the
+    machine work of the counted spelling `x != x`.
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_isnan(x)
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
+        return result
+    return original_math_isnan(x)
+
+
+def math_isinf(x: float) -> bool:
+    """Patch math.isinf: counted ABS + COMP, the FP-canonical `fabs(x) == inf`.
+
+    Priced from the FP-canonical form even though some compilers lower the classifier to integer
+    bit tests on some targets: the model prices one instruction stream for every architecture,
+    and a value-level FP operation keeps its price whatever bit tricks implement it (the same
+    stance as copysign's benchmarked weight).
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_isinf(x)
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.ABS += 1
+        cnt.COMP += 1
+        return result
+    return original_math_isinf(x)
+
+
+def math_isfinite(x: float) -> bool:
+    """Patch math.isfinite: counted ABS + COMP, the FP-canonical `fabs(x) < inf`.
+
+    Same pricing stance as isinf: the FP-canonical instruction stream, whatever
+    integer-domain lowering a particular compiler picks.
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_isfinite(x)
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.ABS += 1
+        cnt.COMP += 1
+        return result
+    return original_math_isfinite(x)
+
+
+def math_isclose(a: float, b: float, **kwargs: float) -> bool:
+    """Patch math.isclose: counted as the transcription of its documented defining formula.
+
+    The stdlib contract is `abs(a-b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)`, which
+    transcribes symbol by symbol (max -> COMP, the model's min/max price) to
+    SUB + 3 ABS + MUL + 3 COMP -- fixed per call by construction, charged whatever branch the
+    implementation actually takes. Stated gaps under the cost model's formula rule: the
+    `a == b` and infinity guards, the `||` short-circuit savings, and the implementation's
+    weak-test respelling (CPython multiplies twice, `fabs(rel_tol*b)` and `fabs(rel_tol*a)`,
+    where the formula's max-then-multiply does once). Tolerances arrive by keyword (mirrored
+    here), and a CountedFloat anywhere among the operands counts the call.
+    """
+    # computed first: a non-numeric operand or negative tolerance raises before counting
+    result = original_math_isclose(a, b, **kwargs)
+    if (
+        isinstance(a, CountedFloat)
+        or isinstance(b, CountedFloat)
+        or any(isinstance(v, CountedFloat) for v in kwargs.values())
+    ):
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.SUB += 1
+        cnt.ABS += 3
+        cnt.MUL += 1
+        cnt.COMP += 3
+    return result
+
+
 # -------------------------------------------------------------------------
 #  replacements for what cannot be counted
 # -------------------------------------------------------------------------
 # The math functions that meet CountedFloat values without counting them, mapped to what each such
 # call costs the count.  Kept in step with the coverage table in the math-patching docs: the
-# not-instrumented functions hand back plain floats, which stops counting downstream, while
-# isclose is the one predicate whose uncounted work is real arithmetic rather than a
-# classification.  Their replacements only report -- the results are the originals', untouched.
+# not-instrumented functions hand back plain floats, which stops counting downstream.  Their
+# replacements only report -- the results are the originals', untouched.
 _BREAKS_CONTAGION = "uncounted; result is a plain float"
 _UNCOUNTED_MATH: dict[str, str] = {
     "frexp": _BREAKS_CONTAGION,
@@ -760,7 +848,6 @@ _UNCOUNTED_MATH: dict[str, str] = {
     "modf": _BREAKS_CONTAGION,
     "nextafter": _BREAKS_CONTAGION,
     "ulp": _BREAKS_CONTAGION,
-    "isclose": "uncounted; performs real arithmetic",
 }
 # Delegation targets of the replacements below.  Captured when they are installed — a replacement
 # can only be executing at or after that capture — and, like the counting replacements' originals,
@@ -844,6 +931,10 @@ _PATCHES: dict[str, object] = {
     "erf": math_erf,
     "erfc": math_erfc,
     "remainder": math_remainder,
+    "isnan": math_isnan,
+    "isinf": math_isinf,
+    "isfinite": math_isfinite,
+    "isclose": math_isclose,
 }
 if hasattr(math, "fma"):
     # Python 3.13+ only. Registering conditionally is what keeps every loop over _PATCHES --
@@ -858,13 +949,9 @@ if hasattr(math, "sumprod"):
 # that -- so a float function a future CPython adds to `math` fails there rather than becoming a
 # silently uncounted hole.  The reason per entry is a judgment about the function's domain that
 # nothing about the callable itself reveals, which is why they are listed rather than detected.
-_NOT_PATCHED_PREDICATE = "predicate: returns a bool, performs no arithmetic of its own"
 _NOT_PATCHED_DUNDER = "counted already, through the CountedFloat dunder it dispatches to"
 _NOT_PATCHED_INTEGER_DOMAIN = "integer domain: never operates on floats"
 _MATH_NOT_PATCHED: dict[str, str] = {
-    "isnan": _NOT_PATCHED_PREDICATE,
-    "isinf": _NOT_PATCHED_PREDICATE,
-    "isfinite": _NOT_PATCHED_PREDICATE,
     "floor": _NOT_PATCHED_DUNDER,
     "ceil": _NOT_PATCHED_DUNDER,
     "trunc": _NOT_PATCHED_DUNDER,

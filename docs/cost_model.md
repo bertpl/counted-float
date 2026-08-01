@@ -177,16 +177,28 @@ algorithm, contract included.**
 - **2.4** *(nuance)* — regime-dependent [fast paths](glossary.md#fast-path) inside such
   functions are handled by rule 4's input ranges, not by pricing the shortcut.
 
-**Rule 3 — operations whose real algorithm has input-dependent cost are priced as their
-deterministic mathematical core, with the gap stated.**
+**Rule 3 — operations whose real algorithm has input-dependent cost are priced from the
+operation's documented defining formula instead.**
 
-- **3.1** *(example)* — `math.fsum` maintains as many non-overlapping partial sums as the
-  *values* force (mixing widely different magnitudes grows the list, cancellation shrinks
-  it), so even for a fixed-length input there is no constant to benchmark; it is priced as
-  the mathematical reduction, (n−1) ADD.
-- **3.2** *(consequence)* — the un-priced machinery is stated explicitly wherever the
-  price is documented: a deviation under this rule is a documented gap, never a silent
-  one.
+- **3.1** *(procedure)* — the formula is transcribed symbol by symbol into FlopTypes, each
+  occurrence priced exactly once: `|·|` → ABS, `max`/`min` → COMP (the model's price for
+  them everywhere), arithmetic and comparisons → their types. A formula contains no
+  guards, no short-circuits and no adaptive machinery, so none are priced — the
+  transcription is fixed per call *by construction*, charged whatever branch the
+  implementation actually takes, and unconditioned on argument values: the constant folds
+  of rule 1 apply to operator decompositions of the user's own expression, never inside a
+  formula price. "Documented defining formula" means the operation's stated contract —
+  the stdlib docs' formula where one is given (`math.isclose`), the mathematical
+  definition where the contract is a mathematical operation: `math.fsum` maintains as
+  many non-overlapping partial sums as the *values* force, so there is no constant to
+  benchmark — its formula is the reduction Σxᵢ, priced (n−1) ADD. This is not the "naive
+  substitute" rule 2.3 forbids: that rule measures a weight for a call with a fixed real
+  cost, while here no fixed real cost exists, and the formula is the only fixed-cost
+  object available.
+- **3.2** *(consequence)* — everything the executing algorithm does differently —
+  adaptive extras, short-circuit savings, regime guards, algebraic respellings of the
+  formula — is stated explicitly wherever the price is documented: a deviation under
+  this rule is a documented gap, never a silent one.
 
 **Rule 4 — benchmark inputs represent the operation's general case.**
 
@@ -264,8 +276,8 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 
 Some Python operations have no `FlopType` of their own and count as a composition of the
 types above (see [FLOP types](flop_types.md#coverage-at-a-glance) for the full operation
-table). Most follow rule 1 at the operation level; `math.fsum` and `round(x, n)` carry
-rule 3's documented gaps:
+table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` and
+`math.isclose` carry rule 3's documented gaps:
 
 - `x // y` → DIV + RND, `x % y` / `divmod` → DIV + RND + MUL + SUB — the floored-division
   sequences a port emits.
@@ -277,6 +289,11 @@ rule 3's documented gaps:
 - `math.degrees` / `math.radians` → MUL, `math.prod` → one MUL per chained multiply.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
+- `math.isclose` → SUB + 3 ABS + MUL + 3 COMP under rule 3 — the transcription of its
+  documented predicate `|a−b| ≤ max(rel_tol·max(|a|,|b|), abs_tol)`. Stated gaps: the
+  equality and infinity guards, the short-circuit savings, and the implementation's
+  weak-test respelling (which multiplies twice where the formula's max-then-multiply does
+  once).
 
 `math.dist` and n-ary `math.hypot` are *not* decompositions: they count the dedicated
 `DIST` + (n−2) `DIST_XARG` and `HYPOT` + (n−2) `HYPOT_XARG` types, measured on the real

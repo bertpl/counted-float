@@ -184,6 +184,10 @@ _PATCH_ARGS: dict[str, tuple[object, ...]] = {
     "erf": (CF(0.5),),
     "erfc": (CF(0.5),),
     "remainder": (CF(5.0), CF(3.0)),
+    "isnan": (CF(2.0),),
+    "isinf": (CF(2.0),),
+    "isfinite": (CF(2.0),),
+    "isclose": (CF(2.0), CF(2.5)),
     "fma": (CF(2.0), CF(3.0), CF(4.0)),
     "sumprod": ([CF(2.0)], [CF(3.0)]),
 }

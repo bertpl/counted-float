@@ -94,7 +94,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **ARM:** `FABS`
     - **x86:** `ANDPD`
 - **Counted Python operations:** `abs(x)` and `math.fabs(x)` where `x` is a
-  `CountedFloat` (both map to the same `FABS`/`ANDPD` instruction)
+  `CountedFloat` (both map to the same `FABS`/`ANDPD` instruction); one ABS
+  inside `math.isinf` / `math.isfinite` (the classifier's `fabs`-then-compare)
+  and three inside `math.isclose`'s core
 - **Not counted:** `numpy.abs`, `numpy.fabs`, complex abs, abs on non-CountedFloat
 - **Weight measurement:** [the machine code behind the `ABS` weight](machine_code/abs.md)
 
@@ -127,7 +129,10 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **ARM:** `FCMP`
     - **x86:** `(U)COMISD`
 - **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and
-  `min(x,y)`, `max(x,y)` for `CountedFloat`
+  `min(x,y)`, `max(x,y)` for `CountedFloat`; the float classifiers —
+  `math.isnan` (the self-compare a port emits), one COMP inside `math.isinf` /
+  `math.isfinite`, three inside `math.isclose`'s core, and `is_integer()`'s
+  compare
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons, and
   truthiness (`bool(x)`, `if x:`, `assert x`) — a deliberate, labeled exception.
   The interpreter inserts the test implicitly at every `if` / `while` / `and` /
