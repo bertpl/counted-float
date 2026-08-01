@@ -347,6 +347,37 @@ def test_pickle_round_trip_preserves_countedness_at_zero_count(thread_counter, v
         assert restored == value or (math.isnan(restored) and math.isnan(value))
 
 
+@pytest.mark.parametrize("protocol", range(pickle.HIGHEST_PROTOCOL + 1))
+def test_each_protocol_takes_its_documented_route(protocol):
+    """The route itself, not only its outcome: both would pass if one of them vanished.
+
+    Protocols 0-1 route through `copyreg._reconstructor`, which the pickle stream names
+    outright; protocols 2+ use `__getnewargs__` and the class's own `__new__`, and name no
+    reconstructor at all.
+    """
+    # --- act -----------------------------------
+    stream = pickle.dumps(CountedFloat(1.5), protocol=protocol)
+
+    # --- assert --------------------------------
+    assert (b"_reconstructor" in stream) is (protocol <= 1)
+
+
+def test_protocol_0_loses_the_nan_payload_that_later_protocols_keep():
+    """The stated exception to bit-exactness, pinned so it stays a known limit of protocol 0."""
+    # --- arrange -------------------------------
+    payload_nan = CountedFloat(struct.unpack(">d", bytes.fromhex("7ff8deadbeef0000"))[0])
+
+    # --- act -----------------------------------
+    restored = {p: pickle.loads(pickle.dumps(payload_nan, protocol=p)) for p in (0, 1, 2)}  # noqa: S301
+
+    # --- assert --------------------------------
+    # protocol 0 stores floats as repr text, so the payload cannot survive the round trip
+    assert _bits(restored[0]) != _bits(payload_nan)
+    assert math.isnan(restored[0])  # still a nan, just not the same one
+    for protocol in (1, 2):
+        assert _bits(restored[protocol]) == _bits(payload_nan)
+
+
 @pytest.mark.parametrize("copier", [copy.copy, copy.deepcopy], ids=["copy", "deepcopy"])
 def test_copy_preserves_countedness_at_zero_count(thread_counter, copier):
     # --- act -----------------------------------
