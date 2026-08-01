@@ -116,13 +116,13 @@ def count_mul_with_identity_multiplier(multiplier: float) -> None:
 def count_pow_with_constant_base(base: float) -> None:
     """Register the flops a compiled port would execute for ``base ** x`` with a constant base.
 
-    Constants are folded by value: base 1 -> nothing (pow(1, y) is 1.0 for every y, nan
-    included, so the port ships the constant -- __rpow__ returns it plain), base 2 -> EXP2,
-    base 10 -> EXP10, anything else -> POW.
+    Constants are folded by value: base 2 -> EXP2, base 10 -> EXP10, anything else -> POW.
+
+    Base 1 never arrives here: pow(1, y) is 1.0 for every y (nan included), so the callers
+    return that constant as a plain float without counting, the way __pow__ handles a constant
+    exponent of 0.
     """
     value = float(base)
-    if value == 1.0:
-        return
     try:
         cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
