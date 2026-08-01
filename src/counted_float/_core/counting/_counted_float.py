@@ -759,29 +759,27 @@ class CountedFloat(float):
             count_pow_with_constant_base(other)
         return float.__new__(CountedFloat, result)
 
+    if hasattr(float, "from_number"):
+        # Python 3.14+ only. Declared conditionally, the way the math tables register
+        # version-gated functions: the member exists on CountedFloat exactly when it exists on
+        # float, so surface comparisons hold in both directions on every supported interpreter.
+        @classmethod
+        def from_number(cls, number: object) -> CountedFloat:
+            """Counted construction from a real number (float.from_number), I2F for int sources.
 
-if hasattr(float, "from_number"):
-    # Python 3.14+ only. Attached conditionally, the way the math tables register version-gated
-    # functions: the member exists on CountedFloat exactly when it exists on float, so surface
-    # comparisons hold in both directions on every supported interpreter.
-    def _from_number(cls: type[CountedFloat], number: object) -> CountedFloat:
-        """Counted construction from a real number (float.from_number), I2F for int sources.
-
-        CPython's from_number converts to a C double before handing the subclass constructor a
-        plain float, so without this override an int source converts unpaid where
-        CountedFloat(n) counts I2F -- the same source, two constructors, two answers. The
-        source matrix mirrors __new__: int (bool included) counts I2F; float sources cost
-        nothing; Decimal and Fraction convert uncounted, a stated gap; strings are rejected by
-        the underlying call.
-        """
-        # resolved dynamically: on 3.13-era typeshed the member does not exist to reference
-        from_number = getattr(float, "from_number")  # noqa: B009
-        result = from_number(number)  # compute first: a str or oversized source raises before counting
-        if isinstance(number, int):
-            try:
-                _TLS.flop_counts.I2F += 1
-            except AttributeError:  # first counted op on this thread
-                _create_thread_state().I2F += 1
-        return float.__new__(CountedFloat, result)
-
-    CountedFloat.from_number = classmethod(_from_number)  # ty: ignore[unresolved-attribute] -- version-gated member
+            CPython's from_number converts to a C double before handing the subclass constructor
+            a plain float, so without this override an int source converts unpaid where
+            CountedFloat(n) counts I2F -- the same source, two constructors, two answers. The
+            source matrix mirrors __new__: int (bool included) counts I2F; float sources cost
+            nothing; Decimal and Fraction convert uncounted, a stated gap; strings are rejected
+            by the underlying call.
+            """
+            # resolved dynamically: on 3.13-era typeshed the member does not exist to reference
+            float_from_number = getattr(float, "from_number")  # noqa: B009
+            result = float_from_number(number)  # compute first: a bad source raises before counting
+            if isinstance(number, int):
+                try:
+                    _TLS.flop_counts.I2F += 1
+                except AttributeError:  # first counted op on this thread
+                    _create_thread_state().I2F += 1
+            return float.__new__(CountedFloat, result)
