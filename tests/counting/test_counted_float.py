@@ -311,7 +311,7 @@ def test_counted_float_math_round_n(f: float, n_digits: int):
     cf_round = round(cf, n_digits)
 
     # --- assert ------------------------------------------
-    assert isinstance(cf_round, float)
+    assert isinstance(cf_round, CountedFloat)  # the result carries counted work, so it re-wraps
     assert f_round == cf_round
 
 
@@ -442,7 +442,11 @@ def test_counted_float_math_pow(f1: float, f2: float, cf_left: bool, cf_right: b
     cf_pow = left**right
 
     # --- assert ------------------------------------------
-    assert isinstance(cf_pow, CountedFloat)
+    # the absorbing folds return the port's constant as a plain float: a *plain* exponent 0 or a
+    # *plain* base 1; a CountedFloat in either slot is the runtime opt-in and stays counted
+    absorbing = (not cf_right and float(f2) == 0.0) or (not cf_left and float(f1) == 1.0)
+    assert isinstance(cf_pow, float if absorbing else CountedFloat)
+    assert (type(cf_pow) is float) == absorbing
     assert f_pow == cf_pow
 
 

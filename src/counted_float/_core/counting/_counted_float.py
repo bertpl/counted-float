@@ -15,7 +15,9 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
     """Register the flops a compiled port would execute for ``x ** exponent`` with a constant exponent.
 
     Constants are folded by value (an int and an equal-valued plain float compile identically):
-      - 0, 1                     -> nothing (the expression folds away entirely)
+      - 0                        -> nothing (pow(x, 0) is 1.0 for every x, nan and inf included,
+                                    so the port ships the constant -- __pow__ returns it plain)
+      - 1                        -> nothing (the expression folds away to x itself, still counted)
       - 0.5 / -0.5               -> SQRT / SQRT + DIV
       - -1                       -> DIV (reciprocal)
       - integer 2 <= |n| <= 16   -> square-and-multiply MULs (x**3 -> 2 MUL, x**8 -> 3 MUL, ...),
@@ -114,9 +116,13 @@ def count_mul_with_identity_multiplier(multiplier: float) -> None:
 def count_pow_with_constant_base(base: float) -> None:
     """Register the flops a compiled port would execute for ``base ** x`` with a constant base.
 
-    Constants are folded by value: base 2 -> EXP2, base 10 -> EXP10, anything else -> POW.
+    Constants are folded by value: base 1 -> nothing (pow(1, y) is 1.0 for every y, nan
+    included, so the port ships the constant -- __rpow__ returns it plain), base 2 -> EXP2,
+    base 10 -> EXP10, anything else -> POW.
     """
     value = float(base)
+    if value == 1.0:
+        return
     try:
         cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
@@ -288,14 +294,17 @@ class CountedFloat(float):
         """Round to n decimal places, i.e. round(x, n).
 
         n = None -> round to nearest integer and return int (F2I)
-        n = 0    -> round to nearest integer and return float (RND)
-        n != 0   -> round to n decimal places and return float: a compiled port scales into
-                    the digit position, rounds, and scales back -- MUL + RND + DIV. The
+        n = 0    -> round to nearest integer and return CountedFloat (RND)
+        n != 0   -> round to n decimal places and return CountedFloat: a compiled port scales
+                    into the digit position, rounds, and scales back -- MUL + RND + DIV. The
                     unscale is a true divide (the scale factor is a power of ten, whose
                     reciprocal is not exact), so no reciprocal fold applies. Stated gap: the
                     port price knowingly omits the correctly-rounded decimal machinery
                     CPython itself runs (David Gay's algorithm), which has no fixed
                     instruction cost to price.
+
+        The float-returning overloads re-wrap: the result depends on the receiver and carries
+        counted work, so a plain-float return would silently stop all downstream counting.
         """
         result = float.__round__(self, n)  # compute first: round(inf/nan) with n=None raises (F2I) before counting
         if n is None:
@@ -303,7 +312,8 @@ class CountedFloat(float):
                 _TLS.flop_counts.F2I += 1  # rounded and returned int
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().F2I += 1
-        elif operator.index(n) == 0:
+            return result
+        if operator.index(n) == 0:
             try:
                 _TLS.flop_counts.RND += 1  # rounded and returned float
             except AttributeError:  # first counted op on this thread
@@ -318,7 +328,7 @@ class CountedFloat(float):
             cnt.RND += 1
             cnt.DIV += 1
 
-        return result
+        return float.__new__(CountedFloat, result)
 
     def __floor__(self) -> int:
         """math.floor(x)."""
@@ -626,6 +636,11 @@ class CountedFloat(float):
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
+
+        A constant exponent 0 is the one absorbing case: pow(x, 0) is 1.0 for every x (nan and
+        inf included), so the result is a compile-time constant of the port and comes back as a
+        plain float — downstream folds keyed on its value then mirror the port's constant
+        propagation. A CountedFloat exponent of 0.0 stays the runtime-POW path above.
         """
         result = float.__pow__(self, other)
         if result is NotImplemented:
@@ -638,6 +653,8 @@ class CountedFloat(float):
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().POW += 1
         else:
+            if float(other) == 0.0:
+                return result  # the port's constant 1.0 — plain, uncounted
             count_pow_with_constant_exponent(other)
         return float.__new__(CountedFloat, result)
 
@@ -652,6 +669,10 @@ class CountedFloat(float):
         A negative base with a fractional exponent yields a complex result (as for plain float);
         complex values fall outside the counting model, so nothing is counted and the result is
         returned unwrapped.
+
+        A constant base 1 is the one absorbing case: pow(1, y) is 1.0 for every y (nan
+        included), so the result is a compile-time constant of the port and comes back as a
+        plain float. A CountedFloat base of 1.0 stays the runtime-POW path above.
         """
         result = float.__rpow__(self, other)
         if result is NotImplemented:
@@ -664,5 +685,7 @@ class CountedFloat(float):
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().POW += 1
         else:
+            if float(other) == 1.0:
+                return result  # the port's constant 1.0 — plain, uncounted
             count_pow_with_constant_base(other)
         return float.__new__(CountedFloat, result)

@@ -8,7 +8,7 @@ package can name the rule it follows — and the few that deviate can say so exp
 
 ## How the imaginary port gets made
 
-Two conventions anchor every rule below.
+Three conventions anchor every rule below.
 
 **First: in counted code, a plain `float` operand is a compile-time
 [constant](glossary.md#constant)** — something the imaginary compiled program would know
@@ -45,6 +45,26 @@ actors, playing by two different rules.**
   optimization levels, no fast-math flag involved — the model's assumed compiler has it
   switched off (`-ffp-contract=off`), so the priced instruction stream is the same on
   every architecture.
+
+**Third: zero cost and countedness are independent axes.** A float-valued result that
+*depends on* a `CountedFloat` operand stays a `CountedFloat` even when the port emits no
+instruction for it (`+x`, `x * 1.0`, `x ** 1`) — the preserved type is what keeps
+downstream counting alive, and a container of floats carries countedness in its elements
+(`divmod` returns two `CountedFloat`s). The converse is a result whose **bits the
+operation's own semantics fix for every possible counted operand** — nan payloads and
+signed zeros included: that is a compile-time constant of the port, so it comes back as a
+**plain float**, and downstream folds keyed on its value mirror the port's constant
+propagation. The constant cases are enumerated, like the identity folds of rule 1.7:
+`x ** 0` (`pow(x, 0)` is `1.0` for every `x`), `1.0 ** x` (`pow(1, y)` likewise), and
+`float`'s `.imag` (`+0.0` for every receiver). Near-misses stay counted because they fail
+at bit level — `x * 0.0` is sign- and nan-dependent, `x + nan` carries a nan receiver's
+payload — and un-enumerated degeneracies stay conservatively counted as written.
+Countedness otherwise ends only where the *value* leaves the float domain (`bool`, `int`,
+`str` — priced where the port pays, e.g. F2I, COMP), through the one documented exit
+`float(x)` (safe because leaving the counted world is the explicit point of the call), or
+as a WARNING-reported gap (see the
+[`math` coverage table](math_patching.md#coverage-of-the-math-module)); a *silent*
+plain-float return from a counted operand is a defect in the model, not a judgment call.
 
 Every pricing decision below is an application of one question: **who produced this
 operation — the author, writing it into the source, or the compiler, translating the

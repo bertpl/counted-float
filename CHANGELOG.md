@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `round(x, n)` on a counted value no longer returns a plain float, which silently stopped all downstream counting
+- `x ** 0` and `1.0 ** x` now fold to a plain-float constant the way a compiled port would, instead of producing a counted result that over-counted downstream work
+
 ### Security
 
 ## 2.1.1 (2026-07-29)
