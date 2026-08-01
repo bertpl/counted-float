@@ -129,10 +129,12 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and
   `min(x,y)`, `max(x,y)` for `CountedFloat`
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons, and
-  truthiness (`bool(x)`, `if x:`) — deliberately uncounted as pervasive
-  bookkeeping; write an algorithmic zero-test as `x != 0.0` to have it counted
-  (see the predicates row in
-  [Math patching semantics](math_patching.md#coverage-of-the-math-module))
+  truthiness (`bool(x)`, `if x:`, `assert x`) — a deliberate, labeled exception.
+  The interpreter inserts the test implicitly at every `if` / `while` / `and` /
+  `or` / `not` / `assert` with no opt-out, and `python -O` elides `assert`
+  entirely, so a truthiness count would price interpreter bookkeeping and vary
+  with interpreter flags — no port-faithful count does either. Write an
+  algorithmic zero-test as `x != 0.0` to have it counted
 - **Weight measurement:** [the machine code behind the `COMP` weight](machine_code/comp.md)
 
 ## FlopType.RND (`round`) { #flop-rnd }

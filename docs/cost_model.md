@@ -88,6 +88,27 @@ only when bit-exact. Whenever the rules mention what real compilers do at plain 
 that is *corroboration* that an admitted rewrite is real-world practice — never the
 admission criterion itself.
 
+## What the model prices
+
+One precondition scopes every rule below: **the model prices floating-point work only** —
+operations whose port emits floating-point instructions (rule 1) or floating-point library
+calls (rules 2–3). Work in any other domain — integer and bit manipulation, string
+conversion, arbitrary-precision arithmetic — has no FlopType and is counted nowhere, by
+scope rather than by exemption. That is why `hex()` (a mantissa-nibble read rendered as
+text) and `as_integer_ratio()` (a bit-field read plus an integer shift) count nothing while
+`math.copysign` — a value-level floating-point operation, whatever bit tricks implement
+it — carries a benchmarked weight: the boundary is the *domain of the operation*, not
+whether its machine code looks like manipulation or computation.
+
+The same precondition places Python's other numeric types outside the model:
+`decimal.Decimal` and `fractions.Fraction` are software towers a compiled port has no
+counterpart for, so nothing about them is priced. Converting one into the counting model
+(`CountedFloat(Decimal("1.5"))`) therefore counts nothing, where an `int` source counts the
+`I2F` its port instruction costs — a stated gap rather than an oversight. Mixing them into
+counted arithmetic is likewise outside the model; see
+[known limitations](known_limitations.md#other-limitations) for what each mixed operation
+does today.
+
 ## The rules
 
 **Rule 1 — operations that compile to CPU instructions only (no library call) are priced
@@ -143,8 +164,11 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
 algorithm, contract included.**
 
 - **2.1** *(scope)* — applies whenever the call's cost is *deterministic per call*: a
-  fixed number of operations per invocation (or per element or coordinate), independent
-  of the data values. Anything else falls to rule 3.
+  fixed number of **floating-point** operations per invocation (or per element or
+  coordinate), independent of the data values. The qualifier is load-bearing — a
+  deterministic library call whose work is integer or string conversion (`strtod`,
+  `printf`-style rendering) fails the domain precondition above, not this rule. Anything
+  else floating-point falls to rule 3.
 - **2.2** *(consequence)* — the weight is measured on the very call wherever the
   toolchain can compile it ([libm](glossary.md#libm)'s `sin`, `log`, ...).
 - **2.3** *(nuance)* — where the toolchain cannot compile the real call, a faithful port

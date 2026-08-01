@@ -103,6 +103,7 @@ _OPERATORS: list[tuple[str, Callable[[], object]]] = [
     ("trunc", lambda: math.trunc(CF(2.5))),
     ("int", lambda: int(CF(2.5))),
     ("new_from_int", lambda: CF(3)),
+    ("is_integer", lambda: CF(2.0).is_integer()),
     ("eq", lambda: CF(1.5) == CF(2.5)),
     ("ne", lambda: CF(1.5) != CF(2.5)),
     ("lt", lambda: CF(1.5) < CF(2.5)),
@@ -120,6 +121,9 @@ _OPERATORS: list[tuple[str, Callable[[], object]]] = [
     ("rsub_minus_zero", lambda: CF(2.0).__rsub__(-0.0)),
     ("rpow_countedfloat_base", lambda: CF(2.0).__rpow__(CF(3.0))),
 ]
+if hasattr(float, "from_number"):
+    # Python 3.14+ only, registered conditionally like the version-gated math patches below
+    _OPERATORS.append(("from_number_int", lambda: CF.from_number(3)))
 
 
 @pytest.mark.parametrize(("op_id", "call"), _OPERATORS, ids=[op_id for op_id, _ in _OPERATORS])
