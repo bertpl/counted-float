@@ -296,8 +296,12 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().POW += 1
         elif isinstance(x, CountedFloat):
+            if float(y) == 0.0:
+                return result  # pow(x, 0) is 1.0 for every x: the port's constant, plain and uncounted
             count_pow_with_constant_exponent(y)
         else:
+            if float(x) == 1.0:
+                return result  # pow(1, y) is 1.0 for every y: the port's constant, plain and uncounted
             count_pow_with_constant_base(x)
         return float.__new__(CountedFloat, result)
     return original_math_pow(x, y)

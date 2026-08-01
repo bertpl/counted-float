@@ -197,9 +197,11 @@ def test_counted_float_counts_round(thread_counter, ndigits, expected_counts: di
     cf = CountedFloat(1.23456)
 
     # --- act ---------------------------------------------
-    _ = round(cf, ndigits)
+    result = round(cf, ndigits)
 
     # --- assert ------------------------------------------
+    # the float-returning overloads re-wrap (the result carries counted work); n=None returns int
+    assert isinstance(result, int if ndigits is None else CountedFloat)
     assert thread_counter.total_count() == sum(expected_counts.values())
     for field, expected in expected_counts.items():
         assert getattr(thread_counter, field) == expected
@@ -725,8 +727,7 @@ def test_counted_float_mod_floordiv_divmod_zero_division_counts_nothing(thread_c
 @pytest.mark.parametrize(
     ("exponent", "expected_counts"),
     [
-        (0, {}),  # folds away entirely
-        (1, {}),
+        (1, {}),  # folds away to x itself (exponent 0 is the absorbing fold, tested separately)
         (2, {"MUL": 1}),
         (2.0, {"MUL": 1}),  # constants fold by value: 2.0 compiles like 2
         (3, {"MUL": 2}),  # x*x, *x
@@ -793,6 +794,57 @@ def test_counted_float_rpow_constant_float_base_folds_by_value(thread_counter):
     assert thread_counter.EXP2 == 1
     assert thread_counter.EXP10 == 1
     assert thread_counter.POW == 1
+
+
+@pytest.mark.parametrize("exponent", [0, 0.0, -0.0], ids=["int", "float", "negative-zero"])
+@pytest.mark.parametrize("value", [1.23456, 0.0, math.nan, math.inf], ids=["ordinary", "zero", "nan", "inf"])
+def test_counted_float_pow_constant_exponent_zero_returns_plain_constant(thread_counter, value, exponent):
+    """pow(x, 0) is 1.0 for every x, so the result is the port's constant: plain and uncounted."""
+    # --- act ---------------------------------------------
+    result = CountedFloat(value) ** exponent
+
+    # --- assert ------------------------------------------
+    assert type(result) is float
+    assert result == 1.0
+    assert thread_counter.total_count() == 0
+
+
+@pytest.mark.parametrize("value", [1.23456, 0.0, math.nan, math.inf], ids=["ordinary", "zero", "nan", "inf"])
+def test_counted_float_rpow_constant_base_one_returns_plain_constant(thread_counter, value):
+    """pow(1, y) is 1.0 for every y, the same absorbing fold as a constant exponent 0."""
+    # --- act ---------------------------------------------
+    result = 1.0 ** CountedFloat(value)
+
+    # --- assert ------------------------------------------
+    assert type(result) is float
+    assert result == 1.0
+    assert thread_counter.total_count() == 0
+
+
+def test_counted_float_absorbing_pow_folds_mirrored_in_math_pow(thread_counter):
+    # --- act ---------------------------------------------
+    result_exponent_zero = math.pow(CountedFloat(1.23456), 0.0)
+    result_base_one = math.pow(1.0, CountedFloat(math.nan))
+
+    # --- assert ------------------------------------------
+    assert type(result_exponent_zero) is float
+    assert result_exponent_zero == 1.0
+    assert type(result_base_one) is float
+    assert result_base_one == 1.0
+    assert thread_counter.total_count() == 0
+
+
+def test_counted_float_counted_zero_exponent_and_one_base_stay_runtime(thread_counter):
+    """A CountedFloat operand is the opt-in: the absorbing values fold only as plain constants."""
+    # --- act ---------------------------------------------
+    result_exponent = CountedFloat(1.23456) ** CountedFloat(0.0)
+    result_base = CountedFloat(1.0) ** CountedFloat(2.5)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result_exponent, CountedFloat)
+    assert isinstance(result_base, CountedFloat)
+    assert thread_counter.POW == 2
+    assert thread_counter.total_count() == 2
 
 
 def test_counted_float_pow_runtime_counted_exponent_counts_pow(thread_counter):
