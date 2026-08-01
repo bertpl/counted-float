@@ -68,11 +68,10 @@ Every commonly used `math` function, and how it participates in counting:
 <!-- BEGIN generated: math-coverage-table -->
 | Coverage | Functions |
 |---|---|
-| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
+| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `isnan` (COMP — the self-compare a port emits), `isinf` (ABS + COMP), `isfinite` (ABS + COMP), `isclose` (SUB + 3 ABS + 2 MUL + 3 COMP — the full weak-test expression; the equality/infinity guards and short-circuit savings are a stated gap), `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
 | **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | exactly the float-representation helpers — `frexp`, `ldexp`, `modf`, `nextafter`, `ulp` |
-| **Predicates** (uncounted, return a `bool`) | `isnan`, `isinf`, `isfinite`, `isclose` — and truthiness (`bool(x)`, `if x:`, `assert x`), which a compiled port would test against zero. It is left uncounted because it appears constantly in ordinary control flow rather than in the arithmetic being measured; an *algorithmic* zero-test can be written `x != 0.0`, which counts `COMP` |
 <!-- END generated: math-coverage-table -->
 
 The not-instrumented set breaks contagion: the plain-`float` result silently
@@ -84,14 +83,17 @@ While a context is open, the reduction patches (`fsum`, `prod`, `sumprod`,
 computing the result — a space-behavior divergence from the streaming stdlib
 versions; see [Known limitations](known_limitations.md).
 
-The predicates return a `bool` rather than a number, so contagion does not apply
-to them — but they are uncounted all the same. `math.isclose` is the one where
-that matters: it performs real arithmetic (a difference, absolute values, and a
-scaled tolerance comparison) and none of it is counted.
+The float-classification calls (`isnan`, `isinf`, `isfinite`, `isclose`) return a
+`bool`, so contagion does not apply to them — but they count all the same: a
+compiled port emits real compare machinery for each, the same work the operator
+spellings (`x != x`, `x != 0.0`) have always counted. The one comparison left
+uncounted is truthiness (`bool(x)`, `if x:`), a labeled exception — the
+interpreter inserts it implicitly, with no opt-out — documented with the
+[`COMP` type](flop_types.md#flop-comp).
 
 Rather than checking this table against your code by hand, you can have a counting
-context report these calls as it meets them — the not-instrumented set and
-`math.isclose`, each reported once per call site. See
+context report the uncounted calls as it meets them — the not-instrumented set,
+each reported once per call site. See
 [watching what gets counted](counting_flops.md#watching-what-gets-counted).
 
 `math.fma(x, y, z)` exists only from Python 3.13 on, and is patched exactly where

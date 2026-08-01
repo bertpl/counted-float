@@ -108,7 +108,12 @@ def test_comparison_with_fraction_matches_float(op: Callable, thread_counter: Th
 
     # --- assert ------------------------------------------
     assert result == op(1.5, frac)
-    assert thread_counter.total_count() == 0
+    # Fraction's own float handling guards with math.isnan and math.isinf, and the classifiers
+    # count for a counted operand whoever calls them -- so the comparison registers exactly the
+    # two guards (measured identical on 3.11 through 3.14); the comparison itself adds nothing
+    assert thread_counter.COMP == 2
+    assert thread_counter.ABS == 1
+    assert thread_counter.total_count() == 3
 
 
 def test_reflected_operators_of_foreign_type_win(thread_counter: ThreadLocalFlopCounter):

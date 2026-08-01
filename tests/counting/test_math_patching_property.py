@@ -26,6 +26,7 @@ _ARITY = {
     "fma": 3,
     "copysign": 2,
     "remainder": 2,
+    "isclose": 2,
 }  # others take one operand
 # the sequence-taking functions get a two-element sequence per argument instead of bare scalars
 _SEQUENCE_ARGS = {
