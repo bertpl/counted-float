@@ -45,7 +45,6 @@ counted_float = "counted_float._core._cli_main:main"
 Source = "https://github.com/bertpl/counted-float"
 ChangeLog = "https://github.com/bertpl/counted-float/blob/main/CHANGELOG.md"
 Issues = "https://github.com/bertpl/counted-float/issues"
-Roadmap = "https://github.com/bertpl/counted-float/milestones"
 
 [project.optional-dependencies]
 # Everything the flops benchmark suite needs: the compiled probes, the arrays they run on, and the
