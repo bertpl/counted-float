@@ -5,7 +5,8 @@ from math import copysign as _copysign  # the raw builtin: math.copysign is patc
 from math import frexp as _frexp  # the raw builtin: math.frexp may later carry a reporting wrapper
 from typing import TYPE_CHECKING, SupportsIndex, final
 
-from ._thread_counter import _TLS, _create_thread_state
+from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
+from .verbosity import warn_uncounted_call
 
 if TYPE_CHECKING:
     from ._thread_counter import CountsTarget
@@ -173,9 +174,14 @@ class CountedFloat(float):
     def __new__(cls, value: float | int) -> CountedFloat:
         """Construct from a numeric source, counting I2F for int inputs.
 
+        The source matrix is the counting model's entry contract: an int (bool included) counts
+        I2F, the port's int->double conversion instruction; a float source costs nothing (no
+        conversion exists); Decimal and Fraction convert uncounted -- their conversion has no
+        FlopType, a stated gap, since non-float numeric types sit outside the model's scope.
         Numeric-source construction is the supported contract: counted code converts numbers,
         it does not parse them. Strings happen to work (the delegation to ``float(value)``
-        accepts them) but that is incidental, not part of the contract -- hence the annotation.
+        accepts them) but that is incidental, not part of the contract -- hence the annotation;
+        like fromhex, the parse is uncounted.
         """
         instance = super().__new__(cls, float(value))  # compute first: an oversized int raises before counting
         if isinstance(value, int):
@@ -185,14 +191,75 @@ class CountedFloat(float):
                 _create_thread_state().I2F += 1
         return instance
 
-    def __str__(self) -> str:
-        return self.__repr__()
-
     def __repr__(self) -> str:
+        """The loud counted-value repr — the single presentation mechanism.
+
+        float defines no __str__ of its own, so str(x), print(x), f"{x}" and format(x, "") all
+        land here, through object.__str__ and float.__format__'s empty-spec fast path. Loud on
+        purpose: whether a value silently fell out of the counting system is this library's
+        central hazard, and the repr is the zero-cost place it shows. Any non-empty format spec
+        (even a bare alignment) formats the plain value instead.
+        """
         return f"CountedFloat({float.__repr__(self)})"
 
     def __hash__(self) -> int:
         return float.__hash__(self)
+
+    # -------------------------------------------------------------------------
+    #  FLOAT-SURFACE MEMBERS
+    # -------------------------------------------------------------------------
+    # .imag deliberately stays inherited: it is +0.0 for every receiver (signs and nan payloads
+    # included), so it is a compile-time constant of the port and the plain-float return is the
+    # correct one -- see the cost model's constant-result convention. The two receiver-dependent
+    # members of the complex protocol are overridden below.
+    @property
+    def real(self) -> CountedFloat:
+        """The real part: the receiver itself, bit-identical (the complex protocol on a real).
+
+        A compiled port emits no instruction, so nothing is counted; the type is preserved so
+        downstream counting survives, as for __pos__. Returns self rather than the neighbors'
+        fresh-construction idiom: the class is final and immutable, so identity is unobservable
+        and an equal copy buys nothing.
+        """
+        return self
+
+    def conjugate(self) -> CountedFloat:
+        """The complex conjugate: the receiver itself, bit-identical for every real value.
+
+        Same contract as `real`: no instruction in the port, nothing counted, type preserved.
+        """
+        return self
+
+    def is_integer(self) -> bool:
+        """Whether the value is integral, counted as RND + COMP.
+
+        CPython computes `floor(x) == x` with C's double->double floor (Objects/floatobject.c,
+        float_is_integer), so the port pays one float->float round and one compare -- the price
+        of the counted spelling `x // 1.0 == x`, and RND rather than F2I because no int ever
+        materializes. The non-finite early return (False, nothing computed) is a regime fast
+        path; the price is charged unconditionally, per the cost model's input-range rules.
+        """
+        result = float.is_integer(self)
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.RND += 1
+        cnt.COMP += 1
+        return result
+
+    def as_integer_ratio(self) -> tuple[int, int]:
+        """The exact integer ratio, uncounted but reported at WARNING verbosity.
+
+        The port's extraction is a bit-field read plus an integer shift -- integer-domain work
+        the model prices nowhere -- so nothing is counted. But `n / d` on the result silently
+        resumes float arithmetic at zero flops, the same re-entry math.frexp reports, so the
+        call is surfaced through the same channel. Unlike the math patches this override is
+        permanently installed; the method is cold and the reporting test is one TLS read.
+        """
+        if thread_is_reporting():
+            warn_uncounted_call("float.as_integer_ratio", "its integer parts re-enter float math uncounted")
+        return float.as_integer_ratio(self)
 
     # -------------------------------------------------------------------------
     #  OVERLOADED MATH OPERATIONS
@@ -691,3 +758,30 @@ class CountedFloat(float):
                 return result  # the port's constant 1.0 — plain, uncounted
             count_pow_with_constant_base(other)
         return float.__new__(CountedFloat, result)
+
+
+if hasattr(float, "from_number"):
+    # Python 3.14+ only. Attached conditionally, the way the math tables register version-gated
+    # functions: the member exists on CountedFloat exactly when it exists on float, so surface
+    # comparisons hold in both directions on every supported interpreter.
+    def _from_number(cls: type[CountedFloat], number: object) -> CountedFloat:
+        """Counted construction from a real number (float.from_number), I2F for int sources.
+
+        CPython's from_number converts to a C double before handing the subclass constructor a
+        plain float, so without this override an int source converts unpaid where
+        CountedFloat(n) counts I2F -- the same source, two constructors, two answers. The
+        source matrix mirrors __new__: int (bool included) counts I2F; float sources cost
+        nothing; Decimal and Fraction convert uncounted, a stated gap; strings are rejected by
+        the underlying call.
+        """
+        # resolved dynamically: on 3.13-era typeshed the member does not exist to reference
+        from_number = getattr(float, "from_number")  # noqa: B009
+        result = from_number(number)  # compute first: a str or oversized source raises before counting
+        if isinstance(number, int):
+            try:
+                _TLS.flop_counts.I2F += 1
+            except AttributeError:  # first counted op on this thread
+                _create_thread_state().I2F += 1
+        return float.__new__(CountedFloat, result)
+
+    CountedFloat.from_number = classmethod(_from_number)  # ty: ignore[unresolved-attribute] -- version-gated member

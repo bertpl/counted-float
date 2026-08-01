@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `as_integer_ratio()` on a counted value is now reported at WARNING verbosity, since its integer parts can silently re-enter float math uncounted
+
 ### Changed
 
 ### Deprecated
@@ -17,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `conjugate()` and `.real` on a counted value now preserve countedness instead of silently dropping it
+- `is_integer()` now counts the floor-and-compare a compiled port executes
+- `from_number()` (Python 3.14) now counts the int-to-float conversion for integer sources, like the constructor
 - `round(x, n)` on a counted value no longer returns a plain float, which silently stopped all downstream counting
 - `x ** 0` and `1.0 ** x` now fold to a plain-float constant the way a compiled port would, instead of producing a counted result that over-counted downstream work
 
