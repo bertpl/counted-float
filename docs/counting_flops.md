@@ -106,7 +106,10 @@ patched `math` functions:
    `fma(x, 0.0, z)`, or any other) is the same single instruction and folding a
    value would buy nothing. Its one fold is structural rather than value-based —
    two constant multiplicands collapse to a single constant, leaving a compiled
-   port with a bare add, so that counts ADD.
+   port with a bare add, so that counts ADD. That add then folds like any other
+   add with a constant operand: a collapsed constant of exactly `-0.0` drops it
+   entirely (`z + (-0.0)` is `z` for every `z`), counting nothing, while a
+   `+0.0` product keeps the ADD (`(-0.0) + 0.0` is `+0.0`).
 
 The one place an `I2F` conversion *is* counted is explicit construction from an
 int — `CountedFloat(n)`. That is exactly how you opt a genuine runtime integer

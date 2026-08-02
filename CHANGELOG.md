@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `math.fma` with two constant multiplicands no longer counts the add a compiled port folds away when the constant product is exactly `-0.0` (e.g. `math.fma(2.0, -0.0, x)`)
+
 ### Security
 
 ## 2.2.1 (2026-08-02)

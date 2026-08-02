@@ -57,6 +57,7 @@ from __future__ import annotations
 
 import math
 import threading
+from math import copysign as _copysign  # the raw builtin: math.copysign is patched inside contexts
 from typing import TYPE_CHECKING
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
@@ -335,10 +336,13 @@ def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
     Flop classification follows the constant-folding convention, treating any non-CountedFloat
     operand as a compile-time constant:
       - two constant multiplicands -> their product folds, leaving a compiled port with a bare
-                                      add on the remaining runtime value -> ADD
+                                      add on the remaining runtime value -> ADD; a product of
+                                      exactly -0.0 folds the add away too (z + (-0.0) is z for
+                                      every z -- cost-model rule 1.7) and counts nothing, where
+                                      a +0.0 product keeps the ADD ((-0.0) + 0.0 is +0.0)
       - any other counted operand  -> the port emits one fused instruction -> FMA
-    Constant *values* are never inspected: unlike POW, no FMA variant is cheaper than another --
-    every one is a single instruction -- so there is nothing to strength-reduce.
+    Once an fma survives, constant *values* are never inspected: the explicit call is the author
+    asking for the fused instruction, and it stays fused.
     """
     if isinstance(x, CountedFloat) or isinstance(y, CountedFloat) or isinstance(z, CountedFloat):
         # computed first: math.fma raises ValueError on invalid operand combinations
@@ -350,6 +354,11 @@ def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().FMA += 1
         else:
+            product = x * y  # the constant a compiled port folds at compile time (both multiplicands are plain)
+            if product == 0.0 and _copysign(1.0, product) < 0.0:
+                # a -0.0 product leaves z + (-0.0), which is z for every z, so the port emits
+                # nothing -- the same sign-exact identity fold as a written -0.0 addend
+                return float.__new__(CountedFloat, result)
             try:
                 _TLS.flop_counts.ADD += 1  # x*y is a constant product; only the add survives folding
             except AttributeError:  # first counted op on this thread

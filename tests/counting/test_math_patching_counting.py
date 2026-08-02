@@ -707,6 +707,56 @@ def test_math_fma_with_constant_multiplicands_counts_add(thread_counter):
 
 
 @requires_fma
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        (2.0, -0.0),
+        (-0.0, 2.0),
+        (-2.0, 0.0),
+        (1e-200, -1e-200),
+    ],
+    ids=["negzero_y", "negzero_x", "negative_x_zero_y", "underflow_to_negzero"],
+)
+def test_math_fma_with_negzero_constant_product_counts_nothing(thread_counter, x: float, y: float):
+    """A collapsed product of exactly -0.0 folds the surviving add away: z + (-0.0) is z for every z."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(4.0)
+
+    # --- act ---------------------------------------------
+    result = math.fma(x, y, cf)
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == 0
+    assert result == 4.0
+    assert isinstance(result, CountedFloat)
+
+
+@requires_fma
+@pytest.mark.parametrize(
+    ("x", "y"),
+    [
+        (2.0, 0.0),
+        (0.0, 0.0),
+        (-0.0, -0.0),
+    ],
+    ids=["poszero_y", "both_poszero", "negzeros_cancel"],
+)
+def test_math_fma_with_poszero_constant_product_counts_add(thread_counter, x: float, y: float):
+    """A +0.0 product is the sign-exactness near-miss: (-0.0) + 0.0 is +0.0, so the add stays counted."""
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(4.0)
+
+    # --- act ---------------------------------------------
+    result = math.fma(x, y, cf)
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == 1
+    assert thread_counter.ADD == 1
+    assert result == 4.0
+    assert isinstance(result, CountedFloat)
+
+
+@requires_fma
 def test_math_fma_without_counted_operands_counts_nothing(thread_counter):
     """Every operand constant: the expression folds entirely and contagion does not start."""
     # --- act ---------------------------------------------

@@ -33,7 +33,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `round(x)`, `int(x)`, `math.floor`/`ceil`/`trunc` | `F2I` | operator | ISA | returns `int` |
 | `CountedFloat(int)` | `I2F` | constructor | ISA | yes |
 | `x ** y`, `math.pow(x, y)` | `POW` (or cheaper via constant strength reduction — MULs, SQRT, DIV, EXP2, EXP10) | operator / patch | benchmarked | yes |
-| `math.fma(x, y, z)` (3.13+) | `FMA` (or `ADD` when both multiplicands are constant) | patch | ISA | yes |
+| `math.fma(x, y, z)` (3.13+) | `FMA` (or `ADD` when both multiplicands are constant; nothing when their product is exactly `-0.0`) | patch | ISA | yes |
 | `math.sqrt(x)` | `SQRT` | patch | ISA | yes |
 | `math.cbrt(x)` | `CBRT` | patch | benchmarked | yes |
 | `math.exp(x)`, `math.exp2(x)`, `2 ** x` | `EXP`, `EXP2` | patch / operator | benchmarked | yes |
@@ -235,7 +235,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   instruction with a single rounding
 - **Constant multiplicands decompose:** when *both* `x` and `y` are constants
   their product folds at compile time, leaving a compiled port with a bare add,
-  so that counts ADD rather than FMA. No reduction is done by constant *value* —
+  so that counts ADD rather than FMA — and a collapsed product of exactly
+  `-0.0` folds the add away too (`z + (-0.0)` is `z` for every `z`), counting
+  nothing. No reduction is done by constant *value* —
   every FMA variant is one instruction, so there is nothing to win (see
   [the counting model](counting_flops.md#the-counting-model-what-gets-counted-and-why))
 - **Not counted:** `math.fma` on plain floats only; `a*b + c` written with
