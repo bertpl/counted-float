@@ -303,10 +303,12 @@ _MATH_INSTRUMENTED_NOTES = {
     ),
 }
 # patched, but presented by the decomposition each one counts rather than by a FlopType of its own.
-# 1-argument `hypot` also belongs to this row's prose; `hypot` itself is presented above.
+# 1-argument `hypot` and 1-D `dist` also belong to this row's prose; both functions themselves are
+# presented above.
 _MATH_DECOMPOSED = ["degrees", "radians", "prod", "fsum"]
 _MATH_DECOMPOSED_CELL = (
-    "`degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS"
+    "`degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; "
+    "1-argument `hypot` → ABS; 1-D `dist` → SUB + ABS"
 )
 # registered conditionally by the patch table, so they are absent from it on an older interpreter
 # while still belonging in the committed table -- the note on each says from which version

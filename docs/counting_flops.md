@@ -92,7 +92,7 @@ patched `math` functions:
    | `1.0 ** x` | nothing — the same standards make `pow(1, y)` `1.0` for *every* `y`: the absorbing case on the other operand, likewise a **plain float** constant |
    | `2 ** x` / `10 ** x` | EXP2 / EXP10 (POW for other constant bases) |
    | `math.log(x, 2)` / `math.log(x, 10)` | LOG2 / LOG10 |
-   | `math.log(x, c)`, other values | LOG + MUL (`1/log(c)` folds to a constant multiplier) |
+   | `math.log(x, c)`, other values | LOG + MUL (`1/log(c)` folds to a constant multiplier, which itself identity-folds when it is exactly ±1.0 — base `math.e` counts a bare LOG) |
 
    Beyond \|n\| = 16 real compilers' powi expansion varies, so a generic POW
    is a fair stand-in. When the exponent, base, or log base is itself a

@@ -54,7 +54,9 @@ strength reduction and never adds an I2F conversion:
 - `math.log(x, base)` classifies per log variant: base omitted → LOG;
   constant base 2 / 10 → LOG2 / LOG10 (a compiled port calls `log2`/`log10`
   directly); other constant base → LOG + MUL (a port computes `log(x) * C`
-  with `C = 1/log(base)` folded at compile time); `CountedFloat` base →
+  with `C = 1/log(base)` folded at compile time — and `C` being a constant,
+  the identity folds apply to the multiply itself: exactly `1.0`, e.g. base
+  `math.e`, drops it, exactly `-1.0` counts MINUS); `CountedFloat` base →
   genuinely runtime, a port computes `log(x)/log(base)`: LOG per counted
   operand + DIV.
 
@@ -69,7 +71,7 @@ Every commonly used `math` function, and how it participates in counting:
 | Coverage | Functions |
 |---|---|
 | **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `isnan` (COMP — the self-compare a port emits), `isinf` (ABS + COMP), `isfinite` (ABS + COMP), `isclose` (SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, short-circuit savings and the implementation's respelling are a stated gap), `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
-| **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS |
+| **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS; 1-D `dist` → SUB + ABS |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | exactly the float-representation helpers — `frexp`, `ldexp`, `modf`, `nextafter`, `ulp` |
 <!-- END generated: math-coverage-table -->
