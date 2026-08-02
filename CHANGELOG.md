@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the counting-overhead benchmark now reports a per-flop-type overhead table with a geomean summary, plus a bisection workload doing lgamma work, replacing the single all-cheap-ops figure
+
 ### Deprecated
 
 ### Removed
