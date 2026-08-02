@@ -235,8 +235,9 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
             cnt.LOG10 += 1
     else:
         if isinstance(x, CountedFloat):
-            # the multiplier C = 1/log(base) is a compile-time constant, so it identity-folds at
-            # exactly +/-1.0 -- keyed on the runtime value of log(base), like every fold by value
+            # the port precomputes C = 1/log(base) and multiplies by it; a C of exactly +/-1.0
+            # identity-folds like any constant multiplier. Computing log(base) here mirrors that
+            # compile-time evaluation -- as for every fold, the observed value decides
             log_of_base = original_math_log(float(base))
             if log_of_base == 1.0:
                 cnt.note("const base -> log(x); the 1/log(base) multiplier is 1.0 and folds away")
