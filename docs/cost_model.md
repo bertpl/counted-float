@@ -42,8 +42,8 @@ playing by two different rules.
       or in the
       [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why),
       which owns the full enumeration — together with its bound (for exponent chains,
-      `|n| ≤ 16`): a stated, bounded persona — not a claim about what all programmers
-      everywhere would do.
+      `|n| ≤ 16`). The result is a stated, bounded persona — not a claim about what all
+      programmers everywhere would do.
 - **The compiler** then translates that C source into machine code, and its rule *is*
   mechanical bit-exactness: it may rewrite the source's arithmetic only when the rewrite
   provably never changes any computed value.
@@ -99,25 +99,25 @@ regime. Outside one, `math.*` is unpatched, so type preservation ends at every s
 a counted value (see [Math patching semantics](math_patching.md)); the operators preserve
 countedness everywhere.
 
-Countedness otherwise ends in exactly five places:
+Beyond the constant-result cases above, countedness ends in exactly five places:
 
-- the *value* leaves the float domain (`bool`, `int`, `str`, `complex`), priced where the
-  port pays (e.g. F2I, COMP) — with three exits priced at nothing: the `complex` exit
-  (a negative base under a fractional exponent, either operand counted), since a port of
-  real-float code has no complex counterpart; truthiness (`bool(x)`, `if x:`), the
-  deliberate interpreter-bookkeeping exception documented with the
-  [`COMP` type](flop_types.md#flop-comp); and the `%` presentation type's `str` exit,
-  whose scale-by-100 MUL is the labeled exception on
-  [the float surface](float_surface.md#the-presentation-contract);
-- the one documented exit, `float(x)` — safe because leaving the counted world is the
+- **the *value* leaves the float domain** (`bool`, `int`, `str`, `complex`), priced where
+  the port pays (e.g. F2I, COMP). Three of these exits are priced at nothing:
+    - the `complex` exit (a negative base under a fractional exponent, either operand
+      counted), since a port of real-float code has no complex counterpart;
+    - truthiness (`bool(x)`, `if x:`), the deliberate interpreter-bookkeeping exception
+      documented with the [`COMP` type](flop_types.md#flop-comp);
+    - the `%` presentation type's `str` exit, whose scale-by-100 MUL is the labeled
+      exception on [the float surface](float_surface.md#the-presentation-contract);
+- **the one documented exit, `float(x)`** — safe because leaving the counted world is the
   explicit point of the call;
-- a WARNING-reported gap (see the
+- **a WARNING-reported gap** (see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) and the
   [float surface](float_surface.md#reported-at-warning-verbosity));
-- the builtins `min`/`max` returning a winning plain constant — the one interpreter
+- **the builtins `min`/`max` returning a winning plain constant** — the one interpreter
   mechanism the library cannot intercept; stated, with its re-wrap remedy, in
   [known limitations](known_limitations.md#other-limitations);
-- a non-float numeric operand (a `Fraction`) winning the delegation: the reflected
+- **a non-float numeric operand (a `Fraction`) winning the delegation**: the reflected
   operation returns a correct but plain — and uncounted — `float`, outside the model
   because non-float numeric towers have no compiled-port counterpart (see
   [What the model prices](#what-the-model-prices)); stated, with its non-goal rationale,
@@ -175,9 +175,8 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
       builds).
     - The one way to have a fused multiply-add *counted* is to write one:
       `math.fma(x, y, z)` (Python 3.13+) is the author explicitly asking for the fused
-      operation.
-    - `fma` can carry that meaning because it is special in exactly one way: it has no
-      operator spelling, so writing the call is unambiguous intent.
+      operation — and `fma` can carry that meaning because it is special in exactly one
+      way: it has no operator spelling, so writing the call is unambiguous intent.
     - The boundary runs both ways, and is pinned in favor of the explicit instruction the
       author wrote: real compilers diverge on the bit-exact unfusings (`fma(x, 1.0, z)`
       computes exactly `x + z` — at `-O2`, clang 22 rewrites it to a plain add while
@@ -211,9 +210,9 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
 
 - **1.6** ***(example)*** — **reciprocal multiplication for division**, only where it is exact.
     - A power-of-two constant divisor of either sign (`±2^k`) with a finite reciprocal —
-      there, and only there,
-      `x * (1/c)` is bit-identical to `x / c`, and compilers apply the fold at plain
-      `-O2` — so `x / c` counts MUL for exactly those divisors, and DIV for every other.
+      there, and only there, `x * (1/c)` is bit-identical to `x / c`, and compilers apply
+      the fold at plain `-O2` — so `x / c` counts MUL for exactly those divisors, and DIV
+      for every other.
     - The one stronger fold: `x / 1.0` disappears entirely and counts nothing, like
       `x ** 1`.
 
@@ -227,11 +226,12 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
       `x + 0.0` counts ADD (for `x = -0.0` the result is `+0.0`, not `x`), `x - (-0.0)`
       counts SUB (it *is* `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives
       `+0.0`, where a sign flip would give `-0.0`).
-    - Inside the decomposed operations the same folds apply to the division step — a
-      power-of-two constant divisor (either sign) turns `x // c`'s and `x % c`'s DIV component into
-      MUL, and `// 1.0` drops it entirely — and to the remainder's multiply step, whose
-      constant factor is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply,
-      `x % -1.0` turns it into MINUS.
+    - Inside the decomposed operations the same folds apply to the division step: a
+      power-of-two constant divisor (either sign) turns `x // c`'s and `x % c`'s DIV
+      component into MUL, and `// 1.0` drops it entirely.
+    - They apply equally to the remainder's multiply step, whose constant factor is the
+      divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns it into
+      MINUS.
 
 **Rule 2 — operations that compile to a library call are priced as the call's real
 algorithm, contract included.**
@@ -263,7 +263,7 @@ operation's documented defining formula instead.**
     - A formula contains no guards, no short-circuits and no adaptive machinery, so none
       are priced — the transcription is fixed per call *by construction*, charged
       whatever branch the implementation actually takes, and unconditioned on argument
-      values: the constant folds of rule 1 apply to operator decompositions of the user's
+      values. The constant folds of rule 1 apply to operator decompositions of the user's
       own expression, never inside a formula price.
     - "Documented defining formula" means the operation's stated contract — the stdlib
       docs' formula where one is given (`math.isclose`), the mathematical definition
