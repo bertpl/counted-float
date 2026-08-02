@@ -452,6 +452,12 @@ def test_counted_float_counts_div_by_constant(thread_counter, divisor, expected_
         (lambda cf: cf % 3.0, {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
         (lambda cf: divmod(cf, 4.0), {"RND": 1, "MUL": 2, "SUB": 1}),
         (lambda cf: divmod(cf, 3.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+        # --- ... and a ±1.0 divisor folds the remainder's y*floor(x/y) multiply too ---
+        (lambda cf: cf % 1.0, {"RND": 1, "SUB": 1}),
+        (lambda cf: cf % 1, {"RND": 1, "SUB": 1}),  # int 1 compiles as 1.0
+        (lambda cf: cf % -1.0, {"MINUS": 2, "RND": 1, "SUB": 1}),  # division step and multiply are both sign flips
+        (lambda cf: divmod(cf, 1.0), {"RND": 1, "SUB": 1}),
+        (lambda cf: divmod(cf, -1.0), {"MINUS": 2, "RND": 1, "SUB": 1}),
     ],
 )
 def test_counted_float_identity_folds(thread_counter, case, expected_counts: dict[str, int]):
@@ -477,6 +483,8 @@ def test_counted_float_identity_folds(thread_counter, case, expected_counts: dic
         (lambda cf: cf / CountedFloat(-1.0), {"DIV": 1}),
         (lambda cf: cf // CountedFloat(8.0), {"DIV": 1, "RND": 1}),
         (lambda cf: cf % CountedFloat(8.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+        (lambda cf: cf % CountedFloat(1.0), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
+        (lambda cf: divmod(cf, CountedFloat(-1.0)), {"DIV": 1, "RND": 1, "MUL": 1, "SUB": 1}),
     ],
 )
 def test_counted_float_identity_folds_key_on_constants_only(thread_counter, case, expected_counts):

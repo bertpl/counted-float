@@ -618,8 +618,10 @@ class CountedFloat(float):
         Python's % is the floored remainder r = x - y*floor(x/y), which a compiled port emits as
         DIV + RND (the floor) + MUL + SUB. Distinct from math.fmod, the truncated C remainder.
         A constant divisor routes the division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1.7); the y*floor(...) multiply stays
-        MUL regardless — its other factor is the freshly computed floor, never a constant.
+        (count_div_with_constant_divisor; cost-model rule 1.7) — and it is also the constant
+        factor of the y*floor(...) multiply, so the identity folds apply there too: a divisor
+        of 1.0 drops that multiply, -1.0 makes it a bare sign flip (MINUS). Any other constant
+        keeps it a genuine MUL: the floor factor is freshly computed, never foldable.
         """
         result = float.__mod__(self, other)
         if result is NotImplemented:
@@ -630,10 +632,14 @@ class CountedFloat(float):
             cnt: CountsTarget = _create_thread_state()
         if type(other) is CountedFloat:
             cnt.DIV += 1
+            cnt.MUL += 1
         else:
             count_div_with_constant_divisor(other)
+            if other == 1.0 or other == -1.0:
+                count_mul_with_identity_multiplier(other)
+            else:
+                cnt.MUL += 1
         cnt.RND += 1
-        cnt.MUL += 1
         cnt.SUB += 1
         return float.__new__(CountedFloat, result)
 
@@ -658,7 +664,8 @@ class CountedFloat(float):
         Quotient and remainder share the DIV + RND (the floor); the remainder adds MUL + SUB, so
         divmod counts DIV + RND + MUL + SUB — the same as a lone %, since the // part is shared.
         A constant divisor routes the shared division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1.7).
+        (count_div_with_constant_divisor; cost-model rule 1.7), and folds the remainder's
+        y*floor(...) multiply for a ±1.0 divisor the way % does.
         """
         result = float.__divmod__(self, other)
         if result is NotImplemented:
@@ -669,10 +676,14 @@ class CountedFloat(float):
             cnt: CountsTarget = _create_thread_state()
         if type(other) is CountedFloat:
             cnt.DIV += 1
+            cnt.MUL += 1
         else:
             count_div_with_constant_divisor(other)
+            if other == 1.0 or other == -1.0:
+                count_mul_with_identity_multiplier(other)
+            else:
+                cnt.MUL += 1
         cnt.RND += 1
-        cnt.MUL += 1
         cnt.SUB += 1
         quotient, remainder = result
         return float.__new__(CountedFloat, quotient), float.__new__(CountedFloat, remainder)

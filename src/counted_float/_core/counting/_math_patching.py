@@ -190,7 +190,10 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
       - base omitted           -> LOG
       - constant base 2 / 10   -> LOG2 / LOG10 (a compiled port calls log2/log10 directly)
       - other constant base    -> LOG + MUL (a port computes log(x) * C, with C = 1/log(base)
-                                  folded at compile time)
+                                  folded at compile time); C is itself a constant, so the
+                                  identity folds apply to the multiply: C = 1.0 (base e on a
+                                  libm that rounds log(e) to exactly 1.0) drops it, C = -1.0
+                                  makes it a bare sign flip (MINUS)
       - CountedFloat base      -> genuinely runtime: a port computes log(x)/log(base), so
                                   LOG per CountedFloat operand + DIV
     As everywhere in the counting model, only operations touching CountedFloat values are counted:
@@ -232,9 +235,21 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
             cnt.LOG10 += 1
     else:
         if isinstance(x, CountedFloat):
-            cnt.note("const base -> log(x) * 1/log(base)")
-            cnt.LOG += 1
-            cnt.MUL += 1
+            # the port precomputes C = 1/log(base) and multiplies by it; a C of exactly +/-1.0
+            # identity-folds like any constant multiplier. Computing log(base) here mirrors that
+            # compile-time evaluation -- as for every fold, the observed value decides
+            log_of_base = original_math_log(float(base))
+            if log_of_base == 1.0:
+                cnt.note("const base -> log(x); the 1/log(base) multiplier is 1.0 and folds away")
+                cnt.LOG += 1
+            elif log_of_base == -1.0:
+                cnt.note("const base -> log(x) * -1.0 -> sign flip")
+                cnt.LOG += 1
+                cnt.MINUS += 1
+            else:
+                cnt.note("const base -> log(x) * 1/log(base)")
+                cnt.LOG += 1
+                cnt.MUL += 1
     # the guard above already established that at least one operand is counted
     return float.__new__(CountedFloat, result)
 
@@ -641,7 +656,9 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
 
     Counted as DIST + (n-2) DIST_XARG for n-dimensional inputs: the benchmarked 2-D base cost
     (which carries the per-coordinate subtractions in its offset) plus the measured
-    per-extra-coordinate slope. 1-D inputs count the base cost alone. Iterator inputs are
+    per-extra-coordinate slope. 1-D inputs count SUB + ABS instead: the call computes
+    |p0 - q0| through the same single-coordinate shortcut 1-argument hypot takes, so the
+    port pays the subtract and the fabs, not the scaled 2-D machinery. Iterator inputs are
     materialized up front (the stdlib accepts them too), so the coordinates can be inspected
     after computing the result.
     """
@@ -656,9 +673,13 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
         cnt: CountsTarget = _TLS.flop_counts
     except AttributeError:  # first counted op on this thread
         cnt: CountsTarget = _create_thread_state()
-    cnt.DIST += 1
-    if n > 2:
-        cnt.DIST_XARG += n - 2
+    if n == 1:
+        cnt.SUB += 1
+        cnt.ABS += 1
+    else:
+        cnt.DIST += 1
+        if n > 2:
+            cnt.DIST_XARG += n - 2
     return float.__new__(CountedFloat, result)
 
 

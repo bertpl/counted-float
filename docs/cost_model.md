@@ -157,8 +157,10 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
   `x = -0.0` the result is `+0.0`, not `x`), `x - (-0.0)` counts SUB (it *is*
   `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives `+0.0`, where a sign flip
   would give `-0.0`). Inside the decomposed operations the same folds apply to the
-  division step: a power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV
-  component into MUL, and `// 1.0` drops it entirely.
+  division step — a power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV
+  component into MUL, and `// 1.0` drops it entirely — and to the remainder's multiply
+  step, whose constant factor is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋`
+  multiply, `x % -1.0` turns it into MINUS.
 
 **Rule 2 — operations that compile to a library call are priced as the call's real
 algorithm, contract included.**

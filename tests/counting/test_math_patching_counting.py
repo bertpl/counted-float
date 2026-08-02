@@ -177,6 +177,45 @@ def test_math_log_constant_float_base_folds_like_int(thread_counter):
     assert isinstance(result, CountedFloat)
 
 
+@pytest.mark.parametrize(
+    ("base", "expected_counts"),
+    [
+        pytest.param(
+            math.e,
+            {"LOG": 1},
+            marks=pytest.mark.skipif(
+                math.log(math.e) != 1.0,
+                reason="the fold keys on the runtime value: this libm does not give log(e) == 1.0",
+            ),
+            id="unit-multiplier-folds-away",
+        ),
+        pytest.param(
+            1.0 / math.e,
+            {"LOG": 1, "MINUS": 1},
+            marks=pytest.mark.skipif(
+                math.log(1.0 / math.e) != -1.0,
+                reason="the fold keys on the runtime value: this libm does not give log(1/e) == -1.0",
+            ),
+            id="negative-unit-multiplier-is-a-sign-flip",
+        ),
+    ],
+)
+def test_math_log_constant_base_with_unit_reciprocal_folds_multiply(thread_counter, base, expected_counts):
+    # the port's multiplier C = 1/log(base) is itself a compile-time constant, so the identity
+    # folds apply to it: C = 1.0 drops the multiply, C = -1.0 is a bare sign flip
+    # --- arrange -----------------------------------------
+    cf = CountedFloat(8.0)
+
+    # --- act ---------------------------------------------
+    result = math.log(cf, base)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert thread_counter.total_count() == sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == expected
+
+
 def test_math_log_counted_base_counts_runtime_division(thread_counter):
     # a CountedFloat base is genuinely runtime: a port computes log(x)/log(base)
     # --- arrange -----------------------------------------
@@ -396,9 +435,16 @@ def test_dist_counts_the_arity_scaled_types(thread_counter, n_dims):
 
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
-    assert thread_counter.DIST == 1
-    assert max(0, n_dims - 2) == thread_counter.DIST_XARG
-    assert thread_counter.total_count() == 1 + max(0, n_dims - 2)
+    if n_dims == 1:
+        # one dimension takes the same single-coordinate shortcut as 1-argument hypot: the call
+        # computes |p0 - q0|, so the port pays the subtract and the fabs, not the 2-D base
+        assert thread_counter.SUB == 1
+        assert thread_counter.ABS == 1
+        assert thread_counter.total_count() == 2
+    else:
+        assert thread_counter.DIST == 1
+        assert max(0, n_dims - 2) == thread_counter.DIST_XARG
+        assert thread_counter.total_count() == 1 + max(0, n_dims - 2)
 
 
 def test_dist_accepts_iterator_inputs_and_mismatched_lengths_raise(thread_counter):

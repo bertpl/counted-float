@@ -17,6 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- the `%`/`divmod` decompositions and constant-base `math.log` no longer count the multiply a compiled port folds away for ±1.0 constants (e.g. `x % 1.0`, `math.log(x, math.e)`)
+- 1-D `math.dist` now counts the subtract-and-abs it executes instead of the 2-coordinate distance base cost
+
 ### Security
 
 ## 2.2.0 (2026-08-01)

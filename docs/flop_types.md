@@ -21,8 +21,8 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `x + y`, `x - y`, `x * y` | `ADD`, `SUB`, `MUL` (sign-exact identity constants fold: `* 1.0` / `- 0.0` / `+ (-0.0)` → nothing, `* -1.0` / `(-0.0) - x` → `MINUS`) | operator | ISA | yes |
 | `x / y` | `DIV` (`MUL` for a power-of-two constant divisor — the exact reciprocal fold; `MINUS` for `x / -1.0`; nothing for `x / 1.0`) | operator | ISA | yes |
 | `x // y` | `DIV + RND` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes |
-| `x % y` | `DIV + RND + MUL + SUB` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes |
-| `divmod(x, y)` | `DIV + RND + MUL + SUB` (the division step folds like `/` for constant divisors) | operator (decomposed) | ISA | yes (both) |
+| `x % y` | `DIV + RND + MUL + SUB` (the division step folds like `/` for constant divisors; a `±1.0` divisor folds the multiply step too — away for `1.0`, to `MINUS` for `-1.0`) | operator (decomposed) | ISA | yes |
+| `divmod(x, y)` | `DIV + RND + MUL + SUB` (folds like `%`, division step and multiply step alike) | operator (decomposed) | ISA | yes (both) |
 | `-x` | `MINUS` | operator | ISA | yes |
 | `+x` | *(nothing)* | operator | — | yes |
 | `abs(x)`, `math.fabs(x)` | `ABS` | operator / patch | ISA | yes |
@@ -49,7 +49,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.erf`/`erfc(x)` | `ERF`, `ERFC` | patch | benchmarked | yes |
 | `math.copysign(x, y)` | `COPYSIGN` | patch | benchmarked | yes |
 | `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
-| `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` | patch | benchmarked | yes |
+| `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` (1-D → `SUB + ABS`) | patch | benchmarked | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
 | `math.sumprod(p, q)` (3.12+) | `SUMPROD` + (n−2) `SUMPROD_XELEM` | patch | benchmarked | yes |
@@ -74,6 +74,10 @@ float→float round (`RND`), not an `F2I`:
 - `x % y` → `DIV + RND + MUL + SUB` — the floored remainder `r = x − y·⌊x/y⌋`.
 - `divmod(x, y)` → `DIV + RND + MUL + SUB` — quotient and remainder share the
   `DIV + RND`, so it costs the same as a lone `%`.
+
+For a constant divisor the division step folds like a bare `/`, and a `±1.0` divisor also
+folds the `y·⌊x/y⌋` multiply — the divisor is that multiply's constant factor, so the
+identity folds apply to it: away for `1.0`, `MINUS` for `-1.0`.
 
 `round(x, n)` with a nonzero digit count decomposes the same way:
 
@@ -289,7 +293,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.log(x)` for `CountedFloat`;
   `math.log(x, base)` for `CountedFloat` decomposes per the constant-folding
   convention (constant base 2/10 -> LOG2/LOG10; other constant base ->
-  LOG+MUL; CountedFloat base -> LOG per counted operand + DIV)
+  LOG+MUL, where the multiply itself identity-folds when `1/log(base)` is
+  exactly ±1.0 — e.g. base `math.e`; CountedFloat base -> LOG per counted
+  operand + DIV)
 - **Not counted:** `numpy.log`, log on non-CountedFloat
 - **Weight measurement:** [the machine code behind the `LOG` weight](machine_code/log.md)
 
@@ -421,7 +427,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** `math.dist(p, q)` for `CountedFloat` — counted
   once per call when *any* coordinate is a `CountedFloat`; coordinates beyond
-  the second each add a [`DIST_XARG`](#flop-dist-xarg)
+  the second each add a [`DIST_XARG`](#flop-dist-xarg), and a 1-D call counts
+  `SUB + ABS` instead: the coordinate difference through the same
+  single-coordinate shortcut as 1-argument `hypot`
 - **Not counted:** `dist` on plain floats only, numpy norms/distances
 - **Note:** the 2-D base price of the overflow-safe algorithm `math.dist`
   executes; it sits above `HYPOT` by the per-coordinate subtraction work its
@@ -435,7 +443,8 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** (software)
 - **Counted Python operations:** one per dimension beyond the second of a
   `math.dist` call: an n-dimensional call counts `DIST` + (n−2) `DIST_XARG`
-- **Not counted:** 1- and 2-dimensional calls (they cost the base `DIST` alone)
+- **Not counted:** 2-dimensional calls (they cost the base `DIST` alone) and
+  1-dimensional calls (`SUB + ABS`)
 - **Weight measurement:** [the machine code behind the `DIST_XARG` weight](machine_code/dist_xarg.md)
 
 ## FlopType.SUMPROD (`sumprod(p,q)`) { #flop-sumprod }
