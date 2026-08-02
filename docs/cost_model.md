@@ -2,16 +2,19 @@
 
 Every flop weight and every counting decision in `counted-float` answers the same question:
 **what does this operation cost?** — and that question has more than one defensible answer
-(the code as written, what a compiler would make of it, what the interpreter actually
-executes). This page states the rules used to pick one, so that every pricing choice in the
-package can name the rule it follows — and the few that deviate can say so explicitly.
+(the code as written; what a compiler would make of it — the
+"[compiled port](glossary.md#compiled-port)"; what the interpreter actually executes). This
+page states the rules used to pick one, so that every pricing choice in the package can name
+the rule it follows — and the few that deviate can say so explicitly.
 
 ## How the imaginary port gets made
 
 Three conventions anchor every rule below.
 
-**First: in counted code, a plain `float` operand is a compile-time
-[constant](glossary.md#constant)** — something the imaginary compiled program would know
+### Convention 1 — a plain float is a compile-time constant
+
+In counted code, a plain `float` operand is a compile-time
+[constant](glossary.md#constant) — something the imaginary compiled program would know
 while being compiled — while a **`CountedFloat` operand is dynamic algorithm input**.
 Rules that treat constants specially (strength reduction, reciprocal multiplication) key
 on exactly this distinction. They can only key on the operand's *value*, though, since
@@ -20,41 +23,59 @@ folded on each value it takes, which is a
 [stated limitation](known_limitations.md#constant-folding-keys-on-the-operands-value-not-on-it-being-a-literal)
 rather than part of the model.
 
-**Second: the [port](glossary.md#compiled-port) is made in two stages, by two different
-actors, playing by two different rules.**
+### Convention 2 — two actors build the port
 
-- **The author** — a competent numerical programmer — rewrites the Python code in C. The
-  author sees the constants in the source and makes the choices working numerical code
-  makes: faced with `x ** 5`, they write the square-and-multiply chain
-  (`x2 = x*x; x4 = x2*x2; x4*x`) rather than calling `pow(x, 5.0)`, because that is how
-  performance-conscious C code raises to a small constant power. There is no
-  bit-exactness bar to clear at this stage, because none *exists*: even the "obvious"
-  port that calls libm's `pow` gets different last bits on glibc, Apple's libm and
-  Microsoft's UCRT. What the author owes is **algorithmic faithfulness** — the same
-  mathematical computation, written the way such code is really written. Every judgment
-  call the author is assumed to make is declared — in the rules below or in the
-  [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why),
-  which owns the full enumeration — together with its bound (for exponent chains,
-  `|n| ≤ 16`): a stated, bounded persona — not a claim about what all programmers
-  everywhere would do.
+The [port](glossary.md#compiled-port) is made in two stages, by two different actors,
+playing by two different rules.
+
+- **The author** — a competent numerical programmer — rewrites the Python code in C. What
+  the author owes is **algorithmic faithfulness**: the same mathematical computation,
+  written the way such code is really written.
+    - The author sees the constants in the source and makes the choices working numerical
+      code makes: faced with `x ** 5`, they write the square-and-multiply chain
+      (`x2 = x*x; x4 = x2*x2; x4*x`) rather than calling `pow(x, 5.0)`, because that is
+      how performance-conscious C code raises to a small constant power.
+    - There is no bit-exactness bar to clear at this stage, because none *exists*: even
+      the "obvious" port that calls libm's `pow` gets different last bits on glibc,
+      Apple's libm and Microsoft's UCRT.
+    - Every judgment call the author is assumed to make is declared — in the rules below
+      or in the
+      [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why),
+      which owns the full enumeration — together with its bound (for exponent chains,
+      `|n| ≤ 16`): a stated, bounded persona — not a claim about what all programmers
+      everywhere would do.
 - **The compiler** then translates that C source into machine code, and its rule *is*
   mechanical bit-exactness: it may rewrite the source's arithmetic only when the rewrite
-  provably never changes any computed value. Replacing `x / 8.0` by `x * 0.125` qualifies
-  — the reciprocal is exact, so every result is bit-identical. Fusing `x*y + z` into a
-  single fused multiply-add does not: the fused form rounds once where the source rounds
-  twice — faster, and slightly *different*. One subtlety is pinned explicitly: on some
-  CPUs (notably 64-bit ARM) compilers apply that fusion **by default** at ordinary
-  optimization levels, no fast-math flag involved — the model's assumed compiler has it
-  switched off (`-ffp-contract=off`), so the priced instruction stream is the same on
-  every architecture.
+  provably never changes any computed value.
+    - Replacing `x / 8.0` by `x * 0.125` qualifies — the reciprocal is exact, so every
+      result is bit-identical.
+    - Fusing `x*y + z` into a single fused multiply-add does not: the fused form rounds
+      once where the source rounds twice — faster, and slightly *different*.
+    - One subtlety is pinned explicitly: on some CPUs (notably 64-bit ARM) compilers
+      apply that fusion **by default** at ordinary optimization levels, no fast-math flag
+      involved — the model's assumed compiler has it switched off (`-ffp-contract=off`),
+      so the priced instruction stream is the same on every architecture.
 
-**Third: zero cost and countedness are independent axes.** Cost says what the port
-executes; countedness says what the result's *type* is. Which type a float-valued result
-gets turns on one question — does it depend on a counted operand?
+### Convention 3 — cost and countedness are independent axes
 
-- **Depends on one → `CountedFloat`**, even at zero cost (`+x`, `x * 1.0`, `x ** 1`): the
-  preserved type is what keeps downstream counting alive. A container carries countedness
-  in its elements (`divmod` returns two `CountedFloat`s).
+Every operation on a counted value answers two separate questions:
+
+- **Cost** — what does the port execute? That is what the rules below price.
+- **Countedness** — what type does the result get: does it stay a `CountedFloat`?
+
+The axes vary independently — every combination exists:
+
+|  | result stays `CountedFloat` | result does not |
+|---|---|---|
+| **zero cost** | `+x`, `x * 1.0`, `x ** 1` | `x ** 0`, `1.0 ** x`, `.imag` (a plain `float`) |
+| **real cost** | `x + y`, `math.sin(x)` | `x < y` (a `bool`, COMP), `int(x)` (an `int`, F2I) |
+
+Which type a float-valued result gets turns on one question — does it depend on a counted
+operand?
+
+- **Depends on one → `CountedFloat`**, even at zero cost: the preserved type is what
+  keeps downstream counting alive. A container carries countedness in its elements
+  (`divmod` returns two `CountedFloat`s).
 - **Independent of every one → plain `float`**: the port knows this value at compile time,
   so downstream folds keyed on it mirror the port's own constant propagation.
 
@@ -70,6 +91,8 @@ cases are enumerated, like the identity folds of rule 1.7:
 Near-misses stay counted because they fail that test: `x * 0.0` is sign- and
 nan-dependent, `x + nan` carries a nan receiver's payload. Degeneracies outside the table
 stay conservatively counted as written.
+
+#### Where countedness ends
 
 Countedness otherwise ends in exactly four places:
 
@@ -88,13 +111,6 @@ Countedness otherwise ends in exactly four places:
 
 A *silent* plain-float return from a counted operand is none of those — it is a defect in
 the model, not a judgment call.
-
-Every pricing decision below is an application of one question: **who produced this
-operation — the author, writing it into the source, or the compiler, translating the
-source?** Author-written operations are priced as written; compiler rewrites are admitted
-only when bit-exact. Whenever the rules mention what real compilers do at plain `-O2`,
-that is *corroboration* that an admitted rewrite is real-world practice — never the
-admission criterion itself.
 
 ## What the model prices
 
@@ -119,109 +135,143 @@ does today.
 
 ## The rules
 
+Every pricing decision below is an application of one question: **who produced this
+operation — the author, writing it into the source, or the compiler, translating the
+source?** Author-written operations are priced as written; compiler rewrites are admitted
+only when bit-exact. Whenever the rules mention what real compilers do at plain `-O2`,
+that is *corroboration* that an admitted rewrite is real-world practice — never the
+admission criterion itself.
+
 **Rule 1 — operations that compile to CPU instructions only (no library call) are priced
 as a value-preserving [compiled port](glossary.md#compiled-port).**
 
-- **1.1** *(scope)* — covers arithmetic written in operators (`+`, `*`, `%`,
-  `round(x, n)`, ...) *and* the named calls that reduce to single instructions
+- **1.1** ***(scope)*** — covers **arithmetic written in operators** (`+`, `*`, `%`,
+  `round(x, n)`, ...) *and* the **named calls that reduce to single instructions**
   (`math.sqrt` → `FSQRT`, `abs`/`math.fabs` → `FABS`, `math.copysign`).
-- **1.2** *(definition)* — "value-preserving" is the compiler-stage rule from above: the
+
+- **1.2** ***(definition)*** — **"value-preserving" is the compiler-stage rule from above**: the
   emitted machine code computes exactly the values the authored source defines. Any
   rewrite that changes a computed value — whatever fast-math flag or platform default
   would enable it — is out.
-- **1.3** *(consequence)* — no [FP contraction](glossary.md#fp-contraction): `x*y + z`
-  counts MUL + ADD, not FMA, because fusing is a compiler rewrite that changes values —
-  excluded even where it is a platform default (see
-  [known limitations](known_limitations.md) for what this over-estimates on real builds).
-  The one way to have a fused multiply-add *counted* is to write one: `math.fma(x, y, z)`
-  (Python 3.13+) is the author explicitly asking for the fused operation. `fma` can carry
-  that meaning because it is special in exactly one way: it has no operator spelling, so
-  writing the call is unambiguous intent.
-- **1.4** *(consequence)* — [strength reduction](glossary.md#strength-reduction) comes in
-  both stages, and the stage decides the test. Bit-exact reductions (`x / 8.0` →
-  `x * 0.125`, `x ** 2` → `x * x`) are compiler rewrites, admitted by 1.2. Value-changing
-  reductions can only enter as author decisions, declared case by case in the rules below
-  — never silently.
-- **1.5** *(example)* — constant exponents: `x ** 2` → MUL, `2 ** x` → C99 `exp2`; but
-  `10 ** x` → `pow(10, x)`, since `exp10` is not standard C. The square-and-multiply
-  chain for `3 ≤ |n| ≤ 16` is the canonical *author* decision: no bit-identity to libm's
-  `pow` is owed, because nothing was rewritten — the chain **is** the source the author
-  wrote (real compilers agree it is not theirs to make: they only expand `pow` with
-  constant exponents beyond 2 under fast-math flags). The `|n| ≤ 16` cutoff bounds the
-  claim to exponents where hand-written chains are genuinely how such code gets written;
-  beyond it the author calls `pow`, and the generic POW price applies. The reduction keys
-  on the constant's *value*, never on the spelling: `math.pow(x, 5.0)` and `x ** 5` are
-  two spellings of the same intent and price identically.
-- **1.6** *(example)* — reciprocal multiplication for division only where it is exact: a
-  power-of-two constant divisor with a finite reciprocal — there, and only there,
-  `x * (1/c)` is bit-identical to `x / c`, and compilers apply the fold at plain `-O2` —
-  so `x / c` counts MUL for exactly those divisors, and DIV for every other. The one
-  stronger fold: `x / 1.0` disappears entirely and counts nothing, like `x ** 1`.
-- **1.7** *(example)* — the compiler-stage test also admits the identity folds for
-  constant operands: `x * 1.0` and `x - 0.0` fold away entirely, and so does `x + (-0.0)`
-  (exact for every `x`); `x * -1.0`, `x / -1.0` and `(-0.0) - x` reduce to a bare sign
-  flip and count MINUS. The test is sharp, not sloppy — the near-misses stay counted
-  because a signed zero makes them value-*changing*: `x + 0.0` counts ADD (for
-  `x = -0.0` the result is `+0.0`, not `x`), `x - (-0.0)` counts SUB (it *is*
-  `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives `+0.0`, where a sign flip
-  would give `-0.0`). Inside the decomposed operations the same folds apply to the
-  division step — a power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV
-  component into MUL, and `// 1.0` drops it entirely — and to the remainder's multiply
-  step, whose constant factor is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋`
-  multiply, `x % -1.0` turns it into MINUS.
+
+- **1.3** ***(consequence)*** — **no [FP contraction](glossary.md#fp-contraction)**: `x*y + z`
+  counts MUL + ADD, not FMA, because fusing is a compiler rewrite that changes values.
+    - Excluded even where it is a platform default (see
+      [known limitations](known_limitations.md) for what this over-estimates on real
+      builds).
+    - The one way to have a fused multiply-add *counted* is to write one:
+      `math.fma(x, y, z)` (Python 3.13+) is the author explicitly asking for the fused
+      operation.
+    - `fma` can carry that meaning because it is special in exactly one way: it has no
+      operator spelling, so writing the call is unambiguous intent.
+
+- **1.4** ***(consequence)*** — [strength reduction](glossary.md#strength-reduction) comes in
+  both stages, and **the stage decides the test**.
+    - Bit-exact reductions (`x / 8.0` → `x * 0.125`, `x ** 2` → `x * x`) are compiler
+      rewrites, admitted by 1.2.
+    - Value-changing reductions can only enter as author decisions, declared case by case
+      — in the rules below or in the
+      [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why)
+      — never silently.
+
+- **1.5** ***(example)*** — **constant exponents.** The reduction keys on the constant's *value*,
+  never on the spelling: `math.pow(x, 5.0)` and `x ** 5` are two spellings of the same
+  intent and price identically.
+    - `x ** 2` → MUL, `2 ** x` → C99 `exp2`; but `10 ** x` → `pow(10, x)`, since `exp10`
+      is not standard C.
+    - The square-and-multiply chain for `3 ≤ |n| ≤ 16` is the canonical *author*
+      decision: no bit-identity to libm's `pow` is owed, because nothing was rewritten —
+      the chain **is** the source the author wrote (real compilers agree it is not theirs
+      to make: they only expand `pow` with constant exponents beyond 2 under fast-math
+      flags).
+    - The `|n| ≤ 16` cutoff bounds the claim to exponents where hand-written chains are
+      genuinely how such code gets written; beyond it the author calls `pow`, and the
+      generic POW price applies.
+
+- **1.6** ***(example)*** — **reciprocal multiplication for division**, only where it is exact.
+    - A power-of-two constant divisor with a finite reciprocal — there, and only there,
+      `x * (1/c)` is bit-identical to `x / c`, and compilers apply the fold at plain
+      `-O2` — so `x / c` counts MUL for exactly those divisors, and DIV for every other.
+    - The one stronger fold: `x / 1.0` disappears entirely and counts nothing, like
+      `x ** 1`.
+
+- **1.7** ***(example)*** — the compiler-stage test also admits **the identity folds** for
+  constant operands. The test is sharp, not sloppy — sign-exactness decides every case.
+    - Fold away entirely: `x * 1.0` and `x - 0.0`, and so does `x + (-0.0)` (exact for
+      every `x`).
+    - Reduce to a bare sign flip and count MINUS: `x * -1.0`, `x / -1.0` and
+      `(-0.0) - x`.
+    - The near-misses stay counted because a signed zero makes them value-*changing*:
+      `x + 0.0` counts ADD (for `x = -0.0` the result is `+0.0`, not `x`), `x - (-0.0)`
+      counts SUB (it *is* `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives
+      `+0.0`, where a sign flip would give `-0.0`).
+    - Inside the decomposed operations the same folds apply to the division step — a
+      power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV component into
+      MUL, and `// 1.0` drops it entirely — and to the remainder's multiply step, whose
+      constant factor is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply,
+      `x % -1.0` turns it into MINUS.
 
 **Rule 2 — operations that compile to a library call are priced as the call's real
 algorithm, contract included.**
 
-- **2.1** *(scope)* — applies whenever the call's cost is *deterministic per call*: a
+- **2.1** ***(scope)*** — applies whenever the call's cost is ***deterministic per call***: a
   fixed number of **floating-point** operations per invocation (or per element or
-  coordinate), independent of the data values. The qualifier is load-bearing — a
-  deterministic library call whose work is integer or string conversion (`strtod`,
-  `printf`-style rendering) fails the domain precondition above, not this rule. Anything
-  else floating-point falls to rule 3.
-- **2.2** *(consequence)* — the weight is measured on the very call wherever the
+  coordinate), independent of the data values.
+    - The qualifier is load-bearing — a deterministic library call whose work is integer
+      or string conversion (`strtod`, `printf`-style rendering) fails the domain
+      precondition above, not this rule.
+    - Anything else floating-point falls to rule 3.
+
+- **2.2** ***(consequence)*** — **the weight is measured on the very call** wherever the
   toolchain can compile it ([libm](glossary.md#libm)'s `sin`, `log`, ...).
-- **2.3** *(nuance)* — where the toolchain cannot compile the real call, a faithful port
+
+- **2.3** ***(nuance)*** — where the toolchain cannot compile the real call, **a faithful port**
   of the algorithm it executes is benchmarked instead — never a naive substitute
   (`math.dist`'s overflow-safe scaling, not a plain sum of squares).
-- **2.4** *(nuance)* — regime-dependent [fast paths](glossary.md#fast-path) inside such
+
+- **2.4** ***(nuance)*** — **regime-dependent [fast paths](glossary.md#fast-path)** inside such
   functions are handled by rule 4's input ranges, not by pricing the shortcut.
 
 **Rule 3 — operations whose real algorithm has input-dependent cost are priced from the
 operation's documented defining formula instead.**
 
-- **3.1** *(procedure)* — the formula is transcribed symbol by symbol into FlopTypes, each
+- **3.1** ***(procedure)*** — the formula is **transcribed symbol by symbol** into FlopTypes, each
   occurrence priced exactly once: `|·|` → ABS, `max`/`min` → COMP (the model's price for
-  them everywhere), arithmetic and comparisons → their types. A formula contains no
-  guards, no short-circuits and no adaptive machinery, so none are priced — the
-  transcription is fixed per call *by construction*, charged whatever branch the
-  implementation actually takes, and unconditioned on argument values: the constant folds
-  of rule 1 apply to operator decompositions of the user's own expression, never inside a
-  formula price. "Documented defining formula" means the operation's stated contract —
-  the stdlib docs' formula where one is given (`math.isclose`), the mathematical
-  definition where the contract is a mathematical operation: `math.fsum` maintains as
-  many non-overlapping partial sums as the *values* force, so there is no constant to
-  benchmark — its formula is the reduction Σxᵢ, priced (n−1) ADD. This is not the "naive
-  substitute" rule 2.3 forbids: that rule measures a weight for a call with a fixed real
-  cost, while here no fixed real cost exists, and the formula is the only fixed-cost
-  object available.
-- **3.2** *(consequence)* — everything the executing algorithm does differently —
+  them everywhere), arithmetic and comparisons → their types.
+    - A formula contains no guards, no short-circuits and no adaptive machinery, so none
+      are priced — the transcription is fixed per call *by construction*, charged
+      whatever branch the implementation actually takes, and unconditioned on argument
+      values: the constant folds of rule 1 apply to operator decompositions of the user's
+      own expression, never inside a formula price.
+    - "Documented defining formula" means the operation's stated contract — the stdlib
+      docs' formula where one is given (`math.isclose`), the mathematical definition
+      where the contract is a mathematical operation: `math.fsum` maintains as many
+      non-overlapping partial sums as the *values* force, so there is no constant to
+      benchmark — its formula is the reduction Σxᵢ, priced (n−1) ADD.
+    - This is not the "naive substitute" rule 2.3 forbids: that rule measures a weight
+      for a call with a fixed real cost, while here no fixed real cost exists, and the
+      formula is the only fixed-cost object available.
+
+- **3.2** ***(consequence)*** — everything the executing algorithm does differently —
   adaptive extras, short-circuit savings, regime guards, algebraic respellings of the
   formula — is stated explicitly wherever the price is documented: a deviation under
-  this rule is a documented gap, never a silent one.
+  this rule is **a documented gap, never a silent one**.
 
 **Rule 4 — benchmark inputs represent the operation's general case.**
 
-- **4.1** *(consequence)* — input ranges stay inside the operation's domain.
-- **4.2** *(consequence)* — input ranges avoid cheap fast paths (saturation shortcuts,
+- **4.1** ***(consequence)*** — input ranges **stay inside the operation's domain**.
+
+- **4.2** ***(consequence)*** — input ranges **avoid cheap fast paths** (saturation shortcuts,
   early returns — e.g. `tanh` beyond ±20, `erf` beyond ±6), so a weight prices the real
   computation rather than a shortcut.
-- **4.3** *(consequence)* — input ranges represent the general-case cost, not a degenerate
+
+- **4.3** ***(consequence)*** — input ranges **represent the general-case cost**, not a degenerate
   regime: huge arguments would put `asinh` in its asymptotic log shortcut (about half the
   general-case cost) and `sin` into its expensive large-argument reduction — extreme
   magnitudes mis-price in either direction.
-- **4.4** *(practice)* — where a range needs a non-obvious choice, the benchmark source
-  carries a comment saying why.
+
+- **4.4** ***(practice)*** — where a range needs a non-obvious choice, the benchmark source
+  **carries a comment saying why**.
 
 ## Per-type pricing
 
