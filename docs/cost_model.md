@@ -104,19 +104,19 @@ Beyond the constant-result cases above, countedness ends in exactly five places:
 - **the *value* leaves the float domain** (`bool`, `int`, `str`, `complex`), priced where
   the port pays (e.g. F2I, COMP). Three of these exits are priced at nothing:
     - the `complex` exit (a negative base under a fractional exponent, either operand
-      counted), since a port of real-float code has no complex counterpart;
+      counted), since a port of real-float code has no complex counterpart.
     - truthiness (`bool(x)`, `if x:`), the deliberate interpreter-bookkeeping exception
-      documented with the [`COMP` type](flop_types.md#flop-comp);
+      documented with the [`COMP` type](flop_types.md#flop-comp).
     - the `%` presentation type's `str` exit, whose scale-by-100 MUL is the labeled
-      exception on [the float surface](float_surface.md#the-presentation-contract);
+      exception on [the float surface](float_surface.md#the-presentation-contract).
 - **the one documented exit, `float(x)`** — safe because leaving the counted world is the
-  explicit point of the call;
+  explicit point of the call.
 - **a WARNING-reported gap** (see the
   [`math` coverage table](math_patching.md#coverage-of-the-math-module) and the
-  [float surface](float_surface.md#reported-at-warning-verbosity));
+  [float surface](float_surface.md#reported-at-warning-verbosity)).
 - **the builtins `min`/`max` returning a winning plain constant** — the one interpreter
   mechanism the library cannot intercept; stated, with its re-wrap remedy, in
-  [known limitations](known_limitations.md#other-limitations);
+  [known limitations](known_limitations.md#other-limitations).
 - **a non-float numeric operand (a `Fraction`) winning the delegation**: the reflected
   operation returns a correct but plain — and uncounted — `float`, outside the model
   because non-float numeric towers have no compiled-port counterpart (see
