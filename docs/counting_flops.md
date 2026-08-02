@@ -84,7 +84,7 @@ patched `math` functions:
    | `x ** n`, integer 2 ≤ \|n\| ≤ 16 | square-and-multiply MULs (`x**3` → 2 MUL, `x**8` → 3 MUL); negative `n` adds one DIV |
    | `x ** -1` | DIV (reciprocal) |
    | `x / 1.0` | nothing (folds away; result stays `CountedFloat`) |
-   | `x / c`, power-of-two `c` | MUL — `x * (1/c)` is bit-identical exactly there, so a compiler folds it; any other constant divisor stays DIV |
+   | `x / c`, power-of-two `c` (either sign) | MUL — `x * (1/c)` is bit-identical exactly there, so a compiler folds it; any other constant divisor stays DIV |
    | `x ** 0.5` / `x ** -0.5` | SQRT / SQRT + DIV |
    | `x ** 1` | nothing (folds away to `x` itself; result stays `CountedFloat`) |
    | `x ** 0` | nothing — IEEE 754 and C99 define `pow(x, 0)` as `1.0` for *every* `x` (nan and infinities included), so the result is the port's compile-time constant and comes back as a **plain float** |
@@ -101,10 +101,13 @@ patched `math` functions:
 
    Reduction by *value* only earns its keep where the folded form is genuinely
    cheaper — a short chain of multiplies instead of a libm `pow` call is an
-   enormous saving. So it stops where that stops being true: `math.fma` gets no
-   value-based reduction, because every variant of it (`fma(x, 1.0, z)`,
-   `fma(x, 0.0, z)`, or any other) is the same single instruction and folding a
-   value would buy nothing. Its one fold is structural rather than value-based —
+   enormous saving. `math.fma` is the deliberate exception: it gets no
+   value-based reduction by decree, not by economics. Some variants do have
+   bit-exact cheaper respellings (`fma(x, 1.0, z)` is exactly `x + z`), but an
+   explicit `fma` is the author demanding one fused instruction with one
+   rounding, and the model's compiler never unfuses an author-written `fma` —
+   the mirror of the contraction pin that stops it fusing an author-written
+   `a*b + c`. Its one fold is structural rather than value-based —
    two constant multiplicands collapse to a single constant, leaving a compiled
    port with a bare add, so that counts ADD. That add then folds like any other
    add with a constant operand: a collapsed constant of exactly `-0.0` drops it

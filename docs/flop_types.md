@@ -218,7 +218,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **ARM:** `FDIV`
     - **x86:** `DIVSD`
 - **Counted Python operations:** `x / y` or `y / x` for `CountedFloat` —
-  except division by a power-of-two constant divisor with a finite reciprocal,
+  except division by a power-of-two constant divisor of either sign with a finite reciprocal,
   which counts `MUL`: for exactly those divisors `x * (1/c)` is bit-identical
   to `x / c`, so a compiled port applies the reciprocal fold. `x / 1.0` counts
   nothing at all (it folds away entirely, mirroring `x ** 1`)
@@ -237,8 +237,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   their product folds at compile time, leaving a compiled port with a bare add,
   so that counts ADD rather than FMA — and a collapsed product of exactly
   `-0.0` folds the add away too (`z + (-0.0)` is `z` for every `z`), counting
-  nothing. No reduction is done by constant *value* —
-  every FMA variant is one instruction, so there is nothing to win (see
+  nothing. A surviving `fma` gets no reduction by constant *value*: the
+  explicit call stays fused by the author-boundary pin — written fused stays
+  fused, even where a bit-exact cheaper respelling exists (see
   [the counting model](counting_flops.md#the-counting-model-what-gets-counted-and-why))
 - **Not counted:** `math.fma` on plain floats only; `a*b + c` written with
   operators, which counts MUL + ADD because the interpreter cannot observe the
@@ -271,6 +272,12 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Counted Python operations:** `math.exp(x)` for `CountedFloat`
 - **Not counted:** `math.exp(x)` on non-CountedFloat, `numpy.exp`,
   `math.expm1`, `math.e ** x`
+- **Note:** `math.e ** x` counts POW, not EXP — `math.e` is not e (no float is;
+  e is irrational), so `pow(math.e, x)` and `exp(x)` compute different
+  functions, and neither the bit-exact compiler stage nor the same-computation
+  author stage of the [cost model](cost_model.md) admits the rewrite. Contrast
+  `math.log(x, math.e)`, whose fold rides a `1/log(base)` multiplier that
+  evaluates to exactly 1.0 (see [`FlopType.LOG`](#flop-log))
 - **Weight measurement:** [the machine code behind the `EXP` weight](machine_code/exp.md)
 
 ## FlopType.EXP2 (`2^x`) { #flop-exp2 }

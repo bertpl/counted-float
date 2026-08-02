@@ -70,8 +70,8 @@ def count_div_with_constant_divisor(divisor: float) -> None:
 
     Constants are folded by value (an int and an equal-valued plain float compile identically):
     a divisor of 1 counts nothing (``x / 1.0`` folds away entirely — a compiled port emits no
-    instruction, mirroring ``x ** 1``), and any other power-of-two divisor with a finite
-    reciprocal counts MUL — for exactly those divisors ``x * (1/c)`` is bit-identical to
+    instruction, mirroring ``x ** 1``), and any other power-of-two divisor of either sign with a
+    finite reciprocal counts MUL — for exactly those divisors ``x * (1/c)`` is bit-identical to
     ``x / c``, so a standard-C compiler applies the reciprocal fold at plain ``-O2``. Every
     other divisor counts DIV.
     """
@@ -548,7 +548,8 @@ class CountedFloat(float):
 
         A constant (non-CountedFloat) divisor enables the folds a compiled port applies — see
         count_div_with_constant_divisor: a divisor of 1 counts nothing, any other power-of-two
-        constant divisor with a finite reciprocal counts MUL, everything else counts DIV.
+        constant divisor of either sign with a finite reciprocal counts MUL, everything else
+        counts DIV.
         """
         result = float.__truediv__(self, other)
         if result is NotImplemented:

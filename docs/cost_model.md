@@ -178,6 +178,13 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
       operation.
     - `fma` can carry that meaning because it is special in exactly one way: it has no
       operator spelling, so writing the call is unambiguous intent.
+    - The boundary runs both ways, and is pinned in favor of the explicit instruction the
+      author wrote: real compilers diverge on the bit-exact unfusings (`fma(x, 1.0, z)`
+      computes exactly `x + z` — at `-O2`, clang 22 rewrites it to a plain add while
+      gcc 16 keeps the fused instruction), and the model keeps it fused. This mirrors
+      `-ffp-contract=off`, which keeps written-unfused unfused: both pins price the
+      author's written arithmetic, so the priced stream is the same on every architecture
+      and toolchain.
 
 - **1.4** ***(consequence)*** — [strength reduction](glossary.md#strength-reduction) comes in
   both stages, and **the stage decides the test**.
@@ -203,7 +210,8 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
       generic POW price applies.
 
 - **1.6** ***(example)*** — **reciprocal multiplication for division**, only where it is exact.
-    - A power-of-two constant divisor with a finite reciprocal — there, and only there,
+    - A power-of-two constant divisor of either sign (`±2^k`) with a finite reciprocal —
+      there, and only there,
       `x * (1/c)` is bit-identical to `x / c`, and compilers apply the fold at plain
       `-O2` — so `x / c` counts MUL for exactly those divisors, and DIV for every other.
     - The one stronger fold: `x / 1.0` disappears entirely and counts nothing, like
@@ -220,7 +228,7 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
       counts SUB (it *is* `x + 0.0`), and `0.0 - x` counts SUB (`0.0 - 0.0` gives
       `+0.0`, where a sign flip would give `-0.0`).
     - Inside the decomposed operations the same folds apply to the division step — a
-      power-of-two constant divisor turns `x // c`'s and `x % c`'s DIV component into
+      power-of-two constant divisor (either sign) turns `x // c`'s and `x % c`'s DIV component into
       MUL, and `// 1.0` drops it entirely — and to the remainder's multiply step, whose
       constant factor is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply,
       `x % -1.0` turns it into MINUS.
