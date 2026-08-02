@@ -5,22 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 2.2.1 (2026-08-02)
 
 ### Fixed
 
 - the `%`/`divmod` decompositions and constant-base `math.log` no longer count the multiply a compiled port folds away for ±1.0 constants (e.g. `x % 1.0`, `math.log(x, math.e)`)
 - 1-D `math.dist` now counts the subtract-and-abs it executes instead of the 2-coordinate distance base cost
-
-### Security
 
 ## 2.2.0 (2026-08-01)
 
