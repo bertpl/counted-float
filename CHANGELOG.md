@@ -5,21 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
+## 2.2.2 (2026-08-02)
 
 ### Fixed
 
 - `math.fma` with two constant multiplicands no longer counts the add a compiled port folds away when the constant product is exactly `-0.0` (e.g. `math.fma(2.0, -0.0, x)`)
-
-### Security
 
 ## 2.2.1 (2026-08-02)
 

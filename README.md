@@ -1,7 +1,7 @@
-<!-- badges below refreshed at release v2.2.1 -->
+<!-- badges below refreshed at release v2.2.2 -->
 [![CI](https://img.shields.io/github/actions/workflow/status/bertpl/counted-float/push_to_main.yml?branch=main&label=CI)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
 [![Coverage](https://img.shields.io/badge/coverage-100.00%25-brightgreen)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
-[![Tests](https://img.shields.io/badge/tests-2094-blue)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
+[![Tests](https://img.shields.io/badge/tests-2101-blue)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
 [![Mutation](https://img.shields.io/badge/mutmut-80%25-brightgreen)](https://pypi.org/project/mutmut/)
 [![Docs](https://img.shields.io/readthedocs/counted-float)](https://counted-float.readthedocs.io/)
 [![PyPI](https://img.shields.io/pypi/v/counted-float.svg)](https://pypi.org/project/counted-float/)
