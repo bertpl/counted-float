@@ -396,12 +396,14 @@ missing silently, and the output says so up front.
 
 ## Performance overhead
 
-Counting adds overhead in two forms, measured on an Apple M3 Max (see the
-[Benchmarking page](benchmarking.md#performance-impact) for the CLI example):
-native float ops (`+`, `-`, `*`, `/`, comparisons) run roughly 20–40× slower
-than plain `float` per operation (environment-dependent), while a
-patched `math.*` call carries a roughly fixed ~0.1 µs of overhead — about 6–7×
-for cheap functions like `sqrt`, less for costlier ones. The overhead is inherent
+Counting adds overhead in two forms, and how much depends almost entirely on the
+operation mix: native float ops (`+`, `-`, `*`, `/`, comparisons) sit at the
+expensive end of the range, because the fixed Python-level dispatch cost dwarfs
+the underlying arithmetic, while a patched `math.*` call carries a roughly fixed
+surcharge per call, so the multiple shrinks as the function itself gets more
+expensive. The [Benchmarking page](benchmarking.md#performance-impact) carries a
+captured per-flop-type example; measure your own machine with
+`counted_float evaluate-overhead`. The overhead is inherent
 to Python-level instrumentation; `PauseFlopCounting` stops count registration but
 not the instrumented dispatch, so hot regions that need raw speed should convert
 back to plain `float`. Counts themselves are always exact — overhead affects wall

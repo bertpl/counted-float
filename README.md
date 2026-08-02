@@ -103,16 +103,20 @@ counts.total_count()         # 2
 ## Performance overhead
 
 `CountedFloat` adds counting overhead in two forms — the price of Python-level
-operator dispatch and result wrapping. Measured on an Apple M3 Max (measure your
-own machine with `counted_float evaluate-overhead`):
+operator dispatch and result wrapping. How much slower your code runs depends
+almost entirely on its operation mix:
 
-- **native float ops** (`+`, `-`, `*`, `/`, comparisons): roughly **20–40×**
-  slower than plain `float` per operation, environment-dependent (~21× on the M3
-  Max bisection benchmark);
-- **patched `math.*` calls** (`math.sqrt`, `math.exp`, …): a roughly fixed
-  **~0.1 µs** of overhead per call — about **6–7×** for cheap functions like
-  `sqrt`, and a smaller multiple for costlier ones (the fixed overhead is a
-  smaller share of a slower call).
+- **native float ops** (`+`, `-`, `*`, `/`, comparisons): the expensive end of
+  the range — the fixed per-operation dispatch cost dwarfs the nanoseconds of
+  actual arithmetic;
+- **patched `math.*` calls** (`math.sqrt`, `math.lgamma`, …): a roughly fixed
+  surcharge per call, so the multiple shrinks as the function itself gets more
+  expensive.
+
+`counted_float evaluate-overhead` measures your own machine — a per-flop-type
+overhead table, the geomean across types, and a practical mixed workload; see
+the [captured example](https://counted-float.readthedocs.io/en/latest/benchmarking/#performance-impact)
+for representative figures.
 
 Three facts worth knowing:
 
