@@ -229,9 +229,9 @@ as a value-preserving [compiled port](glossary.md#compiled-port).**
     - Inside the decomposed operations the same folds apply to the division step: a
       power-of-two constant divisor (either sign) turns `x // c`'s and `x % c`'s DIV
       component into MUL, and `// 1.0` drops it entirely.
-    - They apply equally to the remainder's multiply step, whose constant factor is the
-      divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns it into
-      MINUS.
+    - The same folds apply equally to the remainder's multiply step, whose constant factor
+      is the divisor itself: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns it
+      into MINUS.
 
 **Rule 2 — operations that compile to a library call are priced as the call's real
 algorithm, contract included.**
