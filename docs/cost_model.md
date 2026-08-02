@@ -32,9 +32,11 @@ actors, playing by two different rules.**
   port that calls libm's `pow` gets different last bits on glibc, Apple's libm and
   Microsoft's UCRT. What the author owes is **algorithmic faithfulness** — the same
   mathematical computation, written the way such code is really written. Every judgment
-  call the author is assumed to make is declared in the rules below, together with its
-  bound (for exponent chains, `|n| ≤ 16`): a stated, bounded persona — not a claim about
-  what all programmers everywhere would do.
+  call the author is assumed to make is declared — in the rules below or in the
+  [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why),
+  which owns the full enumeration — together with its bound (for exponent chains,
+  `|n| ≤ 16`): a stated, bounded persona — not a claim about what all programmers
+  everywhere would do.
 - **The compiler** then translates that C source into machine code, and its rule *is*
   mechanical bit-exactness: it may rewrite the source's arithmetic only when the rewrite
   provably never changes any computed value. Replacing `x / 8.0` by `x * 0.125` qualifies
@@ -69,14 +71,20 @@ Near-misses stay counted because they fail that test: `x * 0.0` is sign- and
 nan-dependent, `x + nan` carries a nan receiver's payload. Degeneracies outside the table
 stay conservatively counted as written.
 
-Countedness otherwise ends in exactly three places:
+Countedness otherwise ends in exactly four places:
 
-- the *value* leaves the float domain (`bool`, `int`, `str`), priced where the port pays
-  (e.g. F2I, COMP);
+- the *value* leaves the float domain (`bool`, `int`, `str`, `complex`), priced where the
+  port pays (e.g. F2I, COMP) — the `complex` exit (a negative counted base under a
+  fractional constant exponent) prices nothing, since a port of real-float code has no
+  complex counterpart;
 - the one documented exit, `float(x)` — safe because leaving the counted world is the
   explicit point of the call;
 - a WARNING-reported gap (see the
-  [`math` coverage table](math_patching.md#coverage-of-the-math-module)).
+  [`math` coverage table](math_patching.md#coverage-of-the-math-module) and the
+  [float surface](float_surface.md#reported-at-warning-verbosity));
+- the builtins `min`/`max` returning a winning plain constant — the one interpreter
+  mechanism the library cannot intercept; stated, with its re-wrap remedy, in
+  [known limitations](known_limitations.md#other-limitations).
 
 A *silent* plain-float return from a counted operand is none of those — it is a defect in
 the model, not a judgment call.

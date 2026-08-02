@@ -120,6 +120,15 @@ up in that output.
   mutates only its own state. Note that the `benchmarking` extra requires **numba
   0.65 or newer** on a free-threaded build — earlier versions ship no
   free-threaded wheels
+- builtin `min`/`max` return the winning operand *object*, so with mixed
+  counted/plain arguments the result is a plain float whenever a plain constant
+  wins — countedness ends silently, and value-dependently: the same call site
+  keeps or drops it depending on the data. The comparisons themselves count
+  `COMP` correctly; only the result's type can revert, and no dunder exists
+  through which `CountedFloat` could intercept the returned object. When the
+  result feeds counted computation, re-wrap it — `CountedFloat(min(...))`
+  counts nothing (a float-source construction) and is correct whether or not
+  the wrap was needed
 - dict/set membership of `CountedFloat` keys inflates `COMP`: hash-bucket
   equality checks count as comparisons. This is consistent with the model
   (those comparisons really execute) but can surprise when a dict is used as
