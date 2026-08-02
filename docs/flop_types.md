@@ -335,10 +335,10 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   exponents/bases strength-reduce per the constant-folding convention (see the
   counting-model page): `x**0.5` -> SQRT, `x**-1` -> DIV, integer exponents
   2 <= |n| <= 16 -> their multiply chain, base 2/10 -> EXP2/EXP10
-- **Not counted:** `pow` on non-CountedFloat, `numpy.pow`; a negative counted
-  base under a fractional constant exponent, whose result is a plain `complex` —
-  it leaves the real-float domain the model prices, so nothing is counted and
-  contagion ends
+- **Not counted:** `pow` on non-CountedFloat, `numpy.pow`; a negative base
+  under a fractional exponent with either operand counted, whose result is a
+  plain `complex` — it leaves the real-float domain the model prices, so
+  nothing is counted and contagion ends
 - **Weight measurement:** [the machine code behind the `POW` weight](machine_code/pow.md)
 
 ## FlopType.SIN (`sin(x)`) { #flop-sin }
