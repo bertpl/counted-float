@@ -94,12 +94,21 @@ stay conservatively counted as written.
 
 #### Where countedness ends
 
-Countedness otherwise ends in exactly four places:
+The enumeration below holds inside an active `FlopCountingContext` — the model's operative
+regime. Outside one, `math.*` is unpatched, so type preservation ends at every such call on
+a counted value (see [Math patching semantics](math_patching.md)); the operators preserve
+countedness everywhere.
+
+Countedness otherwise ends in exactly five places:
 
 - the *value* leaves the float domain (`bool`, `int`, `str`, `complex`), priced where the
-  port pays (e.g. F2I, COMP) — the `complex` exit (a negative counted base under a
-  fractional constant exponent) prices nothing, since a port of real-float code has no
-  complex counterpart;
+  port pays (e.g. F2I, COMP) — with three exits priced at nothing: the `complex` exit
+  (a negative base under a fractional exponent, either operand counted), since a port of
+  real-float code has no complex counterpart; truthiness (`bool(x)`, `if x:`), the
+  deliberate interpreter-bookkeeping exception documented with the
+  [`COMP` type](flop_types.md#flop-comp); and the `%` presentation type's `str` exit,
+  whose scale-by-100 MUL is the labeled exception on
+  [the float surface](float_surface.md#the-presentation-contract);
 - the one documented exit, `float(x)` — safe because leaving the counted world is the
   explicit point of the call;
 - a WARNING-reported gap (see the
@@ -107,7 +116,12 @@ Countedness otherwise ends in exactly four places:
   [float surface](float_surface.md#reported-at-warning-verbosity));
 - the builtins `min`/`max` returning a winning plain constant — the one interpreter
   mechanism the library cannot intercept; stated, with its re-wrap remedy, in
-  [known limitations](known_limitations.md#other-limitations).
+  [known limitations](known_limitations.md#other-limitations);
+- a non-float numeric operand (a `Fraction`) winning the delegation: the reflected
+  operation returns a correct but plain — and uncounted — `float`, outside the model
+  because non-float numeric towers have no compiled-port counterpart (see
+  [What the model prices](#what-the-model-prices)); stated, with its non-goal rationale,
+  in [known limitations](known_limitations.md#other-limitations).
 
 A *silent* plain-float return from a counted operand is none of those — it is a defect in
 the model, not a judgment call.
