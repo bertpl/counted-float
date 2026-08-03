@@ -8,7 +8,7 @@ suite, which is why it lives here and not beside it.
 from counted_float._core.micro_benchmarking import console, output_quiet
 from counted_float._core.models import FlopType
 
-from ._per_flop_overhead import EXCLUDED_FLOP_TYPES, PER_FLOP_TYPE_SPECS, PerFlopTypeLoop
+from ._per_flop_overhead import PerFlopTypeLoop, excluded_flop_types, per_flop_type_specs
 from ._practical_workload import PRACTICAL_WORKLOAD_LABEL, CountedFloatBisection, FloatBisection
 from ._results import CountingOverheadResults, ExcludedFlopType, PerFlopTypeOverhead
 
@@ -31,8 +31,9 @@ def evaluate_counting_overhead(t_target_sec: float = 0.1, verbose: bool = True) 
         console.print()
 
         # --- per-flop-type loops --------------------
+        excluded = excluded_flop_types()
         per_flop_type: list[PerFlopTypeOverhead] = []
-        for spec in PER_FLOP_TYPE_SPECS:
+        for spec in per_flop_type_specs():
             pool_float = spec.make_pool(False)
             pool_counted = spec.make_pool(True)
             result_float = PerFlopTypeLoop(
@@ -74,9 +75,9 @@ def evaluate_counting_overhead(t_target_sec: float = 0.1, verbose: bool = True) 
     return CountingOverheadResults(
         per_flop_type=per_flop_type,
         excluded_flop_types=[
-            ExcludedFlopType(flop_type=flop_type, reason=EXCLUDED_FLOP_TYPES[flop_type])
+            ExcludedFlopType(flop_type=flop_type, reason=excluded[flop_type])
             for flop_type in FlopType
-            if flop_type in EXCLUDED_FLOP_TYPES
+            if flop_type in excluded
         ],
         practical_workload_label=PRACTICAL_WORKLOAD_LABEL,
         float_time_nsec=result_float_bisection.summary_stats_nsecs_per_exec().q50,

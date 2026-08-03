@@ -12,8 +12,8 @@ Operand pools keep every loop on the generic counting path: values sit strictly 
 operation's domain and never hit a constant fold or strength reduction (no +-0.0 addends, +-1.0
 multipliers, power-of-two divisors, or special exponents). The one exception is EXP10, whose only
 counted spelling *is* the constant-base fold `10.0 ** x` -- its expression column states exactly
-that. Types with no reliably measurable standalone loop are listed in EXCLUDED_FLOP_TYPES with the
-reason, so the printed report shows the exemptions rather than silently omitting rows.
+that. Types with no reliably measurable standalone loop are listed by excluded_flop_types() with
+the reason, so the printed report shows the exemptions rather than silently omitting rows.
 """
 
 from __future__ import annotations
@@ -473,19 +473,33 @@ def _runtime_unavailable() -> dict[FlopType, str]:
     return unavailable
 
 
-# Exclusion rule: a type is excluded only when its standalone measurement is unreliable or
-# impossible, never because its result would be unflattering -- every entry states its reason,
-# and the printed report shows this dict so exemptions are visible in every capture.
-EXCLUDED_FLOP_TYPES: dict[FlopType, str] = {
-    FlopType.HYPOT_XARG: "cost increment per hypot() argument beyond two; not a standalone operation",
-    FlopType.DIST_XARG: "cost increment per dist() dimension beyond two; not a standalone operation",
-    FlopType.SUMPROD_XELEM: "cost increment per sumprod() element beyond two; not a standalone operation",
-    **_runtime_unavailable(),
-}
+def excluded_flop_types() -> dict[FlopType, str]:
+    """The flop types without a per-type overhead row, each mapped to its measurement reason.
 
-PER_FLOP_TYPE_SPECS: list[FlopTypeLoopSpec] = [
-    spec for spec in _all_loop_specs() if spec.flop_type not in EXCLUDED_FLOP_TYPES
-]
+    Exclusion rule: a type is excluded only when its standalone measurement is unreliable or
+    impossible, never because its result would be unflattering -- every entry states its reason,
+    and the printed report shows this mapping so exemptions are visible in every capture.
+
+    Returns a fresh dict per call: construction is trivial, and callers never share a mutable.
+    """
+    return {
+        FlopType.HYPOT_XARG: "cost increment per hypot() argument beyond two; not a standalone operation",
+        FlopType.DIST_XARG: "cost increment per dist() dimension beyond two; not a standalone operation",
+        FlopType.SUMPROD_XELEM: "cost increment per sumprod() element beyond two; not a standalone operation",
+        **_runtime_unavailable(),
+    }
+
+
+def per_flop_type_specs() -> list[FlopTypeLoopSpec]:
+    """Every measurable flop type's loop spec, in FlopType declaration order.
+
+    A plain function rather than a module-level constant -- like excluded_flop_types(), and
+    returning a fresh list per call for the same reason -- so the registry builders execute inside
+    the tests that pin them: mutation testing attributes tests to a function only when it runs
+    during one, and import-time construction is invisible to that attribution.
+    """
+    excluded = excluded_flop_types()
+    return [spec for spec in _all_loop_specs() if spec.flop_type not in excluded]
 
 
 # =================================================================================================
