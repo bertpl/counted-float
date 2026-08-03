@@ -55,6 +55,30 @@ jobs:
           include_all_extra_deps: ${{ matrix.all_extras }}
           coverage: "true"  # each combo uploads its data; the coverage job unions + gates
 
+  # Early warning on the next CPython, never gating: a base install on the upcoming minor, so an
+  # incompatible pre-release -- most acutely a new `math` function the patching partition would not
+  # classify -- fails loudly here months before that Python ships, instead of on users at release.
+  # Three things keep it from gating anything: continue-on-error stops a red run from failing the
+  # workflow, the coverage job does not depend on it, and it uploads no coverage data (the
+  # cumulative floor unions supported versions only). Base install because numba wheels trail new
+  # CPythons by months. Bump the version here when the next pre-release series opens; classifiers
+  # and .python-versions stay untouched until the version is actually supported.
+  python_next:
+    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm (never gates)
+    runs-on: ubuntu-24.04-arm
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # full history + tags: hatch-vcs derives the package version via git describe
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/unit_test
+        with:
+          uv_version: ${{ vars.UV_VERSION }}
+          python_version: "3.15"
+          include_all_extra_deps: "false"
+
   coverage:
     name: coverage
     # Cumulative gate: combine every combo's data into one picture before
