@@ -30,6 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 README = REPO_ROOT / "README.md"
+CITATION = REPO_ROOT / "CITATION.cff"
 PYTHON_VERSIONS_FILE = REPO_ROOT / ".python-versions"
 SPLASH_SCRIPT = REPO_ROOT / ".github" / "scripts" / "create_splash.sh"
 SPLASH_WEBP = REPO_ROOT / "images" / "splash_with_version.webp"
@@ -435,6 +436,22 @@ def refresh_readme_badges(version: str, badges: BadgeMetrics) -> None:
     README.write_text(_stamp_badge_provenance(text, version))
 
 
+def refresh_citation(version: str) -> None:
+    """Stamp the release version and date into CITATION.cff.
+
+    Refreshed at release time like the badges, so the committed citation metadata always names
+    the latest published version instead of going stale.
+    """
+    text = CITATION.read_text()
+    text, n_version = re.subn(r"^version: .*$", f"version: {version}", text, flags=re.MULTILINE)
+    text, n_date = re.subn(
+        r"^date-released: .*$", f"date-released: {date.today().isoformat()}", text, flags=re.MULTILINE
+    )
+    if n_version != 1 or n_date != 1:
+        fail_with_message("CITATION.cff is missing its 'version:' or 'date-released:' field")
+    CITATION.write_text(text)
+
+
 def stamp_splash(version: str) -> None:
     """Stamp the release version onto the committed splash webp (needs ImageMagick).
 
@@ -448,11 +465,12 @@ def stamp_splash(version: str) -> None:
 
 
 def step_10_commit_release(version: str, badges: BadgeMetrics) -> None:
-    """Refresh README badges, stamp the splash, then create the release commit."""
-    print_step(10, f"refresh README badges + stamp splash + commit 'release: {version}'")
+    """Refresh README badges and CITATION.cff, stamp the splash, then create the release commit."""
+    print_step(10, f"refresh README badges + CITATION.cff + stamp splash + commit 'release: {version}'")
     refresh_readme_badges(version, badges)
+    refresh_citation(version)
     stamp_splash(version)
-    run_command(["git", "add", "CHANGELOG.md", "README.md", str(SPLASH_WEBP)])
+    run_command(["git", "add", "CHANGELOG.md", "README.md", "CITATION.cff", str(SPLASH_WEBP)])
     run_command(["git", "commit", "-m", f"release: {version}"])
 
 
