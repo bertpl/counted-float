@@ -2,7 +2,6 @@ name: Pre-commit
 author: Bert Pluymers
 description: Set up uv and run the full pre-commit hook suite over all files, via `make lint`.
 
-inputs:
 runs:
     using: composite
     steps:

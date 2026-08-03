@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the rich dependency floor rises to 13.4, the oldest release whose forced-color rendering produces the styling the weight tree view relies on
+
 ### Deprecated
 
 ### Removed

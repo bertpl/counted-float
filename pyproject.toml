@@ -18,7 +18,9 @@ dependencies = [
     "pydantic>=2.7; python_version < '3.13'",
     "pydantic>=2.9; python_version == '3.13'",
     "pydantic>=2.12; python_version >= '3.14'",
-    "rich>=13.0.0",
+    # 13.4 floor: the weight tree view relies on FORCE_COLOR producing ANSI styling in captured
+    # (non-tty) output, which older rich does not honor
+    "rich>=13.4.0",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
