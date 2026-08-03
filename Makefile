@@ -76,6 +76,10 @@ format-single-file:
 
 # local mutation testing over _core (config in [tool.mutmut]); MODULE=<substr> scopes to matching mutants
 mutation:
+	# the test-attribution map merges by test name, so a changed test that keeps its name keeps its
+	# stale mapping -- and runs against the wrong mutants without any visible signal. Deleting the
+	# map forces a fresh collection pass (~35s) so every run measures against current attribution.
+	rm -f mutants/mutmut-stats.json
 	uv run --group mutation --all-extras --python 3.13 mutmut run $(if $(MODULE),"*$(MODULE)*",)
 
 mutation-results:
