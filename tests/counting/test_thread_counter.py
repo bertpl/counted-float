@@ -56,7 +56,7 @@ def test_thread_counter_count_attributes(thread_counter, incr_flop):
 
 def test_thread_counter_unknown_attribute_raises(thread_counter):
     # --- act & assert ------------------------------------
-    with pytest.raises(AttributeError):
+    with pytest.raises(AttributeError, match=r"^'ThreadLocalFlopCounter' object has no attribute 'NOT_A_FLOP_TYPE'$"):
         _ = thread_counter.NOT_A_FLOP_TYPE
 
 

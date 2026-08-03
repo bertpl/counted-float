@@ -497,6 +497,17 @@ def test_prod_with_an_explicit_start_counts_its_multiply(thread_counter):
     assert thread_counter.MUL == 2  # start*v1, then *v2
 
 
+def test_prod_of_an_empty_iterable_is_its_start(thread_counter):
+    # stdlib contract: an empty product is the start value -- via delegation for plain inputs, and
+    # via the counting path (which must not assume a first element) when the start is counted
+    # --- act / assert ------------------------------------
+    assert math.prod([]) == 1
+    result = math.prod([], start=CountedFloat(2.5))
+    assert isinstance(result, CountedFloat)
+    assert float(result) == 2.5
+    assert thread_counter.total_count() == 0
+
+
 def test_prod_with_a_plain_nonidentity_start_is_not_folded_away(thread_counter):
     # a plain start of 2.0 is NOT the multiplicative identity: it opens the chain and its multiply
     # is counted, exactly as writing the chain out would. Only an identity start (plain 1) folds
@@ -1025,3 +1036,54 @@ def test_math_isclose_negative_tolerance_counts_nothing(thread_counter):
     with pytest.raises(ValueError, match="tolerances must be non-negative"):
         math.isclose(CountedFloat(2.0), 2.5, rel_tol=-1.0)
     assert thread_counter.total_count() == 0  # compute-first contract: a raised call counts nothing
+
+
+# =================================================================================================
+#  Counts accumulate across calls
+# =================================================================================================
+# A second identical call must double every count: an assignment that happens to produce the right
+# first-call value would freeze the counter instead of accumulating onto it.
+@pytest.mark.parametrize(
+    ("base", "expected_counts"),
+    [
+        pytest.param(CountedFloat(2.0), {"LOG": 2, "DIV": 1}, id="runtime-base"),
+        pytest.param(
+            math.e,
+            {"LOG": 1},
+            marks=pytest.mark.skipif(
+                math.log(math.e) != 1.0,
+                reason="the fold keys on the runtime value: this libm does not give log(e) == 1.0",
+            ),
+            id="unit-multiplier-fold",
+        ),
+        pytest.param(
+            1.0 / math.e,
+            {"LOG": 1, "MINUS": 1},
+            marks=pytest.mark.skipif(
+                math.log(1.0 / math.e) != -1.0,
+                reason="the fold keys on the runtime value: this libm does not give log(1/e) == -1.0",
+            ),
+            id="sign-flip-fold",
+        ),
+    ],
+)
+def test_math_log_variant_counts_accumulate_across_calls(thread_counter, base, expected_counts):
+    # --- act ---------------------------------------------
+    for _ in range(2):
+        math.log(CountedFloat(8.0), base)
+
+    # --- assert ------------------------------------------
+    assert thread_counter.total_count() == 2 * sum(expected_counts.values())
+    for field, expected in expected_counts.items():
+        assert getattr(thread_counter, field) == 2 * expected
+
+
+def test_one_dimensional_dist_counts_accumulate_across_calls(thread_counter):
+    # --- act ---------------------------------------------
+    for _ in range(2):
+        math.dist((CountedFloat(1.5),), (4.0,))
+
+    # --- assert ------------------------------------------
+    assert thread_counter.SUB == 2
+    assert thread_counter.ABS == 2
+    assert thread_counter.total_count() == 4

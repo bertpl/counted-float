@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from pydantic import ValidationError
 
@@ -87,9 +89,10 @@ def test_builtin_data_get_flop_weights_dict(key_filter: str, n_expected: int):
 # =================================================================================================
 #  Visualization
 # =================================================================================================
-def test_built_in_data_show():
-    # minimalistic test to at least check we don't raise exceptions
+def test_built_in_data_show(capsys):
+    # minimalistic test: no exceptions, and the tree renders under its "ALL" root label
     BuiltInData.show()
+    assert re.search(r"\bALL\b", capsys.readouterr().out)
     BuiltInData.show(key_filter="amd")
 
 
