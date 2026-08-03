@@ -5,6 +5,7 @@
 [![Mutation](https://img.shields.io/badge/mutmut-85%25-brightgreen)](https://pypi.org/project/mutmut/)
 [![Docs](https://img.shields.io/readthedocs/counted-float)](https://counted-float.readthedocs.io/)
 [![PyPI](https://img.shields.io/pypi/v/counted-float.svg)](https://pypi.org/project/counted-float/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21780137.svg)](https://doi.org/10.5281/zenodo.21780137)
 [![Python](https://img.shields.io/pypi/pyversions/counted-float.svg)](https://pypi.org/project/counted-float/)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/bertpl/counted-float/blob/main/LICENSE)
 [![code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230)](https://github.com/astral-sh/ruff)
