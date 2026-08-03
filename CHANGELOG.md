@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- the minimum rich version is bumped to 13.4; older releases did not render the weight tree view's styling correctly
+
 ### Deprecated
 
 ### Removed
