@@ -46,6 +46,8 @@ def test_format_nsec_as_us(nsec: float, expected_result: str) -> None:
         (1e6 * 12.33002, "  12.33 ms"),
         (1e6 * 345.11001, " 345.11 ms"),
         (1e6 * 1999.7799, "1999.78 ms"),
+        # just above the x.xx5 rounding boundary: only an exact 1e6 divisor still rounds up
+        (2_005_001, "   2.01 ms"),
     ],
 )
 def test_format_nsec_as_ms(nsec: float, expected_result: str) -> None:
@@ -59,6 +61,8 @@ def test_format_nsec_as_ms(nsec: float, expected_result: str) -> None:
         (1e9 * 12.33002, "  12.33 s"),
         (1e9 * 345.11001, " 345.11 s"),
         (1e9 * 1999.7799, "1999.78 s"),
+        # just above the x.xx5 rounding boundary: only an exact 1e9 divisor still rounds up
+        (2_005_000_001, "   2.01 s"),
     ],
 )
 def test_format_nsec_as_s(nsec: float, expected_result: str) -> None:
@@ -83,6 +87,10 @@ def test_format_nsec_as_s(nsec: float, expected_result: str) -> None:
         (1e9 * 12.330020, "  12.33 s "),
         (1e9 * 345.11001, " 345.11 s "),
         (1e9 * 1999.7799, "1999.78 s "),
+        # each unit boundary belongs to the larger unit
+        (1e3, "   1.00 µs"),
+        (1e6, "   1.00 ms"),
+        (1e9, "   1.00 s "),
     ],
 )
 def test_format_time_duration(nsec: float, expected_result: str) -> None:
@@ -120,6 +128,14 @@ def test_format_time_duration(nsec: float, expected_result: str) -> None:
         (100_000.0, " 100K cpu cycles"),  # round(_, -2) >= 100_000
         (999_000.0, " 999K cpu cycles"),  # round(_, -3) < 1_000_000
         (1_000_000.0, "1.00M cpu cycles"),  # round(_, -3) >= 1_000_000
+        # values the threshold rounding carries across a branch boundary: each one pins the exact
+        # precision of its branch's check, which the exact-boundary cases above cannot distinguish
+        (9.996, " 10.0 cpu cycles"),  # round(_, 2) crosses 10; round(_, 3) would not
+        (99.96, "  100 cpu cycles"),  # round(_, 1) crosses 100; round(_, 2) would not
+        (999.6, "1.00K cpu cycles"),  # round(_, 0) crosses 1_000; round(_, 1) would not
+        (99_960.0, " 100K cpu cycles"),  # round(_, -2) crosses 100_000; round to fewer digits would not
+        (999_600.0, "1.00M cpu cycles"),  # round(_, -3) crosses 1_000_000; round to fewer digits would not
+        (2_005_001.0, "2.01M cpu cycles"),  # just above the x.xx5 boundary: needs the exact 1e6 divisor
     ],
 )
 def test_format_latency(n_cycles: float, expected_result: str):

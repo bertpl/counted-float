@@ -213,6 +213,18 @@ def test_a_cell_with_no_row_or_column_evidence_stays_missing():
     assert all(math.isnan(value) for value in filled[0])  # unfillable cells are left as-is, not invented
 
 
+def test_a_ragged_matrix_is_rejected():
+    # --- arrange -----------------------------------------
+    data = [
+        [1.0, 2.0, 3.0],
+        [2.0, 4.0],
+    ]
+
+    # --- act / assert ------------------------------------
+    with pytest.raises(ValueError, match="shorter than"):
+        impute_missing_data(data)
+
+
 def test_a_fully_missing_matrix_is_returned_unchanged():
     """With nothing anywhere to fit against, every cell stays missing.
 

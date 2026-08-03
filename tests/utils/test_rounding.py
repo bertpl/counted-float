@@ -23,6 +23,7 @@ from counted_float._core.utils import round_number
         (8.4, "10%", 8.0),
         (84, "10%", 80.0),
         (0.84, "10%", 0.8),
+        (10.5, "10%", 11.0),  # just past the in-range upper edge: rounded via scale 10, not in-range
     ],
 )
 @pytest.mark.parametrize("negative", [False, True])
@@ -39,3 +40,12 @@ def test_round_number(
 
     # --- assert ------------------------------------------
     assert rounded == expected_value
+
+
+def test_nearest_int_mode_returns_a_float():
+    # the declared return type: callers feed the result straight into float arithmetic
+    # --- act ---------------------------------------------
+    rounded = round_number(1.7, "nearest_int")
+
+    # --- assert ------------------------------------------
+    assert isinstance(rounded, float)

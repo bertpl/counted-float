@@ -70,7 +70,7 @@ def test_the_extremes_are_the_order_statistics():
 
 def test_an_empty_sample_is_rejected():
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError, match="empty sample"):
+    with pytest.raises(ValueError, match=r"^quantile of an empty sample is undefined$"):
         quantile([], 0.5)
 
 

@@ -83,10 +83,10 @@ def test_reading_a_timer_that_never_started_raises():
     timer = Timer()
 
     # --- act / assert ------------------------------------
-    with pytest.raises(RuntimeError, match="not been started"):
+    with pytest.raises(RuntimeError, match=r"^Timer has not been started\.$"):
         timer.t_elapsed_nsec()
 
-    with pytest.raises(RuntimeError, match="not been started"):
+    with pytest.raises(RuntimeError, match=r"^Timer has not been started\.$"):
         timer.t_elapsed_sec()
 
 
