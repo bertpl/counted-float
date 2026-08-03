@@ -1,0 +1,14 @@
+# The version and date-released fields are refreshed by scripts/release.py at every release,
+# so this file always cites the latest published version.
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+title: "counted-float"
+abstract: "Count floating-point operations in Python code & benchmark relative flop costs."
+authors:
+  - family-names: Pluymers
+    given-names: Bert
+license: Apache-2.0
+repository-code: "https://github.com/bertpl/counted-float"
+version: 2.3.0
+date-released: 2026-08-02
