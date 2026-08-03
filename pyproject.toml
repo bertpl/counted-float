@@ -291,8 +291,14 @@ source_paths = ["src/counted_float"]
 #   - _flops_probes.py holds the hardware-timed loops, which only ever execute compiled under numba.
 #     A mutant there changes what is measured rather than whether anything is correct, and no test
 #     can observe it -- the probes are vouched for by the machine-code drift test instead.
+#   - verbosity/_output.py is the rich-console writer for verbose counting mode: style strings,
+#     column padding, and Console() plumbing. The reporting semantics -- which lines appear, when,
+#     on stderr, and how they dedup -- are pinned by the verbosity test suite through the shared
+#     writer singleton, which is created at import and therefore invisible to mutation
+#     attribution; what its mutants can still touch is presentation only.
 do_not_mutate = [
     "src/counted_float/_core/counting/verbosity/_callsite.py",
+    "src/counted_float/_core/counting/verbosity/_output.py",
     "src/counted_float/_core/counting/_flop_weights_tree_view.py",
     "src/counted_float/_core/benchmarking/flops/_flops_probes.py",
 ]

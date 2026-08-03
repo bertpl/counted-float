@@ -1,8 +1,13 @@
 import math
+import threading
 
 import pytest
 
-from counted_float._core.counting._context_managers import FlopCountingContext, PauseFlopCounting
+from counted_float._core.counting._context_managers import (
+    _PAUSE_CROSS_THREAD_MESSAGE,
+    FlopCountingContext,
+    PauseFlopCounting,
+)
 from counted_float._core.counting._counted_float import CountedFloat
 from counted_float._core.counting._thread_counter import THREAD_COUNTER
 
@@ -25,9 +30,11 @@ def test_flop_counting_context_is_active():
     is_active_after = fcc.is_active()
 
     # --- assert ------------------------------------------
-    assert not is_active_before
-    assert is_active_while
-    assert not is_active_after
+    # identity checks: is_active() is a public predicate, so it returns real bools, not
+    # falsy/truthy stand-ins
+    assert is_active_before is False
+    assert is_active_while is True
+    assert is_active_after is False
 
 
 def test_flop_counting_context_counting_basic():
@@ -340,11 +347,35 @@ def test_flop_counting_context_pause_resume_outside_with_block_raises(action: st
     fcc = FlopCountingContext()
 
     # --- act / assert ------------------------------------
-    with pytest.raises(RuntimeError, match=action):
+    # full-message matches: the error must name the refused call exactly
+    message = rf"^cannot {action}\(\) a FlopCountingContext outside its 'with' block$"
+    with pytest.raises(RuntimeError, match=message):
         getattr(fcc, action)()  # never entered
 
     with fcc:
         pass
 
-    with pytest.raises(RuntimeError, match=action):
+    with pytest.raises(RuntimeError, match=message):
         getattr(fcc, action)()  # already exited
+
+
+def test_pause_flop_counting_exit_from_another_thread_names_the_confinement():
+    # --- arrange -----------------------------------------
+    errors: list[Exception] = []
+
+    # --- act ---------------------------------------------
+    with PauseFlopCounting() as pause:
+
+        def exit_elsewhere() -> None:
+            try:
+                pause.__exit__(None, None, None)
+            except RuntimeError as error:
+                errors.append(error)
+
+        worker = threading.Thread(target=exit_elsewhere)
+        worker.start()
+        worker.join()
+
+    # --- assert ------------------------------------------
+    (error,) = errors
+    assert str(error) == _PAUSE_CROSS_THREAD_MESSAGE

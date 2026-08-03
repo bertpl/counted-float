@@ -76,3 +76,16 @@ def test_set_active_flop_weights_stores_a_copy():
 
     # --- assert ------------------------------------------
     assert get_active_flop_weights().weights[FlopType.ADD] == 1.0
+
+
+def test_flop_weights_default_is_computed_lazily_and_cached(monkeypatch):
+    # --- arrange -----------------------------------------
+    monkeypatch.setattr(Config, "_Config__weights", None)  # force the cold path
+
+    # --- act ---------------------------------------------
+    first = get_active_flop_weights()
+    second = get_active_flop_weights()
+
+    # --- assert ------------------------------------------
+    assert isinstance(first, FlopWeights)
+    assert first == second

@@ -366,3 +366,97 @@ def test_the_two_patch_sets_are_disjoint():
 def test_uncounted_functions_exist_in_math(function_name):
     # --- act & assert ------------------------------------
     assert callable(getattr(math, function_name))
+
+
+# ==================================================================================================
+#  The wrapper factory itself
+# ==================================================================================================
+# Direct tests of _make_uncounted_wrapper: the module-level _UNCOUNTED_PATCHES registry is built at
+# import time, so only a factory call made inside a test exercises the closure where mutation
+# attribution can see it. Each test builds its own probe name -- warnings dedup per (operation,
+# location) process-wide, so sharing a name across tests would silence all but the first.
+@pytest.fixture
+def make_probe_wrapper(monkeypatch):
+    """Build wrappers for fake math functions that record their delegated calls.
+
+    Removing the reporting patches restores everything in _uncounted_originals onto the math
+    module, so a probe entry leaks a new `math.<probe>` attribute the monkeypatch teardown does
+    not know about; the fixture deletes those on the way out.
+    """
+    probe_names: list[str] = []
+
+    def make(name: str, delegate_calls: list):
+        def original(*args: object, **kwargs: object) -> str:
+            delegate_calls.append((args, kwargs))
+            return "delegated"
+
+        monkeypatch.setitem(_math_patching._uncounted_originals, name, original)
+        probe_names.append(name)
+        return _math_patching._make_uncounted_wrapper(name, f"{name} consequence")
+
+    yield make
+    for name in probe_names:
+        if hasattr(math, name):
+            delattr(math, name)
+
+
+def test_a_wrapper_delegates_untouched_when_nobody_reports(make_probe_wrapper, logged_lines):
+    # --- arrange -----------------------------------------
+    delegate_calls: list = []
+    wrapper = make_probe_wrapper("probe_silent", delegate_calls)
+    x = CountedFloat(2.5)
+
+    # --- act ---------------------------------------------
+    result = wrapper(x, key=x)  # no context open anywhere: the thread is not reporting
+
+    # --- assert ------------------------------------------
+    assert result == "delegated"
+    assert delegate_calls == [((x,), {"key": x})]
+    assert logged_lines() == []
+
+
+def test_a_wrapper_stays_silent_for_plain_arguments_while_reporting(make_probe_wrapper, logged_lines):
+    # --- arrange -----------------------------------------
+    delegate_calls: list = []
+    wrapper = make_probe_wrapper("probe_plain", delegate_calls)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        result = wrapper(2.5, key=1.5)
+
+    # --- assert ------------------------------------------
+    assert result == "delegated"
+    assert delegate_calls == [((2.5,), {"key": 1.5})]
+    assert logged_lines() == [], "Nothing countable was involved, so there is nothing to warn about."
+
+
+def test_a_wrapper_reports_its_name_and_consequence_for_counted_arguments(make_probe_wrapper, logged_lines):
+    # --- arrange -----------------------------------------
+    delegate_calls: list = []
+    wrapper = make_probe_wrapper("probe_counted", delegate_calls)
+    x = CountedFloat(2.5)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        result = wrapper(x)
+
+    # --- assert ------------------------------------------
+    assert result == "delegated"
+    assert delegate_calls == [((x,), {})]
+    (line,) = logged_lines()
+    assert line.split()[:2] == ["WARN", "probe_counted"]
+    assert "probe_counted consequence" in line
+
+
+def test_a_wrapper_detects_a_counted_value_arriving_by_keyword(make_probe_wrapper, logged_lines):
+    # --- arrange -----------------------------------------
+    delegate_calls: list = []
+    wrapper = make_probe_wrapper("probe_keyword", delegate_calls)
+
+    # --- act ---------------------------------------------
+    with FlopCountingContext(verbosity=Verbosity.WARNING):
+        wrapper(2.5, key=CountedFloat(1.5))
+
+    # --- assert ------------------------------------------
+    (line,) = logged_lines()
+    assert line.split()[:2] == ["WARN", "probe_keyword"]

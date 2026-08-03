@@ -31,11 +31,17 @@ def test_geo_mean_nan_propagates():
     assert math.isnan(geo_mean([1.0, math.nan, 4.0]))
 
 
-@pytest.mark.parametrize("values", [[], [1.0, -2.0]])
-def test_geo_mean_rejects_degenerate_input(values: list):
+@pytest.mark.parametrize(
+    ("values", "message"),
+    [
+        ([], "geo_mean of an empty list is undefined"),
+        ([1.0, -2.0], "geo_mean requires non-negative values"),
+    ],
+)
+def test_geo_mean_rejects_degenerate_input(values: list, message: str):
     # empty input and negative values would silently poison downstream aggregates
     # --- act & assert ------------------------------------
-    with pytest.raises(ValueError, match="geo_mean"):
+    with pytest.raises(ValueError, match=f"^{message}$"):
         geo_mean(values)
 
 

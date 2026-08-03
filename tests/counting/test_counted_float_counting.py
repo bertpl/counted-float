@@ -1013,3 +1013,15 @@ def test_repeated_counted_float_ops_accumulate_their_counts(
     for field, count in per_call.items():
         assert getattr(thread_counter, field) == n_calls * count
     assert thread_counter.total_count() == n_calls * sum(per_call.values())
+
+
+def test_division_by_minus_one_accumulates_its_sign_flips(thread_counter):
+    # a second identical call must double the count: an assignment that happens to produce the
+    # right first-call value would freeze the counter instead of accumulating onto it
+    # --- act ---------------------------------------------
+    for _ in range(2):
+        _ = CountedFloat(3.0) / -1.0
+
+    # --- assert ------------------------------------------
+    assert thread_counter.MINUS == 2
+    assert thread_counter.total_count() == 2
