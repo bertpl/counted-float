@@ -3,9 +3,6 @@ author: bertpluymers
 description: Run counted_float benchmarks inside a github runner using uv.
 
 inputs:
-    uv_version:
-        required: true
-        description: "Version of UV to be used."
     python_version:
         required: false
         description: "Version of Python to be used.  If omitted will default to version in .python-version"
@@ -16,8 +13,6 @@ runs:
     steps:
       - name: Install uv
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: ${{ inputs.uv_version }}
 
       - name: Determine Python version
         shell: bash

@@ -49,29 +49,23 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/unit_test
         with:
-          uv_version: ${{ vars.UV_VERSION }}
           python_version: ${{ matrix.python }}
           dependency_resolution: ${{ matrix.resolution }}
           include_all_extra_deps: ${{ matrix.all_extras }}
           coverage: "true"  # each combo uploads its data; the coverage job unions + gates
 
-  # Early warning on the next CPython, never gating: a base install on the upcoming minor, so an
+  # Early warning on the next CPython, non-blocking: a base install on the upcoming minor, so an
   # incompatible pre-release -- most acutely a new `math` function the patching partition would not
-  # classify -- fails loudly here months before that Python ships, instead of on users at release.
-  # Three things keep it from gating anything: continue-on-error stops a red run from failing the
-  # workflow, the coverage job does not depend on it, and it uploads no coverage data (the
+  # classify -- fails visibly here months before that Python ships, instead of on users at release.
+  # Three things keep it from blocking anything: the test step's continue-on-error keeps the job
+  # (and so the PR checks roll-up) green, with a failure surfacing as a warning annotation instead
+  # of a red cross; the coverage job does not depend on it; and it uploads no coverage data (the
   # cumulative floor unions supported versions only). Base install because numba wheels trail new
   # CPythons by months. Bump the version here when the next pre-release series opens; classifiers
   # and .python-versions stay untouched until the version is actually supported.
   python_next:
-    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm (never gates)
+    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm (non-blocking)
     runs-on: ubuntu-24.04-arm
-    continue-on-error: true
-    env:
-      # pre-release interpreters reach uv through the manifest baked into each uv release, and the
-      # shared vars.UV_VERSION predates 3.15's first pre-release -- so this leg alone pins a uv
-      # that knows it. Fold back to vars.UV_VERSION once the shared pin catches up.
-      UV_VERSION_PYTHON_NEXT: "0.9.17"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -79,18 +73,20 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: ${{ env.UV_VERSION_PYTHON_NEXT }}
       # a bare `--python 3.15` request never auto-downloads a pre-release interpreter; installing
       # it up front is what lets the shared unit-test action resolve 3.15 while the series is in
       # alpha/beta/rc (the bare install request does pick the latest pre-release)
       - name: Install the next Python's pre-release interpreter
         run: uv python install 3.15
       - uses: ./.github/actions/unit_test
+        id: tests
+        continue-on-error: true
         with:
-          uv_version: ${{ env.UV_VERSION_PYTHON_NEXT }}
           python_version: "3.15"
           include_all_extra_deps: "false"
+      - name: Surface a test failure as a warning annotation
+        if: steps.tests.outcome == 'failure'
+        run: echo "::warning title=py3.15-pre leg failed::the next CPython's pre-release broke the suite -- early warning only, nothing is blocked"
 
   coverage:
     name: coverage
@@ -114,8 +110,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-        with:
-          version: ${{ vars.UV_VERSION }}
       - name: Download coverage data from all matrix combos
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:

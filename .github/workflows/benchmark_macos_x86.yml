@@ -17,5 +17,3 @@ jobs:
           persist-credentials: false
       - name: Run counted_float benchmark
         uses: ./.github/actions/benchmark
-        with:
-          uv_version: ${{ vars.UV_VERSION }}
