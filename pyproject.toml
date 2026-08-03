@@ -272,6 +272,11 @@ source_paths = ["src/counted_float"]
 # exclusion list rots the safe way instead: new code is in scope by default, and staying out costs
 # an entry with a reason next to it. The same rule governs the test selection further down.
 #
+# NOTE: mutmut attributes tests to a function only when it is called while a test runs, so code
+# executing only at import time (module-level registry construction) scores every mutant as
+# "no tests" = never killed. Keep registries behind plain functions that tests call directly;
+# release.py gates on the no-tests share so an attribution gap can never silently deflate the badge.
+#
 # Excluded from mutation -- every surviving mutant here is a false signal, not a real gap:
 #   - _callsite.py is pure call-stack introspection, and mutmut runs tests through a trampoline that
 #     becomes the reported call site, so no test can exercise it.

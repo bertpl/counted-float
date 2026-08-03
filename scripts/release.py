@@ -39,9 +39,15 @@ PACKAGE_NAME = "counted-float"
 CATEGORIES = ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"]
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+$")
 # ceiling on the mutation measurement, past which the run is treated as unable to produce a number.
-# A healthy full run finishes in a small fraction of this; the headroom is for a bad run, not for an
+# A healthy full run finishes in about a third of this; the headroom is for a bad run, not for an
 # unknown machine -- the release always runs on the maintainer's.
-MUTATION_TIMEOUT_SEC = 600
+MUTATION_TIMEOUT_SEC = 1200
+# ceiling on the share of mutants with no attributed tests. Such mutants run nothing and score as
+# not-killed, so a large share silently deflates the score below anything the suite actually
+# measures (mutmut attributes tests only to functions called *while a test runs*, so e.g.
+# import-time-only code gets none). A small residue is tolerated; past this share the measurement
+# is under-attributing and gates the release like any other broken measurement.
+MUTATION_NO_TESTS_MAX_SHARE = 0.02
 # provenance line above the badge block: rewritten in place each release, never appended to
 BADGE_STAMP_RE = re.compile(r"^<!-- badges below refreshed at release v[^>]*-->$", re.MULTILINE)
 
@@ -275,10 +281,11 @@ def _measure_mutation_score() -> int:
     Killed over *all* mutants: timeouts count toward the denominator but never the numerator, so a
     mutant that merely ran slowly is never scored as caught.
 
-    Two questions are kept apart. Whether a number could be produced at all gates the release: a
-    crashing suite, a missing or malformed stats file, an empty mutant set or a run past
-    MUTATION_TIMEOUT_SEC all mean the measurement is broken, and swallowing that compounds
-    silently across every later release -- the badge would keep claiming a figure nobody measured.
+    Two questions are kept apart. Whether a *meaningful* number could be produced at all gates the
+    release: a crashing suite, a missing or malformed stats file, an empty mutant set, a run past
+    MUTATION_TIMEOUT_SEC, or a no-tests share past MUTATION_NO_TESTS_MAX_SHARE all mean the
+    measurement is broken, and swallowing that compounds silently across every later release --
+    the badge would keep claiming a figure nobody measured.
     What the number *is* never gates: the score wobbles run to run from timeout nondeterminism, so
     a threshold would reject releases over measurement noise.
 
@@ -311,10 +318,17 @@ def _measure_mutation_score() -> int:
     try:
         stats = json.loads(MUTATION_STATS_FILE.read_text())
         killed, total = int(stats["killed"]), int(stats["total"])
+        no_tests = int(stats["no_tests"])
     except (OSError, ValueError, KeyError) as exc:
         fail_with_message(f"could not read the mutation stats ({exc}), so no mutation score could be measured")
     if total <= 0:
         fail_with_message("the mutation run produced no mutants, so no mutation score could be measured")
+    if no_tests / total > MUTATION_NO_TESTS_MAX_SHARE:
+        fail_with_message(
+            f"{no_tests}/{total} mutants have no attributed tests (> {MUTATION_NO_TESTS_MAX_SHARE:.0%}), so the "
+            f"score under-measures the suite instead of measuring it. The usual cause is code that runs only at "
+            f"import time (see MUTATION_NO_TESTS_MAX_SHARE); fix the attribution before releasing."
+        )
     return round(100 * killed / total)
 
 
