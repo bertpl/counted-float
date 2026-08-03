@@ -1,5 +1,6 @@
 import itertools
 import math
+import re
 
 import pytest
 
@@ -85,6 +86,10 @@ def test_every_exclusion_states_a_reason():
 
 def test_missing_math_functions_are_excluded_with_reasons(monkeypatch):
     # --- arrange ----------------------
+    if hasattr(math, "fma"):
+        assert FlopType.FMA not in excluded_flop_types()  # present means measurable, not excluded
+    if hasattr(math, "sumprod"):
+        assert FlopType.SUMPROD not in excluded_flop_types()
     monkeypatch.delattr(math, "fma", raising=False)
     monkeypatch.delattr(math, "sumprod", raising=False)
 
@@ -92,10 +97,25 @@ def test_missing_math_functions_are_excluded_with_reasons(monkeypatch):
     excluded = excluded_flop_types()
 
     # --- assert -----------------------
-    assert "math.fma" in excluded[FlopType.FMA]
-    assert "3.13" in excluded[FlopType.FMA]
-    assert "math.sumprod" in excluded[FlopType.SUMPROD]
-    assert "3.12" in excluded[FlopType.SUMPROD]
+    assert excluded[FlopType.FMA] == "math.fma is unavailable on this Python (added in 3.13)"
+    assert excluded[FlopType.SUMPROD] == "math.sumprod is unavailable on this Python (added in 3.12)"
+
+
+def test_the_per_argument_increments_are_excluded_as_non_standalone():
+    # the three cost-increment types share one exclusion schema; the printed report shows these
+    # reasons verbatim in every capture
+    # --- arrange ----------------------
+    increment_types = (FlopType.HYPOT_XARG, FlopType.DIST_XARG, FlopType.SUMPROD_XELEM)
+
+    # --- act --------------------------
+    excluded = excluded_flop_types()
+
+    # --- assert -----------------------
+    for flop_type in increment_types:
+        assert re.fullmatch(
+            r"cost increment per \w+\(\) (argument|dimension|element) beyond two; not a standalone operation",
+            excluded[flop_type],
+        )
 
 
 def test_builders_return_fresh_objects_per_call():
@@ -175,9 +195,20 @@ def test_the_expression_column_states_the_measured_operation(flop_type):
     # it on one pool element registers exactly one count of exactly this flop type
     # --- arrange ----------------------
     spec = _spec_for(flop_type)
-    if flop_type is FlopType.I2F:
-        pytest.skip("its expression contrasts the two constructor spellings; not a single expression")
     element = spec.make_pool(True)[0]
+    if flop_type is FlopType.I2F:
+        # its expression contrasts the two constructor spellings: the counted one registers the
+        # I2F at construction, the plain-float one registers nothing
+        counted_spelling, plain_spelling = spec.expression.split(" vs ")
+        _constructor, i = element
+        with FlopCountingContext() as ctx:
+            eval(counted_spelling, {"CountedFloat": CountedFloat, "__builtins__": {}}, {"i": i})  # noqa: S307 -- registry-owned expression
+        assert ctx.flop_counts().I2F == 1
+        assert _total_count(ctx.flop_counts()) == 1
+        with FlopCountingContext() as ctx:
+            eval(plain_spelling, {"float": float, "__builtins__": {}}, {"i": i})  # noqa: S307 -- registry-owned expression
+        assert _total_count(ctx.flop_counts()) == 0
+        return
     match element:
         case ((_, _), (_, _)):
             names = {"p": element[0], "q": element[1]}
