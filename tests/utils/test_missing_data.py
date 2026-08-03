@@ -213,15 +213,16 @@ def test_a_cell_with_no_row_or_column_evidence_stays_missing():
     assert all(math.isnan(value) for value in filled[0])  # unfillable cells are left as-is, not invented
 
 
-def test_a_ragged_matrix_is_rejected():
-    # --- arrange -----------------------------------------
-    data = [
-        [1.0, 2.0, 3.0],
-        [2.0, 4.0],
-    ]
-
+@pytest.mark.parametrize(
+    "data",
+    [
+        [[1.0, 2.0, 3.0], [2.0, 4.0]],  # a later row falls short
+        [[1.0, 2.0], [2.0, 4.0, 6.0]],  # a later row runs long: must raise, not silently truncate
+    ],
+)
+def test_a_ragged_matrix_is_rejected(data: Matrix):
     # --- act / assert ------------------------------------
-    with pytest.raises(ValueError, match="shorter than"):
+    with pytest.raises(ValueError, match="than argument 1"):
         impute_missing_data(data)
 
 
