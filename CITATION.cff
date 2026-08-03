@@ -10,5 +10,5 @@ authors:
     given-names: Bert
 license: Apache-2.0
 repository-code: "https://github.com/bertpl/counted-float"
-version: 2.3.0
-date-released: 2026-08-02
+version: 2.3.1
+date-released: 2026-08-03
