@@ -67,6 +67,11 @@ jobs:
     name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm (never gates)
     runs-on: ubuntu-24.04-arm
     continue-on-error: true
+    env:
+      # pre-release interpreters reach uv through the manifest baked into each uv release, and the
+      # shared vars.UV_VERSION predates 3.15's first pre-release -- so this leg alone pins a uv
+      # that knows it. Fold back to vars.UV_VERSION once the shared pin catches up.
+      UV_VERSION_PYTHON_NEXT: "0.9.17"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,7 +80,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
-          version: ${{ vars.UV_VERSION }}
+          version: ${{ env.UV_VERSION_PYTHON_NEXT }}
       # a bare `--python 3.15` request never auto-downloads a pre-release interpreter; installing
       # it up front is what lets the shared unit-test action resolve 3.15 while the series is in
       # alpha/beta/rc (the bare install request does pick the latest pre-release)
@@ -83,7 +88,7 @@ jobs:
         run: uv python install 3.15
       - uses: ./.github/actions/unit_test
         with:
-          uv_version: ${{ vars.UV_VERSION }}
+          uv_version: ${{ env.UV_VERSION_PYTHON_NEXT }}
           python_version: "3.15"
           include_all_extra_deps: "false"
 
