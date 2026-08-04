@@ -138,6 +138,12 @@ text) and `as_integer_ratio()` (a bit-field read plus an integer shift) count no
 it — carries a benchmarked weight: the boundary is the *domain of the operation*, not
 whether its machine code looks like manipulation or computation.
 
+Within the domain, the same boundary cuts once more: priced is the work the operation does,
+never machinery a float-only *spelling* of it would need. `math.signbit` counts the single
+test its question is (COMP), not the `copysign(1.0, x) < 0.0` contortion that smuggles
+`-0.0`'s sign into comparable form — a spelling the [author](#convention-2-two-actors-build-the-port)
+would never write, having C's `signbit` to hand.
+
 The same precondition places Python's other numeric types outside the model:
 `decimal.Decimal` and `fractions.Fraction` are software towers a compiled port has no
 counterpart for, so nothing about them is priced. Converting one into the counting model
@@ -260,6 +266,10 @@ operation's documented defining formula instead.**
 - **3.1** ***(procedure)*** — the formula is **transcribed symbol by symbol** into FlopTypes, each
   occurrence priced exactly once: `|·|` → ABS, `max`/`min` → COMP (the model's price for
   them everywhere), arithmetic and comparisons → their types.
+    - The price is shared, the operation is not: `math.fmax` / `math.fmin` are a different
+      value function from the builtins — they return the non-NaN operand where `max`/`min`
+      propagate the NaN — and are priced COMP as the compare-and-select a port emits, not
+      as a spelling of the builtins.
     - A formula contains no guards, no short-circuits and no adaptive machinery, so none
       are priced — the transcription is fixed per call *by construction*, charged
       whatever branch the implementation actually takes, and unconditioned on argument
@@ -376,6 +386,17 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
   equality and infinity guards, the short-circuit savings, and the implementation's
   weak-test respelling (which multiplies twice where the formula's max-then-multiply does
   once).
+- **The float classifiers**, each priced as the FP-canonical form of the question it asks:
+  `math.isnan` → COMP (`x != x`), `math.isinf` → ABS + COMP (`|x| = ∞`), `math.isfinite` →
+  ABS + COMP (`|x| < ∞`), `math.isnormal` → ABS + 2 COMP (`DBL_MIN ≤ |x| ≤ DBL_MAX`),
+  `math.issubnormal` → ABS + 2 COMP (`0 < |x| < DBL_MIN`), `math.signbit` → COMP (no FP form
+  to transcribe — see [What the model prices](#what-the-model-prices) — so only the exit
+  every classifier pays for its `bool`). The canonical form is priced whatever integer-domain
+  lowering a compiler picks, as everywhere in the domain: `math.isfinite` compiles to pure
+  integer tests on both priced architectures and counts ABS + COMP all the same. Stated gap
+  for the two range predicates: the price is fixed per call because the port is branchless,
+  so it exceeds what the equivalent Python spelling counts on the inputs where a chained
+  comparison short-circuits (zeros, subnormals, NaN).
 
 `math.dist` and n-ary `math.hypot` are *not* decompositions: they count the dedicated
 `DIST` + (n−2) `DIST_XARG` and `HYPOT` + (n−2) `HYPOT_XARG` types, measured on the real

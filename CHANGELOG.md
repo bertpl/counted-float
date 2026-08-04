@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- on Python 3.15, the new `math` callables are counted: `fmax`/`fmin` (COMP each), `isnormal`/`issubnormal` (ABS + 2 COMP each) and `signbit` (COMP)
+
 ### Changed
 
 ### Deprecated

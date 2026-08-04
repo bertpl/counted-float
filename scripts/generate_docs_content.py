@@ -278,20 +278,32 @@ def generate_builtin_data_table() -> str:
 # instrumented buckets, so patching something new breaks this generator until its row is decided --
 # which is what keeps the table from drifting behind the code.
 #
-# The two arity-parametric and two version-gated entries carry a note; the rest render bare.
+# The arity-parametric, version-gated and decomposed-into-more-than-one-type entries carry a note;
+# the rest render bare.
 _MATH_INSTRUMENTED_ORDER = [
     "sqrt", "cbrt", "exp", "exp2", "expm1", "log", "log2", "log10", "log1p", "pow",
     "sin", "cos", "tan", "asin", "acos", "atan", "atan2", "sinh", "cosh", "tanh",
     "asinh", "acosh", "atanh", "hypot", "dist", "fmod", "remainder", "gamma", "lgamma",
-    "erf", "erfc", "fabs", "copysign", "isnan", "isinf", "isfinite", "isclose", "fma",
-    "sumprod",
+    "erf", "erfc", "fabs", "copysign", "fmax", "fmin", "isnan", "isinf", "isfinite",
+    "isnormal", "issubnormal", "signbit", "isclose", "fma", "sumprod",
 ]  # fmt: skip
 _MATH_INSTRUMENTED_NOTES = {
     "hypot": "(+ `HYPOT_XARG` per coordinate beyond the second)",
     "dist": "(+ `DIST_XARG` likewise)",
+    "fmax": "(Python 3.15+; COMP — the compare-and-select a port emits)",
+    "fmin": "(Python 3.15+; COMP likewise)",
     "isnan": "(COMP — the self-compare a port emits)",
     "isinf": "(ABS + COMP)",
     "isfinite": "(ABS + COMP)",
+    "isnormal": (
+        "(Python 3.15+; ABS + 2 COMP — the FP-canonical `DBL_MIN ≤ |x| ≤ DBL_MAX`; the Python "
+        "spelling's short-circuit on zeros, subnormals and NaN is a stated gap)"
+    ),
+    "issubnormal": "(Python 3.15+; ABS + 2 COMP — likewise, for `0 < |x| < DBL_MIN`)",
+    "signbit": (
+        "(Python 3.15+; COMP — the float-domain exit alone: the copysign its faithful float "
+        "spelling needs is machinery of the spelling, not work the operation does)"
+    ),
     "isclose": (
         "(SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, "
         "short-circuit savings and the implementation's respelling are a stated gap)"
@@ -312,7 +324,7 @@ _MATH_DECOMPOSED_CELL = (
 )
 # registered conditionally by the patch table, so they are absent from it on an older interpreter
 # while still belonging in the committed table -- the note on each says from which version
-_MATH_VERSION_GATED = {"fma", "sumprod"}
+_MATH_VERSION_GATED = {"fma", "sumprod", "fmax", "fmin", "isnormal", "issubnormal", "signbit"}
 
 
 def _math_names_by_reason(reason: str) -> list[str]:

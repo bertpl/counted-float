@@ -140,17 +140,16 @@ def test_capture_originals_keeps_both_original_tables_in_sync():
 # =================================================================================================
 #  Version-gated stand-ins and teardown guard
 # =================================================================================================
-def test_fma_unavailable_stand_in_raises() -> None:
-    # the stand-in exists so original_math_fma is callable pre-3.13; calling it must raise
-    # --- act / assert ------------------------------------
-    with pytest.raises(NotImplementedError, match=r"math\.fma"):
-        _math_patching._math_fma_unavailable(1.0, 2.0, 3.0)
+@pytest.mark.parametrize("fname", ["sumprod", "fma", "fmax", "fmin", "isnormal", "issubnormal", "signbit"])
+def test_version_gated_stand_in_raises(fname: str) -> None:
+    # the stand-ins exist so every original_math_* is callable on an interpreter predating its
+    # function; calling one must raise rather than silently return a value
+    # --- arrange -----------------------------------------
+    stand_in = getattr(_math_patching, f"_math_{fname}_unavailable")
 
-
-def test_sumprod_unavailable_stand_in_raises() -> None:
     # --- act / assert ------------------------------------
-    with pytest.raises(NotImplementedError, match=r"math\.sumprod"):
-        _math_patching._math_sumprod_unavailable([1.0], [2.0])
+    with pytest.raises(NotImplementedError, match=rf"math\.{fname}"):
+        stand_in(1.0, 2.0, 3.0)
 
 
 def test_remove_uncounted_math_patches_is_a_noop_when_none_installed() -> None:
