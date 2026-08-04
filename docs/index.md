@@ -52,3 +52,5 @@ Extras compose, so `counted-float[benchmarking,cli]` gets you everything.
   command-line tool.
 - [Known limitations](known_limitations.md) — what falls outside the counting
   model.
+- [Deprecations](deprecations.md) — the names scheduled for removal at the next
+  major, and what replaces them.
