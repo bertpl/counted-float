@@ -54,18 +54,17 @@ jobs:
           include_all_extra_deps: ${{ matrix.all_extras }}
           coverage: "true"  # each combo uploads its data; the coverage job unions + gates
 
-  # Early warning on the next CPython, non-blocking: a base install on the upcoming minor, so an
-  # incompatible pre-release -- most acutely a new `math` function the patching partition would not
-  # classify -- fails visibly here months before that Python ships, instead of on users at release.
-  # What keeps it from blocking is the test step's continue-on-error, which holds the job (and so
-  # the PR checks roll-up) green, a failure surfacing as a warning annotation instead of a red
-  # cross. It does feed the coverage combine: version-gated code whose only home is this
-  # interpreter has no other leg to be covered from, and the cumulative floor admits no exceptions.
-  # Base install because numba wheels trail new CPythons by months. Bump the version here when the
-  # next pre-release series opens; classifiers and .python-versions stay untouched until the
-  # version is actually supported.
+  # The upcoming CPython, gating like every other leg: a base install on the next minor, so an
+  # incompatible pre-release -- most acutely a new `math` function the patching partition does not
+  # classify -- fails here months before that Python ships, instead of on users at release.
+  # The interpreter is pinned to one exact pre-release build. A floating request re-resolves to
+  # whatever upstream published overnight, so a regression there would redden PRs that have nothing
+  # to do with it; a pin confines that breakage to the commit that moves the pin. Move it as each
+  # rc lands, and fold this job into the matrix above once the version is released -- classifiers
+  # and .python-versions stay untouched until then, since testing a version is not supporting it.
+  # Base install because numba wheels trail new CPythons by months.
   python_next:
-    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm (non-blocking)
+    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -74,29 +73,21 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-      # a bare `--python 3.15` request never auto-downloads a pre-release interpreter; installing
-      # it up front is what lets the shared unit-test action resolve 3.15 while the series is in
-      # alpha/beta/rc (the bare install request does pick the latest pre-release)
-      - name: Install the next Python's pre-release interpreter
-        run: uv python install 3.15
+      # uv never auto-downloads a pre-release for a bare version request, so the shared action
+      # below can only resolve this interpreter once it is already installed
+      - name: Install the pinned pre-release interpreter
+        run: uv python install 3.15.0b4
       - uses: ./.github/actions/unit_test
-        id: tests
-        continue-on-error: true
         with:
-          python_version: "3.15"
+          python_version: "3.15.0b4"
           include_all_extra_deps: "false"
           coverage: "true"
-      - name: Surface a test failure as a warning annotation
-        if: steps.tests.outcome == 'failure'
-        run: echo "::warning title=py3.15-pre leg failed::the next CPython's pre-release broke the suite -- early warning only, nothing is blocked"
 
   coverage:
     name: coverage
     # Cumulative gate: combine every combo's data into one picture before
     # checking the floor, so version-/dependency-divergent code paths (only hit
     # on some combos) don't read as uncovered.
-    # python_next only sequences the download behind that leg's upload; whether it *succeeded* is
-    # not gated here, since it is the one leg allowed to fail.
     needs: [core, python_next]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
     # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
@@ -104,9 +95,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Require every matrix combo to have succeeded
-        if: needs.core.result != 'success'
+        if: needs.core.result != 'success' || needs.python_next.result != 'success'
         run: |
-          echo "::error::test matrix did not fully succeed (core result: ${{ needs.core.result }})"
+          echo "::error::test matrix did not fully succeed (core: ${{ needs.core.result }}, pre-release: ${{ needs.python_next.result }})"
           exit 1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
