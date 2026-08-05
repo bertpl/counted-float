@@ -58,7 +58,7 @@ from __future__ import annotations
 import math
 import threading
 from math import copysign as _copysign  # the raw builtin: math.copysign is patched inside contexts
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Never
 
 from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
 from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
@@ -70,25 +70,37 @@ if TYPE_CHECKING:
     from ._thread_counter import CountsTarget
 
 
-def _math_fma_unavailable(x: float, y: float, z: float) -> float:
-    """Stand-in for `math.fma` on interpreters predating it (below 3.13).
+def _unavailable_stand_in(name: str, minimum_version: str) -> Callable[..., Never]:
+    """Build the stand-in for a `math` function the running interpreter predates.
 
-    Never called: the counting replacement is registered only where `math.fma` exists (see
-    _PATCHES). It exists so the `original_math_fma` reference is callable on every supported
-    interpreter rather than `None`, which would make the patch's own call sites unsound.
+    None of these is ever called: a counting replacement is registered only where its `math`
+    function exists (see _PATCHES). They exist so every `original_math_*` reference is callable
+    on every supported interpreter rather than `None`, which would make the patches' own call
+    sites unsound. Returning `Never` is what lets one builder serve them all: the delegating
+    patches declare `float` and `bool` return types, and a call that cannot return satisfies
+    either.
+
+    Args:
+        name: Name of the `math` function that is missing here.
+        minimum_version: First Python version providing it, for the raised message.
+
+    Returns:
+        A replacement that raises `NotImplementedError` whatever it is passed.
     """
-    raise NotImplementedError("math.fma requires Python 3.13 or newer")
+
+    def stand_in(*args: object, **kwargs: object) -> Never:
+        raise NotImplementedError(f"math.{name} requires Python {minimum_version} or newer")
+
+    return stand_in
 
 
-def _math_sumprod_unavailable(p: Iterable[float], q: Iterable[float], /) -> float:
-    """Stand-in for `math.sumprod` on interpreters predating it (below 3.12).
-
-    Never called: the replacement is registered only where `math.sumprod` exists (see
-    _PATCHES). It exists so the `original_math_sumprod` reference is callable on every
-    supported interpreter rather than `None`, which would make the patch's own call sites
-    unsound.
-    """
-    raise NotImplementedError("math.sumprod requires Python 3.12 or newer")
+_math_sumprod_unavailable = _unavailable_stand_in("sumprod", "3.12")
+_math_fma_unavailable = _unavailable_stand_in("fma", "3.13")
+_math_fmax_unavailable = _unavailable_stand_in("fmax", "3.15")
+_math_fmin_unavailable = _unavailable_stand_in("fmin", "3.15")
+_math_isnormal_unavailable = _unavailable_stand_in("isnormal", "3.15")
+_math_issubnormal_unavailable = _unavailable_stand_in("issubnormal", "3.15")
+_math_signbit_unavailable = _unavailable_stand_in("signbit", "3.15")
 
 
 # -------------------------------------------------------------------------
@@ -148,6 +160,11 @@ original_math_erf = math.erf
 original_math_erfc = math.erfc
 original_math_remainder = math.remainder
 original_math_sumprod = getattr(math, "sumprod", _math_sumprod_unavailable)
+original_math_fmax = getattr(math, "fmax", _math_fmax_unavailable)
+original_math_fmin = getattr(math, "fmin", _math_fmin_unavailable)
+original_math_isnormal = getattr(math, "isnormal", _math_isnormal_unavailable)
+original_math_issubnormal = getattr(math, "issubnormal", _math_issubnormal_unavailable)
+original_math_signbit = getattr(math, "signbit", _math_signbit_unavailable)
 
 # sentinel for math_log's optional base argument; the stdlib signature is math.log(x[, base]),
 # where omitting base is not the same as passing any real value (and None is rejected)
@@ -779,6 +796,46 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
     return original_math_copysign(x, y)
 
 
+def math_fmax(x: float, y: float, /) -> float | CountedFloat:
+    """Patch math.fmax: stdlib contract (NaN-quieting maximum), counted as one COMP.
+
+    A port emits the IEEE max instruction (ARM's `fmaxnm`) -- one instruction of the same
+    compare-select class the COMP weight measures, so the weight is reused, as `math.fabs`
+    reuses ABS. The builtin `max` shares that price while being a different value function:
+    a comparison chain returning whichever operand survives, order-dependent under NaN,
+    where fmax is the NaN-quieting selection. Stated gap: the NaN-quieting clause is a
+    guard, and guards go unpriced, so one COMP is charged on every regime.
+
+    No constant fold applies at any operand value. The candidates all fail the sign- and
+    nan-exactness test: `fmax(x, -inf)` is `x` for every x except a NaN, where it is `-inf`,
+    and `fmax(x, nan)` leaves a signaling NaN quieted rather than untouched.
+    """
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        result = original_math_fmax(x, y)
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_fmax(x, y)
+
+
+def math_fmin(x: float, y: float, /) -> float | CountedFloat:
+    """Patch math.fmin: stdlib contract (NaN-quieting minimum), counted as one COMP.
+
+    The mirror of math_fmax in every respect -- same canonical compare-and-select, same
+    unpriced NaN guard, same absence of folds.
+    """
+    if isinstance(x, CountedFloat) or isinstance(y, CountedFloat):
+        result = original_math_fmin(x, y)
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
+        return float.__new__(CountedFloat, result)
+    return original_math_fmin(x, y)
+
+
 def math_isnan(x: float) -> bool:
     """Patch math.isnan: counted as the one FP self-compare a port emits.
 
@@ -862,6 +919,67 @@ def math_isclose(a: float, b: float, **kwargs: float) -> bool:
         cnt.MUL += 1
         cnt.COMP += 3
     return result
+
+
+def math_isnormal(x: float, /) -> bool:
+    """Patch math.isnormal: counted ABS + 2 COMP, the FP-canonical `DBL_MIN <= fabs(x) <= DBL_MAX`.
+
+    Same pricing stance as isinf and isfinite: the FP-canonical instruction stream, whatever
+    integer-domain lowering a particular compiler picks. The upper bound is isfinite's own
+    test, so isnormal prices as isfinite plus the one comparison that separates normals from
+    subnormals, with the magnitude taken once. Stated gap: the price is fixed per call because
+    the port is branchless, so it over-charges the Python spelling on every input where the
+    chained comparison short-circuits (zeros, subnormals and NaN stop after one compare).
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_isnormal(x)
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.ABS += 1
+        cnt.COMP += 2
+        return result
+    return original_math_isnormal(x)
+
+
+def math_issubnormal(x: float, /) -> bool:
+    """Patch math.issubnormal: counted ABS + 2 COMP, the FP-canonical `0.0 < fabs(x) < DBL_MIN`.
+
+    The mirror of isnormal on the other side of the same boundary: one magnitude and two
+    bounds, the lower one excluding zero (which is neither normal nor subnormal). Its stated
+    gap is isnormal's -- fixed per call against a spelling that short-circuits on zeros and NaN.
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_issubnormal(x)
+        try:
+            cnt: CountsTarget = _TLS.flop_counts
+        except AttributeError:  # first counted op on this thread
+            cnt: CountsTarget = _create_thread_state()
+        cnt.ABS += 1
+        cnt.COMP += 2
+        return result
+    return original_math_issubnormal(x)
+
+
+def math_signbit(x: float, /) -> bool:
+    """Patch math.signbit: counted as one COMP, the price of reading one bool off one float.
+
+    Alone among the classifiers this one has no FP decomposition to transcribe. `x < 0.0` is
+    not it -- `signbit(-0.0)` is True where the comparison is False -- and the only faithful
+    float spelling, `copysign(1.0, x) < 0.0`, needs its copysign solely to make the sign
+    visible to a comparison. That copysign is machinery the spelling needs, not work the
+    operation does, so it is not priced; what remains is the float-domain exit every classifier
+    pays for materializing its bool.
+    """
+    if isinstance(x, CountedFloat):
+        result = original_math_signbit(x)
+        try:
+            _TLS.flop_counts.COMP += 1
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().COMP += 1
+        return result
+    return original_math_signbit(x)
 
 
 # -------------------------------------------------------------------------
@@ -973,6 +1091,19 @@ if hasattr(math, "fma"):
 if hasattr(math, "sumprod"):
     # Python 3.12+ only; same conditional-registration reasoning as math.fma above.
     _PATCHES["sumprod"] = math_sumprod
+# The 3.15 additions, gated one by one on the same reasoning: a partition that is exact on
+# every interpreter needs each name registered where that name exists, not where its release
+# did.
+if hasattr(math, "fmax"):
+    _PATCHES["fmax"] = math_fmax
+if hasattr(math, "fmin"):
+    _PATCHES["fmin"] = math_fmin
+if hasattr(math, "isnormal"):
+    _PATCHES["isnormal"] = math_isnormal
+if hasattr(math, "issubnormal"):
+    _PATCHES["issubnormal"] = math_issubnormal
+if hasattr(math, "signbit"):
+    _PATCHES["signbit"] = math_signbit
 
 # Why each remaining public `math` callable needs no replacement of either kind.  Between this,
 # _PATCHES and _UNCOUNTED_MATH the whole module surface is accounted for, and a test holds them to

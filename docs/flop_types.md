@@ -49,6 +49,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.gamma`/`lgamma(x)` | `GAMMA`, `LGAMMA` | patch | benchmarked | yes |
 | `math.erf`/`erfc(x)` | `ERF`, `ERFC` | patch | benchmarked | yes |
 | `math.copysign(x, y)` | `COPYSIGN` | patch | benchmarked | yes |
+| `math.fmax(x, y)`, `math.fmin(x, y)` (3.15+) | `COMP` (the NaN-quieting guard is unpriced) | patch | ISA | yes — unlike the builtins, whichever operand wins |
 | `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
 | `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` (1-D → `SUB + ABS`) | patch | benchmarked | yes |
 | `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
@@ -100,8 +101,9 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `ANDPD`
 - **Counted Python operations:** `abs(x)` and `math.fabs(x)` where `x` is a
   `CountedFloat` (both map to the same `FABS`/`ANDPD` instruction); one ABS
-  inside `math.isinf` / `math.isfinite` (the classifier's `fabs`-then-compare)
-  and three inside `math.isclose`'s core
+  inside `math.isinf` / `math.isfinite` (the classifier's `fabs`-then-compare),
+  one inside `math.isnormal` / `math.issubnormal` (the magnitude their range
+  test takes once) and three inside `math.isclose`'s core
 - **Not counted:** `numpy.abs`, `numpy.fabs`, complex abs, abs on non-CountedFloat
 - **Weight measurement:** [the machine code behind the `ABS` weight](machine_code/abs.md)
 
@@ -121,6 +123,8 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **x86:** `ANDPD` + `ANDPD` + `ORPD` (no dedicated instruction: clear the sign of `x`,
       isolate the sign of `y`, merge)
 - **Counted Python operations:** `math.copysign(x, y)` where `x` or `y` is a `CountedFloat`
+  (and only there — `math.signbit`, which reads the same bit, counts COMP instead: see
+  [the decomposed operations](cost_model.md#decomposed-operations))
 - **Not counted:** copysign on non-CountedFloat, numpy copysign
 - **Note:** same sign-bit instruction class as ABS and MINUS, but 1–3 ops depending on
   architecture — which is why it is measured as its own benchmarked flop type rather than
@@ -134,9 +138,12 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
     - **ARM:** `FCMP`
     - **x86:** `(U)COMISD`
 - **Counted Python operations:** `x == y`, `x != y`, `x <= y`, ... and
-  `min(x,y)`, `max(x,y)` for `CountedFloat`; the float classifiers —
+  `min(x,y)`, `max(x,y)` for `CountedFloat`; the selections `math.fmax(x,y)` /
+  `math.fmin(x,y)` (the compare-and-select a port emits); the float classifiers —
   `math.isnan` (the self-compare a port emits), one COMP inside `math.isinf` /
-  `math.isfinite`, three inside `math.isclose`'s core, and `is_integer()`'s
+  `math.isfinite`, two inside `math.isnormal` / `math.issubnormal` (their two
+  range bounds), one for `math.signbit` (the sole charge: its question has no FP
+  form to decompose), three inside `math.isclose`'s core, and `is_integer()`'s
   compare
 - **Not counted:** Comparisons on non-CountedFloat, numpy comparisons, and
   truthiness (`bool(x)`, `if x:`, `assert x`) — a deliberate, labeled exception.
@@ -145,10 +152,12 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
   entirely, so a truthiness count would price interpreter bookkeeping and vary
   with interpreter flags — no port-faithful count does either. Write an
   algorithmic zero-test as `x != 0.0` to have it counted
-- **Note:** `min`/`max` return the winning operand *object*, not a `bool` —
-  with mixed counted/plain arguments the winner may be the plain constant,
-  which ends countedness; see
-  [known limitations](known_limitations.md#other-limitations)
+- **Note:** the *builtin* `min`/`max` return the winning operand *object*, not a
+  `bool` — with mixed counted/plain arguments the winner may be the plain
+  constant, which ends countedness; see
+  [known limitations](known_limitations.md#other-limitations). `math.fmax` /
+  `math.fmin` are not affected: they build a fresh result, which the patch wraps,
+  so countedness survives whichever operand wins
 - **Weight measurement:** [the machine code behind the `COMP` weight](machine_code/comp.md)
 
 ## FlopType.RND (`round`) { #flop-rnd }

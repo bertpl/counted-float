@@ -70,7 +70,7 @@ Every commonly used `math` function, and how it participates in counting:
 <!-- BEGIN generated: math-coverage-table -->
 | Coverage | Functions |
 |---|---|
-| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `isnan` (COMP — the self-compare a port emits), `isinf` (ABS + COMP), `isfinite` (ABS + COMP), `isclose` (SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, short-circuit savings and the implementation's respelling are a stated gap), `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
+| **Instrumented** (patched, counts its FlopType) | `sqrt`, `cbrt`, `exp`, `exp2`, `expm1`, `log`, `log2`, `log10`, `log1p`, `pow`, `sin`, `cos`, `tan`, `asin`, `acos`, `atan`, `atan2`, `sinh`, `cosh`, `tanh`, `asinh`, `acosh`, `atanh`, `hypot` (+ `HYPOT_XARG` per coordinate beyond the second), `dist` (+ `DIST_XARG` likewise), `fmod`, `remainder`, `gamma`, `lgamma`, `erf`, `erfc`, `fabs`, `copysign`, `fmax` (Python 3.15+; COMP — the compare-and-select a port emits), `fmin` (Python 3.15+; COMP likewise), `isnan` (COMP — the self-compare a port emits), `isinf` (ABS + COMP), `isfinite` (ABS + COMP), `isnormal` (Python 3.15+; ABS + 2 COMP — the FP-canonical `DBL_MIN ≤ |x| ≤ DBL_MAX`; the Python spelling's short-circuit on zeros, subnormals and NaN is a stated gap), `issubnormal` (Python 3.15+; ABS + 2 COMP — likewise, for `0 < |x| < DBL_MIN`), `signbit` (Python 3.15+; COMP — the float-domain exit alone: the copysign its faithful float spelling needs is machinery of the spelling, not work the operation does), `isclose` (SUB + 3 ABS + MUL + 3 COMP — the transcription of its documented formula; the guards, short-circuit savings and the implementation's respelling are a stated gap), `fma` (Python 3.13+), `sumprod` (Python 3.12+; + `SUMPROD_XELEM` per element beyond the second — counted inputs are unboxed so the extended-precision algorithm runs) |
 | **Instrumented, counted as a decomposition** (patched, counts the flops a compiled port would execute) | `degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; 1-argument `hypot` → ABS; 1-D `dist` → SUB + ABS |
 | **Counted via dunder** (no patch needed — do not expect these in the patch list) | `math.floor` / `math.ceil` / `math.trunc` → F2I through `__floor__`/`__ceil__`/`__trunc__`; the builtins `abs()` → ABS and `round()` → RND/F2I likewise count through their dunders |
 | **Not instrumented** (returns a plain, uncounted `float`) | exactly the float-representation helpers — `frexp`, `ldexp`, `modf`, `nextafter`, `ulp` |
@@ -85,12 +85,18 @@ While a context is open, the reduction patches (`fsum`, `prod`, `sumprod`,
 computing the result — a space-behavior divergence from the streaming stdlib
 versions; see [Known limitations](known_limitations.md).
 
-The float-classification calls (`isnan`, `isinf`, `isfinite`, `isclose`) return a
-`bool`, so contagion does not apply to them — but they count all the same: a
-compiled port emits real compare machinery for each, the same work the operator
-spellings (`x != x`, `x != 0.0`) have always counted. The one comparison left
-uncounted is truthiness (`bool(x)`, `if x:`), a labeled exception — the
-interpreter inserts it implicitly, with no opt-out — documented with the
+The float-classification calls (`isnan`, `isinf`, `isfinite`, `isnormal`,
+`issubnormal`, `signbit`, `isclose`) return a `bool`, so contagion does not apply
+to them — but they count all the same: a compiled port emits real compare
+machinery for each, and each is priced as the FP-canonical form of the question it
+asks. For `isnan` that form *is* an operator spelling a reader could have written
+(`x != x`) and the counts coincide; where the form is a range test the price is
+fixed per call while the Python spelling short-circuits, so `isnormal` and
+`issubnormal` charge more than the hand-written chain does on zeros, subnormals and
+NaN — a stated gap, listed with them in
+[the decomposed operations](cost_model.md#decomposed-operations). The one
+comparison left uncounted is truthiness (`bool(x)`, `if x:`), a labeled exception —
+the interpreter inserts it implicitly, with no opt-out — documented with the
 [`COMP` type](flop_types.md#flop-comp).
 
 Rather than checking this table against your code by hand, you can have a counting

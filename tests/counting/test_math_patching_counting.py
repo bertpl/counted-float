@@ -1,4 +1,5 @@
 import math
+import sys
 
 import pytest
 
@@ -1036,6 +1037,144 @@ def test_math_isclose_negative_tolerance_counts_nothing(thread_counter):
     with pytest.raises(ValueError, match="tolerances must be non-negative"):
         math.isclose(CountedFloat(2.0), 2.5, rel_tol=-1.0)
     assert thread_counter.total_count() == 0  # compute-first contract: a raised call counts nothing
+
+
+# =================================================================================================
+#  Patched math functions - the Python 3.15 additions
+# =================================================================================================
+needs_py315_math = pytest.mark.skipif(
+    not hasattr(math, "fmax"),
+    reason="fmax/fmin/isnormal/issubnormal/signbit require Python 3.15+",
+)
+
+_PY315_NAMES = ["fmax", "fmin", "isnormal", "issubnormal", "signbit"]
+
+
+@pytest.mark.parametrize("fname", _PY315_NAMES)
+def test_py315_math_functions_registered_only_where_available(fname):
+    """Each 3.15 callable is patched exactly on the interpreters that have it, and never elsewhere."""
+    # --- act & assert ------------------------------------
+    assert (fname in _math_patching._PATCHES) == hasattr(math, fname)
+
+
+@needs_py315_math
+@pytest.mark.parametrize("fname", ["fmax", "fmin"])
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        (CountedFloat(2.0), CountedFloat(3.0)),
+        (CountedFloat(2.0), 3.0),
+        (2.0, CountedFloat(3.0)),
+        (CountedFloat(2.0), 3),
+        (CountedFloat(math.nan), 1.0),  # the NaN-quieting guard is unpriced: the same charge
+        (CountedFloat(0.0), -0.0),  # signed zeros likewise
+        (CountedFloat(-math.inf), 2.0),  # an infinite constant does not fold the selection away
+    ],
+    ids=repr,
+)
+def test_math_fmax_and_fmin_count_one_comp(thread_counter, fname, arguments):
+    # --- arrange -----------------------------------------
+    selector = getattr(math, fname)  # resolved inside the context, where the patch is installed
+
+    # --- act ---------------------------------------------
+    result = selector(*arguments)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)  # contagion survives even when the plain operand wins
+    assert float(result) == STDLIB_MATH_FUNCTIONS[fname](*(float(a) for a in arguments))
+    assert thread_counter.COMP == 1  # compare-and-select, charged on every regime
+    assert thread_counter.total_count() == 1
+
+
+@needs_py315_math
+@pytest.mark.parametrize("fname", ["fmax", "fmin"])
+def test_math_fmax_and_fmin_without_counted_operands_count_nothing(thread_counter, fname):
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(2.0, 3.0)
+
+    # --- assert ------------------------------------------
+    assert type(result) is float  # delegated whole: neither wrapped nor counted
+    assert result == STDLIB_MATH_FUNCTIONS[fname](2.0, 3.0)
+    assert thread_counter.total_count() == 0
+
+
+@needs_py315_math
+@pytest.mark.parametrize("classifier_name", ["isnormal", "issubnormal"])
+@pytest.mark.parametrize(
+    "value",
+    [1.0, 0.0, -0.0, 5e-324, sys.float_info.min, math.inf, math.nan],
+    ids=repr,
+)
+def test_math_isnormal_and_issubnormal_count_abs_and_two_comps(thread_counter, classifier_name, value):
+    # --- arrange -----------------------------------------
+    classifier = getattr(math, classifier_name)
+
+    # --- act ---------------------------------------------
+    result = classifier(CountedFloat(value))
+
+    # --- assert ------------------------------------------
+    assert result is STDLIB_MATH_FUNCTIONS[classifier_name](value)
+    assert type(result) is bool
+    # the FP-canonical magnitude and two bounds, charged identically on every regime -- where the
+    # Python spelling short-circuits (zeros, subnormals, NaN) it counts less, the stated gap
+    assert thread_counter.ABS == 1
+    assert thread_counter.COMP == 2
+    assert thread_counter.total_count() == 3
+
+
+@needs_py315_math
+@pytest.mark.parametrize("value", [1.0, -1.0, 0.0, -0.0, math.inf, -math.inf, math.nan], ids=repr)
+def test_math_signbit_counts_one_comp(thread_counter, value):
+    # --- act ---------------------------------------------
+    result = math.signbit(CountedFloat(value))
+
+    # --- assert ------------------------------------------
+    assert result is STDLIB_MATH_FUNCTIONS["signbit"](value)
+    assert type(result) is bool
+    # the float-domain exit every classifier pays: the copysign of the faithful float spelling is
+    # machinery that spelling needs, not work signbit does, so it is charged nothing
+    assert thread_counter.COMP == 1
+    assert thread_counter.total_count() == 1
+
+
+@needs_py315_math
+@pytest.mark.parametrize("fname", ["isnormal", "issubnormal", "signbit"])
+def test_py315_predicates_without_counted_operands_count_nothing(thread_counter, fname):
+    # --- act ---------------------------------------------
+    result = getattr(math, fname)(2.0)
+
+    # --- assert ------------------------------------------
+    assert result is STDLIB_MATH_FUNCTIONS[fname](2.0)
+    assert thread_counter.total_count() == 0
+
+
+# these cannot join _ACCUMULATING_MATH_OPS: that table is built unconditionally, and its calls
+# would not resolve below 3.15
+_PY315_ACCUMULATING_OPS = [
+    ("fmax", lambda: math.fmax(CountedFloat(2.0), 3.0), {"COMP": 1}),
+    ("fmin", lambda: math.fmin(CountedFloat(2.0), 3.0), {"COMP": 1}),
+    ("isnormal", lambda: math.isnormal(CountedFloat(2.0)), {"ABS": 1, "COMP": 2}),
+    ("issubnormal", lambda: math.issubnormal(CountedFloat(5e-324)), {"ABS": 1, "COMP": 2}),
+    ("signbit", lambda: math.signbit(CountedFloat(-2.0)), {"COMP": 1}),
+]
+
+
+@needs_py315_math
+@pytest.mark.parametrize("n_calls", [1, 2, 5])
+@pytest.mark.parametrize(
+    ("op", "per_call"),
+    [(op, counts) for _, op, counts in _PY315_ACCUMULATING_OPS],
+    ids=[i for i, _, _ in _PY315_ACCUMULATING_OPS],
+)
+def test_repeated_py315_math_ops_accumulate_their_counts(thread_counter, op, per_call: dict[str, int], n_calls: int):
+    # --- act ---------------------------------------------
+    for _ in range(n_calls):
+        op()
+
+    # --- assert ------------------------------------------
+    for field, count in per_call.items():
+        assert getattr(thread_counter, field) == n_calls * count
+    assert thread_counter.total_count() == n_calls * sum(per_call.values())
 
 
 # =================================================================================================

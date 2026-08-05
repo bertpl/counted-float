@@ -228,7 +228,12 @@ PAGES: list[MachineCodePage] = [
         extended_probe="f_lte_addsub",
         rationale=(
             "the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices "
-            "compare-and-select machinery, matching what float comparisons cost in optimized code"
+            "compare-and-select machinery, matching what float comparisons cost in optimized code. "
+            "`math.fmax`/`fmin` reuse this weight: their port -- the IEEE max/min instruction (ARM's "
+            "`fmaxnm`/`fminnm`) -- is one instruction of the same compare-select class, the same reuse as "
+            "`math.fabs` -> ABS. They stay a different value function from the builtin `min`/`max` (NaN-quieting "
+            "selection vs a comparison chain returning whichever operand survives, order-dependent under NaN): "
+            "shared machinery, and so a shared price, not shared semantics"
         ),
     ),
     MachineCodePage("copysign", kind=KIND_HARDWARE, base_probe="f_add", extended_probe="f_add_copysign"),

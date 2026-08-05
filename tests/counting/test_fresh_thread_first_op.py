@@ -150,7 +150,8 @@ def test_operator_first_op_on_fresh_thread(op_id: str, call: Callable[[], object
 #  Patched math.* functions
 # =================================================================================================
 # one in-domain call per registered patch, with CountedFloat args so counting actually fires;
-# fma/sumprod are listed unconditionally but only exercised where _PATCHES registers them
+# the version-gated entries are listed unconditionally but only exercised where _PATCHES
+# registers them
 _PATCH_ARGS: dict[str, tuple[object, ...]] = {
     "sqrt": (CF(2.0),),
     "cbrt": (CF(2.0),),
@@ -195,6 +196,11 @@ _PATCH_ARGS: dict[str, tuple[object, ...]] = {
     "isclose": (CF(2.0), CF(2.5)),
     "fma": (CF(2.0), CF(3.0), CF(4.0)),
     "sumprod": ([CF(2.0)], [CF(3.0)]),
+    "fmax": (CF(2.0), CF(3.0)),
+    "fmin": (CF(2.0), CF(3.0)),
+    "isnormal": (CF(2.0),),
+    "issubnormal": (CF(5e-324),),
+    "signbit": (CF(-2.0),),
 }
 
 

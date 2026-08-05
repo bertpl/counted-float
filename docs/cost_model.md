@@ -314,7 +314,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`ATAN2`](machine_code/atan2.md) | `f_add_atan2` − `f_add` | 2, 4 |  |
 | [`ATANH`](machine_code/atanh.md) | `f_add_halfsin_atanh` − `f_add_halfsin` | 2 |  |
 | [`CBRT`](machine_code/cbrt.md) | `f_add_cbrt` − `f_add` | 2 | numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, so the probe calls libm through a ctypes binding -- the bare call CPython executes |
-| [`COMP`](machine_code/comp.md) | `f_lte_addsub` − `f_add` | 1 | the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices compare-and-select machinery, matching what float comparisons cost in optimized code |
+| [`COMP`](machine_code/comp.md) | `f_lte_addsub` − `f_add` | 1 | the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices compare-and-select machinery, matching what float comparisons cost in optimized code. `math.fmax`/`fmin` reuse this weight: their port -- the IEEE max/min instruction (ARM's `fmaxnm`/`fminnm`) -- is one instruction of the same compare-select class, the same reuse as `math.fabs` -> ABS. They stay a different value function from the builtin `min`/`max` (NaN-quieting selection vs a comparison chain returning whichever operand survives, order-dependent under NaN): shared machinery, and so a shared price, not shared semantics |
 | [`COPYSIGN`](machine_code/copysign.md) | `f_add_copysign` − `f_add` | 1 |  |
 | [`COS`](machine_code/cos.md) | `f_add_cos` − `f_add` | 2, 4 |  |
 | [`COSH`](machine_code/cosh.md) | `f_add_acosh_cosh` − `f_add_acosh` | 2, 4 |  |
@@ -376,6 +376,18 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
   equality and infinity guards, the short-circuit savings, and the implementation's
   weak-test respelling (which multiplies twice where the formula's max-then-multiply does
   once).
+- **The float classifiers**, each priced as the FP-canonical form of the question it asks:
+  `math.isnan` → COMP (`x != x`), `math.isinf` → ABS + COMP (`|x| = ∞`), `math.isfinite` →
+  ABS + COMP (`|x| < ∞`), `math.isnormal` → ABS + 2 COMP (`DBL_MIN ≤ |x| ≤ DBL_MAX`),
+  `math.issubnormal` → ABS + 2 COMP (`0 < |x| < DBL_MIN`), `math.signbit` → COMP — its only
+  faithful float spelling, `copysign(1.0, x) < 0.0`, needs the copysign solely to make
+  `-0.0`'s sign visible to a comparison; that is machinery of the *spelling*, not work the
+  operation does, so only the bool-exit compare is priced. The canonical form is priced whatever integer-domain
+  lowering a compiler picks, as everywhere in the domain: `math.isfinite` compiles to pure
+  integer tests on both priced architectures and counts ABS + COMP all the same. Stated gap
+  for the two range predicates: the price is fixed per call because the port is branchless,
+  so it exceeds what the equivalent Python spelling counts on the inputs where a chained
+  comparison short-circuits (zeros, subnormals, NaN).
 
 `math.dist` and n-ary `math.hypot` are *not* decompositions: they count the dedicated
 `DIST` + (n−2) `DIST_XARG` and `HYPOT` + (n−2) `HYPOT_XARG` types, measured on the real
