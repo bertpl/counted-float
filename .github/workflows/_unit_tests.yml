@@ -54,15 +54,11 @@ jobs:
           include_all_extra_deps: ${{ matrix.all_extras }}
           coverage: "true"  # each combo uploads its data; the coverage job unions + gates
 
-  # The upcoming CPython, gating like every other leg: a base install on the next minor, so an
-  # incompatible pre-release -- most acutely a new `math` function the patching partition does not
-  # classify -- fails here months before that Python ships, instead of on users at release.
-  # The interpreter is pinned to one exact pre-release build. A floating request re-resolves to
-  # whatever upstream published overnight, so a regression there would redden PRs that have nothing
-  # to do with it; a pin confines that breakage to the commit that moves the pin. Move it as each
-  # rc lands, and fold this job into the matrix above once the version is released -- classifiers
-  # and .python-versions stay untouched until then, since testing a version is not supporting it.
-  # Base install because numba wheels trail new CPythons by months.
+  # The upcoming CPython, gating like every other leg: an incompatible pre-release -- most acutely
+  # a new `math` function the patching partition does not classify -- fails here months before it
+  # ships. Pinned to one exact build, so upstream breakage can only arrive in the commit that moves
+  # the pin; bump it as each rc lands, and fold the job into the matrix at release. Base install
+  # (numba wheels trail new CPythons); classifiers and .python-versions wait until 3.15 is supported.
   python_next:
     name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm
     runs-on: ubuntu-24.04-arm
