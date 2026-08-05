@@ -37,6 +37,7 @@ nav:
   - Benchmarking: benchmarking.md
   - CLI reference: cli.md
   - Known limitations: known_limitations.md
+  - Deprecations: deprecations.md
   - Reference:
       - FLOP types: flop_types.md
       - Built-in data: builtin_data.md
