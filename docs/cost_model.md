@@ -138,12 +138,6 @@ text) and `as_integer_ratio()` (a bit-field read plus an integer shift) count no
 it — carries a benchmarked weight: the boundary is the *domain of the operation*, not
 whether its machine code looks like manipulation or computation.
 
-Within the domain, the same boundary cuts once more: priced is the work the operation does,
-never machinery a float-only *spelling* of it would need. `math.signbit` counts the single
-test its question is (COMP), not the `copysign(1.0, x) < 0.0` contortion that smuggles
-`-0.0`'s sign into comparable form — a spelling the [author](#convention-2-two-actors-build-the-port)
-would never write, having C's `signbit` to hand.
-
 The same precondition places Python's other numeric types outside the model:
 `decimal.Decimal` and `fractions.Fraction` are software towers a compiled port has no
 counterpart for, so nothing about them is priced. Converting one into the counting model
@@ -266,10 +260,6 @@ operation's documented defining formula instead.**
 - **3.1** ***(procedure)*** — the formula is **transcribed symbol by symbol** into FlopTypes, each
   occurrence priced exactly once: `|·|` → ABS, `max`/`min` → COMP (the model's price for
   them everywhere), arithmetic and comparisons → their types.
-    - The price is shared, the operation is not: `math.fmax` / `math.fmin` are a different
-      value function from the builtins — they return the non-NaN operand where `max`/`min`
-      propagate the NaN — and are priced COMP as the compare-and-select a port emits, not
-      as a spelling of the builtins.
     - A formula contains no guards, no short-circuits and no adaptive machinery, so none
       are priced — the transcription is fixed per call *by construction*, charged
       whatever branch the implementation actually takes, and unconditioned on argument
@@ -324,7 +314,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`ATAN2`](machine_code/atan2.md) | `f_add_atan2` − `f_add` | 2, 4 |  |
 | [`ATANH`](machine_code/atanh.md) | `f_add_halfsin_atanh` − `f_add_halfsin` | 2 |  |
 | [`CBRT`](machine_code/cbrt.md) | `f_add_cbrt` − `f_add` | 2 | numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, so the probe calls libm through a ctypes binding -- the bare call CPython executes |
-| [`COMP`](machine_code/comp.md) | `f_lte_addsub` − `f_add` | 1 | the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices compare-and-select machinery, matching what float comparisons cost in optimized code |
+| [`COMP`](machine_code/comp.md) | `f_lte_addsub` − `f_add` | 1 | the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices compare-and-select machinery, matching what float comparisons cost in optimized code. `math.fmax`/`fmin` reuse this weight: their port -- the IEEE max/min instruction (ARM's `fmaxnm`/`fminnm`) -- is one instruction of the same compare-select class, the same reuse as `math.fabs` -> ABS. They stay a different value function from the builtin `min`/`max` (NaN-quieting selection vs a comparison chain returning whichever operand survives, order-dependent under NaN): shared machinery, and so a shared price, not shared semantics |
 | [`COPYSIGN`](machine_code/copysign.md) | `f_add_copysign` − `f_add` | 1 |  |
 | [`COS`](machine_code/cos.md) | `f_add_cos` − `f_add` | 2, 4 |  |
 | [`COSH`](machine_code/cosh.md) | `f_add_acosh_cosh` − `f_add_acosh` | 2, 4 |  |
@@ -389,9 +379,10 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
 - **The float classifiers**, each priced as the FP-canonical form of the question it asks:
   `math.isnan` → COMP (`x != x`), `math.isinf` → ABS + COMP (`|x| = ∞`), `math.isfinite` →
   ABS + COMP (`|x| < ∞`), `math.isnormal` → ABS + 2 COMP (`DBL_MIN ≤ |x| ≤ DBL_MAX`),
-  `math.issubnormal` → ABS + 2 COMP (`0 < |x| < DBL_MIN`), `math.signbit` → COMP (no FP form
-  to transcribe — see [What the model prices](#what-the-model-prices) — so only the exit
-  every classifier pays for its `bool`). The canonical form is priced whatever integer-domain
+  `math.issubnormal` → ABS + 2 COMP (`0 < |x| < DBL_MIN`), `math.signbit` → COMP — its only
+  faithful float spelling, `copysign(1.0, x) < 0.0`, needs the copysign solely to make
+  `-0.0`'s sign visible to a comparison; that is machinery of the *spelling*, not work the
+  operation does, so only the bool-exit compare is priced. The canonical form is priced whatever integer-domain
   lowering a compiler picks, as everywhere in the domain: `math.isfinite` compiles to pure
   integer tests on both priced architectures and counts ABS + COMP all the same. Stated gap
   for the two range predicates: the price is fixed per call because the port is branchless,

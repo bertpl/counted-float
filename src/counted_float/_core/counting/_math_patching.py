@@ -799,11 +799,12 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
 def math_fmax(x: float, y: float, /) -> float | CountedFloat:
     """Patch math.fmax: stdlib contract (NaN-quieting maximum), counted as one COMP.
 
-    A port selects the larger operand, which is the compare-and-select machinery the COMP
-    weight measures -- the price the model gives `min`/`max` everywhere. The two are different
-    value functions all the same: `math.fmax` returns the non-NaN operand where the builtin
-    `max` propagates the NaN, and they merely share the price. Stated gap: that NaN-quieting
-    clause is a guard, and guards go unpriced, so one COMP is charged on every regime.
+    A port emits the IEEE max instruction (ARM's `fmaxnm`) -- one instruction of the same
+    compare-select class the COMP weight measures, so the weight is reused, as `math.fabs`
+    reuses ABS. The builtin `max` shares that price while being a different value function:
+    a comparison chain returning whichever operand survives, order-dependent under NaN,
+    where fmax is the NaN-quieting selection. Stated gap: the NaN-quieting clause is a
+    guard, and guards go unpriced, so one COMP is charged on every regime.
 
     No constant fold applies at any operand value. The candidates all fail the sign- and
     nan-exactness test: `fmax(x, -inf)` is `x` for every x except a NaN, where it is `-inf`,

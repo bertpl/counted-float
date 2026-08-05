@@ -124,7 +124,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
       isolate the sign of `y`, merge)
 - **Counted Python operations:** `math.copysign(x, y)` where `x` or `y` is a `CountedFloat`
   (and only there — `math.signbit`, which reads the same bit, counts COMP instead: see
-  [what the model prices](cost_model.md#what-the-model-prices))
+  [the decomposed operations](cost_model.md#decomposed-operations))
 - **Not counted:** copysign on non-CountedFloat, numpy copysign
 - **Note:** same sign-bit instruction class as ABS and MINUS, but 1–3 ops depending on
   architecture — which is why it is measured as its own benchmarked flop type rather than
