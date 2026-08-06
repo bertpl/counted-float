@@ -213,7 +213,7 @@ def test_flop_weights_as_geo_mean(sample_flop_weights_dict_by_enum, fill_missing
 
 @pytest.mark.parametrize("rounding_mode", [None, "nearest_int", "10%"])
 @pytest.mark.parametrize("key_filter", ["", "benchmark", "spec"])
-def test_flop_weights_show(key_filter: str, rounding_mode: None | str):
+def test_flop_weights_show(key_filter: str, rounding_mode: str | None):
     # make sure FlopWeights.show() doesn't raise exceptions, for int/float and with/without nan values
 
     # --- arrange -----------------------------------------

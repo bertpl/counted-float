@@ -8,7 +8,7 @@ from counted_float._core.models import FlopWeights
 # =================================================================================================
 #  Public accessors
 # =================================================================================================
-def get_default_consensus_flop_weights(rounding_mode: None | Literal["nearest_int", "10%"] = "10%") -> FlopWeights:
+def get_default_consensus_flop_weights(rounding_mode: Literal["nearest_int", "10%"] | None = "10%") -> FlopWeights:
     """Get the default CONSENSUS flop weights.
 
     Computed as the geo-mean of the unrounded empirical and theoretical weights, rounded to the nearest integer.
@@ -19,7 +19,7 @@ def get_default_consensus_flop_weights(rounding_mode: None | Literal["nearest_in
 
 def get_builtin_flop_weights(
     key_filter: str = "",
-    rounding_mode: None | Literal["nearest_int", "10%"] = "10%",
+    rounding_mode: Literal["nearest_int", "10%"] | None = "10%",
 ) -> FlopWeights:
     """Get built-in flop weights estimated from built-in benchmark results and/or instruction latency analyses.
 
@@ -42,7 +42,7 @@ def get_builtin_flop_weights(
 @cache
 def _get_builtin_flop_weights_cached(
     key_filter: str,
-    rounding_mode: None | Literal["nearest_int", "10%"],
+    rounding_mode: Literal["nearest_int", "10%"] | None,
 ) -> FlopWeights:
     weights = BuiltInData.get_flop_weights(key_filter=key_filter)
     if rounding_mode is not None:
