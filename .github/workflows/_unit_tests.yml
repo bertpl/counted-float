@@ -72,10 +72,10 @@ jobs:
       # uv never auto-downloads a pre-release for a bare version request, so the shared action
       # below can only resolve this interpreter once it is already installed
       - name: Install the pinned pre-release interpreter
-        run: uv python install 3.15.0b4
+        run: uv python install 3.15.0rc1
       - uses: ./.github/actions/unit_test
         with:
-          python_version: "3.15.0b4"
+          python_version: "3.15.0rc1"
           include_all_extra_deps: "false"
           coverage: "true"
 
