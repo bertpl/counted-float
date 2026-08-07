@@ -28,7 +28,7 @@ from counted_float._core.utils import round_number
 )
 @pytest.mark.parametrize("negative", [False, True])
 def test_round_number(
-    value: float, mode: None | Literal["nearest_int", "10%"], expected_value: int | float, negative: bool
+    value: float, mode: Literal["nearest_int", "10%"] | None, expected_value: int | float, negative: bool
 ):
     # --- arrange -----------------------------------------
     if negative:

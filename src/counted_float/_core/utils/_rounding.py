@@ -36,7 +36,7 @@ __ALLOWED_10PERC_ROUNDING_VALUES = [
 ]
 
 
-def round_number(value: float, mode: None | Literal["nearest_int", "10%"]) -> float:
+def round_number(value: float, mode: Literal["nearest_int", "10%"] | None) -> float:
     """Round a floating point number according to the specified mode.
 
     None            -> no rounding, value is returned as is

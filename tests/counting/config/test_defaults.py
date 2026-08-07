@@ -7,7 +7,7 @@ from counted_float._core.models import FlopType, FlopWeights
 
 
 @pytest.mark.parametrize("rounding_mode", [None, "nearest_int", "10%"])
-def test_default_flop_weights(rounding_mode: None | str):
+def test_default_flop_weights(rounding_mode: str | None):
     # --- act ---------------------------------------------
     flop_weights = get_default_consensus_flop_weights(rounding_mode=rounding_mode)
 
