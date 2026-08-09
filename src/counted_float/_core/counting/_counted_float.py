@@ -83,7 +83,7 @@ def count_div_with_constant_divisor(divisor: float) -> None:
         cnt: CountsTarget = _create_thread_state()
     if divisor == -1.0:
         # x / -1.0 is exactly -x, so the port emits a bare sign flip -- the reciprocal-multiply
-        # branch below would otherwise price it as MUL (cost-model rule 1)
+        # branch below would otherwise price it as MUL (rule 1 - identity-folds-are-sign-exact)
         cnt.note("constant divisor -1.0 -> sign flip")
         cnt.MINUS += 1
         return
@@ -101,7 +101,7 @@ def count_div_with_constant_divisor(divisor: float) -> None:
 def count_mul_with_identity_multiplier(multiplier: float) -> None:
     """Register the flops for ``x * multiplier`` where the constant is ``1.0`` or ``-1.0``.
 
-    The sign-exact identity folds of cost-model rule 1: multiplying by constant 1 folds away
+    The identity folds of rule 1 - identity-folds-are-sign-exact: multiplying by constant 1 folds away
     entirely (a compiled port emits no instruction), multiplying by constant -1 reduces to a bare
     sign flip and counts MINUS. Callers pre-check the multiplier, so any other value is a bug.
     """
@@ -438,7 +438,7 @@ class CountedFloat(float):
         """x+other.
 
         A constant (non-CountedFloat) addend of -0.0 folds away: x + (-0.0) is x for every x,
-        so a compiled port emits nothing (cost-model rule 1). A +0.0 addend does NOT fold
+        so a compiled port emits nothing (rule 1 - identity-folds-are-sign-exact). A +0.0 addend does NOT fold
         ((-0.0) + 0.0 is +0.0) and counts ADD like any other.
         """
         result = float.__add__(self, other)
@@ -469,7 +469,7 @@ class CountedFloat(float):
         """x-other.
 
         A constant (non-CountedFloat) subtrahend of +0.0 folds away: x - 0.0 is x for every x
-        (cost-model rule 1). A -0.0 subtrahend does NOT fold (x - (-0.0) is x + 0.0) and
+        (rule 1 - identity-folds-are-sign-exact). A -0.0 subtrahend does NOT fold (x - (-0.0) is x + 0.0) and
         counts SUB like any other.
         """
         result = float.__sub__(self, other)
@@ -487,7 +487,7 @@ class CountedFloat(float):
         """other-x.
 
         A constant minuend of -0.0 is a bare sign flip: (-0.0) - x is exactly -x for every x,
-        so it counts MINUS (cost-model rule 1). A +0.0 minuend is NOT a sign flip
+        so it counts MINUS (rule 1 - identity-folds-are-sign-exact). A +0.0 minuend is NOT a sign flip
         (0.0 - 0.0 is +0.0, where -x would be -0.0) and counts SUB like any other.
         """
         result = float.__rsub__(self, other)
@@ -511,7 +511,7 @@ class CountedFloat(float):
         """x*other.
 
         A constant (non-CountedFloat) multiplier of 1.0 folds away and -1.0 is a bare sign
-        flip counting MINUS — see count_mul_with_identity_multiplier (cost-model rule 1).
+        flip counting MINUS — see count_mul_with_identity_multiplier (rule 1 - identity-folds-are-sign-exact).
         Every other multiplier counts MUL.
         """
         result = float.__mul__(self, other)

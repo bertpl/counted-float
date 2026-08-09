@@ -36,7 +36,14 @@ A `CountedFloat` exponent is runtime input, not a constant, so no rung of the la
 - **the same argument would zero out rule 1's prices for the whole sign family**: `fabs` compiles to an and-mask, unary minus to an xor, `copysign` to two bitwise ops;
 - **identical questions would price differently by spelling**: `math.isnan(x)` free, while `x != x` — the same question written as an operator — unavoidably counts COMP.
 
-**Interpretation.** Classifiers are priced as value-level float operations — the boundary drawn in *What the model prices*, the same one that gives `math.copysign` its benchmarked weight — on the floating-point canonical form of the question each asks, whatever lowering a particular compiler picks: `isnan` → COMP (`x != x`), `isinf` → ABS + COMP (`|x| = ∞`), `isfinite` → ABS + COMP (`|x| < ∞`), `isnormal` / `issubnormal` → ABS + 2 COMP (two bounds on one magnitude). `signbit` is the one classifier whose question has no floating-point formula — `x < 0.0` is not it (`signbit(-0.0)` is `True` where `-0.0 < 0.0` is `False`), and the faithful `copysign(1.0, x) < 0.0` needs its copysign solely to make the sign visible to a comparison — so it charges only the bool-exit compare every classifier's question ends in: one COMP, the spelling's copysign unpriced.
+**Interpretation.** Classifiers are priced as value-level float operations — the boundary drawn in *What the model prices*, the same one that gives `math.copysign` its benchmarked weight — on the floating-point canonical form of the question each asks, whatever lowering a particular compiler picks:
+
+- `isnan` → COMP, the self-compare `x != x`;
+- `isinf` → ABS + COMP, the test `|x| = ∞`;
+- `isfinite` → ABS + COMP, the test `|x| < ∞`;
+- `isnormal` and `issubnormal` → ABS + 2 COMP, two bounds on one magnitude.
+
+`signbit` is the one classifier whose question has no floating-point formula — `x < 0.0` is not it (`signbit(-0.0)` is `True` where `-0.0 < 0.0` is `False`), and the faithful `copysign(1.0, x) < 0.0` needs its copysign solely to make the sign visible to a comparison — so it charges only the bool-exit compare every classifier's question ends in: one COMP, the spelling's copysign unpriced.
 
 **Why.** A zero price fails both ways the tension names, and it under-states real cost: extracting a bool from a float value crosses from the FP register file to flags at latencies in the compare-and-select class — exactly the machinery the COMP weight measures (on x86, `isnan` typically compiles to the FP self-compare itself). Pricing the canonical question keeps one price per operation across spellings and architectures; pricing signbit's copysign would charge for how its question must be phrased in float arithmetic, not for what it asks. The fixed per-call price of the two range predicates (`isnormal`, `issubnormal`) over-charges inputs where a chained Python spelling would short-circuit — that gap is owned by [formula-price-is-fixed](#formula-price-is-fixed).
 
@@ -54,9 +61,33 @@ EXP10 still exists as its own flop type — rather than the call simply counting
 
 **Tension.** `math.log(x, c)` with a constant base: the port computes `log(x) / log(c)`, and `log(c)` folding to a compile-time constant is the two actors doing their ordinary work — no interpretation needed there. The open question is the division that remains: rewriting `log(x) / LOG_C` into `log(x) * (1/LOG_C)` is **not** bit-exact (`1/log(c)` is almost never exactly representable), so the compiler stage is forbidden from making that rewrite — by exactly the rule [reciprocal-exactness-bound](#reciprocal-exactness-bound) states. LOG + DIV and LOG + MUL are both defensible ports.
 
-**Interpretation.** The author writes the multiply form: precompute `C = 1/log(c)` at build time, emit `log(x) * C` — LOG + MUL. The form presupposes that `C` exists: a base of exactly `1.0` has `log(c) = 0` and no reciprocal, and CPython raises before completing the call, so nothing is counted there. The folded constant is then an ordinary constant multiplier, so the `±1.0` folds apply to it: `C` exactly `1.0` (base `e`) drops the multiply — LOG alone; `C` exactly `-1.0` (base `1/e`) becomes a sign flip — LOG + MINUS. Constant bases 2 and 10 skip the division entirely: the port calls `log2` / `log10` directly. A *counted* base is runtime input: LOG per counted operand plus DIV — a runtime reciprocal would itself cost the division it saves.
+**Interpretation.** The author writes the multiply form: precompute `C = 1/log(c)` at build time, emit `log(x) * C` — LOG + MUL. The folded constant is then an ordinary constant multiplier, so the `±1.0` folds apply to it:
+
+- constant base 2 or 10 → LOG2 / LOG10: the port calls those directly, skipping the division;
+- base `e`, where `C` is exactly `1.0` → LOG alone, the multiply folding away;
+- base `1/e`, where `C` is exactly `-1.0` → LOG + MINUS;
+- any other constant base → LOG + MUL;
+- a *counted* base → LOG per counted operand plus DIV, a runtime reciprocal costing the division it would save.
+
+The form presupposes that `C` exists: a base of exactly `1.0` has `log(c) = 0` and no reciprocal, and CPython raises before completing the call, so nothing is counted there.
 
 **Why.** A declared author decision, on the same footing as the exponent chain: precomputing the inverse log of a constant base and multiplying per element is how performance-conscious C genuinely writes repeated base-`c` logarithms. It is deliberately *not* the compiler-stage reciprocal fold — that one stays bit-exact and power-of-two-only ([reciprocal-exactness-bound](#reciprocal-exactness-bound)); this one is the author trading last-bit identity for a multiply, declared here.
+
+## identity-folds-are-sign-exact
+
+**Tension.** Rule 1 admits every bit-exact rewrite, which sorts the constant-operand identities into three groups — but which group a case lands in is not visible from the expression. `x + 0.0` and `x + (-0.0)` look like one fold, as do `x * 1.0` and `x * -1.0`, and a reader applying the test by eye will either fold all of them or none.
+
+**Interpretation.** Signed zero decides every case, and the three groups are:
+
+| Expression (constant operand) | Counts | Why |
+|---|---|---|
+| `x * 1.0` · `x - 0.0` · `x + (-0.0)` | nothing | each is exactly `x` for every `x`, `-0.0` included |
+| `x * -1.0` · `x / -1.0` · `(-0.0) - x` | MINUS | exactly `-x` for every `x`, so the port emits a bare sign flip |
+| `x + 0.0` · `x - (-0.0)` · `0.0 - x` | ADD · SUB · SUB | value-changing at `x = -0.0`, where each gives `+0.0` |
+
+The same folds reach the constant-operand steps of a decomposition: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns it into MINUS. Division by other constants is [reciprocal-exactness-bound](#reciprocal-exactness-bound)'s; the exponent and log ladders are their own entries.
+
+**Why.** The bit-exactness test is sharp rather than approximate, and at these operands the whole question is a single zero's sign: `-0.0 + 0.0` is `+0.0`, so folding `x + 0.0` to `x` would change a result the port must reproduce, while `x + (-0.0)` changes nothing for any `x`. The sign-flip group survives the same test on the NaN-sign calibration the rules page states — the sign of an arithmetic NaN is unspecified, so it is not a value the rewrite has to preserve.
 
 ## reciprocal-exactness-bound
 

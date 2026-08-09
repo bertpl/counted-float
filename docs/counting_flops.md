@@ -80,9 +80,6 @@ patched `math` functions:
 
    | Expression (constant `c`) | Counts |
    |---|---|
-   | `x * 1.0` · `x - 0.0` · `x + (-0.0)` | nothing — each is exactly `x` for every `x`, signed zeros included |
-   | `x * -1.0` · `x / -1.0` · `(-0.0) - x` | MINUS — a bare sign flip |
-   | `x + 0.0` · `x - (-0.0)` · `0.0 - x` | ADD · SUB · SUB — the near-misses: a signed zero makes each one value-changing (`-0.0 + 0.0` is `+0.0`) |
    | `x ** 2` (or `2.0`) | MUL |
    | `x ** n`, integer 2 ≤ \|n\| ≤ 16 | square-and-multiply MULs (`x**3` → 2 MUL, `x**8` → 3 MUL); negative `n` adds one DIV |
    | `x ** -1` | DIV (reciprocal) |
