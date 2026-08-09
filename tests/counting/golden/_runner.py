@@ -30,7 +30,7 @@ def gate_reason(requires: str | None) -> str | None:
 
 @dataclass(frozen=True)
 class ProbeRun:
-    """Counts and per-execution outcomes of running a probe `reps` times in one context."""
+    """A ProbeRun holds the counts and per-execution outcomes of one repeated probe run."""
 
     counts: dict[str, int]
     outcomes: list[object]
@@ -39,8 +39,8 @@ class ProbeRun:
 def run_probe(row: GoldenRow, number_type: type, reps: int) -> ProbeRun:
     """Execute a row's probe `reps` times inside one fresh counting context.
 
-    Asserts the context opens at zero counts — the suite-wide net against state leaking
-    from a previous probe. Each execution's outcome is captured comparably (see
+    Asserts the context opens at zero counts, so state leaking from a previous probe is
+    caught before it can hide in this row's counts. Each execution's outcome is captured comparably (see
     `comparable_outcome`); a raising execution records its exception type.
     """
     outcomes: list[object] = []

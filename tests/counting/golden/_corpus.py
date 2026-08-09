@@ -1,4 +1,4 @@
-"""The complete golden counting corpus: all sections aggregated, with unique probe IDs."""
+"""This module aggregates all corpus sections and asserts probe IDs are unique."""
 
 from ._corpus_regimes import ROWS as _REGIME_ROWS
 from ._corpus_subcases import ROWS as _SUBCASE_ROWS

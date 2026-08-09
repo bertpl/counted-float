@@ -31,14 +31,14 @@ I_LOOPS = "interp:loops-do-not-fold"
 
 @dataclass(frozen=True)
 class GoldenRow:
-    """One executable counting decision of the reference corpus.
+    """A GoldenRow records one executable counting decision of the reference corpus.
 
     Args:
         row_id: Frozen decision-row ID; several probes may share one ID when they pin the
             same decision from different angles.
         label: Short unique probe description; `row_id` + `label` form the test ID.
         probe: Runs the snippet once. Receives the number type to build values with —
-            `CountedFloat` for the counted run, `float` for the plain twin — so both runs
+            `CountedFloat` for the counted run, `float` for the plain run — so both runs
             execute the identical snippet.
         counts: Expected flop counts of one counted execution, keyed by `FlopType.value`,
             zero-count types omitted. The golden test asserts full-dict equality, so an

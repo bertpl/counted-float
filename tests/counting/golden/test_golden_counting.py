@@ -1,7 +1,7 @@
 """One parametrized test drives the whole corpus, asserting each row from every angle.
 
-- **counts** — exact full-dict equality at 1x, and linear scaling at 2x and 5x repetitions
-  in one context, so a counter that accumulates wrongly (or not at all) fails visibly;
+- **counts** — exact full-dict equality at one repetition, and linear scaling at each
+  higher count in `_REPETITIONS`, so a counter that accumulates wrongly fails visibly;
 - **result shape** — exact result types, on every repetition;
 - **the plain twin** — the identical snippet on plain floats counts nothing and produces a
   bit-identical outcome, so counting never changes a value and a snippet with no counted
@@ -30,7 +30,7 @@ def test_golden_counting(row: GoldenRow) -> None:
     if reason := gate_reason(row.requires):
         pytest.skip(reason)
 
-    # --- counted runs at 1x / 2x / 5x -----------
+    # --- counted runs per repetition count ------
     baseline = None
     for reps in _REPETITIONS:
         run = run_probe(row, CountedFloat, reps)
