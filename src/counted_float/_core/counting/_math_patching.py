@@ -355,7 +355,7 @@ def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
       - two constant multiplicands -> their product folds, leaving a compiled port with a bare
                                       add on the remaining runtime value -> ADD; a product of
                                       exactly -0.0 folds the add away too (z + (-0.0) is z for
-                                      every z -- cost-model rule 1.7) and counts nothing, where
+                                      every z -- rule 1 - fma-stays-as-written) and counts nothing, where
                                       a +0.0 product keeps the ADD ((-0.0) + 0.0 is +0.0)
       - any other counted operand  -> the port emits one fused instruction -> FMA
     Once an fma survives, constant *values* are never inspected: the explicit call is the author
@@ -715,7 +715,7 @@ def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | Coun
     Counts n-1 MUL for n elements, and n when `start` is a CountedFloat (a runtime value, so
     its multiply is real) or differs from 1: a port seeds its accumulator from the first
     element, so only a start the port cannot fold opens the loop with a multiply. No element
-    folds, unlike the constant folds of cost-model rule 1.7 (docs/cost_model.md).
+    folds, unlike the constant folds of rule 1 -- see loops-do-not-fold in docs/cost_model_interpretations.md.
 
     Inputs without any CountedFloat are delegated wholesale, preserving int-exactness.
     """
@@ -742,8 +742,8 @@ def math_fsum(seq: Iterable[float]) -> float | CountedFloat:
 
     Counts the mathematical reduction, knowingly under-counting fsum's compensation machinery:
     the exact-summation partials grow and shrink with the data, so the real cost has no per-call
-    constant to price -- the input-dependent-cost fallback in the cost-model docs
-    (docs/cost_model.md). A prototype that wants compensation costed can write Kahan out in
+    constant to price -- cost-model rule 3, input-dependent cost
+    (docs/cost_model_rules.md). A prototype that wants compensation costed can write Kahan out in
     operators and have it counted exactly. The value is computed by the original, so fsum's
     exactness is untouched.
     """

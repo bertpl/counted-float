@@ -24,7 +24,7 @@ counted region.
 
 ## Constant folding keys on the operand's value, not on it being a literal
 
-The [cost model](cost_model.md) presents a plain `float` operand as a
+The [cost model](cost_model_rules.md) presents a plain `float` operand as a
 compile-time [constant](glossary.md#constant) — something the imaginary
 compiled program knows while being compiled. The implementation cannot see the
 source, so it applies that rule to the operand's **runtime value**: any plain
@@ -91,7 +91,7 @@ Two fixes, each with its own reach:
   accumulator, so every later operation has a counted operand and counts, even
   over otherwise-plain data. Elements that fold against that accumulator are
   still dropped, by the identity folds of
-  [the cost model](cost_model.md#the-rules) as everywhere else — a `-0.0` added
+  [the cost model](cost_model_rules.md#the-rules) as everywhere else — a `-0.0` added
   or a `1.0` multiplied costs nothing.
 
 Neither fix reaches `min` and `max`: they take no `start`, and seeding a loop
@@ -111,7 +111,7 @@ remaining comparisons stop counting.
   [watching what gets counted](counting_flops.md#watching-what-gets-counted)
 - operator-level fused multiply-add is not modeled: `a*b + c` counts as separate
   MUL + ADD, matching the contraction-off reference semantics the
-  [cost model](cost_model.md) pins. Real builds routinely contract: on aarch64,
+  [cost model](cost_model_rules.md) pins. Real builds routinely contract: on aarch64,
   FP contraction is the compiler *default* at plain `-O2` (no fast-math flag
   involved), and x86 FMA3 targets fuse under the same defaults — so on such
   builds, flop counts over-estimate fusable multiply-add sequences (dot

@@ -43,7 +43,10 @@ nav:
       - Built-in data: builtin_data.md
       - Methodology: analysis_methodology.md
       - CPU architecture scope: cpu_architectures_scope.md
-      - Cost-model principles: cost_model.md
+      - Cost model:
+          - Rules: cost_model_rules.md
+          - Interpretations: cost_model_interpretations.md
+          - Per-type pricing: cost_model_pricing.md
       - Benchmark machine code:
           - Overview: machine_code/index.md
           - ABS: machine_code/abs.md

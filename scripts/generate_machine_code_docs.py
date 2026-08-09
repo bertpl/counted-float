@@ -211,7 +211,7 @@ class MachineCodePage:
 
 
 # The overview page's grouping buckets, in display order, and the cost-model rule each one
-# defaults to (see docs/cost_model.md for the rules' statements).
+# defaults to (see docs/cost_model_rules.md for the rules' statements).
 KIND_HARDWARE = "Hardware instructions"
 KIND_LIBM = "Library calls (libm)"
 KIND_ARITY = "Arity-scaled algorithms"
@@ -231,6 +231,7 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_lte_addsub",
         rationale=(
+            "rule 2 · fmax-shares-comp-weight, rule 3 · classifiers-price-their-question: "
             "the subtrahend is the ADD/SUB average, and the branchy source compiles branchless -- the weight prices "
             "compare-and-select machinery, matching what float comparisons cost in optimized code. "
             "`math.fmax`/`fmin` reuse this weight: their port -- the IEEE max/min instruction (ARM's "
@@ -242,7 +243,13 @@ PAGES: list[MachineCodePage] = [
     ),
     MachineCodePage("copysign", kind=KIND_HARDWARE, base_probe="f_add", extended_probe="f_add_copysign"),
     MachineCodePage("div", kind=KIND_HARDWARE, base_probe="f_div", extended_probe="f_div_div"),
-    MachineCodePage("fma", kind=KIND_HARDWARE, base_probe="f_fma", extended_probe="f_fma_fma"),
+    MachineCodePage(
+        "fma",
+        kind=KIND_HARDWARE,
+        base_probe="f_fma",
+        extended_probe="f_fma_fma",
+        rationale="rule 1 · fma-stays-as-written: the one fusion observable from Python, so the one that is counted",
+    ),
     MachineCodePage("minus", kind=KIND_HARDWARE, base_probe="f_add", extended_probe="f_add_minus"),
     MachineCodePage("mul", kind=KIND_HARDWARE, base_probe="f_mul", extended_probe="f_mul_mul"),
     MachineCodePage("rnd", kind=KIND_HARDWARE, base_probe="f_add", extended_probe="f_add_round"),
@@ -262,7 +269,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_add_cbrt",
         rationale=(
-            "numba's `np.cbrt` wraps the libm call in NaN/sign handling CPython's `math.cbrt` never executes, "
+            "rule 2 · measurement-fallbacks: numba's `np.cbrt` wraps the libm call in NaN/sign handling "
+            "CPython's `math.cbrt` never executes, "
             "so the probe calls libm through a ctypes binding -- the bare call CPython executes"
         ),
     ),
@@ -279,7 +287,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add_log2",
         extended_probe="f_add_log2_exp2",
         rationale=(
-            "`2 ** x` strength-reduces here because a standard-C port emits C99 `exp2`; the weight is measured on the "
+            "rule 2 · exp10-is-pow: `2 ** x` strength-reduces here because a standard-C port emits C99 `exp2`; "
+            "the weight is measured on the "
             "real `exp2` call"
         ),
     ),
@@ -289,7 +298,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add_log10",
         extended_probe="f_add_log10_exp10",
         rationale=(
-            "`10 ** x` cannot strength-reduce to an `exp10` call -- `exp10` is not standard C -- so a port emits "
+            "rule 2 · exp10-is-pow: `10 ** x` cannot strength-reduce to an `exp10` call -- `exp10` is not standard C "
+            "-- so a port emits "
             "`pow(10, x)`, and that is exactly what the weight measures"
         ),
     ),
@@ -302,7 +312,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_add_hypot",
         rationale=(
-            "the 2-argument base weight is the real libm call; the hand-rolled scaled probes only supply the per- "
+            "rule 2 · measurement-fallbacks: the 2-argument base weight is the real libm call; the hand-rolled "
+            "scaled probes only supply the per- "
             "extra-coordinate slope, validated against this base (within ~10%)"
         ),
     ),
@@ -318,7 +329,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_add_remainder",
         rationale=(
-            "numba has no `math.remainder`, so the probe calls libm through a ctypes binding -- still the bare call "
+            "rule 2 · measurement-fallbacks: numba has no `math.remainder`, so the probe calls libm through a ctypes "
+            "binding -- still the bare call "
             "CPython executes"
         ),
         range_sensitive=True,
@@ -336,7 +348,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_add_dist2",
         rationale=(
-            "hand-rolled overflow-safe port (no libm `dist` exists); prices the scaled algorithm `math.dist` executes, "
+            "rule 2 · measurement-fallbacks: hand-rolled overflow-safe port (no libm `dist` exists); prices the "
+            "scaled algorithm `math.dist` executes, "
             "not a naive sum of squares"
         ),
     ),
@@ -354,7 +367,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add",
         extended_probe="f_add_sumprod2",
         rationale=(
-            "faithful port of CPython's extended-precision (TripleLength) accumulation, error terms emitted "
+            "rule 2 · measurement-fallbacks: faithful port of CPython's extended-precision (TripleLength) "
+            "accumulation, error terms emitted "
             "through the llvm.fma intrinsic; the 2-element base includes the close-out"
         ),
     ),
@@ -372,7 +386,8 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add_hypot_scaled2",
         extended_probe="f_add_hypot_scaled8",
         rationale=(
-            "hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); deterministic per-coordinate cost, "
+            "rule 2 · measurement-fallbacks: hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); "
+            "deterministic per-coordinate cost, "
             "so rule 2 applies to the port"
         ),
         probe_span=6,
@@ -449,6 +464,20 @@ def render_page_list_block() -> str:
     return "\n".join(lines).rstrip()
 
 
+def link_interpretation_citations(text: str) -> str:
+    """Turn every `rule N · slug` citation in `text` into a link to that interpretation entry.
+
+    Applied to the rationale column rather than written into each rationale, so the citation form
+    stays the single thing an author has to get right and every entry becomes reachable in one
+    click. The slugs are frozen, so the anchor a citation resolves to cannot drift.
+    """
+    return re.sub(
+        r"(rule \d+ · )([a-z][a-z0-9-]*)",
+        r"\1[\2](cost_model_interpretations.md#\2)",
+        text,
+    )
+
+
 def render_cost_model_table() -> str:
     """The per-FlopType pricing table on the cost-model page, derived from the page registry.
 
@@ -464,7 +493,9 @@ def render_cost_model_table() -> str:
         difference = f"`{page.extended_probe}` − `{page.base_probe}`"
         measured_cell = difference if page.probe_span == 1 else f"({difference}) / {page.probe_span}"
         rule_cell = RULE_BY_KIND[page.kind] + (", 4" if page.range_sensitive else "")
-        rows.append(f"| {name_cell} | {measured_cell} | {rule_cell} | {page.rationale} |")
+        rows.append(
+            f"| {name_cell} | {measured_cell} | {rule_cell} | {link_interpretation_citations(page.rationale)} |"
+        )
     rows.append(
         "| `F2I` | *(no benchmark probe — priced from spec sheets and third-party tables)* | 1 | "
         "float→int conversion instruction of the port |"
@@ -502,9 +533,9 @@ def regenerate_pages() -> dict[Path, str]:
     regenerated[index_path] = rewrite_marked_blocks(
         read_lf(index_path), index_path, {"machine-code-page-list": render_page_list_block()}
     )
-    cost_model_path = REPO_ROOT / "docs" / "cost_model.md"
-    regenerated[cost_model_path] = rewrite_marked_blocks(
-        read_lf(cost_model_path), cost_model_path, {"cost-model-flop-type-table": render_cost_model_table()}
+    pricing_path = REPO_ROOT / "docs" / "cost_model_pricing.md"
+    regenerated[pricing_path] = rewrite_marked_blocks(
+        read_lf(pricing_path), pricing_path, {"cost-model-flop-type-table": render_cost_model_table()}
     )
     return regenerated
 

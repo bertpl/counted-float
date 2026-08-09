@@ -95,4 +95,4 @@ Each page closes with a short discussion walking through what the listings show:
 
 The listings are regenerated from the compiled probes and committed; the prose discussions are
 written against them. The rules governing *what* each probe pair measures — real call, port,
-or fallback — are stated in [Cost-model principles](../cost_model.md).
+or fallback — are stated in [Cost-model rules](../cost_model_rules.md).
