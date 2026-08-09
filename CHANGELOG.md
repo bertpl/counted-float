@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `math.prod` now counts (n−1) MUL for n elements — n when `start` is counted or differs from 1 — instead of folding constant elements away, matching the loop a compiled port executes; counts change wherever a plain float met a counted one, as an element or as the `start`
+- `math.prod` no longer keeps a partial count when an element raises: like every other counted call, it computes before it counts
+
 ### Deprecated
 
 ### Removed

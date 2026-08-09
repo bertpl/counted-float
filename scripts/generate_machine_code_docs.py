@@ -196,6 +196,9 @@ class MachineCodePage:
         range_sensitive: True where the benchmark's input range is load-bearing for the
             weight's validity (a why-comment in the benchmark source marks these); the
             cost-model table then lists rule 4 alongside the kind's default rule.
+        probe_span: Extra coordinates or elements the extended probe carries over the base
+            probe; a per-argument slope is their latency difference divided by that span. The
+            default applies where the probes differ by an operation rather than by arity.
     """
 
     doc_name: str
@@ -204,6 +207,7 @@ class MachineCodePage:
     extended_probe: str
     rationale: str = ""
     range_sensitive: bool = False
+    probe_span: int = 1
 
 
 # The overview page's grouping buckets, in display order, and the cost-model rule each one
@@ -342,6 +346,7 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add_dist2",
         extended_probe="f_add_dist8",
         rationale="per-extra-coordinate slope of the same overflow-safe port as `DIST`",
+        probe_span=6,
     ),
     MachineCodePage(
         "sumprod",
@@ -359,6 +364,7 @@ PAGES: list[MachineCodePage] = [
         base_probe="f_add_sumprod2",
         extended_probe="f_add_sumprod8",
         rationale="per-extra-element slope of the same TripleLength port as `SUMPROD`",
+        probe_span=6,
     ),
     MachineCodePage(
         "hypot_xarg",
@@ -369,6 +375,7 @@ PAGES: list[MachineCodePage] = [
             "hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); deterministic per-coordinate cost, "
             "so rule 2 applies to the port"
         ),
+        probe_span=6,
     ),
 ]
 
@@ -454,7 +461,8 @@ def render_cost_model_table() -> str:
     ]
     for page in sorted(PAGES, key=lambda entry: entry.doc_name):
         name_cell = f"[`{page.doc_name.upper()}`](machine_code/{page.doc_name}.md)"
-        measured_cell = f"`{page.extended_probe}` − `{page.base_probe}`"
+        difference = f"`{page.extended_probe}` − `{page.base_probe}`"
+        measured_cell = difference if page.probe_span == 1 else f"({difference}) / {page.probe_span}"
         rule_cell = RULE_BY_KIND[page.kind] + (", 4" if page.range_sensitive else "")
         rows.append(f"| {name_cell} | {measured_cell} | {rule_cell} | {page.rationale} |")
     rows.append(

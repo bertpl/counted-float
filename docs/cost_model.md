@@ -319,7 +319,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`COS`](machine_code/cos.md) | `f_add_cos` − `f_add` | 2, 4 |  |
 | [`COSH`](machine_code/cosh.md) | `f_add_acosh_cosh` − `f_add_acosh` | 2, 4 |  |
 | [`DIST`](machine_code/dist.md) | `f_add_dist2` − `f_add` | 2 | hand-rolled overflow-safe port (no libm `dist` exists); prices the scaled algorithm `math.dist` executes, not a naive sum of squares |
-| [`DIST_XARG`](machine_code/dist_xarg.md) | `f_add_dist8` − `f_add_dist2` | 2 | per-extra-coordinate slope of the same overflow-safe port as `DIST` |
+| [`DIST_XARG`](machine_code/dist_xarg.md) | (`f_add_dist8` − `f_add_dist2`) / 6 | 2 | per-extra-coordinate slope of the same overflow-safe port as `DIST` |
 | [`DIV`](machine_code/div.md) | `f_div_div` − `f_div` | 1 |  |
 | [`ERF`](machine_code/erf.md) | `f_add_erf` − `f_add` | 2, 4 |  |
 | [`ERFC`](machine_code/erfc.md) | `f_add_erfc` − `f_add` | 2, 4 |  |
@@ -331,7 +331,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`FMOD`](machine_code/fmod.md) | `f_add_fmod` − `f_add` | 2, 4 |  |
 | [`GAMMA`](machine_code/gamma.md) | `f_add_gammabase_gamma` − `f_add_gammabase` | 2 |  |
 | [`HYPOT`](machine_code/hypot.md) | `f_add_hypot` − `f_add` | 2 | the 2-argument base weight is the real libm call; the hand-rolled scaled probes only supply the per- extra-coordinate slope, validated against this base (within ~10%) |
-| [`HYPOT_XARG`](machine_code/hypot_xarg.md) | `f_add_hypot_scaled8` − `f_add_hypot_scaled2` | 2 | hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); deterministic per-coordinate cost, so rule 2 applies to the port |
+| [`HYPOT_XARG`](machine_code/hypot_xarg.md) | (`f_add_hypot_scaled8` − `f_add_hypot_scaled2`) / 6 | 2 | hand-rolled overflow-safe port (numba cannot compile n-ary `hypot`); deterministic per-coordinate cost, so rule 2 applies to the port |
 | [`LGAMMA`](machine_code/lgamma.md) | `f_add_gammabase_lgamma` − `f_add_gammabase` | 2 |  |
 | [`LOG`](machine_code/log.md) | `f_add_log` − `f_add` | 2 |  |
 | [`LOG10`](machine_code/log10.md) | `f_add_log10` − `f_add` | 2 |  |
@@ -347,7 +347,7 @@ rule that governs it, and — for grey-zone cases — why the choice is what it 
 | [`SQRT`](machine_code/sqrt.md) | `f_add_sqrt` − `f_add` | 1 |  |
 | [`SUB`](machine_code/sub.md) | `f_add_sub` − `f_add` | 1 |  |
 | [`SUMPROD`](machine_code/sumprod.md) | `f_add_sumprod2` − `f_add` | 2 | faithful port of CPython's extended-precision (TripleLength) accumulation, error terms emitted through the llvm.fma intrinsic; the 2-element base includes the close-out |
-| [`SUMPROD_XELEM`](machine_code/sumprod_xelem.md) | `f_add_sumprod8` − `f_add_sumprod2` | 2 | per-extra-element slope of the same TripleLength port as `SUMPROD` |
+| [`SUMPROD_XELEM`](machine_code/sumprod_xelem.md) | (`f_add_sumprod8` − `f_add_sumprod2`) / 6 | 2 | per-extra-element slope of the same TripleLength port as `SUMPROD` |
 | [`TAN`](machine_code/tan.md) | `f_add_tan` − `f_add` | 2, 4 |  |
 | [`TANH`](machine_code/tanh.md) | `f_add_tanh` − `f_add` | 2, 4 |  |
 | `F2I` | *(no benchmark probe — priced from spec sheets and third-party tables)* | 1 | float→int conversion instruction of the port |
@@ -368,7 +368,13 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
   reciprocal, so rule 1.6's fold does not apply). Stated gap under rule 3: CPython itself
   computes this via correctly-rounded decimal conversion, whose input-dependent machinery
   is knowingly not modeled.
-- `math.degrees` / `math.radians` → MUL, `math.prod` → one MUL per chained multiply.
+- `math.degrees` / `math.radians` → MUL.
+- `math.prod` → (n−1) MUL for n elements, n when `start` is counted or differs from 1. The
+  port is a loop whose body runs once per element, so the element count alone decides the
+  price, never the elements' values — unlike the constant folds of rule 1.7, which apply
+  where the port has a constant operand at the operation itself. The `start` is not an
+  element: a port seeds its accumulator from the first one, so only a `start` it cannot fold
+  away opens the loop with a multiply of its own.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
 - `math.isclose` → SUB + 3 ABS + MUL + 3 COMP under rule 3 — the transcription of its

@@ -319,7 +319,8 @@ _MATH_INSTRUMENTED_NOTES = {
 # presented above.
 _MATH_DECOMPOSED = ["degrees", "radians", "prod", "fsum"]
 _MATH_DECOMPOSED_CELL = (
-    "`degrees` / `radians` → MUL; `prod` → one MUL per chained multiply; `fsum` → (n−1) ADD; "
+    "`degrees` / `radians` → MUL; `prod` → (n−1) MUL, n when `start` is counted or differs from 1; "
+    "`fsum` → (n−1) ADD; "
     "1-argument `hypot` → ABS; 1-D `dist` → SUB + ABS"
 )
 # registered conditionally by the patch table, so they are absent from it on an older interpreter

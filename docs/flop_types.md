@@ -52,7 +52,7 @@ documented fallback) are stated in [Cost-model principles](cost_model.md).
 | `math.fmax(x, y)`, `math.fmin(x, y)` (3.15+) | `COMP` (the NaN-quieting guard is unpriced) | patch | ISA | yes — unlike the builtins, whichever operand wins |
 | `math.degrees(x)`, `math.radians(x)` | `MUL` *(decomposed)* | patch | — | yes |
 | `math.dist(p, q)` | `DIST` + (n−2) `DIST_XARG` (1-D → `SUB + ABS`) | patch | benchmarked | yes |
-| `math.prod(xs)` | one `MUL` per chained multiply *(decomposed)* | patch | — | yes |
+| `math.prod(xs)` | (n−1) `MUL` for n elements, n when `start` is counted or differs from 1 *(decomposed)* | patch | — | yes |
 | `math.fsum(xs)` | (n−1) `ADD` *(decomposed; compensation machinery not modeled)* | patch | — | yes |
 | `math.sumprod(p, q)` (3.12+) | `SUMPROD` + (n−2) `SUMPROD_XELEM` | patch | benchmarked | yes |
 | `numpy.*` and other non-stdlib math | *(uncounted)* | — | — | no |

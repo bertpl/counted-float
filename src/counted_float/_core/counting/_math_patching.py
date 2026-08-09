@@ -710,27 +710,31 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
 
 
 def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
-    """Patch math.prod: stdlib contract, counted as the multiply chain it computes.
+    """Patch math.prod: stdlib contract, counted as the multiply loop a port emits.
 
-    The product is folded left-to-right with real multiplications, so counting and contagion
-    emerge from the operations themselves — mixed inputs count exactly what writing the chain
-    out would. A start equal to 1 (the default) is the multiplicative identity: a compiled port
-    folds it away, so it opens the chain without a counted multiply — unless it is itself a
-    CountedFloat, a runtime value whose multiply is real. Inputs without any CountedFloat are
-    delegated to the original wholesale (preserving its int-exactness and fast paths).
+    Counts n-1 MUL for n elements, and n when `start` is a CountedFloat (a runtime value, so
+    its multiply is real) or differs from 1: a port seeds its accumulator from the first
+    element, so only a start the port cannot fold opens the loop with a multiply. No element
+    folds, unlike the constant folds of cost-model rule 1.7 (docs/cost_model.md).
+
+    Inputs without any CountedFloat are delegated wholesale, preserving int-exactness.
     """
     values = list(iterable)
     if not isinstance(start, CountedFloat) and not any(isinstance(v, CountedFloat) for v in values):
         return original_math_prod(values, start=start)
-    if isinstance(start, CountedFloat) or start != 1:
-        acc, remaining = start, values
-    else:
-        # start is plain 1 (folds away); the guard above guarantees a CountedFloat is present, and a
-        # plain-1 start means it is in `values`, so `values` is non-empty here
-        acc, remaining = values[0], values[1:]
-    for value in remaining:
-        acc = acc * value
-    return acc
+    # unboxed first: the original's own multiplications would otherwise register counts of their own
+    plain_values = [float(v) if isinstance(v, CountedFloat) else v for v in values]
+    plain_start = float(start) if isinstance(start, CountedFloat) else start
+    # computed first: raises per stdlib contract (non-numeric elements) before anything is counted
+    result = original_math_prod(plain_values, start=plain_start)
+    opens_with_multiply = isinstance(start, CountedFloat) or start != 1
+    n_muls = len(values) if opens_with_multiply else len(values) - 1
+    if n_muls:
+        try:
+            _TLS.flop_counts.MUL += n_muls
+        except AttributeError:  # first counted op on this thread
+            _create_thread_state().MUL += n_muls
+    return float.__new__(CountedFloat, result)
 
 
 def math_fsum(seq: Iterable[float]) -> float | CountedFloat:

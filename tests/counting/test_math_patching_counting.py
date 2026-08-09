@@ -474,7 +474,7 @@ def test_dist_counts_when_only_q_holds_a_counted_float(thread_counter):
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 4])
-def test_prod_counts_the_multiply_chain(thread_counter, n_values):
+def test_prod_counts_n_minus_one_multiplies(thread_counter, n_values):
     # --- arrange -----------------------------------------
     values = [CountedFloat(float(i + 2)) for i in range(n_values)]
 
@@ -484,7 +484,7 @@ def test_prod_counts_the_multiply_chain(thread_counter, n_values):
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
     assert float(result) == math.prod(float(v) for v in values)
-    assert n_values - 1 == thread_counter.MUL, "the identity start folds away: n-1 multiplies"
+    assert n_values - 1 == thread_counter.MUL, "a port seeds from the first element: n-1 multiplies"
     assert thread_counter.total_count() == n_values - 1
 
 
@@ -509,10 +509,9 @@ def test_prod_of_an_empty_iterable_is_its_start(thread_counter):
     assert thread_counter.total_count() == 0
 
 
-def test_prod_with_a_plain_nonidentity_start_is_not_folded_away(thread_counter):
-    # a plain start of 2.0 is NOT the multiplicative identity: it opens the chain and its multiply
-    # is counted, exactly as writing the chain out would. Only an identity start (plain 1) folds
-    # away -- folding a non-identity start would drop a MUL and change the product itself
+def test_prod_with_a_plain_nonidentity_start_opens_the_loop(thread_counter):
+    # a port seeds its accumulator from the first element, so a start of 2.0 -- not the
+    # multiplicative identity, hence unfoldable -- needs its own multiply
     # --- act ---------------------------------------------
     result = math.prod([CountedFloat(3.0), CountedFloat(4.0)], start=2.0)
 
@@ -536,6 +535,47 @@ def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter
     # --- act / assert ------------------------------------
     result = math.prod([2, 3, 4], start=10)
     assert result == 240  # 10 * 2 * 3 * 4, not the start-dropped 24
+    assert thread_counter.total_count() == 0
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_muls"),
+    [
+        ([CountedFloat(2.0), 1.0, -1.0], 2),
+        ([2.0, 3.0, CountedFloat(4.0)], 2),
+        ([CountedFloat(2.0), *([1.0] * 9)], 9),
+    ],
+)
+def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expected_muls):
+    # identity-valued elements and plain prefixes cost the same as any other element
+    # --- act ---------------------------------------------
+    result = math.prod(values)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert float(result) == math.prod([float(v) for v in values])
+    assert expected_muls == thread_counter.MUL
+    assert thread_counter.total_count() == expected_muls
+
+
+@pytest.mark.parametrize("start", [1, 1.0])
+def test_prod_start_of_one_folds_whether_or_not_it_is_passed(thread_counter, start):
+    # the multiplicative identity keys on value, not on being omitted: a port seeds from the
+    # first element either way, so passing it explicitly adds no multiply
+    # --- act ---------------------------------------------
+    result = math.prod([CountedFloat(2.0), CountedFloat(3.0)], start=start)
+
+    # --- assert ------------------------------------------
+    assert float(result) == 6.0
+    assert thread_counter.MUL == 1
+    assert thread_counter.total_count() == 1
+
+
+def test_prod_counts_nothing_when_an_element_raises(thread_counter):
+    # the product is computed before anything is counted, so a raising element leaves no partial count
+    # --- act / assert ------------------------------------
+    with pytest.raises(TypeError):
+        math.prod([CountedFloat(2.0), CountedFloat(3.0), None])
     assert thread_counter.total_count() == 0
 
 
