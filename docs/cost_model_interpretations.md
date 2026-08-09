@@ -85,7 +85,7 @@ The form presupposes that `C` exists: a base of exactly `1.0` has `log(c) = 0` a
 | `x * -1.0` · `x / -1.0` · `(-0.0) - x` | MINUS | exactly `-x` for every `x`, so the port emits a bare sign flip |
 | `x + 0.0` · `x - (-0.0)` · `0.0 - x` | ADD · SUB · SUB | value-changing at `x = -0.0`, where each gives `+0.0` |
 
-The same folds reach the constant-operand steps of a decomposition: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns it into MINUS. Division by other constants is [reciprocal-exactness-bound](#reciprocal-exactness-bound)'s; the exponent and log ladders are their own entries.
+The same folds reach the constant-operand steps of a decomposition: `x % 1.0` drops the `c·⌊x/c⌋` multiply, `x % -1.0` turns that multiply into MINUS, and the division step of each routes through [reciprocal-exactness-bound](#reciprocal-exactness-bound) on its own. Division by other constants is [reciprocal-exactness-bound](#reciprocal-exactness-bound)'s; the exponent and log ladders are their own entries.
 
 **Why.** The bit-exactness test is sharp rather than approximate, and at these operands the whole question is a single zero's sign: `-0.0 + 0.0` is `+0.0`, so folding `x + 0.0` to `x` would change a result the port must reproduce, while `x + (-0.0)` changes nothing for any `x`. The sign-flip group survives the same test on the NaN-sign calibration the rules page states — the sign of an arithmetic NaN is unspecified, so it is not a value the rewrite has to preserve.
 
