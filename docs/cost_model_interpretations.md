@@ -18,7 +18,7 @@ Entries are cited as `rule 2 · measurement-fallbacks`, here and in code. Slugs 
 
 **Interpretation.** The full constant-exponent ladder, keyed on value (so `math.pow(x, 5.0)` with a plain `5.0` and `x ** 5` price identically). The ladder prices float-domain results only: where the operation leaves the float domain — a negative base under a fractional exponent, whose result is `complex` — the rules page's exit list governs instead, and nothing is counted, whichever operand is counted.
 
-- `0` → nothing, plain result (the constant-result case on the rules page);
+- `0` → nothing, and a plain result: `pow(x, 0)` is `1.0` for every `x` by the standards the rules page cites, so the port ships a constant;
 - `1` → nothing — `pow(x, 1)` is `x` bit-exactly, the compiler-stage identity;
 - `-1` → DIV — the author writes the reciprocal `1.0 / x`;
 - `±0.5` → SQRT / SQRT + DIV — declared author decisions, and genuinely value-changing ones: `pow(-0.0, 0.5)` is `+0.0` where `sqrt(-0.0)` is `-0.0`, so the compiler stage could never make them;

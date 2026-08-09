@@ -47,7 +47,9 @@ Two actors build the port, and every pricing question reduces to: **who produced
 
 Strength reduction exists in both stages, and the stage decides the test: a bit-exact reduction (`x / 8.0` → `x * 0.125`) is a compiler rewrite, admitted by the bit-exactness test alone; a value-changing reduction (the square-and-multiply chain for small constant exponents) can only enter as a declared author decision. What real compilers do at plain `-O2` corroborates that an admitted rewrite is real-world practice — but such corroboration is never the admission criterion.
 
-The result's **type** follows one test, independent of its cost: a float-valued result that depends on a counted operand — at bit level, again signs and NaN payloads included — is a `CountedFloat`, even when it cost nothing to compute (`+x`, `x * 1.0`); a result independent of every counted operand is a plain float (`x ** 0` is `1.0` for every `x`, so the port ships the constant), and downstream folds keyed on it mirror the port's own constant propagation. A container result carries the test per element: `divmod`'s tuple holds two `CountedFloat`s. Cost and countedness are separate axes, and all four combinations occur.
+The result's **type** follows one test, independent of its cost: a float-valued result that depends on a counted operand — at bit level, again signs and NaN payloads included — is a `CountedFloat`, even when it cost nothing to compute (`+x`, `x * 1.0`); a result independent of every counted operand is a plain float, and downstream folds keyed on that value mirror the port's own constant propagation. A container result carries the test per element: `divmod`'s tuple holds two `CountedFloat`s.
+
+The absorbing cases are guaranteed rather than incidental: IEEE 754 and C99 define `pow(x, 0)` as `1.0` for every `x` — NaN and infinities included — and `pow(1, y)` as `1.0` for every `y`, so `x ** 0` and `1.0 ** x` are constants the port ships. Cost and countedness are separate axes, and all four combinations occur.
 
 ## IV. The rules { #the-rules }
 
