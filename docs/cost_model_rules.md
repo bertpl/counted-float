@@ -1,6 +1,6 @@
 # Cost-model rules
 
-Every counting decision in `counted-float` answers one question: **what does this operation cost?** The question has more than one defensible answer — the Python code as written, what a compiler would make of it, what the interpreter actually executes. The model commits to the second: **it prices your code as an imaginary, competently written C translation** — the [compiled port](glossary.md#compiled-port) — in which every plain operand is a compile-time constant.
+Every counting decision in `counted-float` answers one question: **what does this operation cost?** The question has more than one defensible answer — the Python code as written, what a compiler would make of it, what the interpreter actually executes. The model commits to what a compiler would make of it: **it prices your code as an imaginary, competently written C translation** — the [compiled port](glossary.md#compiled-port) — in which every plain operand is a compile-time constant.
 
 The cost model spans three pages, from principle to number:
 
@@ -22,14 +22,14 @@ A plain operand is therefore eligible for exactly the optimizations real compile
 
 Counting itself runs per thread, inside an active `FlopCountingContext`:
 
-- **paused** (`PauseFlopCounting`): counts are suppressed, types never are — a paused block hands back `CountedFloat`s that resume counting on exit. Keeping `math.*` patched while paused is a consequence of that invariant, not an implementation detail.
+- **paused** (`PauseFlopCounting`): counts are suppressed, types never are — a paused block hands back `CountedFloat`s that resume counting on exit. That is why `math.*` stays patched while paused — not an implementation detail.
 - **outside any context**: `math.*` is unpatched, so type preservation ends at every `math` call on a counted value; the operators preserve the type everywhere. Mechanics in [Math patching semantics](math_patching.md).
 
 ## II. What the model prices { #what-the-model-prices }
 
 The model prices operations that **compute on float values** — those whose port emits floating-point instructions or floating-point library calls. Work in any other domain — integer and bit manipulation, string conversion, arbitrary-precision arithmetic — has no `FlopType` and is counted nowhere, by scope rather than by exemption.
 
-How an operation happens to be *implemented* plays no role in that test, or anywhere else in the model. `math.copysign` is a value-level floating-point operation and carries a benchmarked weight, whatever bit tricks compute it — and `abs` and unary minus are the same case (the emitted code is an and-mask and an xor); `hex()` reads mantissa nibbles into text and counts nothing, however much it touches a float.
+How an operation happens to be *implemented* plays no role in that scope question, or anywhere else in the model. `math.copysign` is a value-level floating-point operation and carries a benchmarked weight, whatever bit tricks compute it — and `abs` and unary minus are the same case (the emitted code is an and-mask and an xor); `hex()` reads mantissa nibbles into text and counts nothing, however much it touches a float.
 
 The same scope test places Python's other numeric towers outside the model. `decimal.Decimal`, `fractions.Fraction` and `complex` have no compiled-port counterpart here, so nothing about them is priced:
 
@@ -43,7 +43,7 @@ The same holds one step further out: [numpy is an explicit non-goal](known_limit
 Two actors build the port, and every pricing question reduces to: **who produced this operation — the author, writing it into the source, or the compiler, translating the source?**
 
 - **The author** — a competent numerical programmer — rewrites your Python in C with algorithmic faithfulness: the same computation, written the way performance-conscious numerical code is really written. The author works at the level of *your* code — operators, control flow, calls **into** libraries — and never re-implements a library's internals. Where the author is assumed to make a judgment call, the call is declared and bounded.
-- **The compiler** then translates that C into machine code, and its rule is mechanical **bit-exactness**: it may rewrite arithmetic only when the rewrite provably changes no computed value — signed zeros and NaN payloads included — and floating-point contraction is off. One calibration is pinned: IEEE 754 leaves the *sign* of a NaN produced by arithmetic unspecified, so NaN-sign differences sit outside the test — which is what licenses the sign-flip rewrites (`x * -1.0` and `(-0.0) - x` both reduce to a bare sign flip, MINUS) alongside the value-exact ones.
+- **The compiler** then translates that C into machine code, and its rule is mechanical **bit-exactness**: it may rewrite arithmetic only when the rewrite provably changes no computed value — signed zeros and NaN payloads included — and floating-point contraction is off. One calibration is pinned: IEEE 754 leaves the *sign* of a NaN produced by arithmetic unspecified, so NaN-sign differences sit outside the test — so the sign-flip rewrites are admitted — `x * -1.0` and `(-0.0) - x` both reduce to a bare sign flip, MINUS — alongside the value-exact ones.
 
 Strength reduction exists in both stages, and the stage decides the test: a bit-exact reduction (`x / 8.0` → `x * 0.125`) is a compiler rewrite, admitted by the bit-exactness test alone; a value-changing reduction (the square-and-multiply chain for small constant exponents) can only enter as a declared author decision. What real compilers do at plain `-O2` corroborates that an admitted rewrite is real-world practice — but such corroboration is never the admission criterion.
 
@@ -53,13 +53,13 @@ The result's **type** follows one test, independent of its cost: a float-valued 
 
 Four rules price every operation, in order of preference. Two defaults span them.
 
-**One operation at a time.** Each operation is priced on its own, from its own operands. The model never sees the expression an operation sits in, so rewrites reaching across neighboring operations — `(x * 2.0) * 4.0` into `x * 8.0`, `-(-x)` into `x` — are outside the model, however bit-exact they are, and both operations are priced. A real compiler makes those rewrites; not making them is a limitation of an instrument that watches operations execute one by one, and it over-counts by however many the compiler would have collapsed.
+**One operation at a time.** Each operation is priced on its own, from its own operands. The model never sees the expression an operation sits in, so rewrites reaching across neighboring operations — `(x * 2.0) * 4.0` into `x * 8.0`, `-(-x)` into `x` — are outside the model, however bit-exact they are, and both operations are priced. A real compiler makes those rewrites; not making them is a limitation of an instrument that watches operations execute one by one, and the count runs high by however many the compiler would have collapsed.
 
 **A call is priced whole**, whether it is a single-instruction call under rule 1 or a library call under rules 2–3. An operand's value changes a call's price only where a declared interpretation says so — constant `pow` exponents and bases, constant `log` bases, `fma`'s constant product are the declared cases; absent such a declaration, operand values never modify the price of a call that completes. (`math.copysign(x, 2.0)` counts COPYSIGN, not the ABS its constant would make it equivalent to.)
 
 ### Rule 1 — CPU instructions: priced as the value-preserving port
 
-Arithmetic written in operators, and the named calls that reduce to single instructions (`math.sqrt`, `abs`, `math.copysign`). The port applies every bit-exact rewrite and no other: `x / 8.0` counts MUL, `x + 0.0` counts ADD (for `x = -0.0` the result is `+0.0`, so the fold would change a bit), and `x*y + z` counts MUL + ADD — fusing is a value-changing rewrite, so the one way to have a fused multiply-add counted is to write one: `math.fma(x, y, z)`. Real builds routinely contract by default; what switching contraction off over-estimates there is noted in [known limitations](known_limitations.md#other-limitations).
+Arithmetic written in operators, and the named calls that reduce to single instructions (`math.sqrt`, `abs`, `math.copysign`). The port applies every bit-exact rewrite and no other: `x / 8.0` counts MUL, `x + 0.0` counts ADD (for `x = -0.0` the result is `+0.0`, so the fold would change a bit), and `x*y + z` counts MUL + ADD — fusing is a value-changing rewrite, so the one way to have a fused multiply-add counted is to write one: `math.fma(x, y, z)`. Real builds routinely contract by default; what switching contraction off over-estimates there is noted in [known limitations](known_limitations.md#other-limitations). Which constant operands fold, and which are the near-misses that do not, is enumerated in the [counting-model fold table](counting_flops.md#the-counting-model-what-gets-counted-and-why).
 
 Operations that decompose into rule-1 steps — the floored-division family (`//`, `%`, `divmod`), `round(x, n)`'s scale and unscale — fold per step: every step whose operand is a constant (the division step, the remainder's multiply by the divisor, a scale factor of exactly `±1.0`) folds exactly as the written operator would.
 
@@ -89,14 +89,14 @@ Counting stops in exactly three places, each one already forced by an earlier se
 - **the value leaves the float domain** — any non-float result (`bool`, `int`, `str`, `complex`, or a value converted into another numeric tower) returns bare, priced where the port pays (`int(x)` counts F2I, `x < y` counts COMP) and priced at nothing where *What the model prices* puts the exit outside the model: string formatting, the complex result of a negative base under a fractional exponent, and every conversion out of the float domain;
 - **the user opts out** — `float(x)`, the contract's explicit exit.
 
-Two exits inside that first bullet are priced at nothing by **declared exception** rather than by scope, because the port does emit an instruction for them, and both are labeled where they are documented:
+Two exits inside the float-domain bullet are priced at nothing by **declared exception** rather than by scope, because the port does emit an instruction for them, and both are labeled where they are documented:
 
 - **truthiness** (`bool(x)`, `if x:`) — the interpreter inserts it implicitly at every `if`, `while`, `and`, `or`, `not` and `assert`, with no opt-out, and `python -O` elides `assert` entirely, so a price here would vary with interpreter flags rather than with the algorithm. The algorithmic spelling `x != 0.0` counts COMP. Documented with [the `COMP` type](flop_types.md#flop-comp).
 - **the `%` presentation format** — its scale-by-100 multiply is real, unobservable from Python, and its result cannot re-enter the algorithm; labeled on [the float surface](float_surface.md#the-presentation-contract).
 
 Every other way a counted value goes plain is a **limitation**, not a rule: the operations the instrument cannot count report through the WARNING channel (see [the `math` coverage table](math_patching.md#coverage-of-the-math-module) and [the float surface](float_surface.md#reported-at-warning-verbosity)), and the two interpreter mechanisms the library cannot intercept — the builtins `min`/`max` returning a winning plain constant, and a `Fraction` *winning* the delegation (the reflected operation returning Fraction's own plain float; when Fraction instead hands the arithmetic back to the float operators, they count normally, per *What a count records*) — are stated, with remedies, in [known limitations](known_limitations.md#other-limitations).
 
-A silent plain-float return from a counted operand is none of the above: it is a defect in the model, not a judgment call.
+A silent plain-float return from a counted operand is neither an exit nor a limitation: it is a defect in the model, not a judgment call.
 
 ## VI. What a count records { #what-a-count-records }
 

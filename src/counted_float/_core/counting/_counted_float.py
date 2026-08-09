@@ -28,7 +28,7 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
                                     varies and a generic POW is a fair stand-in.  The chain is a
                                     source-level porting decision, priced as written — not a
                                     toolchain transformation needing bit-identity to libm pow;
-                                    see the constant-exponent ladder in docs/cost_model_interpretations.md
+                                    see exponent-chain-bound in docs/cost_model_interpretations.md
       - anything else            -> POW
     """
     value = float(exponent)
@@ -580,7 +580,7 @@ class CountedFloat(float):
         Floored division decomposes into DIV + RND: a compiled port computes x/y and rounds the
         quotient toward -inf, a float->float round (RND / FRINTM / ROUNDSD class), not an F2I.
         A constant divisor routes the division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1).
+        (count_div_with_constant_divisor; rule 1 - reciprocal-exactness-bound).
         """
         result = float.__floordiv__(self, other)
         if result is NotImplemented:
@@ -619,7 +619,7 @@ class CountedFloat(float):
         Python's % is the floored remainder r = x - y*floor(x/y), which a compiled port emits as
         DIV + RND (the floor) + MUL + SUB. Distinct from math.fmod, the truncated C remainder.
         A constant divisor routes the division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1) — and it is also the constant
+        (count_div_with_constant_divisor; rule 1 - reciprocal-exactness-bound) — and it is also the constant
         factor of the y*floor(...) multiply, so the identity folds apply there too: a divisor
         of 1.0 drops that multiply, -1.0 makes it a bare sign flip (MINUS). Any other constant
         keeps it a genuine MUL: the floor factor is freshly computed, never foldable.
@@ -665,7 +665,7 @@ class CountedFloat(float):
         Quotient and remainder share the DIV + RND (the floor); the remainder adds MUL + SUB, so
         divmod counts DIV + RND + MUL + SUB — the same as a lone %, since the // part is shared.
         A constant divisor routes the shared division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1), and folds the remainder's
+        (count_div_with_constant_divisor; rule 1 - reciprocal-exactness-bound), and folds the remainder's
         y*floor(...) multiply for a ±1.0 divisor the way % does.
         """
         result = float.__divmod__(self, other)

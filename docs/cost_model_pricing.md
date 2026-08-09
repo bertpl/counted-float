@@ -1,6 +1,6 @@
 # Per-type pricing
 
-Every flop type's weight, how it is measured, and the operations that count as compositions of the types. The [rules](cost_model_rules.md) say why each price is what it is; the [interpretations](cost_model_interpretations.md) resolve the grey zones the notes below cite; the measured weight *values* live with the [built-in data](builtin_data.md) and the per-type [machine-code pages](machine_code/index.md).
+Every flop type's weight, how it is measured, and the operations that count as compositions of the types. The [rules](cost_model_rules.md) say why each price is what it is; the [interpretations](cost_model_interpretations.md) resolve the gray zones the notes below cite; the measured weight *values* live with the [built-in data](builtin_data.md) and the per-type [machine-code pages](machine_code/index.md).
 
 Every weight is a **latency** weight: the latency difference between two [dependent-chain](glossary.md#dependent-chain) benchmark probes whose loops differ by the operation being priced — or, for the two conversion instructions no probe reaches, a published latency for that instruction. Per-extra-argument weights divide the difference by the number of arguments separating the two probes. Composite prices below add their parts' weights as if the parts chain — the declared bias of `rule 4 · decompositions-sum-latencies`.
 
@@ -61,7 +61,7 @@ Every weight is a **latency** weight: the latency difference between two [depend
 
 ## Decomposed operations
 
-Operations with no flop type of their own count as compositions of the types above, each citing the rule and interpretation that fix it. Every composite price on this page adds its parts as if they chain (`decompositions-sum-latencies`).
+Operations with no flop type of their own count as compositions of the types above, each citing the rule and interpretation that fix it.
 
 **Floored division** (rule 1; constant steps fold per the rules page):
 
