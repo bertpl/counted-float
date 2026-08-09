@@ -558,6 +558,19 @@ def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expect
     assert thread_counter.total_count() == expected_muls
 
 
+@pytest.mark.parametrize("start", [1, 1.0])
+def test_prod_start_of_one_folds_whether_or_not_it_is_passed(thread_counter, start):
+    # the multiplicative identity keys on value, not on being omitted: a port seeds from the
+    # first element either way, so passing it explicitly adds no multiply
+    # --- act ---------------------------------------------
+    result = math.prod([CountedFloat(2.0), CountedFloat(3.0)], start=start)
+
+    # --- assert ------------------------------------------
+    assert float(result) == 6.0
+    assert thread_counter.MUL == 1
+    assert thread_counter.total_count() == 1
+
+
 def test_prod_counts_nothing_when_an_element_raises(thread_counter):
     # the product is computed before anything is counted, so a raising element leaves no partial count
     # --- act / assert ------------------------------------

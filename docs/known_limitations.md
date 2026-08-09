@@ -61,10 +61,12 @@ up in that output.
 ## Loops the library cannot count as loops
 
 `math.prod` and `math.fsum` count n−1 operations for n elements, whatever the
-elements hold. The built-in `sum`, `min` and `max`, and any loop written by
-hand, cannot be counted that way: the library cannot patch them, so their counts
-come from the individual operator calls, and each of those applies the ordinary
-constant folds.
+elements hold (`math.prod` counts n when `start` is not 1). The built-in `sum`,
+`min` and `max`, and any loop written by hand, cannot be counted that way: the
+library cannot patch them, so their counts come from the individual operator
+calls. Two things then cost counts that a loop would charge — the ordinary
+constant folds apply to each arithmetic operation, and an operation between two
+plain operands counts nothing at all.
 
 Counting through the operator calls goes wrong in two directions:
 
@@ -72,22 +74,29 @@ Counting through the operator calls goes wrong in two directions:
   an integer `0`, and adding zero is not a no-op for signed zero
   (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted exactly as a strict compiler
   would emit it. An explicit `0.0` seed changes nothing, for the same reason.
-- **too few operations** whenever plain floats precede the first `CountedFloat`:
-  those operations have no counted operand at all, so `sum([1.0, 2.0, cf])`
-  counts one addition where a loop runs two, and `min([1.0, 2.0, cf, 3.0])` one
-  comparison where a loop runs three.
+- **too few operations** wherever an operation meets no counted operand:
+  `sum([1.0, 2.0, cf])` counts one addition where a loop runs two, the plain
+  prefix costing nothing. For `min` and `max` a plain winner also turns the
+  running result plain again, so the shortfall is value-dependent:
+  `min([1.0, 2.0, CountedFloat(5.0), 3.0])` counts one comparison of three,
+  while the same call with `CountedFloat(0.5)` — which wins — counts two.
 
-Two fixes, with different reach:
+Two fixes, each with its own reach:
 
 - **`math.fsum(data)` or `math.prod(data)`** — n−1 operations for n elements,
-  every element counted whatever its value. There is no equivalent for
-  `min`/`max`.
+  every element counted whatever its value. Counts nothing at all when the
+  sequence holds no `CountedFloat`, and there is no `min`/`max` equivalent.
 - **seed a counted accumulator** — `sum(data[1:], start=CountedFloat(data[0]))`,
-  and the same shape for a loop written by hand. Every later operation then has
-  a counted operand, so it counts. Elements that fold against that accumulator
-  are still dropped, by the identity folds of
+  and the same shape for a `+` or `*` loop written by hand: contagion carries the
+  accumulator, so every later operation has a counted operand and counts, even
+  over otherwise-plain data. Elements that fold against that accumulator are
+  still dropped, by the identity folds of
   [the cost model](cost_model.md#the-rules) as everywhere else — a `-0.0` added
   or a `1.0` multiplied costs nothing.
+
+Neither fix reaches `min` and `max`: they take no `start`, and seeding a loop
+does not help, because a plain winner turns the accumulator plain again and the
+remaining comparisons stop counting.
 
 ## Other limitations
 
@@ -154,8 +163,11 @@ Two fixes, with different reach:
 - builtin `min`/`max` return the winning operand *object*, so with mixed
   counted/plain arguments the result is a plain float whenever a plain constant
   wins — countedness ends silently, and value-dependently: the same call site
-  keeps or drops it depending on the data. The comparisons themselves count
-  `COMP` correctly; only the result's type can revert, and no dunder exists
+  keeps or drops it depending on the data. Each comparison with a counted
+  operand counts `COMP`; those between two plain operands do not, which is what
+  makes an n-argument call cost fewer than n−1 — see
+  [Loops the library cannot count as loops](#loops-the-library-cannot-count-as-loops).
+  No dunder exists
   through which `CountedFloat` could intercept the returned object. When the
   result feeds counted computation, re-wrap it — `CountedFloat(min(...))`
   counts nothing (a float-source construction) and is correct whether or not

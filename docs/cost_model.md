@@ -370,9 +370,11 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
   is knowingly not modeled.
 - `math.degrees` / `math.radians` → MUL.
 - `math.prod` → (n−1) MUL for n elements, n when `start` is counted or differs from 1. The
-  port is a loop whose body runs once per element, so the count depends only on how many
-  elements there are, never on their values — unlike the constant folds of rule 1.7, which
-  apply where the port has a constant operand at the operation itself.
+  port is a loop whose body runs once per element, so the element count alone decides the
+  price, never the elements' values — unlike the constant folds of rule 1.7, which apply
+  where the port has a constant operand at the operation itself. The `start` is not an
+  element: a port seeds its accumulator from the first one, so only a `start` it cannot fold
+  away opens the loop with a multiply of its own.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
 - `math.isclose` → SUB + 3 ABS + MUL + 3 COMP under rule 3 — the transcription of its
