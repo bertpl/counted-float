@@ -38,7 +38,7 @@ The same scope test places Python's other numeric towers outside the model. `dec
 
 The same holds one step further out: [numpy is an explicit non-goal](known_limitations.md#numpy-counting-is-an-explicit-non-goal) — its work never flows through the counted type, and its vectorized execution is the throughput regime the latency weights deliberately do not price.
 
-## III. How the port is built { #how-the-port-is-built }
+## III. How [the port](glossary.md#compiled-port) is built { #how-the-port-is-built }
 
 Two actors build the port, and every pricing question reduces to: **who produced this operation — the author, writing it into the source, or the compiler, translating the source?**
 
