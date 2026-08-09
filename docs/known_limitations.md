@@ -58,6 +58,32 @@ observable, though — a counting context asked to
 fold with the reason it was applied, so a site being folded inconsistently shows
 up in that output.
 
+## Loops the library cannot price as loops
+
+`math.prod` and `math.fsum` price flat in the element count, because their compiled port is
+a loop whose body executes once per element whatever that element holds. The built-in `sum`
+and any hand-written loop cannot be priced that way: they are not interceptable, so their
+counts emerge from the individual operator calls, and each of those applies the ordinary
+constant folds. That leaves `sum(data)` wrong in both directions — one ADD more than the
+loop when every element is counted (the `0` seed opens with an add no port emits), and fewer
+whenever plain floats precede the first `CountedFloat`.
+
+Two ways to get the loop-accurate count:
+
+- **`math.fsum(data)`** — exactly (n−1) ADD, with no seeding or element-type question. The
+  simplest fix, and `math.prod(data)` plays the same role for products.
+- **seed a counted accumulator** — `sum(rest, start=CountedFloat(first))`. The wrap is what
+  matters: once the accumulator is a `CountedFloat`, every later addition counts, plain
+  elements included. It costs nothing (a float source is free) and is unnecessary only when
+  the first element is already counted.
+
+The same applies to a loop you write yourself: either replace it with `math.fsum` /
+`math.prod`, or make sure the accumulator is a `CountedFloat` from the first step. Elements
+that are exactly the operation's identity (`-0.0` in a sum, `1.0` or `-1.0` in a product)
+still fold away against a counted accumulator, so neither workaround is bit-proof against
+those specific values. The built-ins `min` and `max` need no workaround: comparisons have no
+identity element, so nothing folds and their (n−1) COMP already equals the loop price.
+
 ## Other limitations
 
 - the uncounted built-in operations are cataloged per surface: the `math`

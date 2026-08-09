@@ -510,9 +510,9 @@ def test_prod_of_an_empty_iterable_is_its_start(thread_counter):
 
 
 def test_prod_with_a_plain_nonidentity_start_is_not_folded_away(thread_counter):
-    # a plain start of 2.0 is NOT the multiplicative identity: it opens the chain and its multiply
-    # is counted, exactly as writing the chain out would. Only an identity start (plain 1) folds
-    # away -- folding a non-identity start would drop a MUL and change the product itself
+    # a plain start of 2.0 is NOT the multiplicative identity: it is a real operand, so the loop
+    # opens with its multiply. Only an identity start (plain 1) drops out, which is a port seeding
+    # its accumulator from the first element rather than a fold of the start's value
     # --- act ---------------------------------------------
     result = math.prod([CountedFloat(3.0), CountedFloat(4.0)], start=2.0)
 
@@ -536,6 +536,37 @@ def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter
     # --- act / assert ------------------------------------
     result = math.prod([2, 3, 4], start=10)
     assert result == 240  # 10 * 2 * 3 * 4, not the start-dropped 24
+    assert thread_counter.total_count() == 0
+
+
+@pytest.mark.parametrize(
+    ("values", "expected_muls"),
+    [
+        ([CountedFloat(2.0), 1.0, -1.0], 2),
+        ([2.0, 3.0, CountedFloat(4.0)], 2),
+        ([CountedFloat(2.0), *([1.0] * 9)], 9),
+    ],
+)
+def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expected_muls):
+    # the port is a loop over an array whose body is one multiply per element: it executes whatever
+    # value the element holds, so identity-valued elements and plain prefixes cost the same as any
+    # other. Pricing the written chain instead would make the three cases here 1 MINUS, 1 MUL and 0
+    # --- act ---------------------------------------------
+    result = math.prod(values)
+
+    # --- assert ------------------------------------------
+    assert isinstance(result, CountedFloat)
+    assert float(result) == math.prod([float(v) for v in values])
+    assert expected_muls == thread_counter.MUL
+    assert thread_counter.total_count() == expected_muls
+
+
+def test_prod_counts_nothing_when_an_element_raises(thread_counter):
+    # compute-first: the product is evaluated on unboxed plain floats before the single count is
+    # registered, so a non-numeric element leaves no partial count behind
+    # --- act / assert ------------------------------------
+    with pytest.raises(TypeError):
+        math.prod([CountedFloat(2.0), CountedFloat(3.0), None])
     assert thread_counter.total_count() == 0
 
 
