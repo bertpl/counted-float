@@ -474,7 +474,7 @@ def test_dist_counts_when_only_q_holds_a_counted_float(thread_counter):
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 4])
-def test_prod_counts_the_multiply_chain(thread_counter, n_values):
+def test_prod_counts_one_multiply_per_element(thread_counter, n_values):
     # --- arrange -----------------------------------------
     values = [CountedFloat(float(i + 2)) for i in range(n_values)]
 
@@ -484,7 +484,7 @@ def test_prod_counts_the_multiply_chain(thread_counter, n_values):
     # --- assert ------------------------------------------
     assert isinstance(result, CountedFloat)
     assert float(result) == math.prod(float(v) for v in values)
-    assert n_values - 1 == thread_counter.MUL, "the identity start folds away: n-1 multiplies"
+    assert n_values - 1 == thread_counter.MUL, "a port seeds from the first element: n-1 multiplies"
     assert thread_counter.total_count() == n_values - 1
 
 
@@ -509,10 +509,9 @@ def test_prod_of_an_empty_iterable_is_its_start(thread_counter):
     assert thread_counter.total_count() == 0
 
 
-def test_prod_with_a_plain_nonidentity_start_is_not_folded_away(thread_counter):
+def test_prod_with_a_plain_nonidentity_start_opens_the_loop(thread_counter):
     # a plain start of 2.0 is NOT the multiplicative identity: it is a real operand, so the loop
-    # opens with its multiply. Only an identity start (plain 1) drops out, which is a port seeding
-    # its accumulator from the first element rather than a fold of the start's value
+    # opens with its multiply
     # --- act ---------------------------------------------
     result = math.prod([CountedFloat(3.0), CountedFloat(4.0)], start=2.0)
 
@@ -548,9 +547,7 @@ def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter
     ],
 )
 def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expected_muls):
-    # the port is a loop over an array whose body is one multiply per element: it executes whatever
-    # value the element holds, so identity-valued elements and plain prefixes cost the same as any
-    # other. Pricing the written chain instead would make the three cases here 1 MINUS, 1 MUL and 0
+    # identity-valued elements and plain prefixes cost the same as any other element
     # --- act ---------------------------------------------
     result = math.prod(values)
 
@@ -562,8 +559,7 @@ def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expect
 
 
 def test_prod_counts_nothing_when_an_element_raises(thread_counter):
-    # compute-first: the product is evaluated on unboxed plain floats before the single count is
-    # registered, so a non-numeric element leaves no partial count behind
+    # the product is computed before anything is counted, so a raising element leaves no partial count
     # --- act / assert ------------------------------------
     with pytest.raises(TypeError):
         math.prod([CountedFloat(2.0), CountedFloat(3.0), None])

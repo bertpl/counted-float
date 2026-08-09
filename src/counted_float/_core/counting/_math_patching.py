@@ -712,16 +712,13 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
 def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
     """Patch math.prod: stdlib contract, counted as the multiply loop a port emits.
 
-    A port of `prod(seq)` is a loop over an array whose body is one multiply per element, so the
-    price is flat in the element count and no element folds: the loop body executes whatever
-    value an element holds, and a compiler cannot constant-propagate through a traversal. The
-    default start is the multiplicative identity, which a port drops by seeding the accumulator
-    from the first element, leaving n-1 multiplies; any other start -- plain or counted -- is a
-    real operand and opens the loop with its own multiply.
+    Counts n-1 MUL for n elements, n with a start other than the default: a port seeds its
+    accumulator from the first element, so only a real start opens the loop with a multiply.
+    No element folds, unlike the operator arithmetic elsewhere in the model -- the port's loop
+    body executes once per element whatever value that element holds.
 
     Counted inputs are unboxed before delegating, so the original's own multiplications register
-    nothing and the single count below is the whole price. Inputs without any CountedFloat are
-    delegated wholesale (preserving int-exactness and fast paths).
+    nothing; inputs without any CountedFloat are delegated wholesale, preserving int-exactness.
     """
     values = list(iterable)
     if not isinstance(start, CountedFloat) and not any(isinstance(v, CountedFloat) for v in values):

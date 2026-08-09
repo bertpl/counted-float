@@ -196,10 +196,9 @@ class MachineCodePage:
         range_sensitive: True where the benchmark's input range is load-bearing for the
             weight's validity (a why-comment in the benchmark source marks these); the
             cost-model table then lists rule 4 alongside the kind's default rule.
-        probe_span: How many extra arguments separate the two probes. The per-argument slopes
-            divide their probe difference by this, so the table's formula must show it; the
-            value belongs to the probe pair and is mirrored from the suite that computes the
-            weights.
+        probe_span: Extra coordinates or elements between the two probes, by which a
+            per-argument slope divides their latency difference; 1 where the probes differ by
+            an operation rather than by arity.
     """
 
     doc_name: str

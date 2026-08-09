@@ -58,31 +58,34 @@ observable, though — a counting context asked to
 fold with the reason it was applied, so a site being folded inconsistently shows
 up in that output.
 
-## Loops the library cannot price as loops
+## Loops the library cannot count as loops
 
-`math.prod` and `math.fsum` price flat in the element count, because their compiled port is
-a loop whose body executes once per element whatever that element holds. The built-in `sum`
-and any hand-written loop cannot be priced that way: they are not interceptable, so their
-counts emerge from the individual operator calls, and each of those applies the ordinary
-constant folds. That leaves `sum(data)` wrong in both directions — one ADD more than the
-loop when every element is counted (the `0` seed opens with an add no port emits), and fewer
-whenever plain floats precede the first `CountedFloat`.
+`math.prod` and `math.fsum` count one operation per element, whatever the elements hold. The
+built-in `sum` and any loop written by hand cannot be counted that way — the library cannot
+patch them, so their counts come from the individual operator calls, and each of those applies
+the ordinary constant folds.
 
-Two ways to get the loop-accurate count:
+That leaves `sum(data)` wrong in both directions:
 
-- **`math.fsum(data)`** — exactly (n−1) ADD, with no seeding or element-type question. The
-  simplest fix, and `math.prod(data)` plays the same role for products.
-- **seed a counted accumulator** — `sum(rest, start=CountedFloat(first))`. The wrap is what
-  matters: once the accumulator is a `CountedFloat`, every later addition counts, plain
-  elements included. It costs nothing (a float source is free) and is unnecessary only when
-  the first element is already counted.
+- **one addition too many** over counted values: it seeds with an integer `0`, and adding zero
+  is not a no-op for signed zero (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted exactly as a
+  strict compiler would emit it. An explicit `0.0` seed changes nothing, for the same reason.
+- **too few** whenever plain floats precede the first `CountedFloat`, since those additions
+  have no counted operand at all.
 
-The same applies to a loop you write yourself: either replace it with `math.fsum` /
-`math.prod`, or make sure the accumulator is a `CountedFloat` from the first step. Elements
-that are exactly the operation's identity (`-0.0` in a sum, `1.0` or `-1.0` in a product)
-still fold away against a counted accumulator, so neither workaround is bit-proof against
-those specific values. The built-ins `min` and `max` need no workaround: comparisons have no
-identity element, so nothing folds and their (n−1) COMP already equals the loop price.
+Two ways to get the loop count:
+
+- **`math.fsum(data)`** — n−1 ADD for n elements, with no seeding or element-type question.
+- **`sum(rest, start=CountedFloat(first))`** — once the accumulator is a `CountedFloat`, every
+  later addition counts, plain elements included. The wrap costs nothing, and is unnecessary
+  only when the first element is already counted.
+
+A loop written by hand has the same two fixes: call `math.fsum` or `math.prod`, or make the
+accumulator a `CountedFloat` from the first step. Elements equal to the operation's identity
+(`-0.0` in a sum, `1.0` or `-1.0` in a product) still fold away against a counted accumulator,
+so both workarounds still drop those. The built-ins `min` and `max` need no workaround at all:
+comparisons have no identity element, so nothing folds and their n−1 COMP already matches the
+loop.
 
 ## Other limitations
 
@@ -170,15 +173,6 @@ identity element, so nothing folds and their (n−1) COMP already equals the loo
   peak memory differs, and only while a context is active. (`math.hypot` takes
   its coordinates as separate positional arguments, already materialized as a
   tuple by the interpreter, so it does not diverge.)
-- the built-in `sum` counts one addition more than `math.fsum` over the same
-  values: it seeds the reduction with an integer `0`, so an n-element sum costs
-  n ADD where the mathematical reduction — and `math.fsum` — costs n−1. This
-  follows from the identity-fold rule rather than escaping it: adding zero is
-  not a no-op for signed zero (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted
-  exactly as a strict compiler would emit it. Passing a `0.0` seed explicitly
-  changes nothing for the same reason. Use `math.fsum(values)` when the count
-  should match the mathematical reduction, or seed from the sequence itself with
-  `sum(values[1:], values[0])`
 - flop weights should be taken with a grain of salt and should only provide
   relative ballpark estimates w.r.t. computational complexity. Production
   implementations in a compiled language could have vastly differing
