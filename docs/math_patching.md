@@ -94,7 +94,7 @@ asks. For `isnan` that form *is* an operator spelling a reader could have writte
 fixed per call while the Python spelling short-circuits, so `isnormal` and
 `issubnormal` charge more than the hand-written chain does on zeros, subnormals and
 NaN — a stated gap, listed with them in
-[the decomposed operations](cost_model.md#decomposed-operations). The one
+[the decomposed operations](cost_model_pricing.md#decomposed-operations). The one
 comparison left uncounted is truthiness (`bool(x)`, `if x:`), a labeled exception —
 the interpreter inserts it implicitly, with no opt-out — documented with the
 [`COMP` type](flop_types.md#flop-comp).

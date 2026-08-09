@@ -423,7 +423,7 @@ def test_counted_float_counts_div_by_constant(thread_counter, divisor, expected_
 @pytest.mark.parametrize(
     ("case", "expected_counts"),
     [
-        # --- folds: the compiled port emits nothing (cost-model rule 1.7) ---
+        # --- folds: the compiled port emits nothing (cost-model rule 1) ---
         (lambda cf: cf * 1.0, {}),
         (lambda cf: 1.0 * cf, {}),
         (lambda cf: cf * 1, {}),  # an int and an equal-valued plain float compile identically
@@ -461,7 +461,7 @@ def test_counted_float_counts_div_by_constant(thread_counter, divisor, expected_
     ],
 )
 def test_counted_float_identity_folds(thread_counter, case, expected_counts: dict[str, int]):
-    """The sign-exact identity folds of cost-model rule 1.7, and the near-misses that must not fold."""
+    """The sign-exact identity folds of cost-model rule 1, and the near-misses that must not fold."""
     # --- arrange -----------------------------------------
     cf = CountedFloat(1.23456)
 

@@ -28,7 +28,7 @@ def count_pow_with_constant_exponent(exponent: float) -> None:
                                     varies and a generic POW is a fair stand-in.  The chain is a
                                     source-level porting decision, priced as written — not a
                                     toolchain transformation needing bit-identity to libm pow;
-                                    see the constant-exponent rule in docs/cost_model.md
+                                    see the constant-exponent ladder in docs/cost_model_interpretations.md
       - anything else            -> POW
     """
     value = float(exponent)
@@ -83,7 +83,7 @@ def count_div_with_constant_divisor(divisor: float) -> None:
         cnt: CountsTarget = _create_thread_state()
     if divisor == -1.0:
         # x / -1.0 is exactly -x, so the port emits a bare sign flip -- the reciprocal-multiply
-        # branch below would otherwise price it as MUL (cost-model rule 1.7)
+        # branch below would otherwise price it as MUL (cost-model rule 1)
         cnt.note("constant divisor -1.0 -> sign flip")
         cnt.MINUS += 1
         return
@@ -101,7 +101,7 @@ def count_div_with_constant_divisor(divisor: float) -> None:
 def count_mul_with_identity_multiplier(multiplier: float) -> None:
     """Register the flops for ``x * multiplier`` where the constant is ``1.0`` or ``-1.0``.
 
-    The sign-exact identity folds of cost-model rule 1.7: multiplying by constant 1 folds away
+    The sign-exact identity folds of cost-model rule 1: multiplying by constant 1 folds away
     entirely (a compiled port emits no instruction), multiplying by constant -1 reduces to a bare
     sign flip and counts MINUS. Callers pre-check the multiplier, so any other value is a bug.
     """
@@ -438,7 +438,7 @@ class CountedFloat(float):
         """x+other.
 
         A constant (non-CountedFloat) addend of -0.0 folds away: x + (-0.0) is x for every x,
-        so a compiled port emits nothing (cost-model rule 1.7). A +0.0 addend does NOT fold
+        so a compiled port emits nothing (cost-model rule 1). A +0.0 addend does NOT fold
         ((-0.0) + 0.0 is +0.0) and counts ADD like any other.
         """
         result = float.__add__(self, other)
@@ -469,7 +469,7 @@ class CountedFloat(float):
         """x-other.
 
         A constant (non-CountedFloat) subtrahend of +0.0 folds away: x - 0.0 is x for every x
-        (cost-model rule 1.7). A -0.0 subtrahend does NOT fold (x - (-0.0) is x + 0.0) and
+        (cost-model rule 1). A -0.0 subtrahend does NOT fold (x - (-0.0) is x + 0.0) and
         counts SUB like any other.
         """
         result = float.__sub__(self, other)
@@ -487,7 +487,7 @@ class CountedFloat(float):
         """other-x.
 
         A constant minuend of -0.0 is a bare sign flip: (-0.0) - x is exactly -x for every x,
-        so it counts MINUS (cost-model rule 1.7). A +0.0 minuend is NOT a sign flip
+        so it counts MINUS (cost-model rule 1). A +0.0 minuend is NOT a sign flip
         (0.0 - 0.0 is +0.0, where -x would be -0.0) and counts SUB like any other.
         """
         result = float.__rsub__(self, other)
@@ -511,7 +511,7 @@ class CountedFloat(float):
         """x*other.
 
         A constant (non-CountedFloat) multiplier of 1.0 folds away and -1.0 is a bare sign
-        flip counting MINUS — see count_mul_with_identity_multiplier (cost-model rule 1.7).
+        flip counting MINUS — see count_mul_with_identity_multiplier (cost-model rule 1).
         Every other multiplier counts MUL.
         """
         result = float.__mul__(self, other)
@@ -580,7 +580,7 @@ class CountedFloat(float):
         Floored division decomposes into DIV + RND: a compiled port computes x/y and rounds the
         quotient toward -inf, a float->float round (RND / FRINTM / ROUNDSD class), not an F2I.
         A constant divisor routes the division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1.7).
+        (count_div_with_constant_divisor; cost-model rule 1).
         """
         result = float.__floordiv__(self, other)
         if result is NotImplemented:
@@ -619,7 +619,7 @@ class CountedFloat(float):
         Python's % is the floored remainder r = x - y*floor(x/y), which a compiled port emits as
         DIV + RND (the floor) + MUL + SUB. Distinct from math.fmod, the truncated C remainder.
         A constant divisor routes the division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1.7) — and it is also the constant
+        (count_div_with_constant_divisor; cost-model rule 1) — and it is also the constant
         factor of the y*floor(...) multiply, so the identity folds apply there too: a divisor
         of 1.0 drops that multiply, -1.0 makes it a bare sign flip (MINUS). Any other constant
         keeps it a genuine MUL: the floor factor is freshly computed, never foldable.
@@ -665,7 +665,7 @@ class CountedFloat(float):
         Quotient and remainder share the DIV + RND (the floor); the remainder adds MUL + SUB, so
         divmod counts DIV + RND + MUL + SUB — the same as a lone %, since the // part is shared.
         A constant divisor routes the shared division step through the same folds as a bare `/`
-        (count_div_with_constant_divisor; cost-model rule 1.7), and folds the remainder's
+        (count_div_with_constant_divisor; cost-model rule 1), and folds the remainder's
         y*floor(...) multiply for a ±1.0 divisor the way % does.
         """
         result = float.__divmod__(self, other)

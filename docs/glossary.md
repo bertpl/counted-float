@@ -33,7 +33,7 @@ a multiply chain) have no bit-target to hit — different libms already differ i
 — and owe algorithmic faithfulness instead. The cost model prices operator arithmetic as
 what this port would execute, rather than what the much slower Python interpreter happens
 to do. See
-[Cost-model principles](cost_model.md#how-the-imaginary-port-gets-made) for the full story.
+[Cost-model principles](cost_model_rules.md#iii-how-the-port-is-built) for the full story.
 
 ## Constant { #constant }
 
@@ -57,7 +57,7 @@ A shortcut inside a math function for input regimes where the full computation i
 unnecessary. For any argument beyond ±20, `tanh` equals ±1 to machine precision, so the
 library returns that constant immediately. Fast paths cost far less than the general case,
 so the benchmarks pick input ranges that avoid them: a weight should price the work the
-function normally performs, not its shortcut ([cost-model rule 4](cost_model.md#the-rules)).
+function normally performs, not its shortcut ([cost-model rule 4](cost_model_rules.md#iv-the-rules)).
 
 ## FP contraction { #fp-contraction }
 
@@ -92,4 +92,4 @@ when part of the expression is [constant](#constant): `x ** 2` becomes a single 
 model it happens at either stage of the [compiled port](#compiled-port): bit-exact
 reductions are compiler rewrites; value-changing ones (the multiply chain for `x ** 5`)
 can only be *author* decisions, declared and bounded in
-[cost-model rule 1](cost_model.md#the-rules).
+[cost-model rule 1](cost_model_rules.md#iv-the-rules).

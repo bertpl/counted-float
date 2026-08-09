@@ -211,7 +211,7 @@ class MachineCodePage:
 
 
 # The overview page's grouping buckets, in display order, and the cost-model rule each one
-# defaults to (see docs/cost_model.md for the rules' statements).
+# defaults to (see docs/cost_model_rules.md for the rules' statements).
 KIND_HARDWARE = "Hardware instructions"
 KIND_LIBM = "Library calls (libm)"
 KIND_ARITY = "Arity-scaled algorithms"
@@ -502,9 +502,9 @@ def regenerate_pages() -> dict[Path, str]:
     regenerated[index_path] = rewrite_marked_blocks(
         read_lf(index_path), index_path, {"machine-code-page-list": render_page_list_block()}
     )
-    cost_model_path = REPO_ROOT / "docs" / "cost_model.md"
-    regenerated[cost_model_path] = rewrite_marked_blocks(
-        read_lf(cost_model_path), cost_model_path, {"cost-model-flop-type-table": render_cost_model_table()}
+    pricing_path = REPO_ROOT / "docs" / "cost_model_pricing.md"
+    regenerated[pricing_path] = rewrite_marked_blocks(
+        read_lf(pricing_path), pricing_path, {"cost-model-flop-type-table": render_cost_model_table()}
     )
     return regenerated
 

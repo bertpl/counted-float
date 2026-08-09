@@ -12,7 +12,7 @@ find:
 - Python operations that are *not* counted for this flop type
 
 The rules deciding *how* each type is priced (compiled-port lens, real-call lens, and the
-documented fallback) are stated in [Cost-model principles](cost_model.md).
+documented fallback) are stated in [Cost-model principles](cost_model_rules.md).
 
 ## Coverage at a glance
 
@@ -124,7 +124,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
       isolate the sign of `y`, merge)
 - **Counted Python operations:** `math.copysign(x, y)` where `x` or `y` is a `CountedFloat`
   (and only there — `math.signbit`, which reads the same bit, counts COMP instead: see
-  [the decomposed operations](cost_model.md#decomposed-operations))
+  [the decomposed operations](cost_model_pricing.md#decomposed-operations))
 - **Not counted:** copysign on non-CountedFloat, numpy copysign
 - **Note:** same sign-bit instruction class as ABS and MINUS, but 1–3 ops depending on
   architecture — which is why it is measured as its own benchmarked flop type rather than
@@ -284,7 +284,7 @@ decomposes for bases other than 2/10 — see `FlopType.LOG` below.
 - **Note:** `math.e ** x` counts POW, not EXP — `math.e` is not e (no float is;
   e is irrational), so `pow(math.e, x)` and `exp(x)` compute different
   functions, and neither the bit-exact compiler stage nor the same-computation
-  author stage of the [cost model](cost_model.md) admits the rewrite. Contrast
+  author stage of the [cost model](cost_model_rules.md) admits the rewrite. Contrast
   `math.log(x, math.e)`, whose fold rides a `1/log(base)` multiplier that
   evaluates to exactly 1.0 (see [`FlopType.LOG`](#flop-log))
 - **Weight measurement:** [the machine code behind the `EXP` weight](machine_code/exp.md)
