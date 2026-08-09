@@ -28,12 +28,10 @@ help:
 	@echo ''
 	@echo '  test		                    Run pytest unit tests.'
 	@echo '  test-collect-ids               List the collected test node-ids (CI unions these across matrix legs).'
-	@echo '  lint		                    Run all pre-commit hooks on all files.'
+	@echo '  lint		                    Run all pre-commit hooks on all files. Formats and applies ruff fixes as it goes.'
 	@echo '  mutation		                Run local mutation testing (mutmut). MODULE=<substr> scopes it.'
 	@echo '  mutation-results	            List the surviving mutants from the last mutation run.'
 	@echo '  mutation-stats	                Export the last mutation run'"'"'s tallies as JSON (used by the release badge).'
-	@echo '  format		                    Format source code using ruff.'
-	@echo '  format-single-file             Format single file using ruff. Useful in e.g. PyCharm to automatically trigger formatting on file save.'
 	@echo ''
 	@echo '  precompute-weights            Regenerate the shipped consensus flop weights from the built-in source data.'
 	@echo '  regen-docs                    Regenerate the dataset-derived docs content (marked text blocks + screenshots).'
@@ -43,7 +41,6 @@ help:
 	@echo ''
 	@echo 'Options:'
 	@echo ''
-	@echo '  format-single-file             - accepts `file_path=<path>` to pass the relative path of the file to be formatted.'
 	@echo '  test, test-collect-ids         - accept PYTHON=<x.y>, RESOLUTION=highest|lowest-direct, ALL_EXTRAS=true|false, PYTEST_ARGS=<args>.'
 	@echo '  lint                           - accepts PRE_COMMIT_ARGS=<args>.'
 
@@ -65,14 +62,6 @@ test-collect-ids:
 lint:
 	uv sync --locked --all-extras
 	uv run pre-commit run --all-files $(PRE_COMMIT_ARGS)
-
-format:
-	uv run ruff format .;
-	uv run ruff check --fix .;
-
-format-single-file:
-	uv run ruff format ${file_path};
-	uv run ruff check --fix ${file_path};
 
 # local mutation testing over _core (config in [tool.mutmut]); MODULE=<substr> scopes to matching mutants
 mutation:
