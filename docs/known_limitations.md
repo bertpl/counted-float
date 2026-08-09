@@ -91,7 +91,7 @@ Two fixes, each with its own reach:
   accumulator, so every later operation has a counted operand and counts, even
   over otherwise-plain data. Elements that fold against that accumulator are
   still dropped, by the identity folds of
-  [the cost model](cost_model_rules.md#iv-the-rules) as everywhere else — a `-0.0` added
+  [the cost model](cost_model_rules.md#the-rules) as everywhere else — a `-0.0` added
   or a `1.0` multiplied costs nothing.
 
 Neither fix reaches `min` and `max`: they take no `start`, and seeding a loop

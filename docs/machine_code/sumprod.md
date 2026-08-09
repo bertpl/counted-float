@@ -10,7 +10,7 @@ error term a genuine fused multiply-add, emitted through the `llvm.fma` intrinsi
 into a three-double running total, plus the close-out collapsing that total to one double.
 The compensated sequence has real instruction-level parallelism (only the hi-lane
 accumulation is serial), which is why the cost is measured on the whole algorithm rather than
-decomposed into a per-operation chain — see [Cost-model principles](../cost_model_rules.md).
+decomposed into a per-operation chain — see [Cost-model rules](../cost_model_rules.md).
 
 What Python code counts into `SUMPROD` is described in
 [FLOP types](../flop_types.md#flop-sumprod).

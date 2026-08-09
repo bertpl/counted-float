@@ -1,16 +1,16 @@
 # Cost-model interpretations
 
-The [rules](cost_model_rules.md) are deliberately few, and a few places admit two defensible readings. Each entry below resolves one such place: the **tension** (what two readings the rules allow), the **interpretation** (the one the model uses), and **why** (the principle that decides it).
+A few places in the [rules](cost_model_rules.md) admit two defensible readings. Each entry below resolves one such place: the **tension** (what two readings the rules allow), the **interpretation** (the one the model uses), and **why** (the principle that decides it).
 
 Entries are cited as `rule 2 · measurement-fallbacks`, here and in code. Slugs are frozen — entries are appended, never renamed — so every citation and anchor stays valid.
 
 ## fma-stays-as-written
 
-**Tension.** Bit-exactness cuts both ways for fused multiply-add: fusing `x*y + z` changes values (one rounding where the source has two), but *unfusing* a written `fma(x, 1.0, z)` is bit-exact — it computes exactly `x + z` — and real compilers diverge on it at `-O2` (clang rewrites to a plain add, gcc keeps the fused instruction). So does a written `math.fma` with degenerate constants unfuse?
+**Tension.** Bit-exactness admits one direction of the fused multiply-add and not the other. Fusing `x*y + z` changes values (one rounding where the source has two), but *unfusing* a written `fma(x, 1.0, z)` is bit-exact — it computes exactly `x + z` — and real compilers diverge on it at `-O2` (clang rewrites to a plain add, gcc keeps the fused instruction). So does a written `math.fma` with degenerate constants unfuse?
 
-**Interpretation.** The written form wins in both directions: operators never fuse, and a `math.fma` call never unfuses — once an fma survives, constant operand values are not inspected. The one prior question is whether an fma survives at all: with *both* multiplicands plain, no fused instruction remains — the constant product folds at compile time, leaving an ADD (or nothing, when the product is exactly `-0.0`). That is ordinary rule-1 constant folding, not an unfusing.
+**Interpretation.** The written form decides both directions: operators never fuse, and a `math.fma` call never unfuses — once an fma survives, constant operand values are not inspected. The one prior question is whether an fma survives at all: with *both* multiplicands plain, no fused instruction remains — the constant product folds at compile time, leaving an ADD (or nothing, when the product is exactly `-0.0`). That is ordinary rule-1 constant folding, not an unfusing.
 
-**Why.** `math.fma` is special in exactly one way: it has no operator spelling, so writing the call is unambiguous author intent asking for the fused instruction. Pricing the author's written arithmetic — fused stays fused, unfused stays unfused — is the same pin as the model's compiler having [floating-point contraction](glossary.md#fp-contraction) switched off (`-ffp-contract=off`: the compiler never fuses a written `x*y + z` on its own), and for the same reason: the priced instruction stream comes out identical on every architecture and toolchain.
+**Why.** `math.fma` is special in exactly one way: it has no operator spelling, so writing the call is unambiguous author intent asking for the fused instruction. Pricing the author's written arithmetic — fused stays fused, unfused stays unfused — is fixed for the same reason as the model's compiler having [floating-point contraction](glossary.md#fp-contraction) switched off (`-ffp-contract=off`: the compiler never fuses a written `x*y + z` on its own), and for the same reason: the priced instruction stream comes out identical on every architecture and toolchain.
 
 ## exponent-chain-bound
 
@@ -27,13 +27,13 @@ Entries are cited as `rule 2 · measurement-fallbacks`, here and in code. Slugs 
 
 A `CountedFloat` exponent is runtime input, not a constant, so no rung of the ladder applies to it: with a counted base too, the call prices POW; with a constant base, the base ladder in [exp10-is-pow](#exp10-is-pow) governs instead (`2 ** cf` prices EXP2, not POW).
 
-**Why.** The chain is an author decision, not a compiler rewrite — it needs no bit-identity to libm's `pow`, because nothing was rewritten: the chain *is* the source the author would write. Real compilers agree the choice is not theirs (they expand constant exponents beyond 2 only under fast-math flags). The bound keeps the persona honest: within it, hand-written chains are how performance-conscious code genuinely raises to small constant powers; beyond it, that claim stops being true and the author calls `pow`.
+**Why.** The chain is an author decision, not a compiler rewrite — it needs no bit-identity to libm's `pow`, because nothing was rewritten: the chain *is* the source the author would write. Real compilers agree the choice is not theirs (they expand constant exponents beyond 2 only under fast-math flags). The bound keeps the author's declared decision defensible: within it, hand-written chains are how performance-conscious code genuinely raises to small constant powers; beyond it, that claim stops being true and the author calls `pow`.
 
 ## classifiers-price-their-question
 
-**Tension.** The float classifiers (`math.isnan`, `isinf`, `isfinite`, `isnormal`, `issubnormal`, `signbit`) follow the two actors into apparently free territory: the author calls the C99 macro — never re-implements it — and the compiler lowers the macro to integer bit tests (`isfinite` does on both priced architectures), and integer work is outside the model's scope. Read strictly, every classifier prices at zero. Two things break under that reading:
+**Tension.** The float classifiers (`math.isnan`, `isinf`, `isfinite`, `isnormal`, `issubnormal`, `signbit`) come out free if the two actors are followed strictly: the author calls the C99 macro — never re-implements it — and the compiler lowers the macro to integer bit tests (`isfinite` does on both priced architectures), and integer work is outside the model's scope. Read strictly, every classifier prices at zero. Two things break under that reading:
 
-- **it proves too much**: `fabs` compiles to an and-mask, unary minus to an xor, `copysign` to two bitwise ops — the same "the emitted code is bit manipulation" argument would collapse rule 1's prices for the whole sign family;
+- **the same argument would zero out rule 1's prices for the whole sign family**: `fabs` compiles to an and-mask, unary minus to an xor, `copysign` to two bitwise ops — the same "the emitted code is bit manipulation" argument would collapse rule 1's prices for the whole sign family;
 - **identical questions would price differently by spelling**: `math.isnan(x)` free, while `x != x` — the same question written as an operator — unavoidably counts COMP.
 
 **Interpretation.** Classifiers are priced as value-level float operations — the boundary drawn in *What the model prices*, the same one that gives `math.copysign` its benchmarked weight — on the floating-point canonical form of the question each asks, whatever lowering a particular compiler picks: `isnan` → COMP (`x != x`), `isinf` → ABS + COMP (`|x| = ∞`), `isfinite` → ABS + COMP (`|x| < ∞`), `isnormal` / `issubnormal` → ABS + 2 COMP (two bounds on one magnitude). `signbit` is the one classifier whose question has no floating-point formula — `x < 0.0` is not it (`signbit(-0.0)` is `True` where `-0.0 < 0.0` is `False`), and the faithful `copysign(1.0, x) < 0.0` needs its copysign solely to make the sign visible to a comparison — so it charges only the bool-exit compare every classifier's question ends in: one COMP, the spelling's copysign unpriced.
@@ -44,11 +44,11 @@ A `CountedFloat` exponent is runtime input, not a constant, so no rung of the la
 
 **Tension.** `2 ** x` strength-reduces to a real `exp2` call, so symmetry suggests `10 ** x` reduces to `exp10`.
 
-**Interpretation.** `2 ** x` prices as C99 `exp2`, measured on the real call. `10 ** x` prices as `pow(10, x)` — and the EXP10 weight is *measured* on `pow(10, x)`, so price and name stay honest. Any other constant base — `math.e` included — prices generic POW: no exponential reduction is declared for it, and `pow(e, x)` is not `exp(x)` bit-wise, so the compiler stage could not make one.
+**Interpretation.** `2 ** x` prices as C99 `exp2`, measured on the real call. `10 ** x` prices as `pow(10, x)` — and the EXP10 weight is *measured* on `pow(10, x)`, so the weight measures the call the name describes. Any other constant base — `math.e` included — prices generic POW: no exponential reduction is declared for it, and `pow(e, x)` is not `exp(x)` bit-wise, so the compiler stage could not make one.
 
 **Why.** The author writes portable standard C, and calls into libraries at their public surface: `exp2` is standard C99, `exp10` is not. A strength reduction to a call the port cannot portably make would price an instruction stream the port cannot emit.
 
-EXP10 still exists as its own flop type — rather than the call simply counting POW — because `10 ** x` is its own operation with its own general case: the base is pinned at 10, so libm's `pow` runs the same internal regime on every call, and rule 4 prices an operation on *its* general case. The weight is measured on exactly that fixed-base `pow(10, x)` call — the type stays honest about what the user wrote, the measurement about what the port emits. Generic POW's weight prices the two-runtime-operand regime instead.
+EXP10 still exists as its own flop type — rather than the call simply counting POW — because `10 ** x` is its own operation with its own general case: the base is pinned at 10, so libm's `pow` runs the same internal regime on every call, and rule 4 prices an operation on *its* general case. The weight is measured on exactly that fixed-base `pow(10, x)` call — the type names what the user wrote, the measurement what the port emits. Generic POW's weight prices the two-runtime-operand regime instead.
 
 ## log-constant-base-folds
 
@@ -68,7 +68,7 @@ EXP10 still exists as its own flop type — rather than the call simply counting
 
 ## fmax-shares-comp-weight
 
-**Tension.** For `math.fmax` / `fmin` the two actors land cleanly: the author calls the C99 function, and the compiler emits — on ARM — a single IEEE max/min instruction (`fmaxnm` / `fminnm`), and on x86, which has no IEEE-semantics max instruction (`maxsd` returns its second operand under NaN), a short branchless compare-select sequence with a NaN fixup. The open question is rule 2's: read literally, "measure the very call" gives fmax and fmin a benchmarked flop type of their own — yet the machinery the port executes is the same compare-and-select class the COMP weight already measures.
+**Tension.** For `math.fmax` / `fmin` the two actors give a clear answer: the author calls the C99 function, and the compiler emits — on ARM — a single IEEE max/min instruction (`fmaxnm` / `fminnm`), and on x86, which has no IEEE-semantics max instruction (`maxsd` returns its second operand under NaN), a short branchless compare-select sequence with a NaN fixup. The open question is rule 2's: read literally, "measure the very call" gives fmax and fmin a benchmarked flop type of their own — yet the machinery the port executes is the same compare-and-select class the COMP weight already measures.
 
 **Interpretation.** No new type: one COMP per call, the COMP weight reused the way `math.fabs` reuses ABS. The NaN-quieting fixup is declared here as this pricing's stated gap — the price charges the selection, not the quieting. The semantics stay distinct from the builtins `min` / `max` (order-dependent comparison chains returning whichever operand survives): shared machinery and a shared price, never shared meaning.
 
@@ -96,7 +96,7 @@ EXP10 still exists as its own flop type — rather than the call simply counting
 - `math.fsum` counts (n−1) ADD while the real compensation machinery grows and shrinks with the data.
 - The range classifiers (`isnormal`, `issubnormal`) charge their fixed ABS + 2 COMP even on inputs where a chained Python spelling stops after one compare.
 
-**Why.** A formula contains no control flow by construction, so its transcription is the one fixed-cost object an input-dependent operation offers — conditioning the price on branches would reintroduce exactly the input-dependence rule 3 exists to escape. The obligation that keeps the fixed price honest: every divergence of the executing algorithm is stated where the price is documented — a documented gap, never a silent one.
+**Why.** A formula contains no control flow by construction, so its transcription is the one fixed-cost object an input-dependent operation offers — conditioning the price on branches would reintroduce exactly the input-dependence rule 3 exists to escape. The obligation that comes with the fixed price: every divergence of the executing algorithm is stated where the price is documented — a documented gap, never a silent one.
 
 ## loops-do-not-fold
 

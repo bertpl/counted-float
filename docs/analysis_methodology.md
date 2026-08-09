@@ -63,7 +63,7 @@ to work with a maximum of 4K double precision values.
 ## 1.6. Benchmark design rationale
 
 What each benchmark executes — which call or port is measured, and over which input ranges —
-follows the package-wide pricing rules; see [Cost-model principles](cost_model_rules.md) for the
+follows the package-wide pricing rules; see [Cost-model rules](cost_model_rules.md) for the
 rules and the per-type table applying them.
 
 

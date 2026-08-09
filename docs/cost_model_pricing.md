@@ -59,8 +59,6 @@ Every weight is a **latency** weight: the latency difference between two [depend
 | `I2F` | *(no benchmark probe — priced from spec sheets and third-party tables)* | 1 | int→float conversion instruction of the port |
 <!-- END generated: cost-model-flop-type-table -->
 
-One scope reminder from the rules page: a deterministic call whose work is *not* float-domain (`strtod`-class parsing, string rendering) fails the scope precondition, not rule 2 — it has no row here and no price anywhere.
-
 ## Decomposed operations
 
 Operations with no flop type of their own count as compositions of the types above, each citing the rule and interpretation that fix it. Every composite price on this page adds its parts as if they chain (`decompositions-sum-latencies`).
@@ -78,31 +76,26 @@ Operations with no flop type of their own count as compositions of the types abo
 
 **Float→int exits** (rule 1): `int(x)`, `math.floor`, `math.ceil`, `math.trunc` → F2I each.
 
-**The classifiers** (rule 3 · classifiers-price-their-question): `math.isnan` → COMP · `isinf`, `isfinite` → ABS + COMP · `isnormal`, `issubnormal` → ABS + 2 COMP · `signbit` → COMP.
+**The classifiers** (rule 3 · classifiers-price-their-question):
 
-**Formula-priced calls** (rule 3 · formula-price-is-fixed): `math.isclose` → SUB + 3 ABS + MUL + 3 COMP · `math.fsum` → (n−1) ADD, where n is the number of elements passed, counted or not — the same flat shape the sequence calls below reach from rule 1, arrived at from the other direction.
+- `math.isnan` → COMP;
+- `math.isinf`, `math.isfinite` → ABS + COMP each;
+- `math.isnormal`, `math.issubnormal` → ABS + 2 COMP each;
+- `math.signbit` → COMP.
+
+**Formula-priced calls** (rule 3 · formula-price-is-fixed):
+
+- `math.isclose` → SUB + 3 ABS + MUL + 3 COMP;
+- `math.fsum` → (n−1) ADD, where n is the number of elements passed, counted or not.
 
 **Sequence calls** (rule 1 · loops-do-not-fold): `math.prod` → (n−1) MUL for n elements, n for a `start` that is counted or whose value is not 1 — no element folds, because the port's loop body runs once per element whatever it holds. Like every price on this page it applies only where a counted value is involved; a sequence of plain floats counts nothing. The built-in `sum` is not interceptable and does fold, costing n ADD for n counted values and less when plain elements come first; the workarounds are in [known limitations](known_limitations.md#loops-the-library-cannot-count-as-loops).
 
-**Single-instruction respellings** (rule 1): `math.degrees`, `math.radians` → MUL each (the conversion factor folds to a constant) · `float.is_integer` → RND + COMP (the counted spelling `x // 1.0 == x`; RND, not F2I, because no int ever materializes).
+**Single-instruction respellings** (rule 1):
 
-**Constant-operand ladders** — the compact outcome tables of the interpretations entries:
+- `math.degrees`, `math.radians` → MUL each, the conversion factor folding to a constant;
+- `float.is_integer` → RND + COMP, the counted spelling `x // 1.0 == x` — RND rather than F2I, because no int ever materializes.
 
-| Case | Counts | Entry |
-|---|---|---|
-| `x ** 0` | nothing, plain `1.0` | exponent-chain-bound |
-| `x ** 1` | nothing | exponent-chain-bound |
-| `x ** -1` | DIV | exponent-chain-bound |
-| `x ** ±0.5` | SQRT · SQRT + DIV | exponent-chain-bound |
-| `x ** n`, integer 2 ≤ \|n\| ≤ 16 | square-and-multiply MULs, +DIV if n < 0 | exponent-chain-bound |
-| `x ** other` | POW | exponent-chain-bound |
-| `1.0 ** x` | nothing, plain `1.0` | rules page, constant results |
-| `2 ** x` · `10 ** x` | EXP2 · EXP10 | exp10-is-pow |
-| other constant base ** x | POW | exp10-is-pow |
-| `log(x)` | LOG | — |
-| `log(x, 2)` · `log(x, 10)` | LOG2 · LOG10 | log-constant-base-folds |
-| `log(x, c)` | LOG + MUL (LOG alone for base `e`; LOG + MINUS for base `1/e`) | log-constant-base-folds |
-| `log(x, counted_base)` | LOG per counted operand + DIV | log-constant-base-folds |
+**Constant operands** — a constant exponent, base or logarithm base changes what the port emits. Those ladders are enumerated where they are decided: [exponent-chain-bound](cost_model_interpretations.md#exponent-chain-bound), [exp10-is-pow](cost_model_interpretations.md#exp10-is-pow) and [log-constant-base-folds](cost_model_interpretations.md#log-constant-base-folds).
 
 ## Arity-scaled operations
 

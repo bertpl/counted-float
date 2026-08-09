@@ -44,7 +44,7 @@ nav:
       - Methodology: analysis_methodology.md
       - CPU architecture scope: cpu_architectures_scope.md
       - Cost model:
-          - Principles and rules: cost_model_rules.md
+          - Rules: cost_model_rules.md
           - Interpretations: cost_model_interpretations.md
           - Per-type pricing: cost_model_pricing.md
       - Benchmark machine code:
