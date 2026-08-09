@@ -60,7 +60,7 @@ up in that output.
 
 ## Loops the library cannot count as loops
 
-`math.prod` and `math.fsum` count one operation per element, whatever the
+`math.prod` and `math.fsum` count n−1 operations for n elements, whatever the
 elements hold. The built-in `sum`, `min` and `max`, and any loop written by
 hand, cannot be counted that way: the library cannot patch them, so their counts
 come from the individual operator calls, and each of those applies the ordinary
@@ -73,9 +73,9 @@ Counting through the operator calls goes wrong in two directions:
   (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted exactly as a strict compiler
   would emit it. An explicit `0.0` seed changes nothing, for the same reason.
 - **too few operations** whenever plain floats precede the first `CountedFloat`:
-  those operations have no counted operand, so `sum([1.0, 2.0, cf])` counts one
-  addition and `min([1.0, 2.0, cf, 3.0])` one comparison, where a loop runs
-  three of each.
+  those operations have no counted operand at all, so `sum([1.0, 2.0, cf])`
+  counts one addition where a loop runs two, and `min([1.0, 2.0, cf, 3.0])` one
+  comparison where a loop runs three.
 
 Two fixes, with different reach:
 
@@ -85,8 +85,9 @@ Two fixes, with different reach:
 - **seed a counted accumulator** — `sum(data[1:], start=CountedFloat(data[0]))`,
   and the same shape for a loop written by hand. Every later operation then has
   a counted operand, so it counts. Elements that fold against that accumulator
-  are still dropped: `-0.0` costs nothing in a sum, `1.0` nothing in a product,
-  and `-1.0` reduces to MINUS.
+  are still dropped, by the identity folds of
+  [the cost model](cost_model.md#the-rules) as everywhere else — a `-0.0` added
+  or a `1.0` multiplied costs nothing.
 
 ## Other limitations
 

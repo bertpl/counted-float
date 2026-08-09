@@ -197,8 +197,8 @@ class MachineCodePage:
             weight's validity (a why-comment in the benchmark source marks these); the
             cost-model table then lists rule 4 alongside the kind's default rule.
         probe_span: Extra coordinates or elements the extended probe carries over the base
-            probe; a per-argument slope is their latency difference divided by it. 1 where the
-            probes differ by an operation rather than by arity.
+            probe; a per-argument slope is their latency difference divided by that span. The
+            default applies where the probes differ by an operation rather than by arity.
     """
 
     doc_name: str

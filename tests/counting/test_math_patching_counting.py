@@ -474,7 +474,7 @@ def test_dist_counts_when_only_q_holds_a_counted_float(thread_counter):
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 4])
-def test_prod_counts_one_multiply_per_element(thread_counter, n_values):
+def test_prod_counts_n_minus_one_multiplies(thread_counter, n_values):
     # --- arrange -----------------------------------------
     values = [CountedFloat(float(i + 2)) for i in range(n_values)]
 
@@ -510,8 +510,8 @@ def test_prod_of_an_empty_iterable_is_its_start(thread_counter):
 
 
 def test_prod_with_a_plain_nonidentity_start_opens_the_loop(thread_counter):
-    # a plain start of 2.0 is NOT the multiplicative identity: it is a real operand, so the loop
-    # opens with its multiply
+    # a port seeds its accumulator from the first element, so a start of 2.0 -- not the
+    # multiplicative identity, hence unfoldable -- needs its own multiply
     # --- act ---------------------------------------------
     result = math.prod([CountedFloat(3.0), CountedFloat(4.0)], start=2.0)
 
