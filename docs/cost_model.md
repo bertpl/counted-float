@@ -368,10 +368,11 @@ table). Most follow rule 1 at the operation level; `math.fsum`, `round(x, n)` an
   reciprocal, so rule 1.6's fold does not apply). Stated gap under rule 3: CPython itself
   computes this via correctly-rounded decimal conversion, whose input-dependent machinery
   is knowingly not modeled.
-- `math.degrees` / `math.radians` → MUL. `math.prod` → (n−1) MUL for n elements (n with an
-  explicit `start`): its port is a loop whose body runs once per element, so the count depends
-  only on how many elements there are, never on their values — unlike the operator arithmetic
-  of rule 1.7, where the constant is written at the operation itself.
+- `math.degrees` / `math.radians` → MUL.
+- `math.prod` → (n−1) MUL for n elements, n when `start` is counted or differs from 1: its
+  port is a loop whose body runs once per element, so the count depends only on how many
+  elements there are, never on their values — unlike the constant folds of rule 1.7, which
+  apply where the constant is written at the operation itself.
 - `math.fsum` → (n−1) ADD under rule 3: the compensation machinery is input-dependent and
   knowingly not modeled.
 - `math.isclose` → SUB + 3 ABS + MUL + 3 COMP under rule 3 — the transcription of its

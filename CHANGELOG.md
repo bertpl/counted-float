@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `math.prod` now counts (n−1) MUL for n elements (n with an explicit `start`) instead of folding constant elements away, matching the loop a compiled port executes; counts change only for sequences mixing plain floats with `CountedFloat` values
+- `math.prod` now counts (n−1) MUL for n elements — n when `start` is counted or differs from 1 — instead of folding constant elements away, matching the loop a compiled port executes; counts change only for sequences mixing plain floats with `CountedFloat` values
 
 ### Deprecated
 

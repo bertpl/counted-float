@@ -60,32 +60,33 @@ up in that output.
 
 ## Loops the library cannot count as loops
 
-`math.prod` and `math.fsum` count one operation per element, whatever the elements hold. The
-built-in `sum` and any loop written by hand cannot be counted that way — the library cannot
-patch them, so their counts come from the individual operator calls, and each of those applies
-the ordinary constant folds.
+`math.prod` and `math.fsum` count one operation per element, whatever the
+elements hold. The built-in `sum`, `min` and `max`, and any loop written by
+hand, cannot be counted that way: the library cannot patch them, so their counts
+come from the individual operator calls, and each of those applies the ordinary
+constant folds.
 
-That leaves `sum(data)` wrong in both directions:
+Counting through the operator calls goes wrong in two directions:
 
-- **one addition too many** over counted values: it seeds with an integer `0`, and adding zero
-  is not a no-op for signed zero (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted exactly as a
-  strict compiler would emit it. An explicit `0.0` seed changes nothing, for the same reason.
-- **too few** whenever plain floats precede the first `CountedFloat`, since those additions
-  have no counted operand at all.
+- **one addition too many** in `sum(data)` over counted values: `sum` seeds with
+  an integer `0`, and adding zero is not a no-op for signed zero
+  (`-0.0 + 0.0` is `+0.0`), so `+ 0` is counted exactly as a strict compiler
+  would emit it. An explicit `0.0` seed changes nothing, for the same reason.
+- **too few operations** whenever plain floats precede the first `CountedFloat`:
+  those operations have no counted operand, so `sum([1.0, 2.0, cf])` counts one
+  addition and `min([1.0, 2.0, cf, 3.0])` one comparison, where a loop runs
+  three of each.
 
-Two ways to get the loop count:
+Two fixes, with different reach:
 
-- **`math.fsum(data)`** — n−1 ADD for n elements, with no seeding or element-type question.
-- **`sum(rest, start=CountedFloat(first))`** — once the accumulator is a `CountedFloat`, every
-  later addition counts, plain elements included. The wrap costs nothing, and is unnecessary
-  only when the first element is already counted.
-
-A loop written by hand has the same two fixes: call `math.fsum` or `math.prod`, or make the
-accumulator a `CountedFloat` from the first step. Elements equal to the operation's identity
-(`-0.0` in a sum, `1.0` or `-1.0` in a product) still fold away against a counted accumulator,
-so both workarounds still drop those. The built-ins `min` and `max` need no workaround at all:
-comparisons have no identity element, so nothing folds and their n−1 COMP already matches the
-loop.
+- **`math.fsum(data)` or `math.prod(data)`** — n−1 operations for n elements,
+  every element counted whatever its value. There is no equivalent for
+  `min`/`max`.
+- **seed a counted accumulator** — `sum(data[1:], start=CountedFloat(data[0]))`,
+  and the same shape for a loop written by hand. Every later operation then has
+  a counted operand, so it counts. Elements that fold against that accumulator
+  are still dropped: `-0.0` costs nothing in a sum, `1.0` nothing in a product,
+  and `-1.0` reduces to MINUS.
 
 ## Other limitations
 

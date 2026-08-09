@@ -712,10 +712,11 @@ def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
 def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | CountedFloat:
     """Patch math.prod: stdlib contract, counted as the multiply loop a port emits.
 
-    Counts n-1 MUL for n elements, n with a start other than the default: a port seeds its
-    accumulator from the first element, so only a real start opens the loop with a multiply.
-    No element folds, unlike the operator arithmetic elsewhere in the model -- the port's loop
-    body executes once per element whatever value that element holds.
+    Counts n-1 MUL for n elements, and n when `start` is a CountedFloat (a runtime value, so
+    its multiply is real) or differs from 1: a port seeds its accumulator from the first
+    element, so only a start it cannot fold opens the loop with a multiply. No element folds,
+    unlike the constant folds of cost-model rule 1.7 -- the port's loop body runs once per
+    element whatever value that element holds.
 
     Counted inputs are unboxed before delegating, so the original's own multiplications register
     nothing; inputs without any CountedFloat are delegated wholesale, preserving int-exactness.
