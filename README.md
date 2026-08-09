@@ -1,8 +1,8 @@
-<!-- badges below refreshed at release v2.3.1 -->
+<!-- badges below refreshed at release v2.4.0 -->
 [![CI](https://img.shields.io/github/actions/workflow/status/bertpl/counted-float/push_to_main.yml?branch=main&label=CI)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
 [![Coverage](https://img.shields.io/badge/coverage-100.00%25-brightgreen)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
-[![Tests](https://img.shields.io/badge/tests-2334-blue)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
-[![Mutation](https://img.shields.io/badge/mutmut-85%25-brightgreen)](https://pypi.org/project/mutmut/)
+[![Tests](https://img.shields.io/badge/tests-2425-blue)](https://github.com/bertpl/counted-float/actions/workflows/push_to_main.yml)
+[![Mutation](https://img.shields.io/badge/mutmut-84%25-brightgreen)](https://pypi.org/project/mutmut/)
 [![Docs](https://img.shields.io/readthedocs/counted-float)](https://counted-float.readthedocs.io/)
 [![PyPI](https://img.shields.io/pypi/v/counted-float.svg)](https://pypi.org/project/counted-float/)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21780137.svg)](https://doi.org/10.5281/zenodo.21780137)

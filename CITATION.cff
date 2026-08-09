@@ -16,5 +16,5 @@ identifiers:
     value: 10.5281/zenodo.21780137
     description: "The concept DOI of this software; resolves to the latest archived version."
 repository-code: "https://github.com/bertpl/counted-float"
-version: 2.3.1
-date-released: 2026-08-03
+version: 2.4.0
+date-released: 2026-08-09

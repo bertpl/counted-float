@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.4.0 (2026-08-09)
 
 ### Added
 
@@ -15,14 +15,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `math.prod` now counts (n−1) MUL for n elements — n when `start` is counted or differs from 1 — instead of folding constant elements away, matching the loop a compiled port executes; counts change wherever a plain float met a counted one, as an element or as the `start`
 - `math.prod` no longer keeps a partial count when an element raises: like every other counted call, it computes before it counts
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
 
 ## 2.3.1 (2026-08-03)
 
