@@ -1,16 +1,14 @@
-"""The golden counting test: every corpus row, executed and asserted from every angle.
-
-One parametrized test drives the whole corpus. Per row it asserts, in one pass:
+"""One parametrized test drives the whole corpus, asserting each row from every angle.
 
 - **counts** — exact full-dict equality at 1x, and linear scaling at 2x and 5x repetitions
   in one context, so a counter that accumulates wrongly (or not at all) fails visibly;
 - **result shape** — exact result types, on every repetition;
 - **the plain twin** — the identical snippet on plain floats counts nothing and produces a
-  bit-identical outcome, so counting never changes a value and rule A1's delegate-when-plain
-  holds on every row.
+  bit-identical outcome, so counting never changes a value and a snippet with no counted
+  operand stays plain, on every row.
 
-Rows A5 and A6 (the outside-context and paused regimes) are pinned by the dedicated tests at
-the bottom; the shared runner deliberately models only the inside-a-fresh-context regime.
+Rows A5 and A6 are covered by `test_outside_context_regime` and `test_paused_regime`; see
+`_corpus_regimes` for why they sit outside the shared runner.
 """
 
 import math
@@ -66,28 +64,28 @@ def _raw_result(row: GoldenRow) -> object:
         return row.probe(CountedFloat)
 
 
-# --- the two regimes outside the runner's model --
-
-
+# ==================================================================================================
+#  The two regimes outside the runner's model
+# ==================================================================================================
 def test_outside_context_regime() -> None:
     """Row A5: without a context, math.* is unpatched and only operators preserve the type."""
-    # --- act --------------------------------
+    # --- act --------------------------
     via_math = math.sqrt(CountedFloat(4.0))
     via_operator = CountedFloat(2.0) + 1.0
 
-    # --- assert -----------------------------
+    # --- assert -----------------------
     assert type(via_math) is float
     assert type(via_operator) is CountedFloat
 
 
 def test_paused_regime() -> None:
     """Row A6: paused keeps patches installed and types counted while suppressing counts."""
-    # --- arrange / act ----------------------
+    # --- arrange / act ----------------
     with FlopCountingContext() as ctx, PauseFlopCounting():
         via_math = math.sqrt(CountedFloat(4.0))
         via_operator = CountedFloat(2.0) + 1.0
 
-    # --- assert -----------------------------
+    # --- assert -----------------------
     assert type(via_math) is CountedFloat
     assert type(via_operator) is CountedFloat
     assert not any(ctx.flop_counts().as_dict().values())

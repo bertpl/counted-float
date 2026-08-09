@@ -1,9 +1,8 @@
-"""Execution and comparison machinery for the golden counting corpus.
+"""The runner executes corpus probes and reduces their outcomes to a comparable form.
 
-The runner executes a row's probe inside a fresh `FlopCountingContext` — once or repeated —
-and reduces the outcome to a comparable form: float-valued parts compare by bit pattern (so
-`-0.0` vs `+0.0` and NaN payloads are visible), everything else by type and value, and a
-raising probe by its exception type.
+Each probe runs inside a fresh `FlopCountingContext` — once or repeated. Float-valued parts
+of an outcome compare by bit pattern (so `-0.0` vs `+0.0` and NaN payloads are visible),
+everything else by type and value, and a raising probe by its exception type.
 """
 
 import importlib.util
@@ -13,7 +12,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from fractions import Fraction
 
-from counted_float import CountedFloat, FlopCountingContext
+from counted_float import FlopCountingContext
 
 from ._row import GoldenRow
 
@@ -102,15 +101,3 @@ def scaled_counts(counts: dict[str, int], reps: int) -> dict[str, int]:
 def _nonzero_counts(ctx: FlopCountingContext) -> dict[str, int]:
     """Extract the context's nonzero flop counts keyed by flop-type value."""
     return {k.value: v for k, v in ctx.flop_counts().as_dict().items() if v}
-
-
-# `CountedFloat` re-exported so the test module names both run types from one import site.
-__all__ = [
-    "CountedFloat",
-    "ProbeRun",
-    "assert_result_shape",
-    "comparable_outcome",
-    "gate_reason",
-    "run_probe",
-    "scaled_counts",
-]

@@ -1,19 +1,13 @@
-"""Schema of one golden-corpus row: a probe plus everything the golden test asserts about it.
+"""`GoldenRow` records a probe plus everything the golden test asserts about it.
 
-Each row is one counting decision of the cost model, executable: the probe runs the snippet
-with an injected number type (`CountedFloat` for the counted run, `float` for the plain twin),
-and the row states the expected counts, the expected result shape, and the cost-model text
-that forces the outcome.
-
-Citations use two prefixes, resolved against the docs pages by the corpus meta-tests:
-`rules:<anchor>` points into `docs/cost_model_rules.md`, `interp:<slug>` into
-`docs/cost_model_interpretations.md`.
+Citations use two prefixes: `rules:<anchor>` names an anchor in `docs/cost_model_rules.md`,
+`interp:<slug>` one in `docs/cost_model_interpretations.md`.
 """
 
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-# --- rules-page anchors -----------------------
+# Rules-page anchors.
 R_CONTRACT = "rules:the-contract"
 R_SCOPE = "rules:what-the-model-prices"
 R_PORT = "rules:how-the-port-is-built"
@@ -21,7 +15,7 @@ R_RULES = "rules:the-rules"
 R_ENDINGS = "rules:where-countedness-ends"
 R_RECORDS = "rules:what-a-count-records"
 
-# --- interpretation slugs ---------------------
+# Interpretation slugs.
 I_FMA = "interp:fma-stays-as-written"
 I_EXPONENT_CHAIN = "interp:exponent-chain-bound"
 I_CLASSIFIERS = "interp:classifiers-price-their-question"
@@ -40,8 +34,8 @@ class GoldenRow:
     """One executable counting decision of the reference corpus.
 
     Args:
-        row_id: Frozen decision-row ID (`A1`..`D15`); several probes may share one ID when
-            they pin the same decision from different angles.
+        row_id: Frozen decision-row ID; several probes may share one ID when they pin the
+            same decision from different angles.
         label: Short unique probe description; `row_id` + `label` form the test ID.
         probe: Runs the snippet once. Receives the number type to build values with —
             `CountedFloat` for the counted run, `float` for the plain twin — so both runs
@@ -52,8 +46,8 @@ class GoldenRow:
         result: Expected result shape of the counted run: an exact type, or a tuple of exact
             types for container results. `None` iff `raises` is set.
         raises: Exception type the probe raises (on both runs), or `None`.
-        requires: Availability gate: a `math` attribute name, `"from_number"`, or `"numpy"`;
-            `None` when the probe runs everywhere.
+        requires: Availability gate, interpreted by `_runner.gate_reason`; `None` when the
+            probe runs everywhere.
         cites: Cost-model citations (`rules:` / `interp:` prefixed) that force the outcome.
         twin: Whether the plain run must reproduce the counted run's outcome bit-for-bit.
             Off only where the outcome deliberately encodes the type (e.g. `repr`), or where

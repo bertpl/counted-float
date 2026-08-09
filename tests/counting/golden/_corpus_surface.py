@@ -1,4 +1,4 @@
-"""Corpus section D — the float surface and the countedness exits (rows D1–D15)."""
+"""Section D holds the float surface and the countedness exits."""
 
 import copy
 import math

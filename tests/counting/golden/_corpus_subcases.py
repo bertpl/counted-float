@@ -1,8 +1,7 @@
-"""Corpus section C — value-dependent sub-cases (rows C1–C65).
+"""Section C holds the value-dependent sub-cases.
 
 Redundancy probes (`reinforces=True`) sit directly under the probe they reinforce and pin
-both sides of each value-dependent boundary: the exponent-chain bound at |n| = 16/17, the
-reciprocal-fold edge at 2^-1023, the signed-zero near-misses, and the constant-base ladders.
+both sides of each value-dependent boundary.
 """
 
 import math
@@ -28,7 +27,7 @@ from ._row import (
 CF = CountedFloat
 
 ROWS: list[GoldenRow] = [
-    # --- operators, folds, and unary ------------
+    # Operators, folds, and unary.
     GoldenRow("C1", "cf + cf", lambda num: num(1.0) + num(2.0), {"ADD": 1}, CF, cites=(R_RULES,)),
     GoldenRow("C2", "cf - cf", lambda num: num(1.0) - num(2.0), {"SUB": 1}, CF, cites=(R_RULES,)),
     GoldenRow("C3", "cf * cf", lambda num: num(1.5) * num(2.0), {"MUL": 1}, CF, cites=(R_RULES,)),
@@ -93,7 +92,7 @@ ROWS: list[GoldenRow] = [
     GoldenRow("C17", "-cf", lambda num: -num(3.0), {"MINUS": 1}, CF, cites=(R_RULES,)),
     GoldenRow("C18", "+cf free but counted type", lambda num: +num(3.0), {}, CF, cites=(R_PORT,)),
     GoldenRow("C19", "abs(cf)", lambda num: abs(num(-3.0)), {"ABS": 1}, CF, cites=(R_RULES,)),
-    # --- floored division family ----------------
+    # Floored division family.
     GoldenRow("C20", "cf // 3.0", lambda num: num(7.0) // 3.0, {"DIV": 1, "RND": 1}, CF, cites=(R_RULES,)),
     GoldenRow(
         "C21", "cf // 8.0 reciprocal step", lambda num: num(7.0) // 8.0, {"MUL": 1, "RND": 1}, CF, cites=(I_RECIPROCAL,)
@@ -140,7 +139,7 @@ ROWS: list[GoldenRow] = [
         (CF, CF),
         cites=(I_IDENTITY_FOLDS,),
     ),
-    # --- round family and comparisons -----------
+    # Round family and comparisons.
     GoldenRow("C28", "round(cf) int exit", lambda num: round(num(2.7)), {"F2I": 1}, int, cites=(R_ENDINGS,)),
     GoldenRow("C29", "round(cf, 0)", lambda num: round(num(2.7), 0), {"RND": 1}, CF, cites=(R_RULES,)),
     GoldenRow(
@@ -171,7 +170,7 @@ ROWS: list[GoldenRow] = [
     GoldenRow(
         "C34", "cf.is_integer()", lambda num: num(3.0).is_integer(), {"COMP": 1, "RND": 1}, bool, cites=(R_RULES,)
     ),
-    # --- the pow ladder -------------------------
+    # The pow ladder.
     GoldenRow("C35", "cf ** cf", lambda num: num(3.0) ** num(2.0), {"POW": 1}, CF, cites=(I_EXPONENT_CHAIN,)),
     GoldenRow("C36", "cf ** 0 absorbs plain", lambda num: num(3.0) ** 0, {}, float, cites=(I_EXPONENT_CHAIN,)),
     GoldenRow("C37", "cf ** 1 identity", lambda num: num(3.0) ** 1, {}, CF, cites=(I_EXPONENT_CHAIN,)),
@@ -283,7 +282,7 @@ ROWS: list[GoldenRow] = [
         (float, float),
         cites=(I_EXPONENT_CHAIN,),
     ),
-    # --- the log ladder -------------------------
+    # The log ladder.
     GoldenRow("C49", "log(cf)", lambda num: math.log(num(8.0)), {"LOG": 1}, CF, cites=(I_LOG_BASE,)),
     GoldenRow("C50", "log(cf, 2)", lambda num: math.log(num(8.0), 2), {"LOG2": 1}, CF, cites=(I_LOG_BASE,)),
     GoldenRow("C51", "log(cf, 10)", lambda num: math.log(num(1000.0), 10), {"LOG10": 1}, CF, cites=(I_LOG_BASE,)),
@@ -328,7 +327,7 @@ ROWS: list[GoldenRow] = [
         CF,
         cites=(I_LOG_BASE,),
     ),
-    # --- fma ------------------------------------
+    # Fma.
     GoldenRow(
         "C56",
         "fma(cf, cf, cf)",
@@ -374,7 +373,7 @@ ROWS: list[GoldenRow] = [
         requires="fma",
         cites=(I_FMA, I_IDENTITY_FOLDS),
     ),
-    # --- arity-scaled calls ---------------------
+    # Arity-scaled calls.
     GoldenRow(
         "C59",
         "hypot(cf, cf, cf)",
@@ -420,7 +419,7 @@ ROWS: list[GoldenRow] = [
         requires="sumprod",
         cites=(I_MEASUREMENT,),
     ),
-    # --- sequence calls -------------------------
+    # Sequence calls.
     GoldenRow(
         "C64",
         "prod([cf, cf, cf])",

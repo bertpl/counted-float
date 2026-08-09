@@ -1,4 +1,4 @@
-"""Corpus section A — cross-cutting regime decisions (rows A1–A18).
+"""Section A holds the cross-cutting regime decisions.
 
 Rows A5 (outside any context) and A6 (paused) need a context arrangement the shared runner
 deliberately does not model; they are pinned by dedicated tests in `test_golden_counting`.

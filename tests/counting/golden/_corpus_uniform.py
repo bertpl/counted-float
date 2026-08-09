@@ -1,4 +1,4 @@
-"""Corpus section B — uniform operations, one fixed tally per call (rows B1–B41)."""
+"""Section B holds the uniform operations, each with one fixed tally per call."""
 
 import math
 
@@ -12,7 +12,7 @@ from ._row import (
     GoldenRow,
 )
 
-# (row_id, math name, flop type, probe argument) -- one benchmarked weight per call.
+# Each entry is (row_id, math name, flop type, probe argument); one benchmarked weight per call.
 _UNARY_OWN_TYPE = [
     ("B1", "sqrt", "SQRT", 2.0),
     ("B2", "cbrt", "CBRT", 2.0),
@@ -41,7 +41,7 @@ _UNARY_OWN_TYPE = [
     ("B25", "fabs", "ABS", -2.0),
 ]
 
-# (row_id, math name, flop type, probe arguments) -- binary calls with a weight of their own.
+# Each entry is (row_id, math name, flop type, probe arguments); binary calls with a weight of their own.
 _BINARY_OWN_TYPE = [
     ("B28", "atan2", "ATAN2", (1.0, 2.0)),
     ("B29", "fmod", "FMOD", (5.0, 3.0)),
@@ -49,7 +49,7 @@ _BINARY_OWN_TYPE = [
     ("B31", "copysign", "COPYSIGN", (3.0, -2.0)),
 ]
 
-# (row_id, math name, counts, probe argument) -- the bool-returning classifiers.
+# Each entry is (row_id, math name, counts, probe argument); the bool-returning classifiers.
 _CLASSIFIERS = [
     ("B34", "isnan", {"COMP": 1}, 2.0),
     ("B35", "isinf", {"ABS": 1, "COMP": 1}, 2.0),
