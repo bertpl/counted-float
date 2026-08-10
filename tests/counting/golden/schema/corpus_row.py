@@ -118,7 +118,7 @@ def row(
     `probe` overrides compilation for the rare probe a snippet cannot express (the numpy
     rows, whose import cannot live in the fixed namespace); the snippet still serves as ID.
     """
-    return _build(row_id, snippet, counts, outcome, cites, requires, plain_parity, unpatched_parity, probe)
+    return _build_row(row_id, snippet, counts, outcome, cites, requires, plain_parity, unpatched_parity, probe)
 
 
 def rows(
@@ -142,7 +142,7 @@ def rows(
         raise ValueError(f"{row_id}: a family takes exactly one axis, got {sorted(axis)}")
     ((name, values),) = axis.items()
     return [
-        _build(
+        _build_row(
             row_id,
             snippet.replace("{" + name + "}", str(value)),
             counts(value) if callable(counts) else counts,
@@ -157,7 +157,7 @@ def rows(
     ]
 
 
-def _build(
+def _build_row(
     row_id: str,
     snippet: str,
     counts: dict[str, int],

@@ -1,9 +1,8 @@
 """Section C holds the value-dependent sub-cases.
 
 Snippets run over the injected `num` — `CountedFloat` counted, plain `float` for the twin run.
-
-Probes sharing a row ID pin the same decision from extra angles — reflected forms, sibling
-operators, and both sides of a value boundary.
+Row-ID groups here collect reflected forms, sibling operators, and both sides of each value
+boundary.
 """
 
 from counted_float import CountedFloat

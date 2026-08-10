@@ -38,7 +38,7 @@ def gate_reason(requires: str | None) -> str | None:
 
 @dataclass(frozen=True)
 class ProbeRun:
-    """One repeated probe run's aggregated results.
+    """A ProbeRun holds one repeated probe run's aggregated results.
 
     `raw_last` is the unreduced result of the final execution — what result-shape assertions
     inspect — and `None` when the probe raised.
@@ -110,8 +110,7 @@ def assert_result_shape(raw: object, row: CorpusRow) -> None:
 def _execute(row: CorpusRow, number_type: type) -> tuple[object, object]:
     """Run the probe once, returning the raw result paired with its comparable form.
 
-    A raising probe yields `(None, ("raises", <exception type>))` — the exception type is
-    the outcome.
+    A raising probe yields `(None, ("raises", <exception type>))`.
     """
     try:
         raw = row.probe(number_type)
