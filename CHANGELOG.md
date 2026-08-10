@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `FlopCounts` now renders compactly: `str()` and `show()` list only nonzero counts, with `show(weights=...)` adding a weighted-cost column
+- `FlopCounts.as_dict(nonzero_only=True)` returns only the nonzero counts
+
 ### Changed
 
 ### Deprecated

@@ -109,6 +109,68 @@ def test_flop_counts_as_dict():
     assert counts_as_dict == orig_data
 
 
+def test_flop_counts_as_dict_nonzero_only():
+    """nonzero_only drops exactly the zero-count entries and keeps FlopType order."""
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(MUL=3, ADD=2)
+
+    # --- act / assert ------------------------------------
+    nonzero = flop_counts.as_dict(nonzero_only=True)
+    assert nonzero == {FlopType.ADD: 2, FlopType.MUL: 3}
+    assert list(nonzero) == [FlopType.ADD, FlopType.MUL]
+    assert FlopCounts().as_dict(nonzero_only=True) == {}
+
+
+def test_flop_counts_str_lists_only_nonzero_counts():
+    """str() renders the constructor call rebuilding the counts; repr keeps every field."""
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(MUL=3, ADD=2)
+
+    # --- act / assert ------------------------------------
+    assert str(flop_counts) == "FlopCounts(ADD=2, MUL=3)"
+    assert str(FlopCounts()) == "FlopCounts()"
+    assert "COPYSIGN=0" in repr(flop_counts)
+
+
+def test_flop_counts_show_prints_nonzero_rows_and_total(capsys):
+    """show() prints one row per nonzero count plus a total row, wrapped in braces."""
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(MUL=3, ADD=2)
+
+    # --- act ---------------------------------------------
+    flop_counts.show()
+    lines = capsys.readouterr().out.splitlines()
+
+    # --- assert ------------------------------------------
+    assert lines[0] == "{"
+    assert lines[-1] == "}"
+    assert len(lines) == 5  # braces + ADD + MUL + total
+    assert "ADD" in lines[1]
+    assert lines[1].rstrip().endswith("2")
+    assert "MUL" in lines[2]
+    assert lines[2].rstrip().endswith("3")
+    assert "total" in lines[3]
+    assert lines[3].rstrip().endswith("5")
+
+
+def test_flop_counts_show_with_weights_appends_cost_column(capsys):
+    """show(weights=...) appends count-times-weight per row and a weighted total."""
+    # --- arrange -----------------------------------------
+    flop_counts = FlopCounts(MUL=3, ADD=2)
+    weights = FlopWeights(weights=dict.fromkeys(FlopType, 2.0))
+
+    # --- act ---------------------------------------------
+    flop_counts.show(weights=weights)
+    lines = capsys.readouterr().out.splitlines()
+
+    # --- assert ------------------------------------------
+    assert "x" in lines[1]
+    assert lines[1].rstrip().endswith("4.000")  # 2 x 2.0
+    assert lines[2].rstrip().endswith("6.000")  # 3 x 2.0
+    assert "total" in lines[3]
+    assert lines[3].rstrip().endswith("10.000")
+
+
 def test_flop_counts_total_count():
     # --- arrange -----------------------------------------
     flop_counts = FlopCounts()
