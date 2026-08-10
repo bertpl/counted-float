@@ -15,8 +15,7 @@ from decimal import Decimal
 from fractions import Fraction
 
 from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting
-
-from .corpus import CorpusRow
+from tests.counting.golden.corpus import CorpusRow
 
 REGIMES = ("counting", "paused", "outside")
 

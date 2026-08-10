@@ -76,9 +76,9 @@ ROWS: list[CorpusRow] = flat([
     row("A18", "math.gcd(num(4.0), 2)",                            {},                       None,         R_SCOPE, raises=TypeError),
     row("A18", "math.isqrt(num(4.0))",                             {},                       None,         R_SCOPE, raises=TypeError),
     row("A18", "math.lcm(num(4.0), 2)",                            {},                       None,         R_SCOPE, raises=TypeError),
-    row("A14", "num(2.0) * np.array([1.0])",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", twin=False, probe=_NUMPY_MUL_ARRAY),
-    row("A14", "num(2.0) * np.float32(1.0)",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", twin=False, probe=_NUMPY_MUL_FLOAT32),
-    row("A14", "(num(1.0) + np.float64(2.0), np.float64(2.0) + num(1.0))", {"ADD": 2},       (CF, CF),     R_SCOPE, requires="numpy", twin=False, probe=_NUMPY_FLOAT64_BOTH_SIDES),
+    row("A14", "num(2.0) * np.array([1.0])",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", plain_parity=False, probe=_NUMPY_MUL_ARRAY),
+    row("A14", "num(2.0) * np.float32(1.0)",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", plain_parity=False, probe=_NUMPY_MUL_FLOAT32),
+    row("A14", "(num(1.0) + np.float64(2.0), np.float64(2.0) + num(1.0))", {"ADD": 2},       (CF, CF),     R_SCOPE, requires="numpy", plain_parity=False, probe=_NUMPY_FLOAT64_BOTH_SIDES),
     row("A18", "math.perm(num(4.0), 2)",                           {},                       None,         R_SCOPE, raises=TypeError),
 ])
 # fmt: on

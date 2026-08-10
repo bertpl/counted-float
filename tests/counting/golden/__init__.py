@@ -8,7 +8,7 @@ How the pieces fit:
   the injected number type: `CountedFloat` for the counted run, plain `float` for the twin
   run. Each row states its expected flop counts, exact result type (or exception), the
   cost-model citations that force the outcome, and optional gates.
-- **The runner** (`_runner`) executes a probe under one of three context regimes — counting
+- **The helpers** (`helpers/`) execute a probe under one of three context regimes — counting
   (a fresh `FlopCountingContext`), paused, or outside any context — and reduces outcomes to
   bit-comparable form.
 - **The golden test** (`test_golden_counting`) drives every row across regime × repetition

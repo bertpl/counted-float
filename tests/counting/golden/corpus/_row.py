@@ -67,9 +67,12 @@ class CorpusRow:
         requires: Availability gate, interpreted by `_runner.gate_reason`; `None` when the
             probe runs everywhere.
         cites: Cost-model citations (`rules:` / `interp:` prefixed) that force the outcome.
-        twin: Whether the plain run must reproduce the counted run's outcome bit-for-bit.
-            Off only where the outcome deliberately encodes the type (e.g. `repr`), or where
-            the plain twin legitimately diverges (numpy accepts plain floats).
+        plain_parity: Whether the plain run reproduces the counted run's outcome
+            bit-for-bit. Off where the outcome deliberately encodes the type (`repr`), or
+            where the operation itself distinguishes the subclass — numpy accepts a plain
+            float and rejects `CountedFloat`, and that rejection is what the row pins. The
+            plain run still executes and still must count nothing; only the outcome
+            comparison is skipped.
         reinforces: True for redundancy probes beyond the strictly needed one — extra angles
             on the same decision, typically both sides of a value boundary.
     """
@@ -82,7 +85,7 @@ class CorpusRow:
     raises: type[BaseException] | None = None
     requires: str | None = None
     cites: tuple[str, ...] = field(default=())
-    twin: bool = True
+    plain_parity: bool = True
     reinforces: bool = False
 
     @property
@@ -99,7 +102,7 @@ def row(
     *cites: str,
     raises: type[BaseException] | None = None,
     requires: str | None = None,
-    twin: bool = True,
+    plain_parity: bool = True,
     reinforces: bool = False,
     probe: Callable[[type], object] | None = None,
     **axis: list,
@@ -128,7 +131,7 @@ def row(
             raises=raises,
             requires=requires,
             cites=cites,
-            twin=twin,
+            plain_parity=plain_parity,
             reinforces=reinforces,
         )
 

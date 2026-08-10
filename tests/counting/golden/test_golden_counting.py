@@ -7,9 +7,9 @@ The dimensions are the corpus rows, the context regime, and the repetition count
   zero counts at every repetition, the outside regime has no counter to read;
 - **result shape** — exact result types under counting and paused (types survive pausing);
   outside, `math.*` is unpatched, so results legitimately go plain and only values compare;
-- **the plain twin** — the identical snippet on plain floats counts nothing and produces a
-  bit-identical outcome, so counting never changes a value and a snippet with no counted
-  operand stays plain, on every row.
+- **the plain run** — the identical snippet on plain floats counts nothing on every row, and
+  (where `plain_parity` holds) produces a bit-identical outcome, so counting never changes a
+  value.
 
 Corpus rows A5 and A6 are the outside and paused regimes themselves.
 """
@@ -18,8 +18,8 @@ import pytest
 
 from counted_float import CountedFloat
 
-from ._runner import REGIMES, assert_result_shape, gate_reason, raw_result, run_probe, scaled_counts
 from .corpus import ROWS, CorpusRow
+from .helpers import REGIMES, assert_result_shape, gate_reason, raw_result, run_probe, scaled_counts
 
 _REPETITIONS = (1, 2, 5)
 
@@ -28,10 +28,10 @@ _REPETITIONS = (1, 2, 5)
 @pytest.mark.parametrize("regime", REGIMES)
 @pytest.mark.parametrize("row", ROWS, ids=[row.uid for row in ROWS])
 def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
-    """One corpus row holds under one regime: counts, result shape, and the plain twin."""
+    """One corpus row holds under one regime: counts, result shape, and the plain run."""
     if reason := gate_reason(row.requires):
         pytest.skip(reason)
-    if regime == "outside" and not row.twin:
+    if regime == "outside" and not row.plain_parity:
         pytest.skip("row's outcome legitimately differs between counted and plain")
 
     # --- counted run ------------------
@@ -48,10 +48,10 @@ def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
         if row.raises is None:
             assert_result_shape(raw_result(row, regime), row)
 
-    # --- the plain twin ---------------
-    if row.twin:
-        twin = run_probe(row, float, 1, regime)
-        assert twin.counts == {}, f"{row.uid} [{regime}]: plain twin counted {twin.counts}"
-        assert twin.outcomes[0] == run.outcomes[0], (
-            f"{row.uid} [{regime}]: plain twin outcome {twin.outcomes[0]} differs from counted {run.outcomes[0]}"
+    # --- the plain run ----------------
+    plain = run_probe(row, float, 1, regime)
+    assert plain.counts == {}, f"{row.uid} [{regime}]: plain run counted {plain.counts}"
+    if row.plain_parity:
+        assert plain.outcomes[0] == run.outcomes[0], (
+            f"{row.uid} [{regime}]: plain outcome {plain.outcomes[0]} differs from counted {run.outcomes[0]}"
         )

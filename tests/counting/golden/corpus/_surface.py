@@ -18,7 +18,7 @@ ROWS: list[CorpusRow] = flat([
     row("D1",  "(math.floor(num(2.7)), math.ceil(num(2.2)), math.trunc(num(2.7)))", {"F2I": 3}, (int, int, int), R_ENDINGS),
     row("D2",  "float(num(2.7))",                                            {},          float,              R_CONTRACT),
     row("D3",  "bool(num(2.7))",                                             {},          bool,               R_ENDINGS),
-    row("D4",  "repr(num(1.5))",                                             {},          str,                R_ENDINGS, twin=False),
+    row("D4",  "repr(num(1.5))",                                             {},          str,                R_ENDINGS, plain_parity=False),
     row("D4",  "f'{num(1.5):.2f}'",                                          {},          str,                R_ENDINGS),
     row("D5",  "f'{num(0.5):.1%}'",                                          {},          str,                R_ENDINGS),
     row("D6",  "num(2.5).as_integer_ratio()",                                {},          (int, int),         R_ENDINGS),
