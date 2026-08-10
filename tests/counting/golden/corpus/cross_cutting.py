@@ -63,7 +63,7 @@ ROWS: list[CorpusRow] = flat([
     row("A7",  "num(1.0) + Decimal('1.5')",                        {},                       None,         R_SCOPE, raises=TypeError),
     row("A8", "num(1.5) == Decimal('1.5')",                        {},                       bool,         R_SCOPE),
     row("A8", "num(1.5) < Decimal('2.5')",                         {},                       bool,         R_SCOPE),
-    row("A9", "num(1.0) + Fraction(1, 2)",                        {},                       float,        R_ENDINGS),
+    row("A9", "num(1.0) + Fraction(1, 2)",                         {},                       float,        R_ENDINGS),
     row("A10", "Fraction(1, 2) + num(1.0)",                        {"ADD": 1},               CF,           R_RECORDS),
     row("A11", "num(0.3) < Fraction(1, 2)",                        {"ABS": 1, "COMP": 2},    bool,         R_RECORDS, I_CLASSIFIERS),
     row("A13", "divmod(num(7.0), 3.0)",                            {"DIV": 1, "MUL": 1, "RND": 1, "SUB": 1}, (CF, CF), R_PORT),
@@ -79,8 +79,8 @@ ROWS: list[CorpusRow] = flat([
     row("A16", "math.lcm(num(4.0), 2)",                            {},                       None,         R_SCOPE, raises=TypeError),
     row("A12", "num(2.0) * np.array([1.0])",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", plain_parity=False, probe=_NUMPY_MUL_ARRAY),
     row("A12", "num(2.0) * np.float32(1.0)",                       {},                       None,         R_SCOPE, raises=TypeError, requires="numpy", plain_parity=False, probe=_NUMPY_MUL_FLOAT32),
-    row("A12", "num(1.0) + np.float64(2.0)",                        {"ADD": 1},               CF,           R_SCOPE, requires="numpy", plain_parity=False, probe=_NUMPY_FLOAT64_LEFT),
-    row("A12", "np.float64(2.0) + num(1.0)",                        {"ADD": 1},               CF,           R_SCOPE, requires="numpy", plain_parity=False, probe=_NUMPY_FLOAT64_RIGHT),
+    row("A12", "num(1.0) + np.float64(2.0)",                       {"ADD": 1},               CF,           R_SCOPE, requires="numpy", plain_parity=False, probe=_NUMPY_FLOAT64_LEFT),
+    row("A12", "np.float64(2.0) + num(1.0)",                       {"ADD": 1},               CF,           R_SCOPE, requires="numpy", plain_parity=False, probe=_NUMPY_FLOAT64_RIGHT),
     row("A16", "math.perm(num(4.0), 2)",                           {},                       None,         R_SCOPE, raises=TypeError),
 ])
 # fmt: on
