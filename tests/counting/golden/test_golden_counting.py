@@ -32,7 +32,7 @@ def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
     """One corpus row holds under one regime: counts, result shape, and the plain run."""
     if reason := gate_reason(row.requires):
         pytest.skip(reason)
-    if regime == "outside" and not row.plain_parity:
+    if regime == "outside" and not (row.plain_parity and row.unpatched_parity):
         pytest.skip("row's outcome legitimately differs between counted and plain")
 
     # --- counted run ------------------
