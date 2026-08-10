@@ -24,6 +24,8 @@ _REPETITIONS = (1, 2, 5)
 
 
 @pytest.mark.parametrize("reps", _REPETITIONS)
+# REGIMES (from helpers) is ("counting", "paused", "outside") — a fresh counting context,
+# a paused one, and no context at all; the module docstring says what each asserts.
 @pytest.mark.parametrize("regime", REGIMES)
 @pytest.mark.parametrize("row", ROWS, ids=[row.uid for row in ROWS])
 def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
