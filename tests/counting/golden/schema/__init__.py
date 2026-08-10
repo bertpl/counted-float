@@ -4,7 +4,7 @@ Both the corpus data (`corpus/`) and the test machinery (`helpers/`) depend on t
 so it holds no dependency on either — the shared foundation the golden suite is built from.
 """
 
-from ._row import (
+from .corpus_row import (
     I_CLASSIFIERS,
     I_EXP10,
     I_EXPONENT_CHAIN,

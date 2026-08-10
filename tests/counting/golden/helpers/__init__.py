@@ -1,6 +1,6 @@
 """Machinery the golden tests run on: probe execution, outcome comparison, and the assertions."""
 
-from ._runner import (
+from .runner import (
     REGIMES,
     ProbeRun,
     assert_result_shape,

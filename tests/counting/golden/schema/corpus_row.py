@@ -64,7 +64,7 @@ class CorpusRow:
         result: Expected result shape of the counted run: an exact type, or a tuple of exact
             types for container results. `None` iff `raises` is set.
         raises: Exception type the probe raises (on both runs), or `None`.
-        requires: Availability gate, interpreted by `_runner.gate_reason`; `None` when the
+        requires: Availability gate, interpreted by `helpers.runner.gate_reason`; `None` when the
             probe runs everywhere.
         cites: Cost-model citations (`rules:` / `interp:` prefixed) that force the outcome.
         plain_parity: Whether the plain run reproduces the counted run's outcome
