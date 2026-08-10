@@ -37,6 +37,8 @@ ROWS: list[CorpusRow] = flat([
     row("D11", "num(5)",                                                     {"I2F": 1},  CF,                 R_SCOPE),
     row("D12", "num(2.5)",                                                   {},          CF,                 R_SCOPE),
     row("D12", "num(Decimal('1.5'))",                                        {},          CF,                 R_SCOPE),
+    row("D12", "num('2.5')",                                                 {},          CF,                 R_SCOPE),
+    row("D12", "num(Fraction(5, 2))",                                        {},          CF,                 R_SCOPE),
     row("D12", "num.from_number(2.5)",                                       {},          CF,                 R_SCOPE, requires="from_number"),
     row("D13", "pickle.loads(pickle.dumps(num(2.5)))",                       {},          CF,                 R_CONTRACT),
     row("D13", "copy.deepcopy(num(2.5))",                                    {},          CF,                 R_CONTRACT),

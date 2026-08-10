@@ -18,14 +18,12 @@ import pytest
 from counted_float import CountedFloat
 
 from .corpus import ROWS, CorpusRow
-from .helpers import REGIMES, assert_result_shape, gate_reason, raw_result, run_probe, scaled_counts
+from .helpers import REGIMES, assert_result_shape, gate_reason, run_probe
 
 _REPETITIONS = (1, 2, 5)
 
 
 @pytest.mark.parametrize("reps", _REPETITIONS)
-# REGIMES (from helpers) is ("counting", "paused", "outside") — a fresh counting context,
-# a paused one, and no context at all; the module docstring says what each asserts.
 @pytest.mark.parametrize("regime", REGIMES)
 @pytest.mark.parametrize("row", ROWS, ids=[row.uid for row in ROWS])
 def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
@@ -40,14 +38,14 @@ def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
     if row.raises is not None:
         for outcome in run.outcomes:
             assert outcome == ("raises", row.raises), f"{row.uid}: expected {row.raises.__name__}, got {outcome}"
-    assert len(set(map(repr, run.outcomes))) == 1, f"{row.uid}: outcome varies across repetitions"
+    assert len(set(run.outcomes)) == 1, f"{row.uid}: outcome varies across repetitions"
 
     # --- counts and result shape ------
     if regime in ("counting", "paused"):
-        expected = scaled_counts(row.counts, reps) if regime == "counting" else {}
+        expected = {flop_type: count * reps for flop_type, count in row.counts.items()} if regime == "counting" else {}
         assert run.counts == expected, f"{row.uid} [{regime}]: counts at {reps}x are {run.counts}, expected {expected}"
         if row.raises is None:
-            assert_result_shape(raw_result(row, regime), row)
+            assert_result_shape(run.raw_last, row)
 
     # --- the plain run ----------------
     plain = run_probe(row, float, 1, regime)

@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 from fractions import Fraction
 
-from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting
+from counted_float import FlopCountingContext, PauseFlopCounting
 from tests.counting.golden.schema import CorpusRow
 
 REGIMES = ("counting", "paused", "outside")
@@ -28,15 +28,25 @@ def gate_reason(requires: str | None) -> str | None:
         return None if importlib.util.find_spec("numpy") else "requires numpy"
     if requires == "from_number":
         return None if hasattr(float, "from_number") else "requires float.from_number (3.14+)"
+    if requires == "exact-log-e":
+        # The log-base identity folds key on the runtime libm value, so a libm computing
+        # log(e) or log(1/e) inexactly makes the fold legitimately not fire.
+        exact = math.log(math.e) == 1.0 and math.log(1.0 / math.e) == -1.0
+        return None if exact else "requires a libm where log(e) == 1.0 and log(1/e) == -1.0"
     return None if hasattr(math, requires) else f"requires math.{requires}"
 
 
 @dataclass(frozen=True)
 class ProbeRun:
-    """A ProbeRun holds the counts and per-execution outcomes of one repeated probe run."""
+    """A ProbeRun holds the counts, per-execution outcomes, and last raw result of one repeated probe run.
+
+    `raw_last` is the unreduced result of the final execution — what result-shape assertions
+    inspect — and `None` when the probe raised.
+    """
 
     counts: dict[str, int]
     outcomes: list[object]
+    raw_last: object
 
 
 def run_probe(row: CorpusRow, number_type: type, reps: int, regime: str = "counting") -> ProbeRun:
@@ -47,18 +57,13 @@ def run_probe(row: CorpusRow, number_type: type, reps: int, regime: str = "count
     no context to read, so its counts are empty by construction.
     """
     if regime == "outside":
-        return ProbeRun(counts={}, outcomes=[_execute(row, number_type) for _ in range(reps)])
+        executions = [_execute(row, number_type) for _ in range(reps)]
+        return ProbeRun(counts={}, outcomes=[c for _, c in executions], raw_last=executions[-1][0])
     with FlopCountingContext() as ctx:
         assert not _nonzero_counts(ctx), "context must open at zero counts"
         with PauseFlopCounting() if regime == "paused" else nullcontext():
-            outcomes = [_execute(row, number_type) for _ in range(reps)]
-    return ProbeRun(counts=_nonzero_counts(ctx), outcomes=outcomes)
-
-
-def raw_result(row: CorpusRow, regime: str = "counting") -> object:
-    """Execute a non-raising row once and return the raw (uncompared) result."""
-    with FlopCountingContext(), PauseFlopCounting() if regime == "paused" else nullcontext():
-        return row.probe(CountedFloat)
+            executions = [_execute(row, number_type) for _ in range(reps)]
+    return ProbeRun(counts=_nonzero_counts(ctx), outcomes=[c for _, c in executions], raw_last=executions[-1][0])
 
 
 def comparable_outcome(value: object) -> object:
@@ -100,17 +105,17 @@ def assert_result_shape(raw: object, row: CorpusRow) -> None:
         assert type(raw) is spec, f"{row.uid}: result {raw!r} is {type(raw).__name__}, expected {spec.__name__}"
 
 
-def scaled_counts(counts: dict[str, int], reps: int) -> dict[str, int]:
-    """Return the expected counts of `reps` executions: each per-execution count times reps."""
-    return {flop_type: count * reps for flop_type, count in counts.items()}
+def _execute(row: CorpusRow, number_type: type) -> tuple[object, object]:
+    """Run the probe once, returning the raw result paired with its comparable form.
 
-
-def _execute(row: CorpusRow, number_type: type) -> object:
-    """Run the probe once, reducing its result — or its exception type — to a comparable form."""
+    A raising probe yields `(None, ("raises", <exception type>))` — the exception type is
+    the outcome.
+    """
     try:
-        return comparable_outcome(row.probe(number_type))
+        raw = row.probe(number_type)
+        return raw, comparable_outcome(raw)
     except Exception as exc:  # noqa: BLE001 -- the exception type is the outcome
-        return ("raises", type(exc))
+        return None, ("raises", type(exc))
 
 
 def _nonzero_counts(ctx: FlopCountingContext) -> dict[str, int]:

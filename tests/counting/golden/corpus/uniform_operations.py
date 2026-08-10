@@ -10,6 +10,7 @@ from tests.counting.golden.schema import (
     I_CLASSIFIERS,
     I_FMAX_COMP,
     I_FORMULA_FIXED,
+    R_PORT,
     R_RECORDS,
     R_RULES,
     CorpusRow,
@@ -21,7 +22,7 @@ CF = CountedFloat
 
 # fmt: off
 ROWS: list[CorpusRow] = flat([
-    row("B1",  "math.sqrt(num(2.0))",                    {"SQRT": 1},     CF,    R_RULES),
+    row("B1",  "math.sqrt(num(2.0))",                    {"SQRT": 1},     CF,    R_RULES, R_PORT),
     row("B2",  "math.cbrt(num(2.0))",                    {"CBRT": 1},     CF,    R_RULES),
     row("B3",  "math.exp(num(0.5))",                     {"EXP": 1},      CF,    R_RULES),
     row("B3",  "math.exp(num(710.0))",                   {},              None,  R_RECORDS, raises=OverflowError, reinforces=True),
@@ -57,7 +58,9 @@ ROWS: list[CorpusRow] = flat([
     row("B20", "math.atanh(num(0.5))",                   {"ATANH": 1},    CF,    R_RULES),
     row("B20", "math.atanh(num(2.0))",                   {},              None,  R_RECORDS, raises=ValueError, reinforces=True),
     row("B21", "math.gamma(num(2.5))",                   {"GAMMA": 1},    CF,    R_RULES),
+    row("B21", "math.gamma(num(-1.0))",                  {},              None,  R_RECORDS, raises=ValueError, reinforces=True),
     row("B22", "math.lgamma(num(2.5))",                  {"LGAMMA": 1},   CF,    R_RULES),
+    row("B22", "math.lgamma(num(0.0))",                  {},              None,  R_RECORDS, raises=ValueError, reinforces=True),
     row("B23", "math.erf(num(0.5))",                     {"ERF": 1},      CF,    R_RULES),
     row("B24", "math.erfc(num(0.5))",                    {"ERFC": 1},     CF,    R_RULES),
     row("B25", "math.fabs(num(-2.0))",                   {"ABS": 1},      CF,    R_RULES),
@@ -84,7 +87,9 @@ ROWS: list[CorpusRow] = flat([
     row("B32", "math.fmax(2.0, 3.0)",                    {},              float, I_FMAX_COMP, requires="fmax", reinforces=True),
     row("B33", "math.fmin(num(2.0), num(3.0))",          {"COMP": 1},     CF,    I_FMAX_COMP, requires="fmin"),
     row("B33", "math.fmin(num(2.0), 3.0)",               {"COMP": 1},     CF,    I_FMAX_COMP, requires="fmin", reinforces=True),
+    row("B33", "math.fmin(2.0, num(3.0))",               {"COMP": 1},     CF,    I_FMAX_COMP, requires="fmin", reinforces=True),
     row("B33", "math.fmin(num(math.nan), 1.0)",          {"COMP": 1},     CF,    I_FMAX_COMP, requires="fmin", reinforces=True),
+    row("B33", "math.fmin(2.0, 3.0)",                    {},              float, I_FMAX_COMP, requires="fmin", reinforces=True),
     row("B34", "math.isnan(num(2.0))",                   {"COMP": 1},           bool, I_CLASSIFIERS),
     row("B34", "math.isnan(num({x}))",                   {"COMP": 1},           bool, I_CLASSIFIERS, reinforces=True, x=["0.0", "math.inf", "math.nan"]),
     row("B35", "math.isinf(num(2.0))",                   {"ABS": 1, "COMP": 1}, bool, I_CLASSIFIERS),
@@ -107,6 +112,7 @@ ROWS: list[CorpusRow] = flat([
     row("B40", "math.isclose(2.0, 2.5, rel_tol=num(0.5))",      {"ABS": 3, "COMP": 3, "MUL": 1, "SUB": 1}, bool, I_FORMULA_FIXED, reinforces=True),
     row("B41", "math.fsum([num(0.1)] * 4)",              {"ADD": 3},      CF,    I_FORMULA_FIXED),
     row("B41", "math.fsum([num(0.1)])",                  {},              CF,    I_FORMULA_FIXED, reinforces=True),
+    row("B41", "math.fsum([1.0, num(2.0)])",             {"ADD": 1},      CF,    I_FORMULA_FIXED, reinforces=True),
     row("B41", "math.fsum([num(0.1)] * {n})",            lambda n: {"ADD": n - 1}, CF, I_FORMULA_FIXED, reinforces=True, n=[2, 3, 5]),
 ])
 # fmt: on
