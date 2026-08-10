@@ -29,7 +29,7 @@ def gate_reason(requires: str | None) -> str | None:
     if requires == "from_number":
         return None if hasattr(float, "from_number") else "requires float.from_number (3.14+)"
     if requires == "exact-log-e":
-        # The log-base identity folds key on the runtime libm value, so a libm computing
+        # The log-base identity folds depend on the runtime libm value, so a libm computing
         # log(e) or log(1/e) inexactly makes the fold legitimately not fire.
         exact = math.log(math.e) == 1.0 and math.log(1.0 / math.e) == -1.0
         return None if exact else "requires a libm where log(e) == 1.0 and log(1/e) == -1.0"
@@ -38,7 +38,7 @@ def gate_reason(requires: str | None) -> str | None:
 
 @dataclass(frozen=True)
 class ProbeRun:
-    """A ProbeRun holds the counts, per-execution outcomes, and last raw result of one repeated probe run.
+    """One repeated probe run's aggregated results.
 
     `raw_last` is the unreduced result of the final execution — what result-shape assertions
     inspect — and `None` when the probe raised.
@@ -58,12 +58,14 @@ def run_probe(row: CorpusRow, number_type: type, reps: int, regime: str = "count
     """
     if regime == "outside":
         executions = [_execute(row, number_type) for _ in range(reps)]
-        return ProbeRun(counts={}, outcomes=[c for _, c in executions], raw_last=executions[-1][0])
+        return ProbeRun(counts={}, outcomes=[comparable for _, comparable in executions], raw_last=executions[-1][0])
     with FlopCountingContext() as ctx:
         assert not _nonzero_counts(ctx), "context must open at zero counts"
         with PauseFlopCounting() if regime == "paused" else nullcontext():
             executions = [_execute(row, number_type) for _ in range(reps)]
-    return ProbeRun(counts=_nonzero_counts(ctx), outcomes=[c for _, c in executions], raw_last=executions[-1][0])
+    return ProbeRun(
+        counts=_nonzero_counts(ctx), outcomes=[comparable for _, comparable in executions], raw_last=executions[-1][0]
+    )
 
 
 def comparable_outcome(value: object) -> object:

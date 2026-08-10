@@ -1,7 +1,7 @@
 """Section B holds the uniform operations, each with one fixed tally per call.
 
 Snippets run over the injected `num` — `CountedFloat` counted, plain `float` for the twin run.
-Probes sharing a row ID pin the same decision from extra angles beyond the strictly needed one.
+Probes sharing a row ID pin the same decision from extra angles beyond the strictly needed probe.
 """
 
 from counted_float import CountedFloat
