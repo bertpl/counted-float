@@ -126,13 +126,13 @@ class FlopCounts:
         """Print the nonzero counts in FlopType order, followed by a total row.
 
         Args:
-            weights: When given, each row appends `x <weight> = <weighted cost>` and the total
-                row ends with the weighted total (NaN when a used flop type has a missing
-                weight, matching `total_weighted_cost`). When omitted, only counts are shown —
+            weights: When given, each row gains a weighted-cost column and the total row a
+                weighted total (NaN when a used flop type has a missing weight, matching
+                `total_weighted_cost`). When omitted, only counts are shown —
                 the active config weights are deliberately not pulled in, so plain `show()`
                 never depends on global state.
         """
-        # same padding rule as FlopWeights.show(), so the two renderings line up when read together
+        # The padding matches FlopWeights.show(), so the two renderings line up when read together.
         name_pad = 4 + max(len(flop_type.long_name()) for flop_type in FlopType) + 2
         print("{")
         for flop_type in FlopType:

@@ -135,6 +135,7 @@ def test_flop_counts_str_lists_only_nonzero_counts():
 
 
 def test_flop_counts_show_prints_nonzero_rows_and_total(capsys):
+    """show() prints one row per nonzero count plus a total row, wrapped in braces."""
     # --- arrange -----------------------------------------
     flop_counts = FlopCounts(MUL=3, ADD=2)
 
@@ -155,6 +156,7 @@ def test_flop_counts_show_prints_nonzero_rows_and_total(capsys):
 
 
 def test_flop_counts_show_with_weights_appends_cost_column(capsys):
+    """show(weights=...) appends count-times-weight per row and a weighted total."""
     # --- arrange -----------------------------------------
     flop_counts = FlopCounts(MUL=3, ADD=2)
     weights = FlopWeights(weights=dict.fromkeys(FlopType, 2.0))
