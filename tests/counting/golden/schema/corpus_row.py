@@ -73,6 +73,10 @@ class CorpusRow:
             float and rejects `CountedFloat`, and that rejection is what the row pins. The
             plain run still executes and still must count nothing; only the outcome
             comparison is skipped.
+        unpatched_parity: Whether that parity survives with `math.*` unpatched (the outside
+            regime). Off only where the *unpatched* stdlib computes a different value for a
+            float subclass — CPython's `sumprod` reserves its extended-precision path for
+            exact `float`s, so for a subclass its cancellation-sensitive results diverge.
         reinforces: True for redundancy probes beyond the strictly needed one — extra angles
             on the same decision, typically both sides of a value boundary.
     """
@@ -86,6 +90,7 @@ class CorpusRow:
     requires: str | None = None
     cites: tuple[str, ...] = field(default=())
     plain_parity: bool = True
+    unpatched_parity: bool = True
     reinforces: bool = False
 
     @property
@@ -103,6 +108,7 @@ def row(
     raises: type[BaseException] | None = None,
     requires: str | None = None,
     plain_parity: bool = True,
+    unpatched_parity: bool = True,
     reinforces: bool = False,
     probe: Callable[[type], object] | None = None,
     **axis: list,
@@ -111,8 +117,9 @@ def row(
 
     An axis (`n=[1, 2, 5]`) substitutes each value textually into the snippet's `{n}` hole
     and expands to one row per value; `counts` may then be a callable of the axis value, so a
-    family states its pricing formula once. Snippets without an axis are used verbatim, so
-    literal braces are only off-limits in axis snippets.
+    family states its pricing formula once — zero-valued counts are dropped, so a formula may
+    reach zero at a boundary value. Snippets without an axis are used verbatim, so literal
+    braces are only off-limits in axis snippets.
 
     `probe` overrides compilation for the rare probe a snippet cannot express (the numpy
     rows, whose import cannot live in the fixed namespace); the snippet still serves as ID.
@@ -121,6 +128,7 @@ def row(
         raise ValueError(f"{row_id}: at most one axis per row, got {sorted(axis)}")
 
     def build(filled_snippet: str, expected: dict[str, int]) -> CorpusRow:
+        expected = {flop_type: count for flop_type, count in expected.items() if count}
         compiled = probe if probe is not None else _compile_snippet(row_id, filled_snippet)
         return CorpusRow(
             row_id=row_id,
@@ -132,6 +140,7 @@ def row(
             requires=requires,
             cites=cites,
             plain_parity=plain_parity,
+            unpatched_parity=unpatched_parity,
             reinforces=reinforces,
         )
 
