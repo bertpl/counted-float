@@ -79,9 +79,16 @@ class FlopCounts:
         return FlopCounts(**{attr: getattr(self, attr) - getattr(other, attr) for attr in _FIELD_NAMES})
 
     # --- extract info ------------------------------------
-    def as_dict(self) -> dict[FlopType, int]:
-        """Return the flop counts as a dictionary with FlopType keys."""
-        return {flop_type: getattr(self, flop_type.name) for flop_type in FlopType}
+    def as_dict(self, nonzero_only: bool = False) -> dict[FlopType, int]:
+        """Return the flop counts as a dictionary with FlopType keys.
+
+        Args:
+            nonzero_only: When True, omit flop types whose count is zero.
+        """
+        counts = {flop_type: getattr(self, flop_type.name) for flop_type in FlopType}
+        if nonzero_only:
+            return {flop_type: count for flop_type, count in counts.items() if count}
+        return counts
 
     def total_count(self) -> int:
         """Sum of all flop counts."""
@@ -103,6 +110,45 @@ class FlopCounts:
         return sum(
             count * weights.weights[flop_type] for flop_type in FlopType if (count := getattr(self, flop_type.name))
         )
+
+    # --- rendering ---------------------------------------
+    def __str__(self) -> str:
+        """Render only the nonzero counts, as the constructor call that would rebuild them.
+
+        The dataclass `repr` (all fields, zeros included) stays available for debugging.
+        """
+        nonzero = ", ".join(
+            f"{flop_type.name}={count}" for flop_type in FlopType if (count := getattr(self, flop_type.name))
+        )
+        return f"FlopCounts({nonzero})"
+
+    def show(self, weights: FlopWeights | None = None) -> None:
+        """Print the nonzero counts in FlopType order, followed by a total row.
+
+        Args:
+            weights: When given, each row appends `x <weight> = <weighted cost>` and the total
+                row ends with the weighted total (NaN when a used flop type has a missing
+                weight, matching `total_weighted_cost`). When omitted, only counts are shown —
+                the active config weights are deliberately not pulled in, so plain `show()`
+                never depends on global state.
+        """
+        # same padding rule as FlopWeights.show(), so the two renderings line up when read together
+        name_pad = 4 + max(len(flop_type.long_name()) for flop_type in FlopType) + 2
+        print("{")
+        for flop_type in FlopType:
+            count = getattr(self, flop_type.name)
+            if not count:
+                continue
+            line = f"    {flop_type.long_name()}".ljust(name_pad) + f": {count:>6}"
+            if weights is not None:
+                weight = weights.weights[flop_type]
+                line += f"  x {weight:8.3f}  = {count * weight:10.3f}"
+            print(line)
+        total_line = f"    {'total'}".ljust(name_pad) + f": {self.total_count():>6}"
+        if weights is not None:
+            total_line += f"  {'':10}  = {self.total_weighted_cost(weights):10.3f}"
+        print(total_line)
+        print("}")
 
     # --- increment-target contract -----------------------
     def note(self, rationale: str) -> None:

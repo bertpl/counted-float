@@ -273,6 +273,35 @@ counts = ctx.flop_counts()   # {FlopType.MUL: 1, FlopType.SUB: 1}
 counts.total_count()         # 2
 ```
 
+**Example 5**: _inspecting the counts_
+
+The dataclass `repr` of a `FlopCounts` object lists every flop type, zeros included; the
+renderings below show only what was actually counted.
+
+```python
+from counted_float import CountedFloat, FlopCountingContext
+
+cf1 = CountedFloat(1.73)
+cf2 = CountedFloat(2.94)
+
+with FlopCountingContext() as ctx:
+    _ = cf1 * cf2 + cf1
+
+counts = ctx.flop_counts()
+str(counts)                        # 'FlopCounts(ADD=1, MUL=1)'
+counts.as_dict(nonzero_only=True)  # {FlopType.ADD: 1, FlopType.MUL: 1}
+
+counts.show()
+# {
+#     FlopType.ADD            [x+y]             :      1
+#     FlopType.MUL            [x*y]             :      1
+#     total                                     :      2
+# }
+```
+
+Passing weights (`counts.show(weights=...)`) appends a weighted-cost column per row and a
+weighted total, using the same NaN-for-missing convention as `total_weighted_cost()`.
+
 ### Watching what gets counted
 
 A flop counting context can also report as it goes, instead of only counting. Two
@@ -283,7 +312,7 @@ levels:
 
 Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
-**Example 5**: _verbose counting_
+**Example 6**: _verbose counting_
 
 <!-- BEGIN generated: snippet-verbosity-info -->
 ```python
@@ -321,7 +350,7 @@ snippet. Three things worth knowing:
   operations logs a million lines: `INFO` is a microscope for small snippets, not
   a profiler for a whole run.
 
-**Example 6**: _reporting what could not be counted_
+**Example 7**: _reporting what could not be counted_
 
 <!-- BEGIN generated: snippet-verbosity-warning -->
 ```python
@@ -366,7 +395,7 @@ there either.
     `CountedFloat` throughout is what makes a count trustworthy; this level only
     catches the boundaries that are visible.
 
-**Example 7**: _both sides in one stream_
+**Example 8**: _both sides in one stream_
 
 `INFO` includes the `WARNING` lines, so a single run shows what was counted and
 what was lost, interleaved in the order it happened:
