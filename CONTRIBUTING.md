@@ -23,8 +23,7 @@ installs pre-commit hooks.
 
 ```bash
 make test     # Run the test suite (pytest)
-make lint     # Run all pre-commit checks (format, ruff, ty, hygiene)
-make format   # Format and auto-fix with ruff
+make lint     # Run all pre-commit checks (format, ruff, ty, hygiene); formats and applies ruff fixes as it goes
 ```
 
 ## Development workflow
