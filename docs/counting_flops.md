@@ -300,7 +300,7 @@ counts.show()
 ```
 
 Passing weights (`counts.show(weights=...)`) appends a weighted-cost column per row and a
-weighted total, using the same NaN-for-missing convention as `total_weighted_cost()`.
+weighted total (NaN when a counted flop type has no weight, matching `total_weighted_cost()`).
 
 ### Watching what gets counted
 

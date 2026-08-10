@@ -114,10 +114,8 @@ def test_flop_counts_as_dict_nonzero_only():
     # --- arrange -----------------------------------------
     flop_counts = FlopCounts(MUL=3, ADD=2)
 
-    # --- act ---------------------------------------------
+    # --- act / assert ------------------------------------
     nonzero = flop_counts.as_dict(nonzero_only=True)
-
-    # --- assert ------------------------------------------
     assert nonzero == {FlopType.ADD: 2, FlopType.MUL: 3}
     assert list(nonzero) == [FlopType.ADD, FlopType.MUL]
     assert FlopCounts().as_dict(nonzero_only=True) == {}
