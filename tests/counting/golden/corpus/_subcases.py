@@ -7,8 +7,7 @@ decision — reflected forms, sibling operators, and both sides of a value bound
 """
 
 from counted_float import CountedFloat
-
-from ._row import (
+from tests.counting.golden.schema import (
     I_EXP10,
     I_EXPONENT_CHAIN,
     I_FMA,

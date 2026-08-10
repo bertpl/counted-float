@@ -7,8 +7,7 @@ row under all three context regimes, so those two decisions are the regime dimen
 """
 
 from counted_float import CountedFloat
-
-from ._row import (
+from tests.counting.golden.schema import (
     I_CLASSIFIERS,
     R_CONTRACT,
     R_ENDINGS,

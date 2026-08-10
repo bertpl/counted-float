@@ -2,6 +2,8 @@
 
 How the pieces fit:
 
+- **The schema** (`schema/`) is the corpus vocabulary both other packages build on: the
+  `CorpusRow` type, the `row`/`flat` table factories, and the cost-model citation constants.
 - **The corpus** (`corpus/`) is a table of rows, one per counting decision. A row's snippet
   string — e.g. `"math.sqrt(num(2.0))"` — is simultaneously the probe (compiled at import
   into `lambda num: ...`), the test ID, and the expression a failure message shows. `num` is

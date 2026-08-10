@@ -1,7 +1,8 @@
 """This package aggregates all corpus sections and asserts probe IDs are unique."""
 
+from tests.counting.golden.schema import CorpusRow
+
 from ._regimes import ROWS as _REGIME_ROWS
-from ._row import CorpusRow
 from ._subcases import ROWS as _SUBCASE_ROWS
 from ._surface import ROWS as _SURFACE_ROWS
 from ._uniform import ROWS as _UNIFORM_ROWS

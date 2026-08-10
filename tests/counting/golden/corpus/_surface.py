@@ -7,8 +7,7 @@ from decimal import Decimal
 from fractions import Fraction
 
 from counted_float import CountedFloat
-
-from ._row import R_CONTRACT, R_ENDINGS, R_RECORDS, R_SCOPE, CorpusRow, flat, row
+from tests.counting.golden.schema import R_CONTRACT, R_ENDINGS, R_RECORDS, R_SCOPE, CorpusRow, flat, row
 
 CF = CountedFloat
 

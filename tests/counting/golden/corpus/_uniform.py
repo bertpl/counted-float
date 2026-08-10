@@ -4,8 +4,7 @@ Snippets run over the injected `num` — `CountedFloat` counted, plain `float` f
 """
 
 from counted_float import CountedFloat
-
-from ._row import (
+from tests.counting.golden.schema import (
     I_CLASSIFIERS,
     I_FMAX_COMP,
     I_FORMULA_FIXED,
