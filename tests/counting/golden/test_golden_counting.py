@@ -11,7 +11,6 @@ The dimensions are the corpus rows, the context regime, and the repetition count
   (where `plain_parity` holds) produces a bit-identical outcome, so counting never changes a
   value.
 
-Corpus rows A5 and A6 are the outside and paused regimes themselves.
 """
 
 import pytest
