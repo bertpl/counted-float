@@ -93,7 +93,7 @@ def assert_result_shape(raw: object, row: CorpusRow) -> None:
     Exact `type(...) is` checks on purpose: a `CountedFloat` result asserted as `float`
     (or vice versa) is precisely the countedness defect the corpus exists to catch.
     """
-    spec = row.result
+    spec = row.outcome
     if isinstance(spec, tuple):
         assert isinstance(raw, tuple), f"{row.uid}: expected a tuple result, got {type(raw).__name__}"
         assert len(raw) == len(spec), f"{row.uid}: expected {len(spec)} elements, got {len(raw)}"

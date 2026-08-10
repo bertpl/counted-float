@@ -7,14 +7,14 @@ from decimal import Decimal
 from fractions import Fraction
 
 from counted_float import CountedFloat
-from tests.counting.golden.schema import R_CONTRACT, R_ENDINGS, R_RECORDS, R_SCOPE, CorpusRow, flat, row
+from tests.counting.golden.schema import R_CONTRACT, R_ENDINGS, R_RECORDS, R_SCOPE, CorpusRow, row
 
 CF = CountedFloat
 
 # fmt: off
-ROWS: list[CorpusRow] = flat([
+ROWS: list[CorpusRow] = [
     row("D1",  "int(num(2.7))",                                              {"F2I": 1},  int,                R_ENDINGS),
-    row("D1",  "int(num(math.inf))",                                         {},          None,               R_RECORDS, raises=OverflowError),
+    row("D1",  "int(num(math.inf))",                                         {},          OverflowError,      R_RECORDS),
     row("D1",  "math.floor(num(2.7))",                                       {"F2I": 1},  int,                R_ENDINGS),
     row("D1",  "math.ceil(num(2.2))",                                        {"F2I": 1},  int,                R_ENDINGS),
     row("D1",  "math.trunc(num(2.7))",                                       {"F2I": 1},  int,                R_ENDINGS),
@@ -48,5 +48,5 @@ ROWS: list[CorpusRow] = flat([
     row("D15", "complex(num(2.5))",                                          {},          complex,            R_ENDINGS),
     row("D15", "Decimal(num(2.5))",                                          {},          Decimal,            R_ENDINGS),
     row("D15", "Fraction(num(2.5))",                                         {},          Fraction,           R_ENDINGS),
-])
+]
 # fmt: on

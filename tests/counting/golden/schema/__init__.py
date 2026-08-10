@@ -23,8 +23,8 @@ from .corpus_row import (
     R_RULES,
     R_SCOPE,
     CorpusRow,
-    flat,
     row,
+    rows,
 )
 
 __all__ = [
@@ -46,6 +46,6 @@ __all__ = [
     "R_RULES",
     "R_SCOPE",
     "CorpusRow",
-    "flat",
     "row",
+    "rows",
 ]
