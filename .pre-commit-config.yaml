@@ -23,7 +23,7 @@ repos:
         pass_filenames: true
       - id: ruff
         name: ruff check
-        # --fix lets pre-commit be run to fix; it still blocks, since it detects rewritten files.
+        # --fix lets pre-commit be run to fix; it still blocks, since pre-commit detects rewritten files.
         entry: uv run ruff check --fix
         language: system
         types: [python]

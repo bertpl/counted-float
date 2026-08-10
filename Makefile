@@ -1,5 +1,3 @@
-file_path=
-
 # Comments sit above their target rather than inside the recipe: CI runs the test targets on
 # Windows too, where make drives cmd.exe, which does not understand `#`.
 
