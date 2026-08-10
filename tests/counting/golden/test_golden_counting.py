@@ -1,91 +1,57 @@
 """One parametrized test drives the whole corpus, asserting each row from every angle.
 
-- **counts** — exact full-dict equality at one repetition, and linear scaling at each
-  higher count in `_REPETITIONS`, so a counter that accumulates wrongly fails visibly;
-- **result shape** — exact result types, on every repetition;
+The dimensions are the corpus rows, the context regime, and the repetition count:
+
+- **counts** — exact full-dict equality, scaled linearly by the repetition count in one
+  context, so a counter that accumulates wrongly fails visibly; the paused regime expects
+  zero counts at every repetition, the outside regime has no counter to read;
+- **result shape** — exact result types under counting and paused (types survive pausing);
+  outside, `math.*` is unpatched, so results legitimately go plain and only values compare;
 - **the plain twin** — the identical snippet on plain floats counts nothing and produces a
   bit-identical outcome, so counting never changes a value and a snippet with no counted
   operand stays plain, on every row.
 
-Rows A5 and A6 are covered by `test_outside_context_regime` and `test_paused_regime`; see
-`_corpus_regimes` for why they sit outside the shared runner.
+Corpus rows A5 and A6 are the outside and paused regimes themselves.
 """
-
-import math
 
 import pytest
 
-from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting
+from counted_float import CountedFloat
 
-from ._corpus import ROWS
-from ._row import GoldenRow
-from ._runner import assert_result_shape, gate_reason, run_probe, scaled_counts
+from ._runner import REGIMES, assert_result_shape, gate_reason, raw_result, run_probe, scaled_counts
+from .corpus import ROWS, CorpusRow
 
 _REPETITIONS = (1, 2, 5)
 
 
+@pytest.mark.parametrize("reps", _REPETITIONS)
+@pytest.mark.parametrize("regime", REGIMES)
 @pytest.mark.parametrize("row", ROWS, ids=[row.uid for row in ROWS])
-def test_golden_counting(row: GoldenRow) -> None:
-    """One corpus row holds: counts, linear scaling, result shape, and the plain twin."""
+def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
+    """One corpus row holds under one regime: counts, result shape, and the plain twin."""
     if reason := gate_reason(row.requires):
         pytest.skip(reason)
+    if regime == "outside" and not row.twin:
+        pytest.skip("row's outcome legitimately differs between counted and plain")
 
-    # --- counted runs per repetition count ------
-    baseline = None
-    for reps in _REPETITIONS:
-        run = run_probe(row, CountedFloat, reps)
-        assert run.counts == scaled_counts(row.counts, reps), (
-            f"{row.uid}: counts at {reps}x are {run.counts}, expected {scaled_counts(row.counts, reps)}"
-        )
+    # --- counted run ------------------
+    run = run_probe(row, CountedFloat, reps, regime)
+    if row.raises is not None:
         for outcome in run.outcomes:
-            if row.raises is not None:
-                assert outcome == ("raises", row.raises), f"{row.uid}: expected {row.raises.__name__}, got {outcome}"
-        assert len(set(map(repr, run.outcomes))) == 1, f"{row.uid}: outcome varies across repetitions"
-        if reps == 1:
-            baseline = run.outcomes[0]
+            assert outcome == ("raises", row.raises), f"{row.uid}: expected {row.raises.__name__}, got {outcome}"
+    assert len(set(map(repr, run.outcomes))) == 1, f"{row.uid}: outcome varies across repetitions"
 
-    # --- result shape (non-raising rows) --------
-    if row.raises is None:
-        raw = _raw_result(row)
-        assert_result_shape(raw, row)
+    # --- counts and result shape ------
+    if regime in ("counting", "paused"):
+        expected = scaled_counts(row.counts, reps) if regime == "counting" else {}
+        assert run.counts == expected, f"{row.uid} [{regime}]: counts at {reps}x are {run.counts}, expected {expected}"
+        if row.raises is None:
+            assert_result_shape(raw_result(row, regime), row)
 
-    # --- the plain twin -------------------------
+    # --- the plain twin ---------------
     if row.twin:
-        twin = run_probe(row, float, 1)
-        assert twin.counts == {}, f"{row.uid}: plain twin counted {twin.counts}"
-        assert twin.outcomes[0] == baseline, (
-            f"{row.uid}: plain twin outcome {twin.outcomes[0]} differs from counted {baseline}"
+        twin = run_probe(row, float, 1, regime)
+        assert twin.counts == {}, f"{row.uid} [{regime}]: plain twin counted {twin.counts}"
+        assert twin.outcomes[0] == run.outcomes[0], (
+            f"{row.uid} [{regime}]: plain twin outcome {twin.outcomes[0]} differs from counted {run.outcomes[0]}"
         )
-
-
-def _raw_result(row: GoldenRow) -> object:
-    """Execute a non-raising row once and return the raw (uncompared) result."""
-    with FlopCountingContext():
-        return row.probe(CountedFloat)
-
-
-# ==================================================================================================
-#  The two regimes outside the runner's model
-# ==================================================================================================
-def test_outside_context_regime() -> None:
-    """Row A5: without a context, math.* is unpatched and only operators preserve the type."""
-    # --- act --------------------------
-    via_math = math.sqrt(CountedFloat(4.0))
-    via_operator = CountedFloat(2.0) + 1.0
-
-    # --- assert -----------------------
-    assert type(via_math) is float
-    assert type(via_operator) is CountedFloat
-
-
-def test_paused_regime() -> None:
-    """Row A6: paused keeps patches installed and types counted while suppressing counts."""
-    # --- arrange / act ----------------
-    with FlopCountingContext() as ctx, PauseFlopCounting():
-        via_math = math.sqrt(CountedFloat(4.0))
-        via_operator = CountedFloat(2.0) + 1.0
-
-    # --- assert -----------------------
-    assert type(via_math) is CountedFloat
-    assert type(via_operator) is CountedFloat
-    assert not any(ctx.flop_counts().as_dict().values())

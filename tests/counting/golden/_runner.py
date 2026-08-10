@@ -1,20 +1,24 @@
 """The runner executes corpus probes and reduces their outcomes to a comparable form.
 
-Each probe runs inside a fresh `FlopCountingContext` — once or repeated. Float-valued parts
-of an outcome compare by bit pattern (so `-0.0` vs `+0.0` and NaN payloads are visible),
+A probe runs under one of three context regimes — `counting` (a fresh `FlopCountingContext`),
+`paused` (the same, inside `PauseFlopCounting`), or `outside` (no context at all). Float-valued
+parts of an outcome compare by bit pattern (so `-0.0` vs `+0.0` and NaN payloads are visible),
 everything else by type and value, and a raising probe by its exception type.
 """
 
 import importlib.util
 import math
 import struct
+from contextlib import nullcontext
 from dataclasses import dataclass
 from decimal import Decimal
 from fractions import Fraction
 
-from counted_float import FlopCountingContext
+from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting
 
-from ._row import GoldenRow
+from .corpus import CorpusRow
+
+REGIMES = ("counting", "paused", "outside")
 
 
 def gate_reason(requires: str | None) -> str | None:
@@ -36,22 +40,26 @@ class ProbeRun:
     outcomes: list[object]
 
 
-def run_probe(row: GoldenRow, number_type: type, reps: int) -> ProbeRun:
-    """Execute a row's probe `reps` times inside one fresh counting context.
+def run_probe(row: CorpusRow, number_type: type, reps: int, regime: str = "counting") -> ProbeRun:
+    """Execute a row's probe `reps` times under one context regime.
 
-    Asserts the context opens at zero counts, so state leaking from a previous probe is
-    caught before it can hide in this row's counts. Each execution's outcome is captured comparably (see
-    `comparable_outcome`); a raising execution records its exception type.
+    The counting regime asserts its context opens at zero counts, so state leaking from a
+    previous probe is caught before it can hide in this row's counts. The outside regime has
+    no context to read, so its counts are empty by construction.
     """
-    outcomes: list[object] = []
+    if regime == "outside":
+        return ProbeRun(counts={}, outcomes=[_execute(row, number_type) for _ in range(reps)])
     with FlopCountingContext() as ctx:
         assert not _nonzero_counts(ctx), "context must open at zero counts"
-        for _ in range(reps):
-            try:
-                outcomes.append(comparable_outcome(row.probe(number_type)))
-            except Exception as exc:  # noqa: BLE001 -- the exception type is the outcome
-                outcomes.append(("raises", type(exc)))
+        with PauseFlopCounting() if regime == "paused" else nullcontext():
+            outcomes = [_execute(row, number_type) for _ in range(reps)]
     return ProbeRun(counts=_nonzero_counts(ctx), outcomes=outcomes)
+
+
+def raw_result(row: CorpusRow, regime: str = "counting") -> object:
+    """Execute a non-raising row once and return the raw (uncompared) result."""
+    with FlopCountingContext(), PauseFlopCounting() if regime == "paused" else nullcontext():
+        return row.probe(CountedFloat)
 
 
 def comparable_outcome(value: object) -> object:
@@ -75,7 +83,7 @@ def comparable_outcome(value: object) -> object:
     raise TypeError(f"corpus probe produced an uncomparable {type(value).__name__}")
 
 
-def assert_result_shape(raw: object, row: GoldenRow) -> None:
+def assert_result_shape(raw: object, row: CorpusRow) -> None:
     """Assert one raw probe result matches the row's expected result shape exactly.
 
     Exact `type(...) is` checks on purpose: a `CountedFloat` result asserted as `float`
@@ -96,6 +104,14 @@ def assert_result_shape(raw: object, row: GoldenRow) -> None:
 def scaled_counts(counts: dict[str, int], reps: int) -> dict[str, int]:
     """Return the expected counts of `reps` executions: each per-execution count times reps."""
     return {flop_type: count * reps for flop_type, count in counts.items()}
+
+
+def _execute(row: CorpusRow, number_type: type) -> object:
+    """Run the probe once, reducing its result — or its exception type — to a comparable form."""
+    try:
+        return comparable_outcome(row.probe(number_type))
+    except Exception as exc:  # noqa: BLE001 -- the exception type is the outcome
+        return ("raises", type(exc))
 
 
 def _nonzero_counts(ctx: FlopCountingContext) -> dict[str, int]:
