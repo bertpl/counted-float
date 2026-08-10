@@ -61,9 +61,9 @@ class CorpusRow:
         counts: Expected flop counts of one counted execution, keyed by `FlopType.value`,
             zero-count types omitted. The golden test asserts full-dict equality, so an
             absent key asserts that type counts nothing.
-        result: Expected result shape of the counted run: an exact type, or a tuple of exact
-            types for container results. `None` iff `raises` is set.
-        raises: Exception type the probe raises (on both runs), or `None`.
+        outcome: Expected outcome of the counted run: an exact result type, a tuple of exact
+            types for container results, or — for a probe that raises on both runs — the
+            exception type (any `BaseException` subclass reads as "raises").
         requires: Availability gate, interpreted by `helpers.runner.gate_reason`; `None` when the
             probe runs everywhere.
         cites: Cost-model citations (`rules:` / `interp:` prefixed) that force the outcome.
@@ -77,21 +77,24 @@ class CorpusRow:
             regime). Off only where the *unpatched* stdlib computes a different value for a
             float subclass — CPython's `sumprod` reserves its extended-precision path for
             exact `float`s, so for a subclass its cancellation-sensitive results diverge.
-        reinforces: True for redundancy probes beyond the strictly needed one — extra angles
-            on the same decision, typically both sides of a value boundary.
     """
 
     row_id: str
     snippet: str
     probe: Callable[[type], object]
     counts: dict[str, int]
-    result: type | tuple[type, ...] | None = None
-    raises: type[BaseException] | None = None
+    outcome: type | tuple[type, ...]
     requires: str | None = None
     cites: tuple[str, ...] = field(default=())
     plain_parity: bool = True
     unpatched_parity: bool = True
-    reinforces: bool = False
+
+    @property
+    def raises(self) -> type[BaseException] | None:
+        """Return the exception type of a raising probe, or None for a returning probe."""
+        if isinstance(self.outcome, type) and issubclass(self.outcome, BaseException):
+            return self.outcome
+        return None
 
     @property
     def uid(self) -> str:
@@ -102,61 +105,81 @@ class CorpusRow:
 def row(
     row_id: str,
     snippet: str,
-    counts: dict[str, int] | Callable[[object], dict[str, int]],
-    result: type | tuple[type, ...] | None = None,
+    counts: dict[str, int],
+    outcome: type | tuple[type, ...],
     *cites: str,
-    raises: type[BaseException] | None = None,
     requires: str | None = None,
     plain_parity: bool = True,
     unpatched_parity: bool = True,
-    reinforces: bool = False,
     probe: Callable[[type], object] | None = None,
-    **axis: list,
-) -> list[CorpusRow]:
-    """Expand one corpus entry into its `CorpusRow`s — one per value of the (single) axis.
-
-    An axis (`n=[1, 2, 5]`) substitutes each value textually into the snippet's `{n}` hole
-    and expands to one row per value; `counts` may then be a callable of the axis value, so a
-    family states its pricing formula once — zero-valued counts are dropped, so a formula may
-    reach zero at a boundary value. Snippets without an axis are used verbatim, so literal
-    braces are only off-limits in axis snippets.
+) -> CorpusRow:
+    """Build one corpus row from a table entry.
 
     `probe` overrides compilation for the rare probe a snippet cannot express (the numpy
     rows, whose import cannot live in the fixed namespace); the snippet still serves as ID.
     """
-    if len(axis) > 1:
-        raise ValueError(f"{row_id}: at most one axis per row, got {sorted(axis)}")
+    return _build_row(row_id, snippet, counts, outcome, cites, requires, plain_parity, unpatched_parity, probe)
 
-    def build(filled_snippet: str, expected: dict[str, int]) -> CorpusRow:
-        expected = {flop_type: count for flop_type, count in expected.items() if count}
-        compiled = probe if probe is not None else _compile_snippet(row_id, filled_snippet)
-        return CorpusRow(
-            row_id=row_id,
-            snippet=filled_snippet,
-            probe=compiled,
-            counts=expected,
-            result=result,
-            raises=raises,
-            requires=requires,
-            cites=cites,
-            plain_parity=plain_parity,
-            unpatched_parity=unpatched_parity,
-            reinforces=reinforces,
-        )
 
-    if not axis:
-        assert not callable(counts), f"{row_id}: callable counts need an axis"
-        return [build(snippet, counts)]
+def rows(
+    row_id: str,
+    snippet: str,
+    counts: dict[str, int] | Callable[[object], dict[str, int]],
+    outcome: type | tuple[type, ...],
+    *cites: str,
+    requires: str | None = None,
+    plain_parity: bool = True,
+    unpatched_parity: bool = True,
+    **axis: list,
+) -> list[CorpusRow]:
+    """Expand one family entry into a `CorpusRow` per value of its (single) axis.
+
+    The axis (`n=[1, 2, 5]`) substitutes each value textually into the snippet's `{n}` hole;
+    `counts` may then be a callable of the axis value, so a family states its pricing formula
+    once — zero-valued counts are dropped, so a formula may reach zero at a boundary value.
+    """
+    if len(axis) != 1:
+        raise ValueError(f"{row_id}: a family takes exactly one axis, got {sorted(axis)}")
     ((name, values),) = axis.items()
     return [
-        build(snippet.replace("{" + name + "}", str(value)), counts(value) if callable(counts) else counts)
+        _build_row(
+            row_id,
+            snippet.replace("{" + name + "}", str(value)),
+            counts(value) if callable(counts) else counts,
+            outcome,
+            cites,
+            requires,
+            plain_parity,
+            unpatched_parity,
+            None,
+        )
         for value in values
     ]
 
 
-def flat(groups: list[list[CorpusRow]]) -> list[CorpusRow]:
-    """Concatenate the row groups a section's table produces."""
-    return [corpus_row for group in groups for corpus_row in group]
+def _build_row(
+    row_id: str,
+    snippet: str,
+    counts: dict[str, int],
+    outcome: type | tuple[type, ...],
+    cites: tuple[str, ...],
+    requires: str | None,
+    plain_parity: bool,
+    unpatched_parity: bool,
+    probe: Callable[[type], object] | None,
+) -> CorpusRow:
+    """Assemble one `CorpusRow`, dropping zero counts and compiling the snippet."""
+    return CorpusRow(
+        row_id=row_id,
+        snippet=snippet,
+        probe=probe if probe is not None else _compile_snippet(row_id, snippet),
+        counts={flop_type: count for flop_type, count in counts.items() if count},
+        outcome=outcome,
+        requires=requires,
+        cites=cites,
+        plain_parity=plain_parity,
+        unpatched_parity=unpatched_parity,
+    )
 
 
 def _compile_snippet(row_id: str, snippet: str) -> Callable[[type], object]:

@@ -24,5 +24,5 @@ from .value_dependent import ROWS as _VALUE_DEPENDENT_ROWS
 
 ROWS: list[CorpusRow] = [*_CROSS_CUTTING_ROWS, *_UNIFORM_ROWS, *_VALUE_DEPENDENT_ROWS, *_FLOAT_SURFACE_ROWS]
 
-_uids = [corpus_row.uid for corpus_row in ROWS]
-assert len(_uids) == len(set(_uids)), "corpus probe IDs must be unique"
+_snippets = [corpus_row.snippet for corpus_row in ROWS]
+assert len(_snippets) == len(set(_snippets)), "corpus snippets must be unique across all sections"
