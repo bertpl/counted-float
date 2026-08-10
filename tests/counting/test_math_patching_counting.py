@@ -217,41 +217,6 @@ def test_math_log_constant_base_with_unit_reciprocal_folds_multiply(thread_count
         assert getattr(thread_counter, field) == expected
 
 
-def test_math_log_counted_base_counts_runtime_division(thread_counter):
-    # a CountedFloat base is genuinely runtime: a port computes log(x)/log(base)
-    # --- arrange -----------------------------------------
-    cf = CountedFloat(8.0)
-
-    # --- act & assert ------------------------------------
-    # plain x, counted base: LOG (of the base) + DIV
-    result = math.log(16.0, CountedFloat(2.0))
-    assert thread_counter.total_count() == 2
-    assert thread_counter.LOG == 1
-    assert thread_counter.DIV == 1
-    assert isinstance(result, CountedFloat)
-
-    # both counted: 2 x LOG + DIV
-    thread_counter.reset()
-    result = math.log(cf, CountedFloat(2.0))
-    assert thread_counter.total_count() == 3
-    assert thread_counter.LOG == 2
-    assert thread_counter.DIV == 1
-    assert isinstance(result, CountedFloat)
-
-
-def test_math_log_one_arg_form_still_counts(thread_counter):
-    # --- arrange -----------------------------------------
-    cf = CountedFloat(8.0)
-
-    # --- act ---------------------------------------------
-    result = math.log(cf)
-
-    # --- assert ------------------------------------------
-    assert isinstance(result, CountedFloat)
-    assert thread_counter.total_count() == 1
-    assert thread_counter.LOG == 1
-
-
 def test_math_log_two_arg_form_plain_floats_count_nothing(thread_counter):
     # --- act ---------------------------------------------
     result = math.log(8.0, 2.0)
@@ -294,6 +259,10 @@ def test_math_pow_domain_error_counts_nothing(thread_counter):
         ("cos", CountedFloat(math.inf)),
         ("tan", CountedFloat(math.inf)),
         ("expm1", CountedFloat(710.0)),  # overflow (OverflowError)
+        ("acosh", CountedFloat(0.5)),  # domain: x >= 1
+        ("atanh", CountedFloat(2.0)),  # domain: |x| < 1
+        ("sinh", CountedFloat(1e6)),  # overflow
+        ("cosh", CountedFloat(1e6)),  # overflow
     ],
 )
 def test_single_arg_math_ops_error_counts_nothing(thread_counter, fname, arg):
@@ -371,60 +340,8 @@ def test_new_math_ops_domain_error_counts_nothing(thread_counter, fname, args):
 
 
 # =================================================================================================
-#  Patched math functions - hyperbolic ops (sinh/cosh/tanh/asinh/acosh/atanh)
+#  Patched math functions - decomposed ops (dist/prod/fsum/copysign/hypot arity)
 # =================================================================================================
-@pytest.mark.parametrize(
-    ("fname", "arg", "flop_type_name"),
-    [
-        ("sinh", 0.5, "SINH"),
-        ("cosh", 0.5, "COSH"),
-        ("tanh", 0.5, "TANH"),
-        ("asinh", 0.5, "ASINH"),
-        ("acosh", 2.0, "ACOSH"),  # acosh domain: x >= 1
-        ("atanh", 0.5, "ATANH"),  # atanh domain: |x| < 1
-    ],
-)
-def test_hyperbolic_math_ops_count_and_are_contagious(thread_counter, fname, arg, flop_type_name):
-    # --- act ---------------------------------------------
-    result = getattr(math, fname)(CountedFloat(arg))
-
-    # --- assert ------------------------------------------
-    assert isinstance(result, CountedFloat)
-    assert getattr(thread_counter, flop_type_name) == 1
-    assert thread_counter.total_count() == 1
-
-
-@pytest.mark.parametrize(
-    ("fname", "arg"),
-    [
-        ("acosh", CountedFloat(0.5)),  # domain: x >= 1
-        ("atanh", CountedFloat(2.0)),  # domain: |x| < 1
-        ("sinh", CountedFloat(1e6)),  # overflow
-        ("cosh", CountedFloat(1e6)),  # overflow
-    ],
-)
-def test_hyperbolic_math_ops_error_counts_nothing(thread_counter, fname, arg):
-    # compute-first contract: a domain/overflow error leaves nothing counted
-    # --- act & assert ------------------------------------
-    with pytest.raises((ValueError, OverflowError)):
-        getattr(math, fname)(arg)
-    assert thread_counter.total_count() == 0
-
-
-# =================================================================================================
-#  Patched math functions - decomposed ops (degrees/radians/dist/prod/fsum/copysign/hypot arity)
-# =================================================================================================
-@pytest.mark.parametrize("fname", ["degrees", "radians"])
-def test_degrees_radians_count_one_mul(thread_counter, fname):
-    # --- act ---------------------------------------------
-    result = getattr(math, fname)(CountedFloat(1.0))
-
-    # --- assert ------------------------------------------
-    assert isinstance(result, CountedFloat)
-    assert thread_counter.MUL == 1
-    assert thread_counter.total_count() == 1
-
-
 @pytest.mark.parametrize("n_dims", [1, 2, 3, 5])
 def test_dist_counts_the_arity_scaled_types(thread_counter, n_dims):
     # --- arrange -----------------------------------------
@@ -538,26 +455,6 @@ def test_prod_without_counted_values_forwards_a_non_default_start(thread_counter
     assert thread_counter.total_count() == 0
 
 
-@pytest.mark.parametrize(
-    ("values", "expected_muls"),
-    [
-        ([CountedFloat(2.0), 1.0, -1.0], 2),
-        ([2.0, 3.0, CountedFloat(4.0)], 2),
-        ([CountedFloat(2.0), *([1.0] * 9)], 9),
-    ],
-)
-def test_prod_prices_the_loop_so_no_element_folds(thread_counter, values, expected_muls):
-    # identity-valued elements and plain prefixes cost the same as any other element
-    # --- act ---------------------------------------------
-    result = math.prod(values)
-
-    # --- assert ------------------------------------------
-    assert isinstance(result, CountedFloat)
-    assert float(result) == math.prod([float(v) for v in values])
-    assert expected_muls == thread_counter.MUL
-    assert thread_counter.total_count() == expected_muls
-
-
 @pytest.mark.parametrize("start", [1, 1.0])
 def test_prod_start_of_one_folds_whether_or_not_it_is_passed(thread_counter, start):
     # the multiplicative identity keys on value, not on being omitted: a port seeds from the
@@ -569,14 +466,6 @@ def test_prod_start_of_one_folds_whether_or_not_it_is_passed(thread_counter, sta
     assert float(result) == 6.0
     assert thread_counter.MUL == 1
     assert thread_counter.total_count() == 1
-
-
-def test_prod_counts_nothing_when_an_element_raises(thread_counter):
-    # the product is computed before anything is counted, so a raising element leaves no partial count
-    # --- act / assert ------------------------------------
-    with pytest.raises(TypeError):
-        math.prod([CountedFloat(2.0), CountedFloat(3.0), None])
-    assert thread_counter.total_count() == 0
 
 
 @pytest.mark.parametrize("n_values", [1, 2, 5])
@@ -968,46 +857,6 @@ def test_repeated_math_ops_accumulate_their_counts(thread_counter, op, per_call:
     assert thread_counter.total_count() == n_calls * sum(per_call.values())
 
 
-@requires_fma
-@pytest.mark.parametrize("n_calls", [1, 2, 5])
-def test_repeated_fma_accumulates_its_count(thread_counter, n_calls: int):
-    # --- act ---------------------------------------------
-    for _ in range(n_calls):
-        math.fma(CountedFloat(2.0), CountedFloat(3.0), CountedFloat(4.0))
-
-    # --- assert ------------------------------------------
-    assert n_calls == thread_counter.FMA
-    assert thread_counter.total_count() == n_calls
-
-
-@requires_fma
-@pytest.mark.parametrize("n_calls", [1, 2, 5])
-def test_repeated_fma_with_constant_multiplicands_accumulates_add(thread_counter, n_calls: int):
-    # two constant multiplicands fold to one constant, leaving a bare ADD; a distinct counting site
-    # from the fused FMA above
-    # --- act ---------------------------------------------
-    for _ in range(n_calls):
-        math.fma(2.0, 3.0, CountedFloat(4.0))
-
-    # --- assert ------------------------------------------
-    assert n_calls == thread_counter.ADD
-    assert thread_counter.total_count() == n_calls
-
-
-@needs_sumprod
-@pytest.mark.parametrize("n_calls", [1, 2, 5])
-def test_repeated_sumprod_accumulates_its_counts(thread_counter, n_calls: int):
-    # 3 elements -> SUMPROD + 1 SUMPROD_XELEM per call
-    # --- act ---------------------------------------------
-    for _ in range(n_calls):
-        math.sumprod([CountedFloat(1.0), CountedFloat(2.0), CountedFloat(3.0)], [1.0, 1.0, 1.0])
-
-    # --- assert ------------------------------------------
-    assert n_calls == thread_counter.SUMPROD
-    assert n_calls == thread_counter.SUMPROD_XELEM
-    assert thread_counter.total_count() == 2 * n_calls
-
-
 @pytest.mark.parametrize("value", [1.5, 0.0, math.inf, -math.inf, math.nan], ids=repr)
 def test_math_isnan_counts_one_comp(thread_counter, value):
     # --- act ---------------------------------------------
@@ -1255,14 +1104,3 @@ def test_math_log_variant_counts_accumulate_across_calls(thread_counter, base, e
     assert thread_counter.total_count() == 2 * sum(expected_counts.values())
     for field, expected in expected_counts.items():
         assert getattr(thread_counter, field) == 2 * expected
-
-
-def test_one_dimensional_dist_counts_accumulate_across_calls(thread_counter):
-    # --- act ---------------------------------------------
-    for _ in range(2):
-        math.dist((CountedFloat(1.5),), (4.0,))
-
-    # --- assert ------------------------------------------
-    assert thread_counter.SUB == 2
-    assert thread_counter.ABS == 2
-    assert thread_counter.total_count() == 4

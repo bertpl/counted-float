@@ -14,6 +14,7 @@ CF = CountedFloat
 # fmt: off
 ROWS: list[CorpusRow] = flat([
     row("D1",  "int(num(2.7))",                                              {"F2I": 1},  int,                R_ENDINGS),
+    row("D1",  "int(num(math.inf))",                                         {},          None,               R_RECORDS, raises=OverflowError),
     row("D1",  "math.floor(num(2.7))",                                       {"F2I": 1},  int,                R_ENDINGS),
     row("D1",  "math.ceil(num(2.2))",                                        {"F2I": 1},  int,                R_ENDINGS),
     row("D1",  "math.trunc(num(2.7))",                                       {"F2I": 1},  int,                R_ENDINGS),
