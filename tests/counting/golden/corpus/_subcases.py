@@ -1,5 +1,7 @@
 """Section C holds the value-dependent sub-cases.
 
+Snippets run over the injected `num` — `CountedFloat` counted, plain `float` for the twin run.
+
 Redundancy probes (`reinforces=True`) sit within their row ID's group: extra angles on one
 decision — reflected forms, sibling operators, and both sides of a value boundary.
 """
@@ -73,7 +75,7 @@ ROWS: list[CorpusRow] = flat([
     row("C31", "num(1.0) < 2.0",                           {"COMP": 1},              bool,      R_ENDINGS),
     row("C31", "num(1.0) == num(1.0)",                     {"COMP": 1},              bool,      R_ENDINGS),
     row("C31", "num(1.0) == 'abc'",                        {},                       bool,      R_RECORDS),
-    row("C31", "num(1.0) < 'abc'",                         {}, None, R_RECORDS, raises=TypeError),
+    row("C31", "num(1.0) < 'abc'",                         {},                       None,         R_RECORDS, raises=TypeError),
     row("C32", "min(num(3.0), num(2.0), num(1.0))",        {"COMP": 2},              CF,        R_ENDINGS),
     row("C33", "min(num(3.0), 2.0)",                       {"COMP": 1},              float,     R_ENDINGS),
     row("C34", "num(3.0).is_integer()",                    {"COMP": 1, "RND": 1},    bool,      R_RULES),
@@ -105,7 +107,7 @@ ROWS: list[CorpusRow] = flat([
     row("C51", "math.log(num(1000.0), 10)",                {"LOG10": 1},             CF,        I_LOG_BASE),
     row("C52", "math.log(num(27.0), 3)",                   {"LOG": 1, "MUL": 1},     CF,        I_LOG_BASE),
     row("C53", "(math.log(num(8.0), math.e), math.log(num(8.0), 1 / math.e))", {"LOG": 2, "MINUS": 1}, (CF, CF), I_LOG_BASE),
-    row("C53", "math.log(num(8.0), 1.0)",                  {}, None, I_LOG_BASE, R_RECORDS, raises=ZeroDivisionError, reinforces=True),
+    row("C53", "math.log(num(8.0), 1.0)",                  {},                       None,         I_LOG_BASE, R_RECORDS, raises=ZeroDivisionError, reinforces=True),
     row("C54", "math.log(16.0, num(2.0))",                 {"DIV": 1, "LOG": 1},     CF,        I_LOG_BASE),
     row("C55", "math.log(num(16.0), num(2.0))",            {"DIV": 1, "LOG": 2},     CF,        I_LOG_BASE),
     # Fused multiply-add.

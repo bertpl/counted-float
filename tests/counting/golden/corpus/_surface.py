@@ -1,4 +1,7 @@
-"""Section D holds the float surface and the countedness exits."""
+"""Section D holds the float surface and the countedness exits.
+
+Snippets run over the injected `num` — `CountedFloat` counted, plain `float` for the twin run.
+"""
 
 from decimal import Decimal
 from fractions import Fraction

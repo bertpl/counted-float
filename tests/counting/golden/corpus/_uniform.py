@@ -1,4 +1,7 @@
-"""Section B holds the uniform operations, each with one fixed tally per call."""
+"""Section B holds the uniform operations, each with one fixed tally per call.
+
+Snippets run over the injected `num` — `CountedFloat` counted, plain `float` for the twin run.
+"""
 
 from counted_float import CountedFloat
 
