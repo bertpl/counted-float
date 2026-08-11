@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `SystemInfo.from_system()` without the `benchmarking` extra now fails with an actionable "install the extra" message instead of a bare `ModuleNotFoundError`
+
 ### Security
 
 ## 2.5.0 (2026-08-10)

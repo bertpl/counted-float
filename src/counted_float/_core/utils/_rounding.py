@@ -59,7 +59,7 @@ def round_number(value: float, mode: Literal["nearest_int", "10%"] | None) -> fl
             return value
 
 
-def _round_to_log_nearest(value: float, candidate_value: list[float]) -> float:
-    """Return candidate_value that is log-closest to value, assuming all are >0."""
+def _round_to_log_nearest(value: float, candidate_values: list[float]) -> float:
+    """Return the candidate value that is log-closest to value, assuming all are >0."""
     log_value = math.log(value)
-    return min(candidate_value, key=lambda cand: abs(math.log(cand) - log_value))
+    return min(candidate_values, key=lambda cand: abs(math.log(cand) - log_value))

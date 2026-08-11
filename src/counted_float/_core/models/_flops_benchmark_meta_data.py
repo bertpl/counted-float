@@ -60,15 +60,22 @@ class ProcessorInfo(JsonReprModel):
     @classmethod
     def from_system(cls) -> ProcessorInfo:
         """Describe the running machine's processor, as stamped onto a benchmark result."""
-        # both imported here rather than at module level: this is the only place either is used, and
-        # it runs while benchmarking -- whereas the model itself is loaded to parse the shipped data
-        import cpuinfo
-        import psutil
+        # psutil, cpuinfo and the _cpu_freq helpers sit behind the `benchmarking` extra, which only
+        # ProcessorInfo.from_system needs. The required() guard gives a base install -- which ships
+        # SystemInfo as public API but not the extra -- an actionable message rather than a bare
+        # ModuleNotFoundError; the imports stay deferred so that loading the model to parse shipped
+        # data never pulls the extra in. The resulting upward models -> benchmarking dependency is
+        # accepted, since from_system runs only while benchmarking.
+        from counted_float._core.compatibility import Capability
 
-        from counted_float._core.benchmarking.flops._cpu_freq import (
-            get_cpu_frequency_mhz_max,
-            get_cpu_frequency_mhz_min,
-        )
+        with Capability.FLOPS_BENCHMARKING.required():
+            import cpuinfo
+            import psutil
+
+            from counted_float._core.benchmarking.flops._cpu_freq import (
+                get_cpu_frequency_mhz_max,
+                get_cpu_frequency_mhz_min,
+            )
 
         cpu_info_dict = cpuinfo.get_cpu_info()
         return ProcessorInfo(

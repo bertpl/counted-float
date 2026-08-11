@@ -18,6 +18,7 @@ import pytest
 
 from counted_float._core import benchmarking
 from counted_float._core.compatibility import Capability, MissingCapabilityError
+from counted_float._core.models._flops_benchmark_meta_data import ProcessorInfo
 from tests._capabilities import needs
 
 _BLOCK_BENCHMARKING_MODULES = """
@@ -132,6 +133,14 @@ def test_the_guard_refuses_before_importing_anything(extra_not_installed, monkey
         benchmarking.run_flops_benchmark()
 
     assert "counted_float._core.benchmarking.flops" not in sys.modules
+
+
+def test_stamping_the_running_machine_names_the_extra_that_installs_it(extra_not_installed):
+    # ProcessorInfo.from_system reaches the benchmarking-only cpu probes; without the extra the call
+    # must name what to install rather than surface a bare ModuleNotFoundError
+    # --- act / assert ------------------------------------
+    with pytest.raises(MissingCapabilityError, match=re.escape(f"counted-float[{Capability.FLOPS_BENCHMARKING}]")):
+        ProcessorInfo.from_system()
 
 
 # =================================================================================================
