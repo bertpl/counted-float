@@ -101,6 +101,9 @@ class FlopCounts:
         When omitted, the currently configured weights (see Config class) will be used.
         """
         if weights is None:
+            # get_active_flop_weights is imported lazily here, an accepted upward dependency
+            # (models -> counting.config) confined to the None-weights fallback. Pass `weights`
+            # explicitly, as show() does, to keep the call independent of global config.
             from counted_float._core.counting.config import get_active_flop_weights
 
             weights = get_active_flop_weights()

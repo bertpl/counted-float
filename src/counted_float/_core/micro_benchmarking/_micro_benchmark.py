@@ -76,10 +76,12 @@ class MicroBenchmark(ABC):
                 console.print(".", end="")
                 benchmark_runs.append(single_run_result)
 
-            # --- adjust n_ops ---
-            n_ops_min = max(1, int(n_executions / self.MAX_N_EXECUTIONS_FACTOR))
-            n_ops_max = min(int(n_executions * self.MAX_N_EXECUTIONS_FACTOR), self.MAX_N_EXECUTIONS)
-            n_executions = max(n_ops_min, min(n_ops_max, int(n_executions * n_seconds_per_run_target / t_tot_seconds)))
+            # --- adjust n_executions ---
+            n_executions_min = max(1, int(n_executions / self.MAX_N_EXECUTIONS_FACTOR))
+            n_executions_max = min(int(n_executions * self.MAX_N_EXECUTIONS_FACTOR), self.MAX_N_EXECUTIONS)
+            n_executions = max(
+                n_executions_min, min(n_executions_max, int(n_executions * n_seconds_per_run_target / t_tot_seconds))
+            )
 
         # final results
         benchmark_result = MicroBenchmarkResult(

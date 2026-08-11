@@ -60,8 +60,11 @@ class ProcessorInfo(JsonReprModel):
     @classmethod
     def from_system(cls) -> ProcessorInfo:
         """Describe the running machine's processor, as stamped onto a benchmark result."""
-        # both imported here rather than at module level: this is the only place either is used, and
-        # it runs while benchmarking -- whereas the model itself is loaded to parse the shipped data
+        # psutil, cpuinfo and the _cpu_freq helpers all sit behind the `benchmarking` extra, and
+        # this is the only method that touches them. The import is deferred so that loading the
+        # model to parse shipped data never needs the extra -- a base install ships SystemInfo
+        # (public API) without it. The models -> benchmarking dependency this creates points "up"
+        # the package tree; it is accepted because from_system runs only while benchmarking.
         import cpuinfo
         import psutil
 
