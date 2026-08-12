@@ -1,7 +1,7 @@
 import pytest
 
 from counted_float._core.models import FlopType
-from counted_float._core.models._flop_type import normalize_flop_type_keyed_dict
+from counted_float._core.models.flop_type import normalize_flop_type_keyed_dict
 
 
 def test_flop_type_long_name():

@@ -30,9 +30,9 @@ from types import ModuleType
 
 import pytest
 
-from counted_float._core.counting import _counted_float, _math_patching
+from counted_float._core.counting import counted_float, math_patching
 
-_LAZY_INIT_MODULES = [_counted_float, _math_patching]
+_LAZY_INIT_MODULES = [counted_float, math_patching]
 
 # mutmut copies the package under this directory before mutating it (see [tool.mutmut] source_paths)
 _MUTATION_SANDBOX_DIR = "mutants"

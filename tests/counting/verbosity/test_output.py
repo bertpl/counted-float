@@ -1,6 +1,6 @@
 import pytest
 
-from counted_float._core.counting.verbosity._output import (
+from counted_float._core.counting.verbosity.output import (
     _COUNT_WIDTH,
     _LEVEL_WIDTH,
     _OPERATION_WIDTH,

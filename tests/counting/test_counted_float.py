@@ -3,7 +3,7 @@ import weakref
 
 import pytest
 
-from counted_float._core.counting._counted_float import CountedFloat
+from counted_float._core.counting.counted_float import CountedFloat
 
 
 # =================================================================================================

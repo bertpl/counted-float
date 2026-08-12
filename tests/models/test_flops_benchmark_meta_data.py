@@ -3,8 +3,8 @@ from importlib.metadata import PackageNotFoundError
 
 import pytest
 
-import counted_float._core.models._flops_benchmark_meta_data as meta
-from counted_float._core.models._flops_benchmark_meta_data import (
+import counted_float._core.models.flops_benchmark_meta_data as meta
+from counted_float._core.models.flops_benchmark_meta_data import (
     BenchmarkSettings,
     OSInfo,
     PackagesInfo,
@@ -18,7 +18,7 @@ from counted_float._core.models._flops_benchmark_meta_data import (
 cpuinfo = pytest.importorskip("cpuinfo", reason="describing the running machine reads py-cpuinfo")
 psutil = pytest.importorskip("psutil", reason="describing the running machine reads psutil")
 cpu_freq = pytest.importorskip(
-    "counted_float._core.benchmarking.flops._cpu_freq",
+    "counted_float._core.benchmarking.flops.cpu_freq",
     reason="the frequency helpers live with the flops suite, behind its extra",
 )
 

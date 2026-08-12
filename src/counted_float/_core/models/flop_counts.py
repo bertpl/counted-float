@@ -4,10 +4,10 @@ import dataclasses
 from copy import copy as shallow_copy
 from typing import TYPE_CHECKING
 
-from ._flop_type import FlopType
+from .flop_type import FlopType
 
 if TYPE_CHECKING:
-    from ._flop_weights import FlopWeights
+    from .flop_weights import FlopWeights
 
 
 @dataclasses.dataclass(slots=True)

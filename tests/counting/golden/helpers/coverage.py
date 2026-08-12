@@ -6,7 +6,7 @@ from contextlib import contextmanager, suppress
 from dataclasses import dataclass, field
 
 from counted_float import CountedFloat, FlopCountingContext
-from counted_float._core.counting import _math_patching
+from counted_float._core.counting import math_patching
 from tests.counting.golden.corpus import ROWS
 
 from .runner import gate_reason
@@ -49,7 +49,7 @@ def record_corpus_coverage() -> CorpusCoverage:
 
 def patched_math_names() -> set[str]:
     """Return the `math` names that carry a counting replacement on this interpreter."""
-    return set(_math_patching._PATCHES)
+    return set(math_patching._PATCHES)
 
 
 def reachable_dunders() -> set[str]:

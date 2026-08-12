@@ -5,7 +5,7 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from counted_float._core.utils import _missing_data, impute_missing_data
+from counted_float._core.utils import impute_missing_data, missing_data
 
 Matrix = list[list[float]]
 
@@ -283,7 +283,7 @@ def test_a_thinly_coupled_block_pattern_is_recovered_within_120_sweeps(monkeypat
     # truncated fit that happened to land close enough.
     # --- arrange -----------------------------------------
     holed, full = _two_blocks_with_thin_coupling()
-    monkeypatch.setattr(_missing_data, "_MAX_ITER", 120)
+    monkeypatch.setattr(missing_data, "_MAX_ITER", 120)
 
     # --- act ---------------------------------------------
     with warnings.catch_warnings():
@@ -298,7 +298,7 @@ def test_exceeding_the_sweep_budget_warns_instead_of_truncating_silently(monkeyp
     # --- arrange -----------------------------------------
     # a single sweep can never satisfy the convergence test: its corrections *are* the initial fit
     holed, _ = _two_blocks_with_thin_coupling()
-    monkeypatch.setattr(_missing_data, "_MAX_ITER", 1)
+    monkeypatch.setattr(missing_data, "_MAX_ITER", 1)
 
     # --- act / assert ------------------------------------
     with pytest.warns(RuntimeWarning, match="did not reach tolerance"):

@@ -4,7 +4,7 @@ from collections.abc import Callable
 import numpy as np
 import pytest
 
-from counted_float._core.benchmarking.flops._array_generator import (
+from counted_float._core.benchmarking.flops.array_generator import (
     ArrayGenerator,
     ArrayGeneratorLinear,
     ArrayGeneratorLog,

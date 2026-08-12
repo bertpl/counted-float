@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from ._callsite import format_location, locate_call
-from ._output import VerbosityWriter
+from .callsite import format_location, locate_call
+from .output import VerbosityWriter
 
 if TYPE_CHECKING:
     from counted_float._core.models import FlopCounts

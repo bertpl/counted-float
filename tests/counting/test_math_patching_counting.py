@@ -2,8 +2,8 @@ import math
 
 import pytest
 
-from counted_float._core.counting import _math_patching
-from counted_float._core.counting._counted_float import CountedFloat
+from counted_float._core.counting import math_patching
+from counted_float._core.counting.counted_float import CountedFloat
 
 from .conftest import STDLIB_MATH_FUNCTIONS
 
@@ -100,7 +100,7 @@ def test_math_isclose_negative_tolerance_counts_nothing(thread_counter):
 def test_math_fma_registered_only_where_available():
     """math.fma is patched exactly on the interpreters that have it, and never elsewhere."""
     # --- act & assert ------------------------------------
-    assert ("fma" in _math_patching._PATCHES) == hasattr(math, "fma")
+    assert ("fma" in math_patching._PATCHES) == hasattr(math, "fma")
 
 
 _PY315_NAMES = ["fmax", "fmin", "isnormal", "issubnormal", "signbit"]
@@ -110,4 +110,4 @@ _PY315_NAMES = ["fmax", "fmin", "isnormal", "issubnormal", "signbit"]
 def test_py315_math_functions_registered_only_where_available(fname):
     """Each 3.15 callable is patched exactly on the interpreters that have it, and never elsewhere."""
     # --- act & assert ------------------------------------
-    assert (fname in _math_patching._PATCHES) == hasattr(math, fname)
+    assert (fname in math_patching._PATCHES) == hasattr(math, fname)

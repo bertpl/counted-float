@@ -1,6 +1,6 @@
 from pydantic import field_serializer
 
-from counted_float._core.models._base import JsonReprModel
+from counted_float._core.models.base import JsonReprModel
 
 
 class _Sample(JsonReprModel):

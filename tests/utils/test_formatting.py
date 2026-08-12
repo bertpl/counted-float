@@ -1,6 +1,6 @@
 import pytest
 
-from counted_float._core.utils._formatting import (
+from counted_float._core.utils.formatting import (
     _format_nsec_as_ms,
     _format_nsec_as_ns,
     _format_nsec_as_s,

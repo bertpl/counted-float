@@ -7,13 +7,13 @@ import threading
 from types import TracebackType
 from typing import Self
 
-from counted_float._core.counting._math_patching import (
+from counted_float._core.counting.math_patching import (
     apply_math_patches,
     apply_uncounted_math_patches,
     remove_math_patches,
     remove_uncounted_math_patches,
 )
-from counted_float._core.counting._thread_counter import THREAD_COUNTER
+from counted_float._core.counting.thread_counter import THREAD_COUNTER
 from counted_float._core.counting.verbosity import Verbosity
 from counted_float._core.models import FlopCounts
 

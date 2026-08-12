@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 from counted_float._core.benchmarking.flops import FlopsBenchmarkSuite, FlopsMicroBenchmark
-from counted_float._core.benchmarking.flops import _flops_probes as probes
+from counted_float._core.benchmarking.flops import flops_probes as probes
 from counted_float._core.models import FlopsBenchmarkResults, FlopsBenchmarkType, FlopType, FlopWeights
 
 

@@ -5,7 +5,7 @@ import numpy as np
 
 from counted_float._core.micro_benchmarking import MicroBenchmark
 
-from ._array_generator import ArrayGenerator
+from .array_generator import ArrayGenerator
 
 
 class FlopsMicroBenchmark(MicroBenchmark):

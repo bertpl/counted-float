@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from counted_float._core.counting.config._defaults import get_builtin_flop_weights, get_default_consensus_flop_weights
+from counted_float._core.counting.config.defaults import get_builtin_flop_weights, get_default_consensus_flop_weights
 from counted_float._core.models import FlopType, FlopWeights
 
 

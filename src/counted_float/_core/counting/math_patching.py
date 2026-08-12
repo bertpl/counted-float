@@ -60,14 +60,14 @@ import threading
 from math import copysign as _copysign  # the raw builtin: math.copysign is patched inside contexts
 from typing import TYPE_CHECKING, Never
 
-from ._counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
-from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
+from .counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
+from .thread_counter import _TLS, _create_thread_state, thread_is_reporting
 from .verbosity import warn_uncounted_call
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
 
-    from ._thread_counter import CountsTarget
+    from .thread_counter import CountsTarget
 
 
 def _unavailable_stand_in(name: str, minimum_version: str) -> Callable[..., Never]:

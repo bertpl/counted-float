@@ -15,9 +15,9 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from counted_float import CountedFloat
-from counted_float._core.counting import _math_patching
+from counted_float._core.counting import math_patching
 
-_PATCHED_NAMES = sorted(_math_patching._PATCHES.keys())
+_PATCHED_NAMES = sorted(math_patching._PATCHES.keys())
 _ARITY = {
     "atan2": 2,
     "hypot": 2,

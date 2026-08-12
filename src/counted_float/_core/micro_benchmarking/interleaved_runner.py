@@ -18,14 +18,14 @@ from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextC
 
 from counted_float._core.models import MicroBenchmarkResult
 
-from ._output import console
+from .output import console
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from counted_float._core.models import SingleRunResult
 
-    from ._micro_benchmark import MicroBenchmark
+    from .micro_benchmark import MicroBenchmark
 
 K = TypeVar("K")
 

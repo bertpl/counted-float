@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from counted_float._core.benchmarking.flops._cpu_freq import (
+from counted_float._core.benchmarking.flops.cpu_freq import (
     _get_psutil_cpu_freq_attribute_mhz,
     get_cpu_frequency_mhz_current,
     get_cpu_frequency_mhz_max,

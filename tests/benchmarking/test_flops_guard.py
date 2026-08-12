@@ -18,7 +18,7 @@ import pytest
 
 from counted_float._core import benchmarking
 from counted_float._core.compatibility import Capability, MissingCapabilityError
-from counted_float._core.models._flops_benchmark_meta_data import ProcessorInfo
+from counted_float._core.models.flops_benchmark_meta_data import ProcessorInfo
 from tests._capabilities import needs
 
 _BLOCK_BENCHMARKING_MODULES = """

@@ -8,7 +8,7 @@ from counted_float._core.utils import (
     format_time_duration,
 )
 
-from ._output import console
+from .output import console
 
 
 # =================================================================================================

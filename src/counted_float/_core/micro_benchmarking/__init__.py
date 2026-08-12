@@ -6,6 +6,6 @@ not, since it reports a ratio. That is what keeps this layer free of psutil, and
 install carrying no extras.
 """
 
-from ._interleaved_runner import InterleavedBenchmarkRunner, SliceController
-from ._micro_benchmark import MicroBenchmark
-from ._output import console, output_quiet
+from .interleaved_runner import InterleavedBenchmarkRunner, SliceController
+from .micro_benchmark import MicroBenchmark
+from .output import console, output_quiet

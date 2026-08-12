@@ -17,7 +17,7 @@ themselves, so both directions of the comparison hold on every supported Python.
 
 import math
 
-from counted_float._core.counting._math_patching import _MATH_NOT_PATCHED, _PATCHES, _UNCOUNTED_MATH
+from counted_float._core.counting.math_patching import _MATH_NOT_PATCHED, _PATCHES, _UNCOUNTED_MATH
 
 _TABLES = {
     "_PATCHES (instrument it, and give it a FlopType)": set(_PATCHES),

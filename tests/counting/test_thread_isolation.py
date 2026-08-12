@@ -225,7 +225,7 @@ def test_pause_flop_counting_exit_confined_to_owner_thread():
 # ==================================================================================================
 def test_patch_refcount_survives_concurrent_context_churn():
     # --- arrange -----------------------------------------
-    from counted_float._core.counting import _math_patching
+    from counted_float._core.counting import math_patching
 
     sqrt_before = math.sqrt
     n_threads = 8
@@ -246,4 +246,4 @@ def test_patch_refcount_survives_concurrent_context_churn():
 
     # --- assert ------------------------------------------
     assert math.sqrt is sqrt_before, "after all contexts closed, math.sqrt must be restored"
-    assert _math_patching._active_context_count == 0
+    assert math_patching._active_context_count == 0

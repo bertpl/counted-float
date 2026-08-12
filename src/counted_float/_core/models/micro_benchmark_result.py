@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from counted_float._core.utils import quantile
 
-from ._base import JsonReprModel
+from .base import JsonReprModel
 
 
 class SingleRunResult(JsonReprModel):

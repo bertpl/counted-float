@@ -2,7 +2,7 @@ import builtins
 
 import pytest
 
-from counted_float._core import _cli_main
+from counted_float._core import cli_main
 from counted_float._core.compatibility import Capability
 from tests._capabilities import needs
 
@@ -11,12 +11,12 @@ from tests._capabilities import needs
 def test_main_runs_cli_when_click_available(monkeypatch):
     # --- arrange -----------------------------------------
     called = []
-    from counted_float._core import _cli
+    from counted_float._core import cli
 
-    monkeypatch.setattr(_cli, "cli", lambda: called.append(True))
+    monkeypatch.setattr(cli, "cli", lambda: called.append(True))
 
     # --- act ---------------------------------------------
-    _cli_main.main()
+    cli_main.main()
 
     # --- assert ------------------------------------------
     assert called == [True]
@@ -30,7 +30,7 @@ def test_main_exits_with_guidance_when_the_extra_is_not_installed(monkeypatch, c
 
     # --- act & assert ------------------------------------
     with pytest.raises(SystemExit) as exc_info:
-        _cli_main.main()
+        cli_main.main()
 
     assert exc_info.value.code == 1
     assert 'pip install "counted-float[cli]"' in capsys.readouterr().err
@@ -44,7 +44,7 @@ def test_main_lets_a_genuine_import_failure_surface_as_itself(monkeypatch):
     real_import = builtins.__import__
 
     def _fake_import(name, *args, **kwargs):
-        if name == "counted_float._core._cli":
+        if name == "counted_float._core.cli":
             raise ModuleNotFoundError("simulated missing dependency", name="something_else")
         return real_import(name, *args, **kwargs)
 
@@ -52,4 +52,4 @@ def test_main_lets_a_genuine_import_failure_surface_as_itself(monkeypatch):
 
     # --- act & assert ------------------------------------
     with pytest.raises(ModuleNotFoundError, match="simulated missing dependency"):
-        _cli_main.main()
+        cli_main.main()

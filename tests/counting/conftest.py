@@ -3,8 +3,8 @@ import math
 import pytest
 
 from counted_float import FlopCountingContext
-from counted_float._core.counting import _math_patching
-from counted_float._core.counting._thread_counter import (
+from counted_float._core.counting import math_patching
+from counted_float._core.counting.thread_counter import (
     _TLS,
     THREAD_COUNTER,
     ThreadLocalFlopCounter,
@@ -13,7 +13,7 @@ from counted_float._core.counting._thread_counter import (
 
 # Shared by the machinery and counting halves of the math-patching tests; defined here so both
 # reach them at collection time (they key `@pytest.mark.parametrize` decorators).
-PATCHED_FUNCTION_NAMES = sorted(_math_patching._PATCHES.keys())
+PATCHED_FUNCTION_NAMES = sorted(math_patching._PATCHES.keys())
 
 # captured at import of this conftest, i.e. with no counting context active anywhere
 STDLIB_MATH_FUNCTIONS = {name: getattr(math, name) for name in PATCHED_FUNCTION_NAMES}
@@ -24,7 +24,7 @@ def incr_flop():
     """Provide the increment call that the packaged code deliberately does not have.
 
     Production counting sites inline their increments -- a method call costs about as much as the
-    increment itself (see the _thread_counter module docstring) -- so ThreadLocalFlopCounter offers
+    increment itself (see the thread_counter module docstring) -- so ThreadLocalFlopCounter offers
     no increment API for tests to borrow.  Tests that want to register a flop without routing it
     through CountedFloat arithmetic use this helper instead.  It reproduces the production
     increment pattern exactly: a write through the thread's counts alias, with the lazy-init

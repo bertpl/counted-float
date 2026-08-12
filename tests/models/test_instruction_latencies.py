@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from counted_float._core.models._instruction_latencies import (
+from counted_float._core.models.instruction_latencies import (
     InstructionLatencies,
     InstructionLatencies_ARM,
     InstructionLatencies_SSE2,

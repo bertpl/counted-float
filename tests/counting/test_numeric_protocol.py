@@ -13,8 +13,8 @@ from fractions import Fraction
 
 import pytest
 
-from counted_float._core.counting._counted_float import CountedFloat
-from counted_float._core.counting._thread_counter import ThreadLocalFlopCounter
+from counted_float._core.counting.counted_float import CountedFloat
+from counted_float._core.counting.thread_counter import ThreadLocalFlopCounter
 
 ARITHMETIC_OPERATORS = [
     operator.add,

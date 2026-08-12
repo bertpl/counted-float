@@ -8,9 +8,9 @@ suite, which is why it lives here and not beside it.
 from counted_float._core.micro_benchmarking import console, output_quiet
 from counted_float._core.models import FlopType
 
-from ._per_flop_overhead import PerFlopTypeLoop, excluded_flop_types, per_flop_type_specs
-from ._practical_workload import PRACTICAL_WORKLOAD_LABEL, CountedFloatBisection, FloatBisection
-from ._results import CountingOverheadResults, ExcludedFlopType, PerFlopTypeOverhead
+from .per_flop_overhead import PerFlopTypeLoop, excluded_flop_types, per_flop_type_specs
+from .practical_workload import PRACTICAL_WORKLOAD_LABEL, CountedFloatBisection, FloatBisection
+from .results import CountingOverheadResults, ExcludedFlopType, PerFlopTypeOverhead
 
 
 def evaluate_counting_overhead(t_target_sec: float = 0.1, verbose: bool = True) -> CountingOverheadResults:
