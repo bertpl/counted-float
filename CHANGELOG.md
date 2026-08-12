@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- the published release artifacts are no longer built from a CI cache that other pushes to `main` can write into, closing a supply-chain path
+
 ## 2.5.0 (2026-08-10)
 
 ### Added
