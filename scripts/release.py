@@ -159,6 +159,10 @@ def step_5_check_pypi_doesnt_have(version: str) -> None:
     except urllib.error.HTTPError as e:
         if e.code != 404:
             fail_with_message(f"PyPI check returned HTTP {e.code}")
+    except urllib.error.URLError as e:
+        # a transport failure (DNS, connection reset, timeout) has no HTTP response to inspect, so the
+        # check can't run -- fail with a message rather than abort the release with a raw traceback
+        fail_with_message(f"could not reach PyPI to check {version}: {e.reason}")
 
 
 def step_6_check_classifiers_match() -> None:

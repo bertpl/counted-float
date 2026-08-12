@@ -79,7 +79,8 @@ The body (optional) explains *why*, not *what*. Wrap at ~72 characters.
 ## Changelog
 
 Add an entry under the appropriate category in the `## Unreleased` section of
-[`CHANGELOG.md`](CHANGELOG.md) as part of your PR.
+[`CHANGELOG.md`](CHANGELOG.md) as part of your PR. CI requires an entry for
+`feat/` and `fix/` branches.
 
 Changelog entries are **user-facing** — write them for someone deciding whether
 to upgrade, not for someone reviewing the implementation.
