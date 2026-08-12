@@ -5,9 +5,9 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from ._base import JsonReprModel
-from ._flop_type import FlopType
-from ._flop_weights import FlopWeights
+from .base import JsonReprModel
+from .flop_type import FlopType
+from .flop_weights import FlopWeights
 
 
 # =================================================================================================

@@ -1,7 +1,7 @@
 import sys
 from pathlib import Path
 
-from counted_float._core.counting.verbosity._callsite import UNKNOWN_LOCATION, format_location, locate_call
+from counted_float._core.counting.verbosity.callsite import UNKNOWN_LOCATION, format_location, locate_call
 
 
 # ==================================================================================================
@@ -23,11 +23,11 @@ def test_locate_call_skips_frames_inside_the_package():
     # angle-bracketed file name keeps coverage from tracing this fabricated code as if it were a
     # source file of its own (it has none on disk).
     package_frame = compile(
-        "from counted_float._core.counting.verbosity._callsite import locate_call\nlocation = locate_call()\n",
+        "from counted_float._core.counting.verbosity.callsite import locate_call\nlocation = locate_call()\n",
         "<fabricated counted_float frame>",
         "exec",
     )
-    namespace = {"__name__": "counted_float._core.counting._counted_float"}
+    namespace = {"__name__": "counted_float._core.counting.counted_float"}
 
     # --- act ---------------------------------------------
     exec(package_frame, namespace)  # noqa: S102 -- fabricating a package frame is the point
@@ -43,7 +43,7 @@ def test_locate_call_skips_the_top_level_package_frame():
     # a frame whose module name is exactly the package, as ``counted_float/__init__.py`` reports --
     # it lacks the trailing dot the submodule check keys on, so only the exact-name clause skips it.
     package_frame = compile(
-        "from counted_float._core.counting.verbosity._callsite import locate_call\nlocation = locate_call()\n",
+        "from counted_float._core.counting.verbosity.callsite import locate_call\nlocation = locate_call()\n",
         "<fabricated counted_float top-level frame>",
         "exec",
     )

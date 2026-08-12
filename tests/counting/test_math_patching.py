@@ -5,8 +5,8 @@ import sys
 import pytest
 
 from counted_float import FlopCountingContext
-from counted_float._core.counting import _math_patching
-from counted_float._core.counting._counted_float import CountedFloat
+from counted_float._core.counting import math_patching
+from counted_float._core.counting.counted_float import CountedFloat
 
 from .conftest import PATCHED_FUNCTION_NAMES, STDLIB_MATH_FUNCTIONS
 
@@ -26,7 +26,7 @@ def test_import_does_not_patch_math():
 @pytest.mark.parametrize("fname", PATCHED_FUNCTION_NAMES)
 def test_math_module_patched_inside_context_only(fname):
     original = STDLIB_MATH_FUNCTIONS[fname]
-    replacement = _math_patching._PATCHES[fname]
+    replacement = math_patching._PATCHES[fname]
 
     # --- before any context ------------------------------
     assert getattr(math, fname) is original
@@ -108,7 +108,7 @@ def test_unbalanced_remove_math_patches_does_not_clobber_a_later_patch():
 
     # --- act ---------------------------------------------
     try:
-        _math_patching.remove_math_patches()  # unbalanced: no context is open
+        math_patching.remove_math_patches()  # unbalanced: no context is open
         survived = math.sqrt is third_party_sqrt
     finally:
         math.sqrt = original_sqrt  # ty: ignore[invalid-assignment]
@@ -126,13 +126,13 @@ def test_capture_originals_keeps_both_original_tables_in_sync():
     stale import-time reference, so nothing downstream would notice.
     """
     # --- act ---------------------------------------------
-    _math_patching._capture_originals()
+    math_patching._capture_originals()
 
     # --- assert ------------------------------------------
-    for name in _math_patching._PATCHES:
-        delegation_target = getattr(_math_patching, f"original_math_{name}", None)
+    for name in math_patching._PATCHES:
+        delegation_target = getattr(math_patching, f"original_math_{name}", None)
         assert delegation_target is not None, f"no original_math_{name} global for patched '{name}'"
-        assert delegation_target is _math_patching._saved_originals[name], (
+        assert delegation_target is math_patching._saved_originals[name], (
             f"original_math_{name} does not match the restoration snapshot for '{name}'"
         )
 
@@ -145,7 +145,7 @@ def test_version_gated_stand_in_raises(fname: str) -> None:
     # the stand-ins exist so every original_math_* is callable on an interpreter predating its
     # function; calling one must raise rather than silently return a value
     # --- arrange -----------------------------------------
-    stand_in = getattr(_math_patching, f"_math_{fname}_unavailable")
+    stand_in = getattr(math_patching, f"_math_{fname}_unavailable")
 
     # --- act / assert ------------------------------------
     with pytest.raises(NotImplementedError, match=rf"math\.{fname}"):
@@ -155,8 +155,8 @@ def test_version_gated_stand_in_raises(fname: str) -> None:
 def test_remove_uncounted_math_patches_is_a_noop_when_none_installed() -> None:
     # the guard returns early when no thread is reporting, so there is nothing to undo
     # --- arrange -----------------------------------------
-    assert _math_patching._reporting_thread_count == 0
+    assert math_patching._reporting_thread_count == 0
 
     # --- act / assert (must not raise or touch the math module) ---
-    _math_patching.remove_uncounted_math_patches()
-    assert _math_patching._reporting_thread_count == 0
+    math_patching.remove_uncounted_math_patches()
+    assert math_patching._reporting_thread_count == 0

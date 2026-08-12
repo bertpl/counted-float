@@ -4,12 +4,12 @@ from typing import TYPE_CHECKING
 
 from pydantic import field_serializer, field_validator
 
-from ._base import JsonReprModel
-from ._flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
-from ._flop_weights import FlopWeights
-from ._flops_benchmark_meta_data import BenchmarkSettings, SystemInfo
-from ._flops_benchmark_type import FlopsBenchmarkType
-from ._micro_benchmark_result import Quantiles
+from .base import JsonReprModel
+from .flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
+from .flop_weights import FlopWeights
+from .flops_benchmark_meta_data import BenchmarkSettings, SystemInfo
+from .flops_benchmark_type import FlopsBenchmarkType
+from .micro_benchmark_result import Quantiles
 
 if TYPE_CHECKING:
     from pydantic import FieldSerializationInfo

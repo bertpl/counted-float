@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from counted_float._core.models import FlopType, FlopWeights
 
 if TYPE_CHECKING:
-    from ._dataset import NestedFlopWeights
+    from .dataset import NestedFlopWeights
 
 
 class FlopWeightsTreeView:

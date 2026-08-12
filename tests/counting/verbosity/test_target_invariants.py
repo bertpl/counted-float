@@ -9,7 +9,7 @@ are stated once here, as a matrix, rather than left to the module docstring.
 import pytest
 
 from counted_float import FlopCounts, Verbosity
-from counted_float._core.counting._thread_counter import _TLS
+from counted_float._core.counting.thread_counter import _TLS
 
 
 # ==================================================================================================

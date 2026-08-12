@@ -1,3 +1,3 @@
-from ._array_generator import ArrayGenerator
-from ._flops_benchmark_suite import FlopsBenchmarkResults, FlopsBenchmarkSuite
-from ._flops_micro_benchmark import FlopsMicroBenchmark
+from .array_generator import ArrayGenerator
+from .flops_benchmark_suite import FlopsBenchmarkResults, FlopsBenchmarkSuite
+from .flops_micro_benchmark import FlopsMicroBenchmark

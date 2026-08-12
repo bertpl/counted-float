@@ -5,11 +5,11 @@ from math import copysign as _copysign  # the raw builtin: math.copysign is patc
 from math import frexp as _frexp  # the raw builtin: math.frexp may later carry a reporting wrapper
 from typing import TYPE_CHECKING, SupportsIndex, final
 
-from ._thread_counter import _TLS, _create_thread_state, thread_is_reporting
+from .thread_counter import _TLS, _create_thread_state, thread_is_reporting
 from .verbosity import warn_uncounted_call
 
 if TYPE_CHECKING:
-    from ._thread_counter import CountsTarget
+    from .thread_counter import CountsTarget
 
 
 def count_pow_with_constant_exponent(exponent: float) -> None:

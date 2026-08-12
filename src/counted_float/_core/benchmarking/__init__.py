@@ -11,6 +11,6 @@ own package and stays eagerly available: reading a stored result needs no extra.
 
 from counted_float._core.models import FlopsBenchmarkResults
 
-from ._runner import run_flops_benchmark
+from .runner import run_flops_benchmark
 
 __all__ = ["FlopsBenchmarkResults", "run_flops_benchmark"]

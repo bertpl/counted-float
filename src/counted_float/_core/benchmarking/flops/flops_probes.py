@@ -10,11 +10,11 @@ import math
 import numba  # ty: ignore[unresolved-import] -- numba comes with the benchmarking extra, which this sub-package requires
 import numpy as np
 
-from ._libm_bindings import libm_cbrt, libm_remainder
-from ._sumprod_port import tl_fma, tl_to_d
+from .libm_bindings import libm_cbrt, libm_remainder
+from .sumprod_port import tl_fma, tl_to_d
 
 # the two probes that measure through a ctypes binding rather than a numba-compiled call --
-# see _libm_bindings for the mechanism and the admission criterion
+# see libm_bindings for the mechanism and the admission criterion
 c_cbrt = libm_cbrt()
 c_remainder = libm_remainder()
 
@@ -103,7 +103,7 @@ def f_add_sqrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, o
 
 @numba.njit(parallel=False)
 def f_add_cbrt(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, out_i: np.ndarray) -> None:
-    # libm cbrt via ctypes (see _libm_bindings): numba's np.cbrt would wrap the call in NaN/sign
+    # libm cbrt via ctypes (see libm_bindings): numba's np.cbrt would wrap the call in NaN/sign
     # handling that CPython's math.cbrt never executes, so the bare call is what gets priced
     for _ in range(n_executions):
         tmp = math.e
@@ -357,7 +357,7 @@ def f_add_dist8(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray, 
 
 
 # The sumprod probes below are a faithful port of CPython's extended-precision math.sumprod
-# accumulation -- see _sumprod_port for the algorithm, the inlined helpers, and the fma
+# accumulation -- see sumprod_port for the algorithm, the inlined helpers, and the fma
 # mechanism.  The dependency runs through the first element's product; the accumulator starts
 # from a runtime zero (in_f[i] * 0.0) rather than literal 0.0, so LLVM cannot constant-fold the
 # first element's compensated arithmetic the way CPython's runtime zeros never would.

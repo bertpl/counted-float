@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from ._callsite import format_location, locate_call
-from ._output import VerbosityWriter
+from .callsite import format_location, locate_call
+from .output import VerbosityWriter
 
 # Call sites reported so far, for the lifetime of the process.  Each entry pairs the operation that
 # could not be counted with the exact place it was called from -- ("erf", ("/proj/my_algo.py", 42))

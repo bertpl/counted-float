@@ -3,13 +3,13 @@ import threading
 
 import pytest
 
-from counted_float._core.counting._context_managers import (
+from counted_float._core.counting.context_managers import (
     _PAUSE_CROSS_THREAD_MESSAGE,
     FlopCountingContext,
     PauseFlopCounting,
 )
-from counted_float._core.counting._counted_float import CountedFloat
-from counted_float._core.counting._thread_counter import THREAD_COUNTER
+from counted_float._core.counting.counted_float import CountedFloat
+from counted_float._core.counting.thread_counter import THREAD_COUNTER
 
 
 # =================================================================================================

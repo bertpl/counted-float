@@ -5,8 +5,8 @@ import re
 import pytest
 
 from counted_float._core.counting import CountedFloat, FlopCountingContext
-from counted_float._core.evaluation import _per_flop_overhead
-from counted_float._core.evaluation._per_flop_overhead import (
+from counted_float._core.evaluation import per_flop_overhead
+from counted_float._core.evaluation.per_flop_overhead import (
     PerFlopTypeLoop,
     excluded_flop_types,
     per_flop_type_specs,
@@ -177,7 +177,7 @@ def test_pools_are_full_sized_spread_and_fold_safe(flop_type):
     measured_plain = _measured_operands(pool_plain)
 
     # --- assert -----------------------
-    assert len(pool_counted) == len(pool_plain) == _per_flop_overhead._POOL_SIZE
+    assert len(pool_counted) == len(pool_plain) == per_flop_overhead._POOL_SIZE
     for column in columns:
         assert all(a < b for a, b in itertools.pairwise(column))
         assert all(float(value) not in _FOLD_TRIGGERS for value in column)

@@ -1,6 +1,6 @@
 import pytest
 
-from counted_float._core.counting.verbosity import _uncounted_warnings
+from counted_float._core.counting.verbosity import uncounted_warnings
 
 
 @pytest.fixture(autouse=True)
@@ -11,7 +11,7 @@ def forget_reported_calls():
     tests have to clear it themselves to stay independent of one another.
     """
 
-    _uncounted_warnings._reported.clear()
+    uncounted_warnings._reported.clear()
 
 
 @pytest.fixture

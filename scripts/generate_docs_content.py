@@ -63,8 +63,8 @@ from flop_weight_chart import THEMES as CHART_THEMES
 from flop_weight_chart import build_svg as build_chart_svg
 
 from counted_float import BuiltInData
-from counted_float._core.counting._float_surface import _FLOAT_DEFINED_UNPATCHED, _OBJECT_DEFINED_UNPATCHED
-from counted_float._core.counting._math_patching import (
+from counted_float._core.counting.float_surface import _FLOAT_DEFINED_UNPATCHED, _OBJECT_DEFINED_UNPATCHED
+from counted_float._core.counting.math_patching import (
     _MATH_NOT_PATCHED,
     _NOT_PATCHED_DUNDER,
     _PATCHES,
@@ -153,7 +153,7 @@ def capture_show_data_ansi() -> str:
             sys.executable,
             "-c",
             "import sys; sys.argv = ['counted_float', 'show-data']; "
-            "from counted_float._core._cli_main import main; main()",
+            "from counted_float._core.cli_main import main; main()",
         ],
         capture_output=True,
         encoding="utf-8",

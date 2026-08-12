@@ -1,1 +1,1 @@
-from ._optional_dependencies import Capability, MissingCapabilityError
+from .optional_dependencies import Capability, MissingCapabilityError

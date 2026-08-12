@@ -3,7 +3,7 @@ from fractions import Fraction
 
 import pytest
 
-from counted_float._core.benchmarking.flops._sumprod_port import _dl_sum, tl_fma, tl_to_d
+from counted_float._core.benchmarking.flops.sumprod_port import _dl_sum, tl_fma, tl_to_d
 
 # The TripleLength port only reproduces math.sumprod bit-for-bit when it can spell a genuine FMA
 # (numba's llvm.fma intrinsic, or math.fma from Py3.13+) and a reference is available to compare

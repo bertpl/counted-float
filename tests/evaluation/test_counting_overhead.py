@@ -11,7 +11,7 @@ from counted_float._core.evaluation import (
     PerFlopTypeOverhead,
     evaluate_counting_overhead,
 )
-from counted_float._core.evaluation._practical_workload import _zero_function
+from counted_float._core.evaluation.practical_workload import _zero_function
 from counted_float._core.models import FlopType
 
 # golden output for the show() test below; module-level so the wide table rows stay unindented

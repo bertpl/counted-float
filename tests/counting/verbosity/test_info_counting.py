@@ -4,7 +4,7 @@ import threading
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext, FlopCounts, PauseFlopCounting, Verbosity
-from counted_float._core.counting._thread_counter import THREAD_COUNTER
+from counted_float._core.counting.thread_counter import THREAD_COUNTER
 
 
 # ==================================================================================================

@@ -3,7 +3,7 @@ import threading
 import pytest
 
 from counted_float import Verbosity
-from counted_float._core.counting._thread_counter import THREAD_COUNTER, ThreadLocalFlopCounter
+from counted_float._core.counting.thread_counter import THREAD_COUNTER, ThreadLocalFlopCounter
 from counted_float._core.models import FlopCounts
 
 

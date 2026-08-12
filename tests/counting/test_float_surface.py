@@ -26,7 +26,7 @@ from fractions import Fraction
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext, Verbosity
-from counted_float._core.counting._float_surface import (
+from counted_float._core.counting.float_surface import (
     _FLOAT_DEFINED_UNPATCHED,
     _OBJECT_DEFINED_UNPATCHED,
     _PROVENANCE_VARIES_BY_VERSION,
@@ -207,9 +207,9 @@ def test_is_integer_counts_the_floor_and_compare(thread_counter, value, expected
 # =================================================================================================
 def test_as_integer_ratio_is_uncounted_and_warns_when_reporting(thread_counter, capsys):
     # --- arrange -------------------------------
-    from counted_float._core.counting.verbosity import _uncounted_warnings
+    from counted_float._core.counting.verbosity import uncounted_warnings
 
-    _uncounted_warnings._reported.clear()  # the reported-sites record is process-wide
+    uncounted_warnings._reported.clear()  # the reported-sites record is process-wide
 
     # --- act -----------------------------------
     quiet = CountedFloat(1.5).as_integer_ratio()

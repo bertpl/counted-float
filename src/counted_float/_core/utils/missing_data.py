@@ -2,7 +2,7 @@ import math
 import sys
 import warnings
 
-from ._geo_mean import geo_mean
+from .geo_mean import geo_mean
 
 # hard cap on fitting sweeps; each sweep below is an exact alternating fit, so this is only ever
 # reached for pathologically weakly-connected observation patterns -- in which case a

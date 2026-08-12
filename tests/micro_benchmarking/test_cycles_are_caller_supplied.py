@@ -10,7 +10,7 @@ from counted_float._core.micro_benchmarking import InterleavedBenchmarkRunner, M
 from counted_float._core.models import MicroBenchmarkResult, SingleRunResult
 
 # patched to prove the timing layer never reaches it; it lives behind the benchmarking extra
-cpu_freq_module = pytest.importorskip("counted_float._core.benchmarking.flops._cpu_freq")
+cpu_freq_module = pytest.importorskip("counted_float._core.benchmarking.flops.cpu_freq")
 
 
 class _TrivialBenchmark(MicroBenchmark):

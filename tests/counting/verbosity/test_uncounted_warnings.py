@@ -4,9 +4,9 @@ import threading
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
-from counted_float._core.counting import _math_patching
+from counted_float._core.counting import math_patching
 
-UNCOUNTED_FUNCTION_NAMES = sorted(_math_patching._UNCOUNTED_MATH)
+UNCOUNTED_FUNCTION_NAMES = sorted(math_patching._UNCOUNTED_MATH)
 
 # what each of them needs after its first (counted) argument
 EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,)}
@@ -254,7 +254,7 @@ def test_reporting_survives_another_reporting_thread_finishing(logged_lines):
     assert worker_is_reporting.wait(timeout=5)
     with FlopCountingContext(verbosity=Verbosity.WARNING):
         pass  # a second reporting thread comes and goes
-    still_installed = math.ulp is _math_patching._UNCOUNTED_PATCHES["ulp"]
+    still_installed = math.ulp is math_patching._UNCOUNTED_PATCHES["ulp"]
     worker_may_finish.set()
     thread.join()
 
@@ -288,7 +288,7 @@ def test_patched_while_reporting_and_restored_after(function_name):
     # --- act & assert ------------------------------------
     with FlopCountingContext():
         with FlopCountingContext(verbosity=Verbosity.WARNING):
-            assert getattr(math, function_name) is _math_patching._UNCOUNTED_PATCHES[function_name]
+            assert getattr(math, function_name) is math_patching._UNCOUNTED_PATCHES[function_name]
         # the enclosing context is still open, but nobody is reporting through it any more
         assert getattr(math, function_name) is original
     assert getattr(math, function_name) is original
@@ -333,8 +333,8 @@ def test_reporting_refcount_survives_concurrent_context_churn():
 
     # --- assert ------------------------------------------
     assert math.ulp is ulp_before, "after the last reporting context closed, math.ulp must be restored"
-    assert _math_patching._reporting_thread_count == 0
-    assert _math_patching._active_context_count == 0
+    assert math_patching._reporting_thread_count == 0
+    assert math_patching._active_context_count == 0
 
 
 def test_replacements_delegate_to_what_they_displaced():
@@ -345,7 +345,7 @@ def test_replacements_delegate_to_what_they_displaced():
 
     # --- act ---------------------------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
-        captured = dict(_math_patching._uncounted_originals)
+        captured = dict(math_patching._uncounted_originals)
 
     # --- assert ------------------------------------------
     assert captured == originals
@@ -354,8 +354,8 @@ def test_replacements_delegate_to_what_they_displaced():
 def test_the_two_patch_sets_are_disjoint():
     # --- arrange -----------------------------------------
     # they patch the same module, so an overlap would mean one silently overriding the other
-    counting = set(_math_patching._PATCHES)
-    reporting = set(_math_patching._UNCOUNTED_PATCHES)
+    counting = set(math_patching._PATCHES)
+    reporting = set(math_patching._UNCOUNTED_PATCHES)
 
     # --- act & assert ------------------------------------
     assert counting & reporting == set()
@@ -390,9 +390,9 @@ def make_probe_wrapper(monkeypatch):
             delegate_calls.append((args, kwargs))
             return "delegated"
 
-        monkeypatch.setitem(_math_patching._uncounted_originals, name, original)
+        monkeypatch.setitem(math_patching._uncounted_originals, name, original)
         probe_names.append(name)
-        return _math_patching._make_uncounted_wrapper(name, f"{name} consequence")
+        return math_patching._make_uncounted_wrapper(name, f"{name} consequence")
 
     yield make
     for name in probe_names:

@@ -154,7 +154,7 @@ class CompiledProbe:
 
 def compile_probe(probe_name: str) -> CompiledProbe:
     """Compile one benchmark probe with the suite's signature and dissect its ASM."""
-    from counted_float._core.benchmarking.flops import _flops_probes as probes
+    from counted_float._core.benchmarking.flops import flops_probes as probes
 
     probe = getattr(probes, probe_name)
     size = 16

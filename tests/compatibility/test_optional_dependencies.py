@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from counted_float._core.compatibility import Capability, MissingCapabilityError
-from counted_float._core.compatibility._optional_dependencies import _declared_extras
+from counted_float._core.compatibility.optional_dependencies import _declared_extras
 
 _PYPROJECT = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
 
@@ -92,7 +92,7 @@ def test_a_distribution_that_is_not_installed_reads_as_absent():
     # the branch every guard depends on, exercised directly rather than left to whichever CI leg
     # happens to run without an extra
     # --- arrange -----------------------------------------
-    from counted_float._core.compatibility._optional_dependencies import _is_installed
+    from counted_float._core.compatibility.optional_dependencies import _is_installed
 
     # --- act / assert ------------------------------------
     assert _is_installed("counted-float") is True

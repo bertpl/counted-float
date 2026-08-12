@@ -3,7 +3,7 @@ from __future__ import annotations
 import platform
 from importlib.metadata import PackageNotFoundError, version
 
-from ._base import JsonReprModel
+from .base import JsonReprModel
 
 
 # =================================================================================================
@@ -60,7 +60,7 @@ class ProcessorInfo(JsonReprModel):
     @classmethod
     def from_system(cls) -> ProcessorInfo:
         """Describe the running machine's processor, as stamped onto a benchmark result."""
-        # psutil, cpuinfo and the _cpu_freq helpers sit behind the `benchmarking` extra, which only
+        # psutil, cpuinfo and the cpu_freq helpers sit behind the `benchmarking` extra, which only
         # ProcessorInfo.from_system needs. The required() guard gives a base install -- which ships
         # SystemInfo as public API but not the extra -- an actionable message rather than a bare
         # ModuleNotFoundError; the imports stay deferred so that loading the model to parse shipped
@@ -72,7 +72,7 @@ class ProcessorInfo(JsonReprModel):
             import cpuinfo
             import psutil
 
-            from counted_float._core.benchmarking.flops._cpu_freq import (
+            from counted_float._core.benchmarking.flops.cpu_freq import (
                 get_cpu_frequency_mhz_max,
                 get_cpu_frequency_mhz_min,
             )

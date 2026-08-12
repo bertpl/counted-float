@@ -18,8 +18,8 @@ import ast
 import math
 from pathlib import Path
 
-from counted_float._core.counting import _math_patching
-from counted_float._core.counting._math_patching import _PATCHES, _REFERENCE_PREFIX
+from counted_float._core.counting import math_patching
+from counted_float._core.counting.math_patching import _PATCHES, _REFERENCE_PREFIX
 
 
 # =================================================================================================
@@ -27,7 +27,7 @@ from counted_float._core.counting._math_patching import _PATCHES, _REFERENCE_PRE
 # =================================================================================================
 def _declared_reference_names() -> set[str]:
     """The math function names declared as module-level `original_math_<name>` references."""
-    tree = ast.parse(Path(_math_patching.__file__ or "").read_text(encoding="utf-8"))
+    tree = ast.parse(Path(math_patching.__file__ or "").read_text(encoding="utf-8"))
     return {
         target.id.removeprefix(_REFERENCE_PREFIX)
         for node in tree.body
@@ -69,19 +69,19 @@ def test_recapture_rebinds_every_delegation_reference():
     """
     # --- arrange -----------------------------------------
     references = {
-        f"{_REFERENCE_PREFIX}{name}": getattr(_math_patching, f"{_REFERENCE_PREFIX}{name}") for name in _PATCHES
+        f"{_REFERENCE_PREFIX}{name}": getattr(math_patching, f"{_REFERENCE_PREFIX}{name}") for name in _PATCHES
     }
     sentinel = object()
     for reference in references:
-        setattr(_math_patching, reference, sentinel)
+        setattr(math_patching, reference, sentinel)
 
     # --- act ---------------------------------------------
     try:
-        _math_patching._capture_originals()
-        still_sentinel = [reference for reference in references if getattr(_math_patching, reference) is sentinel]
+        math_patching._capture_originals()
+        still_sentinel = [reference for reference in references if getattr(math_patching, reference) is sentinel]
     finally:
         for reference, original in references.items():
-            setattr(_math_patching, reference, original)
+            setattr(math_patching, reference, original)
 
     # --- assert ------------------------------------------
     assert not still_sentinel, f"never rebound by the re-capture: {sorted(still_sentinel)}"

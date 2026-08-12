@@ -33,11 +33,11 @@ from collections.abc import Callable
 import pytest
 
 from counted_float import CountedFloat, FlopCountingContext, FlopCounts
-from counted_float._core.counting import _counted_float, _math_patching
-from counted_float._core.counting._thread_counter import THREAD_COUNTER
+from counted_float._core.counting import counted_float, math_patching
+from counted_float._core.counting.thread_counter import THREAD_COUNTER
 
 CF = CountedFloat
-_PATCH_NAMES = sorted(_math_patching._PATCHES.keys())  # excludes fma/sumprod on interpreters without them
+_PATCH_NAMES = sorted(math_patching._PATCHES.keys())  # excludes fma/sumprod on interpreters without them
 
 
 # =================================================================================================
@@ -224,7 +224,7 @@ def test_math_patch_first_op_on_fresh_thread(fname: str) -> None:
 def test_patch_args_cover_every_registered_patch() -> None:
     # a newly registered patch must gain a _PATCH_ARGS entry, or its fresh-thread case would KeyError
     # --- assert -----------------------------
-    assert set(_math_patching._PATCHES) <= set(_PATCH_ARGS)
+    assert set(math_patching._PATCHES) <= set(_PATCH_ARGS)
 
 
 # alternate patch code paths the registry-keyed test above misses (it uses one argument tuple per
@@ -259,7 +259,7 @@ def test_math_patch_alternate_path_first_op_on_fresh_thread(case_id: str, call: 
 # contract is to ACCUMULATE onto whatever counter the helper hands back, and an assignment there
 # would clobber existing counts the moment that helper returns anything but a zeroed counter.  The
 # cases below make the contract observable by handing the site a counter that already holds counts.
-_LAZY_INIT_MODULES = (_counted_float, _math_patching)
+_LAZY_INIT_MODULES = (counted_float, math_patching)
 _PRELOAD = 7
 
 
@@ -286,7 +286,7 @@ def _lazy_init_counts_with_preloaded_state(call: Callable[[], object]) -> dict[s
 
     # the helper is imported into each counting module's own namespace, so the replacement is
     # installed per module -- both of them, since a patch may count through an operator (math.prod
-    # multiplies) and so reach the site in _counted_float rather than its own
+    # multiplies) and so reach the site in counted_float rather than its own
     originals = {m: m._create_thread_state for m in _LAZY_INIT_MODULES}
     for m in _LAZY_INIT_MODULES:
         m._create_thread_state = lambda: preloaded

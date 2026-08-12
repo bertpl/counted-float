@@ -345,7 +345,7 @@ def test_show_renders_integer_weights_without_decimals(capsys):
 
 def test_str_uses_display_labels_not_stable_names():
     # JsonReprModel.__str__ renders under a {"display": True} context, so FlopType keys become human
-    # labels rather than the stable on-disk names -- this pins that context (see models/_base.py)
+    # labels rather than the stable on-disk names -- this pins that context (see models/base.py)
     # --- arrange -----------------------------------------
     fw = FlopWeights(weights={FlopType.ADD: 1.0})
 

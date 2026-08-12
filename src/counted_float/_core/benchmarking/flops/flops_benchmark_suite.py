@@ -3,7 +3,7 @@ import warnings
 from importlib.metadata import version
 
 from counted_float._core.micro_benchmarking import InterleavedBenchmarkRunner
-from counted_float._core.micro_benchmarking._output import console
+from counted_float._core.micro_benchmarking.output import console
 from counted_float._core.models import (
     BenchmarkSettings,
     FlopsBenchmarkResults,
@@ -14,9 +14,9 @@ from counted_float._core.models import (
 )
 from counted_float._core.utils import FALLBACK_CPU_FREQ_MHZ
 
-from ._array_generator import ArrayGenerator
-from ._cpu_freq import get_cpu_frequency_mhz_current
-from ._flops_micro_benchmark import FlopsMicroBenchmark
+from .array_generator import ArrayGenerator
+from .cpu_freq import get_cpu_frequency_mhz_current
+from .flops_micro_benchmark import FlopsMicroBenchmark
 
 FBT = FlopsBenchmarkType
 
@@ -216,7 +216,7 @@ class FlopsBenchmarkSuite:
         # imported here rather than at module level: the probes bind libm ctypes functions when
         # imported, which fails loudly on platforms without a locatable C math library -- that
         # failure belongs to running the flops benchmark, not to importing the benchmarking API
-        from . import _flops_probes as probes
+        from . import flops_probes as probes
 
         # --- assemble the registry -----------------------
         return {

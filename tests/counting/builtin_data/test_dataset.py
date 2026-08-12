@@ -3,13 +3,13 @@ import re
 import pytest
 from pydantic import ValidationError
 
-from counted_float._core.counting.builtin_data._dataset import (
+from counted_float._core.counting.builtin_data.dataset import (
     BuiltInData,
     _construct_flop_weights_from_json_str,
     _flat_to_nested_dict,
     _load_json_files_as_dict,
 )
-from counted_float._core.counting.builtin_data._tree_view import FlopWeightsTreeView
+from counted_float._core.counting.builtin_data.tree_view import FlopWeightsTreeView
 from counted_float._core.models import FlopsBenchmarkResults, FlopType, FlopWeights
 
 

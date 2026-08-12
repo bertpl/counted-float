@@ -7,8 +7,8 @@ from pydantic import field_serializer, field_validator
 
 from counted_float._core.utils import geo_mean, impute_missing_data, round_number
 
-from ._base import JsonReprModel
-from ._flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
+from .base import JsonReprModel
+from .flop_type import FlopType, normalize_flop_type_keyed_dict, serialize_flop_type_keyed_dict
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable

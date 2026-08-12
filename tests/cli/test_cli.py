@@ -5,8 +5,8 @@ import pytest
 from click.testing import CliRunner
 
 from counted_float import BuiltInData
-from counted_float._core import _cli
-from counted_float._core._cli import benchmark, benchmark_counted_float, evaluate_overhead, show_data
+from counted_float._core import cli
+from counted_float._core.cli import benchmark, benchmark_counted_float, evaluate_overhead, show_data
 from counted_float._core.models import FlopsBenchmarkResults
 
 
@@ -54,7 +54,7 @@ def test_evaluate_overhead_invokes_the_evaluation(monkeypatch):
         calls.append(True)
         return _FakeResult()
 
-    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_evaluation)
+    monkeypatch.setattr(cli, "evaluate_counting_overhead", _fake_evaluation)
 
     # --- act ---------------------------------------------
     result = CliRunner().invoke(evaluate_overhead)
@@ -76,7 +76,7 @@ def test_the_old_command_name_still_runs_and_warns(monkeypatch):
     def _fake_evaluation() -> _FakeResult:
         return _FakeResult()
 
-    monkeypatch.setattr(_cli, "evaluate_counting_overhead", _fake_evaluation)
+    monkeypatch.setattr(cli, "evaluate_counting_overhead", _fake_evaluation)
 
     # --- act ---------------------------------------------
     result = CliRunner().invoke(benchmark_counted_float)
@@ -90,7 +90,7 @@ def test_the_old_command_name_still_runs_and_warns(monkeypatch):
 
 def test_the_old_command_name_is_hidden_from_help():
     """The alias exists for install strings already in use, not for new readers to discover."""
-    result = CliRunner().invoke(_cli.cli, ["--help"])
+    result = CliRunner().invoke(cli.cli, ["--help"])
     assert result.exit_code == 0
     assert "evaluate-overhead" in result.output
     assert "benchmark-counted-float" not in result.output
@@ -102,7 +102,7 @@ def test_benchmark_output_round_trip(tmp_path: Path, monkeypatch):
     # --- arrange -----------------------------------------
     # patch out the actual benchmark run (slow) with a realistic built-in result
     results = list(BuiltInData.benchmarks().values()).pop()
-    monkeypatch.setattr(_cli, "run_flops_benchmark", lambda: results)
+    monkeypatch.setattr(cli, "run_flops_benchmark", lambda: results)
     output_path = tmp_path / "benchmark_results.json"
 
     # --- act ---------------------------------------------
@@ -119,7 +119,7 @@ def test_benchmark_echoes_the_output_path(tmp_path: Path, monkeypatch):
 
     # --- arrange -----------------------------------------
     results = list(BuiltInData.benchmarks().values()).pop()
-    monkeypatch.setattr(_cli, "run_flops_benchmark", lambda: results)
+    monkeypatch.setattr(cli, "run_flops_benchmark", lambda: results)
     output_path = tmp_path / "benchmark_results.json"
 
     # --- act ---------------------------------------------
@@ -135,7 +135,7 @@ def test_benchmark_without_output_writes_nothing_and_stays_silent(monkeypatch):
 
     # --- arrange -----------------------------------------
     results = list(BuiltInData.benchmarks().values()).pop()
-    monkeypatch.setattr(_cli, "run_flops_benchmark", lambda: results)
+    monkeypatch.setattr(cli, "run_flops_benchmark", lambda: results)
 
     # --- act ---------------------------------------------
     result = CliRunner().invoke(benchmark)

@@ -7,7 +7,7 @@ accepts nothing else (legacy label keys raise; pre-2.0.0 files must be regenerat
 
 import json
 
-from counted_float._core.counting.builtin_data._dataset import (
+from counted_float._core.counting.builtin_data.dataset import (
     _data_sources_root,
     _load_json_files_as_dict,
     _precomputed_weights_file,
