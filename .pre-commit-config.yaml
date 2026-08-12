@@ -78,7 +78,7 @@ repos:
   #  Managed: utilities
   # ----------------------------------------------------------------------------
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         additional_dependencies: [tomli]  # read [tool.codespell] from pyproject.toml
@@ -89,12 +89,12 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
+    rev: v1.29.0
     hooks:
       - id: zizmor  # security linter for workflows — complements actionlint (correctness)
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.4
     hooks:
       - id: check-github-workflows
       - id: check-dependabot
