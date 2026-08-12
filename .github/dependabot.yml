@@ -22,7 +22,7 @@ updates:
     # long enough for upstream compromises to surface before they can land.
     # (semver-specific cooldowns are not supported for github-actions.)
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
+      default-days: 7  # zizmor's dependabot-cooldown floor; a fresh release still waits this long
 
   - package-ecosystem: "uv"
     # Refreshes uv.lock for the runtime + dev/lint/type tooling the lockfile
@@ -40,5 +40,19 @@ updates:
       python:  # one batched PR for all Python-dependency bumps
         patterns: ["*"]
     cooldown:
-      default-days: 7  # zizmor's dependabot-cooldown floor; ~no-op at weekly cadence anyway
+      default-days: 7  # zizmor's dependabot-cooldown floor; a fresh release still waits this long
       semver-major-days: 14
+
+  - package-ecosystem: "pre-commit"
+    # Bumps the pinned `rev` of each hook in .pre-commit-config.yaml — the hook tooling rots
+    # without these bumps.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore"
+    groups:
+      pre-commit:  # one batched PR for all hook bumps
+        patterns: ["*"]
+    cooldown:
+      default-days: 7  # zizmor's dependabot-cooldown floor; a fresh release still waits this long
