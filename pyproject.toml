@@ -7,6 +7,11 @@ description = "Count floating-point operations in Python code & benchmark relati
 # vX.Y.Z builds as exactly X.Y.Z, an untagged commit as the PEP 440 dev version
 # X.Y.(Z+1).devN+g<sha> — so dev builds self-report their provenance (config below).
 dynamic = ["readme", "version"]
+authors = [
+    { name = "Bert Pluymers" }
+]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 # Counting only. Everything the flops benchmark suite needs -- which is everything that describes or
 # measures a machine -- sits behind the `benchmarking` extra instead, since counting numpy arrays is
@@ -26,7 +31,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     # Python versions kept in sync with .python-versions (release.py enforces this)
     "Programming Language :: Python :: 3.11",
@@ -36,6 +40,7 @@ classifiers = [
     # counting state is per-thread, so nothing is shared to race on a free-threaded build
     "Programming Language :: Python :: Free Threading :: 3 - Stable",
     "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
 ]
 
 [project.scripts]
@@ -44,6 +49,7 @@ classifiers = [
 counted_float = "counted_float._core.cli_main:main"
 
 [project.urls]
+Documentation = "https://counted-float.readthedocs.io/"
 Source = "https://github.com/bertpl/counted-float"
 ChangeLog = "https://github.com/bertpl/counted-float/blob/main/CHANGELOG.md"
 Issues = "https://github.com/bertpl/counted-float/issues"

@@ -40,6 +40,11 @@ Thumbs.db
 .idea
 .vscode
 
+# AI agent working files (also in the maintainer's global gitignore; kept here too so any
+# checkout on a machine without that global ignore is still covered)
+CLAUDE.md
+.claude/
+
 # other local files
 .local
 # Only working_docs/README.md is committed; everything else here stays out of git.
