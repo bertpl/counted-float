@@ -287,7 +287,7 @@ source_paths = ["src/counted_float"]
 #   - builtin_data/_tree_view.py is a renderer whose meaningful behavior is covered elsewhere: the
 #     plain-text layout byte-for-byte by the docs-drift test (which mutmut can't run -- it regenerates
 #     via a subprocess), and the color styling + integer formatting (which the drift test strips /
-#     never exercises) by tests/counting/test_flop_weights_tree_view.py. What remains is purely
+#     never exercises) by tests/counting/builtin_data/test_tree_view.py. What remains is purely
 #     cosmetic (color constants, column-packing widths) or equivalent (overwritten list inits, no-op
 #     strict= on always-equal-length zips), so pinning it would add churn, not signal.
 #   - _flops_probes.py holds the hardware-timed loops, which only ever execute compiled under numba.
