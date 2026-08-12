@@ -40,8 +40,7 @@ Thumbs.db
 .idea
 .vscode
 
-# AI agent working files (also in the maintainer's global gitignore; kept here too so any
-# checkout on a machine without that global ignore is still covered)
+# AI agent working files
 CLAUDE.md
 .claude/
 
