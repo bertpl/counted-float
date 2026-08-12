@@ -15,7 +15,7 @@ import json
 import pathlib
 import sys
 
-from counted_float._core.counting._builtin_data import (
+from counted_float._core.counting.builtin_data._dataset import (
     DATA_PACKAGE,
     PRECOMPUTED_DIR,
     PRECOMPUTED_WEIGHTS_FILE,

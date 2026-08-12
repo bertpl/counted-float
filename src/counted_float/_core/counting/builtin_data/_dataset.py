@@ -13,7 +13,7 @@ from counted_float._core.models import (
     InstructionLatencies,
 )
 
-from ._flop_weights_tree_view import FlopWeightsTreeView
+from ._tree_view import FlopWeightsTreeView
 
 if TYPE_CHECKING:
     from importlib.resources.abc import Traversable
