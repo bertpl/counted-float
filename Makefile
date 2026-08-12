@@ -79,6 +79,14 @@ mutation-stats:
 precompute-weights:
 	uv run python scripts/generate_precomputed_weights.py
 
+# A strict build fails on any warning -- a dead link, a bad nav entry -- instead of shipping it
+# silently. It uses docs-only deps and no project, because the docs build runs no plugin that imports
+# the package, matching the Read the Docs install. The target is declared .PHONY because the `docs/`
+# source directory would otherwise mark the docs target up to date and skip it.
+.PHONY: docs
+docs:
+	uv run --only-group docs mkdocs build --strict
+
 regen-docs:
 	uv run python scripts/generate_docs_content.py
 
