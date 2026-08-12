@@ -44,6 +44,13 @@ repos:
         language: system
         files: ^(pyproject\.toml|uv\.lock)$
         pass_filenames: false
+      - id: python-matrix-coverage
+        name: python matrix covers .python-versions
+        entry: uv run --no-project python scripts/check_python_matrix.py
+        language: system
+        # A version added to .python-versions but not to the CI test matrix would ship untested.
+        files: ^(\.python-versions|\.github/workflows/_unit_tests\.yml)$
+        pass_filenames: false
 
   # ----------------------------------------------------------------------------
   #  Managed: file hygiene
