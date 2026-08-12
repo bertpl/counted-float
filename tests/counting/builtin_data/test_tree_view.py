@@ -1,7 +1,7 @@
 # The plain-text layout of the tree is byte-checked by the docs-drift test (via the show-data slice),
 # so it is not re-pinned here. These tests cover what the drift test does NOT: the integer-weight
 # format (every drift block renders float weights) and the ANSI styling (the drift test strips color).
-from counted_float._core.counting._flop_weights_tree_view import FlopWeightsTreeView
+from counted_float._core.counting.builtin_data._tree_view import FlopWeightsTreeView
 from counted_float._core.models import FlopType, FlopWeights
 
 

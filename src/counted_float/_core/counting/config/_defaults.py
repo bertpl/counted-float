@@ -1,7 +1,7 @@
 from functools import cache
 from typing import Literal
 
-from counted_float._core.counting._builtin_data import BuiltInData
+from counted_float._core.counting.builtin_data import BuiltInData
 from counted_float._core.models import FlopWeights
 
 

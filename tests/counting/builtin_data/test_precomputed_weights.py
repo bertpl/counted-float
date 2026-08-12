@@ -4,7 +4,10 @@ import math
 
 import pytest
 
-from counted_float._core.counting._builtin_data import _aggregate_flop_weights_from_sources, _precomputed_flop_weights
+from counted_float._core.counting.builtin_data._dataset import (
+    _aggregate_flop_weights_from_sources,
+    _precomputed_flop_weights,
+)
 from counted_float._core.counting.config import get_builtin_flop_weights
 from counted_float._core.models import FlopType
 
