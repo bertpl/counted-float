@@ -40,6 +40,10 @@ Thumbs.db
 .idea
 .vscode
 
+# AI agent working files
+CLAUDE.md
+.claude/
+
 # other local files
 .local
 # Only working_docs/README.md is committed; everything else here stays out of git.
