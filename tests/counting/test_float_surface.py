@@ -12,8 +12,8 @@ surface, with two extensions that surface needs and the math one does not:
   `__str__`) would change behavior without changing any name.
 
 Enumeration is by *name* over `dir(float)` on the running interpreter — never by defining class:
-`__getattribute__` sat in `float.__dict__` on 3.11 but not on 3.12+, so a `vars(float)`-based
-sweep breaks across supported versions while the name set stays stable.
+which class defines a member has moved between CPython versions before (`__getattribute__` left
+`float.__dict__` in 3.12), so the name set is the stable contract.
 """
 
 import copy
