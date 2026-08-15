@@ -12,8 +12,8 @@ surface, with two extensions that surface needs and the math one does not:
   `__str__`) would change behavior without changing any name.
 
 Enumeration is by *name* over `dir(float)` on the running interpreter — never by defining class:
-`__getattribute__` sat in `float.__dict__` on 3.11 but not on 3.12+, so a `vars(float)`-based
-sweep breaks across supported versions while the name set stays stable.
+which class defines a member varies among CPython builds (`__getattribute__` left
+`float.__dict__` in 3.12.5), so the name set is the stable contract.
 """
 
 import copy
@@ -113,8 +113,8 @@ def test_every_entry_carries_a_reason():
 
 
 def test_classified_members_have_their_stated_provenance():
-    # members whose defining class moved across supported interpreters are exempt by name, so the
-    # pin holds one arrangement to account without encoding a single version's layout
+    # members whose defining class varies among supported interpreters are exempt by name,
+    # so the pin holds one arrangement to account without encoding a single micro release's layout
     # --- arrange / act -------------------------
     not_float_defined = sorted(
         name

@@ -2,14 +2,12 @@ from __future__ import annotations
 
 import math
 from enum import StrEnum
-from typing import TYPE_CHECKING, TypeVar
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from pydantic import FieldSerializationInfo
-
-_V = TypeVar("_V")
 
 
 class FlopType(StrEnum):
@@ -183,7 +181,7 @@ def normalize_flop_type_keyed_dict(v: object, *, null_to_nan: bool) -> object:
     return resolved
 
 
-def serialize_flop_type_keyed_dict(d: Mapping[FlopType, _V], info: FieldSerializationInfo) -> dict[str, _V]:
+def serialize_flop_type_keyed_dict[V](d: Mapping[FlopType, V], info: FieldSerializationInfo) -> dict[str, V]:
     """Serialize a FlopType-keyed dict, keying on the stable name by default.
 
     A ``{"display": True}`` serialization context switches the keys to the human-readable labels,

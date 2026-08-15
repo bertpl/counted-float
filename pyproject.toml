@@ -12,7 +12,7 @@ authors = [
 ]
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 # Counting only. Everything the flops benchmark suite needs -- which is everything that describes or
 # measures a machine -- sits behind the `benchmarking` extra instead, since counting numpy arrays is
 # an explicit non-goal and the base install's audience is people doing arithmetic in plain Python.
@@ -20,7 +20,7 @@ dependencies = [
     # pydantic floor is a code requirement (auto model-rebuild of cross-module forward refs, from
     # 2.6; serialization `context` for the display-vs-stored key rendering, from 2.7), raised
     # further where a newer CPython needs a newer pydantic-core wheel.
-    "pydantic>=2.7; python_version < '3.13'",
+    "pydantic>=2.7; python_version == '3.12'",
     "pydantic>=2.9; python_version == '3.13'",
     "pydantic>=2.12; python_version >= '3.14'",
     # 13.4 floor: the weight tree view relies on FORCE_COLOR producing ANSI styling in captured
@@ -33,7 +33,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     # Python versions kept in sync with .python-versions (release.py enforces this)
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
@@ -61,17 +60,15 @@ Issues = "https://github.com/bertpl/counted-float/issues"
 benchmarking = [
     # per-Python floors: earliest numba with a wheel for that CPython (also fixes the
     # indirect llvmlite build failure — old numba>=0.50 dragged in unbuildable llvmlite 0.33)
-    "numba>=0.57; python_version < '3.12'",
     "numba>=0.59; python_version == '3.12'",
     "numba>=0.61; python_version == '3.13'",
     "numba>=0.63; python_version >= '3.14'",
     # per-Python floors, same rationale: earliest release shipping a wheel for that CPython, so a
     # `lowest-direct` install resolves to a wheel rather than attempting a source build.
-    "numpy>=1.23.2; python_version < '3.12'",
     "numpy>=1.26.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
     "numpy>=2.3.2; python_version >= '3.14'",
-    "psutil>=5.9.4; python_version < '3.13'",
+    "psutil>=5.9.4; python_version == '3.12'",
     "psutil>=7.1.2; python_version >= '3.13'",
     "py-cpuinfo>=9.0.0",
 ]
@@ -104,7 +101,11 @@ test = [
     # removed in Python 3.14 (breaks the lowest-direct resolution there).
     "hypothesis>=6.156",
     "pytest>=8.0",
-    "pytest-cov>=6.0",
+    # floor at 7.1: pytest-cov 6 auto-measures subprocesses through a site-packages hook that
+    # ignores [tool.coverage.run] source, so a lowest-direct leg recorded files outside the
+    # package (docs snippets, and a system interpreter's sitecustomize.py) into the coverage
+    # union while every other leg did not.
+    "pytest-cov>=7.1",
     "pytest-xdist>=3.5.0",
 ]
 # ruff and ty run as local `uv run` hooks from .pre-commit-config.yaml rather than as pinned
@@ -176,7 +177,7 @@ packages = ["src/counted_float"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"  # matches requires-python floor, so ruff fixes never introduce newer syntax
+target-version = "py312"  # matches requires-python floor, so ruff fixes never introduce newer syntax
 
 [tool.ruff.lint]
 select = [

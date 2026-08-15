@@ -17,21 +17,20 @@ jobs:
         # detection (psutil) and system-info collection (cpuinfo) paths are OS-dependent, and a
         # dependency bump can change their behavior on macOS or Windows -- so one leg on each keeps
         # those paths on the pull-request gate rather than only in the manual benchmark workflows.
-        # Combos cover every axis (all four Pythons, both resolution ends, extras on/off, all three
-        # OSes) strategically rather than as a full product.
+        # Combos cover every axis (every supported Python, both resolution ends, extras on/off,
+        # all three OSes) strategically rather than as a full product.
         #
         # The ubuntu legs run on arm runners, which are faster. One stays on x86: libm is found
         # through a lookup whose path is architecture-specific, and the FMA probes are checked
         # against emitted machine code -- both want a leg per architecture. It runs the default
         # Python, like the other single-purpose legs.
         include:
-          - { os: ubuntu-24.04-arm, python: "3.11", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,    python: "3.13", resolution: highest,       all_extras: "true"  }  # x86: see above
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-24.04-arm, python: "3.11", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
-          - { os: ubuntu-24.04-arm, python: "3.11", resolution: highest,       all_extras: "false" }  # base install: no extras
+          - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: macos-latest,     python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
