@@ -314,12 +314,16 @@ do_not_mutate = [
 ]
 # -n 0 runs the suite serially (mutmut parallelizes across mutants itself); it overrides the
 # addopts `-n auto` -- `-p no:xdist` would instead make `-n` unrecognized and pytest refuse to start.
-# The --ignore/--deselect drop the tests that assert on the *real* call-site filename, which the
-# trampoline reports as `trampoline.py` (they pass under a normal `make test`), plus tests/docs/,
-# which reads scripts/ and docs/ files mutmut does not copy into the sandbox.
+# The --deselect entries drop the tests that assert on the *real* call-site filename, which the
+# trampoline reports as `trampoline.py` (they pass under a normal `make test`). The --ignore
+# entries drop whole folders the sandbox cannot run:
+#   - tests/docs/ reads docs/ and scripts/ files mutmut does not copy into the sandbox.
+#   - tests/tooling/ tests the scripts/ files themselves, equally uncopied -- and mutation scope
+#     is src/ only, so these tests could kill no mutants anyway.
 pytest_add_cli_args = [
     "-n", "0",
     "--ignore=tests/docs",
+    "--ignore=tests/tooling",
     "--ignore=tests/counting/verbosity/test_callsite.py",
     "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_the_logged_line_reports_the_incrementing_location",
     "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_lines_without_a_note_carry_no_rationale",
