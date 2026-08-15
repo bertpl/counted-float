@@ -276,7 +276,7 @@ dev = [
     { name = "hypothesis", specifier = ">=6.156" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-cov", specifier = ">=6.0" },
+    { name = "pytest-cov", specifier = ">=7.1" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
     { name = "ruff", specifier = ">=0.15.11" },
     { name = "ty", specifier = ">=0.0.56" },
@@ -295,7 +295,7 @@ package = [{ name = "check-wheel-contents", specifier = ">=0.6.2" }]
 test = [
     { name = "hypothesis", specifier = ">=6.156" },
     { name = "pytest", specifier = ">=8.0" },
-    { name = "pytest-cov", specifier = ">=6.0" },
+    { name = "pytest-cov", specifier = ">=7.1" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
 ]
 

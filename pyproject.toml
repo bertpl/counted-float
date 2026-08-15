@@ -101,7 +101,11 @@ test = [
     # removed in Python 3.14 (breaks the lowest-direct resolution there).
     "hypothesis>=6.156",
     "pytest>=8.0",
-    "pytest-cov>=6.0",
+    # floor at 7.1: pytest-cov 6 auto-measures subprocesses through a site-packages hook that
+    # ignores [tool.coverage.run] source, so a lowest-direct leg recorded files outside the
+    # package (docs snippets, and a system interpreter's sitecustomize.py) into the coverage
+    # union while every other leg did not.
+    "pytest-cov>=7.1",
     "pytest-xdist>=3.5.0",
 ]
 # ruff and ty run as local `uv run` hooks from .pre-commit-config.yaml rather than as pinned
