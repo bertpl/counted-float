@@ -3,7 +3,7 @@
 
 # Knobs for the test and lint targets. CI varies these per matrix leg by passing them on the
 # make command line; a bare `make test` / `make lint` uses the defaults.
-PYTHON ?= 3.13
+PYTHON ?= 3.14
 RESOLUTION ?= highest
 ALL_EXTRAS ?= true
 PYTEST_ARGS ?=
@@ -67,14 +67,14 @@ mutation:
 	# stale mapping -- and runs against the wrong mutants without any visible signal. Deleting the
 	# map forces a fresh collection pass (~35s) so every run measures against current attribution.
 	rm -f mutants/mutmut-stats.json
-	uv run --group mutation --all-extras --python 3.13 mutmut run $(if $(MODULE),"*$(MODULE)*",)
+	uv run --group mutation --all-extras --python 3.14 mutmut run $(if $(MODULE),"*$(MODULE)*",)
 
 mutation-results:
-	uv run --group mutation --all-extras --python 3.13 mutmut results
+	uv run --group mutation --all-extras --python 3.14 mutmut results
 
 # machine-readable killed/survived/total of the last run -> mutants/mutmut-cicd-stats.json (release.py reads it)
 mutation-stats:
-	uv run --group mutation --all-extras --python 3.13 mutmut export-cicd-stats
+	uv run --group mutation --all-extras --python 3.14 mutmut export-cicd-stats
 
 precompute-weights:
 	uv run python scripts/generate_precomputed_weights.py
