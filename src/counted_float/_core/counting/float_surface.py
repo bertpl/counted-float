@@ -72,11 +72,6 @@ if hasattr(float, "__getformat__"):
 # in `object`'s surface -- or a member migrating to float-defined -- is a test failure with a
 # name attached rather than a silent hole.
 _OBJECT_PLUMBING = "object plumbing: computes no float value"
-# Members whose defining class moved between supported interpreters, so the provenance pin
-# tolerates either side for them. `float.__getattribute__` has its own entry in float.__dict__ on
-# 3.11 and falls through to object's from 3.12 on; the behavior is identical either way, and
-# pinning one arrangement would encode a single interpreter's layout as the contract.
-_PROVENANCE_VARIES_BY_VERSION = frozenset({"__getattribute__"})
 _OBJECT_DEFINED_UNPATCHED: dict[str, str] = {
     "__class__": _OBJECT_PLUMBING,
     "__dir__": _OBJECT_PLUMBING,

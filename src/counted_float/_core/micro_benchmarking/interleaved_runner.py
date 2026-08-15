@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 import random
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import TYPE_CHECKING
 
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TaskID, TextColumn, TimeElapsedColumn
 
@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     from counted_float._core.models import SingleRunResult
 
     from .micro_benchmark import MicroBenchmark
-
-K = TypeVar("K")
 
 
 # =================================================================================================
@@ -116,7 +114,7 @@ class SliceController:
 # =================================================================================================
 #  Interleaved runner
 # =================================================================================================
-class InterleavedBenchmarkRunner(Generic[K]):
+class InterleavedBenchmarkRunner[K]:
     """Runs a set of MicroBenchmarks in round-robin interleaved fashion.
 
     Phases:

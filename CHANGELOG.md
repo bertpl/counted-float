@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Python 3.11 is no longer supported; the minimum is now 3.12
+
 ### Fixed
 
 - `SystemInfo.from_system()` without the `benchmarking` extra now fails with an actionable "install the extra" message instead of a bare `ModuleNotFoundError`
