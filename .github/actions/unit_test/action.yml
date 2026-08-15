@@ -47,9 +47,9 @@ runs:
       - name: Run tests
         shell: bash
         env:
-          # uv-managed builds only, never the runner's system interpreter: a system Python drags
-          # its distro's sitecustomize.py into the coverage data (an /etc file the combine step
-          # then counts against the floor), and its build can lag the current micro release.
+          # uv-managed builds only, never the runner's system interpreter: the interpreter each
+          # leg runs should be exactly the version we ask for, not whatever build the runner
+          # image happens to carry.
           UV_PYTHON_PREFERENCE: only-managed
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
