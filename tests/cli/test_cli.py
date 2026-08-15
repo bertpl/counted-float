@@ -88,6 +88,12 @@ def test_the_old_command_name_still_runs_and_warns(monkeypatch):
     assert "evaluate-overhead" in result.output  # and names its replacement
 
 
+def test_a_subcommand_dispatches_through_the_group():
+    """Invoking via the group covers the dispatch path a real `counted_float <cmd>` call takes."""
+    result = CliRunner().invoke(cli.cli, ["show-data"])
+    assert result.exit_code == 0
+
+
 def test_the_old_command_name_is_hidden_from_help():
     """The alias exists for install strings already in use, not for new readers to discover."""
     result = CliRunner().invoke(cli.cli, ["--help"])
