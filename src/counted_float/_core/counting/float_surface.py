@@ -72,6 +72,14 @@ if hasattr(float, "__getformat__"):
 # in `object`'s surface -- or a member migrating to float-defined -- is a test failure with a
 # name attached rather than a silent hole.
 _OBJECT_PLUMBING = "object plumbing: computes no float value"
+# Members whose defining class varies among supported interpreters, so the provenance pin
+# tolerates either side for them. `float.__getattribute__` has its own entry in float.__dict__
+# through 3.12.4 and falls through to object's from 3.12.5 on (the slot-wrapper fix of CPython
+# gh-117482 stopped exposing redundant slots), so both sides occur among supported 3.12 installs.
+# The behavior is identical either way -- the underlying C slot was always object's generic
+# lookup -- and pinning one arrangement would encode a single micro release's layout as the
+# contract.
+_PROVENANCE_VARIES_BY_VERSION = frozenset({"__getattribute__"})
 _OBJECT_DEFINED_UNPATCHED: dict[str, str] = {
     "__class__": _OBJECT_PLUMBING,
     "__dir__": _OBJECT_PLUMBING,
