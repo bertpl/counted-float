@@ -32,6 +32,11 @@ jobs:
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
+          # 3.15 is supported from its rc1: the interpreter is feature- and ABI-frozen there, so
+          # validating against the rc validates the final release. Pinned to one exact build so
+          # upstream breakage can only arrive in the commit that moves the pin; bump it as each
+          # rc lands and at GA. Base install only, until numba ships 3.15 wheels.
+          - { os: ubuntu-24.04-arm, python: "3.15.0rc1", resolution: highest,  all_extras: "false" }  # base install: no extras
           - { os: macos-latest,     python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest,   python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           # Free-threaded build: counting state is per-thread, so this leg is where the
@@ -46,6 +51,15 @@ jobs:
           # full history + tags: hatch-vcs derives the package version via git describe
           fetch-depth: 0
           persist-credentials: false
+      # uv never auto-downloads a pre-release for a bare version request, so a pre-release leg's
+      # interpreter must be installed before the shared action can resolve it
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        if: contains(matrix.python, 'rc')
+      - name: Install the pinned pre-release interpreter
+        if: contains(matrix.python, 'rc')
+        env:
+          PYTHON_PRERELEASE: ${{ matrix.python }}
+        run: uv python install "$PYTHON_PRERELEASE"
       - uses: ./.github/actions/unit_test
         with:
           python_version: ${{ matrix.python }}
@@ -53,46 +67,21 @@ jobs:
           include_all_extra_deps: ${{ matrix.all_extras }}
           coverage: "true"  # each combo uploads its data; the coverage job unions + gates
 
-  # The upcoming CPython, gating like every other leg: an incompatible pre-release -- most acutely
-  # a new `math` function the patching partition does not classify -- fails here months before it
-  # ships. Pinned to one exact build, so upstream breakage can only arrive in the commit that moves
-  # the pin; bump it as each rc lands, and fold the job into the matrix at release. Base install
-  # (numba wheels trail new CPythons); classifiers and .python-versions wait until 3.15 is supported.
-  python_next:
-    name: py3.15-pre / highest / extras-false / ubuntu-24.04-arm
-    runs-on: ubuntu-24.04-arm
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          # full history + tags: hatch-vcs derives the package version via git describe
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
-      # uv never auto-downloads a pre-release for a bare version request, so the shared action
-      # below can only resolve this interpreter once it is already installed
-      - name: Install the pinned pre-release interpreter
-        run: uv python install 3.15.0rc1
-      - uses: ./.github/actions/unit_test
-        with:
-          python_version: "3.15.0rc1"
-          include_all_extra_deps: "false"
-          coverage: "true"
-
   coverage:
     name: coverage
     # Cumulative gate: combine every combo's data into one picture before
     # checking the floor, so version-/dependency-divergent code paths (only hit
     # on some combos) don't read as uncovered.
-    needs: [core, python_next]
+    needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
     # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
     if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Require every matrix combo to have succeeded
-        if: needs.core.result != 'success' || needs.python_next.result != 'success'
+        if: needs.core.result != 'success'
         run: |
-          echo "::error::test matrix did not fully succeed (core: ${{ needs.core.result }}, pre-release: ${{ needs.python_next.result }})"
+          echo "::error::test matrix did not fully succeed (core: ${{ needs.core.result }})"
           exit 1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

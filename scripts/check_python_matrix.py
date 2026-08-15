@@ -9,8 +9,9 @@ so a version can sit in `.python-versions` and the classifiers, pass the release
 with no test leg running on it.
 
 This check fails when a declared version has no matrix leg. It is one-directional: extra matrix legs
-(the free-threaded and pre-release legs, deliberately absent from `.python-versions`) are fine; only
-an uncovered declared version is an error.
+(such as the free-threaded ones, deliberately absent from `.python-versions`) are fine; only an
+uncovered declared version is an error. A leg pinned to an exact build (e.g. a pre-release like
+`3.15.0rc1`) covers its minor, so a declared version can be tested through such a pin.
 
 Usage:
 
@@ -42,8 +43,13 @@ def read_tested_versions(path: Path = UNIT_TESTS_WORKFLOW) -> set[str]:
 
 
 def uncovered_versions(declared: set[str], tested: set[str]) -> set[str]:
-    """Return declared versions with no matching matrix leg; extra tested legs are allowed."""
-    return declared - tested
+    """Return declared versions with no matching matrix leg; extra tested legs are allowed.
+
+    A declared minor is covered by an exact match or by a leg pinned to a fuller version of that
+    minor (`3.15` is covered by a `3.15.0rc1` leg); the dot in the prefix test keeps `3.1` from
+    counting as covered by a `3.15` leg.
+    """
+    return {d for d in declared if not any(t == d or t.startswith(f"{d}.") for t in tested)}
 
 
 def main() -> int:
