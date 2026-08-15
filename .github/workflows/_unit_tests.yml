@@ -26,14 +26,14 @@ jobs:
         # Python, like the other single-purpose legs.
         include:
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
-          - { os: ubuntu-latest,    python: "3.13", resolution: highest,       all_extras: "true"  }  # x86: see above
-          - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.13", resolution: highest,       all_extras: "true"  }
+          - { os: ubuntu-latest,    python: "3.14", resolution: highest,       all_extras: "true"  }  # x86: see above
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
-          - { os: macos-latest,     python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
-          - { os: windows-latest,   python: "3.13", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          - { os: macos-latest,     python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
+          - { os: windows-latest,   python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           # Free-threaded build: counting state is per-thread, so this leg is where the
           # concurrency tests can actually fail for the reason they were written -- without the
           # GIL serializing the increments they guard. `highest` resolution is required: the
