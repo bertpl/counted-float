@@ -47,6 +47,10 @@ runs:
       - name: Run tests
         shell: bash
         env:
+          # uv-managed builds only, never the runner's system interpreter: a system Python drags
+          # its distro's sitecustomize.py into the coverage data (an /etc file the combine step
+          # then counts against the floor), and its build can lag the current micro release.
+          UV_PYTHON_PREFERENCE: only-managed
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
           EXTRAS: ${{ inputs.include_all_extra_deps }}
@@ -71,6 +75,7 @@ runs:
         if: inputs.coverage == 'true'
         shell: bash
         env:
+          UV_PYTHON_PREFERENCE: only-managed  # same interpreter as the test step above
           PY: ${{ env.PYTHON_EFFECTIVE_VERSION }}
           RES: ${{ inputs.dependency_resolution }}
           EXTRAS: ${{ inputs.include_all_extra_deps }}
