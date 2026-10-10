@@ -282,7 +282,8 @@ provides-extras = ["benchmarking", "cli", "numba"]
 [package.metadata.requires-dev]
 dev = [
     { name = "check-wheel-contents", specifier = ">=0.6.2" },
-    { name = "hypothesis", specifier = ">=6.156" },
+    { name = "hypothesis", marker = "python_full_version < '3.15'", specifier = ">=6.156" },
+    { name = "hypothesis", marker = "python_full_version >= '3.15'", specifier = ">=6.156.4" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=7.1" },
@@ -302,7 +303,8 @@ lint = [
 mutation = [{ name = "mutmut", specifier = ">=3.6.0" }]
 package = [{ name = "check-wheel-contents", specifier = ">=0.6.2" }]
 test = [
-    { name = "hypothesis", specifier = ">=6.156" },
+    { name = "hypothesis", marker = "python_full_version < '3.15'", specifier = ">=6.156" },
+    { name = "hypothesis", marker = "python_full_version >= '3.15'", specifier = ">=6.156.4" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=7.1" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },

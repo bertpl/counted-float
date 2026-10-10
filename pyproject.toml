@@ -102,8 +102,10 @@ constraint-dependencies = [
 # click importable and could not exercise the guard that extra exists for.
 test = [
     # floor raised off 6.0: older 6.x calls entry_points().get(), which importlib.metadata
-    # removed in Python 3.14 (breaks the lowest-direct resolution there).
-    "hypothesis>=6.156",
+    # removed in Python 3.14 (breaks the lowest-direct resolution there). On 3.15 the floor is the
+    # first release with 3.15 wheels: hypothesis ships compiled wheels and no source distribution.
+    "hypothesis>=6.156; python_version < '3.15'",
+    "hypothesis>=6.156.4; python_version >= '3.15'",
     "pytest>=8.0",
     # floor at 7.1: pytest-cov 6 auto-measures subprocesses through a site-packages hook that
     # ignores [tool.coverage.run] source, so a lowest-direct leg recorded files outside the
