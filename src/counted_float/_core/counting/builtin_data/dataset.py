@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from functools import cache
 from importlib.resources import files
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import TypeAdapter
 
@@ -164,7 +164,9 @@ def _flat_to_nested_dict(flat_dict: dict[str, FlopWeights]) -> NestedFlopWeights
 
     E.g. {'a.b.c': 1, 'a.b.d': 2, 'a.e': 3} -> {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}}.
     """
-    nested_dict = {}
+    # typed loosely: every level is a plain dict while it is being built, and NestedFlopWeights would
+    # make each setdefault result a possible leaf
+    nested_dict: dict[str, Any] = {}
     for flat_key, value in flat_dict.items():
         keys = flat_key.split(".")
         d = nested_dict
