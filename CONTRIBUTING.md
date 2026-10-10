@@ -83,8 +83,9 @@ Add an entry under the appropriate category in the `## Unreleased` section of
 `feat/` and `fix/` branches.
 
 Changelog entries are **user-facing** — write them for someone deciding whether
-to upgrade, not for someone reviewing the implementation.
+to upgrade, not for someone reviewing the implementation:
 
-**Keep each entry to a single line.** Omit internal details (class names,
-wiring, behavior-neutral refactors). Expand to a second line only when one line
-genuinely can't convey the change.
+- **Start the entry with a capitalized verb in the imperative:** "Add …", "Fix …", "Remove …".
+- **Put a `**Breaking:**` prefix before the verb when the change can make existing user code fail**, and list that entry first in its category. An entry under the `Removed` category needs no `**Breaking:**` prefix, because the category already says so.
+- **Summarize what changes for the user:** name the function or feature, and the kind of change in a few words, such as "Change the signature of `<function>`". Don't list each changed argument, value or case; the docstrings of that function or feature describe those.
+- **Keep each entry to a single line.** Omit internal details (internal class names, how internal modules call each other, behavior-neutral refactors). Expand to a second line only when one line genuinely can't convey the change.
