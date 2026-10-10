@@ -24,11 +24,11 @@ def gate_reason(requires: str | None) -> str | None:
     """Return why a row cannot run here, or None when its requirement is met."""
     if requires is None:
         return None
-    if requires == "numpy":
+    elif requires == "numpy":
         return None if importlib.util.find_spec("numpy") else "requires numpy"
-    if requires == "from_number":
+    elif requires == "from_number":
         return None if hasattr(float, "from_number") else "requires float.from_number (3.14+)"
-    if requires == "exact-log-e":
+    elif requires == "exact-log-e":
         # The log-base identity folds depend on the runtime libm value, so a libm computing
         # log(e) or log(1/e) inexactly makes the fold legitimately not fire.
         exact = math.log(math.e) == 1.0 and math.log(1.0 / math.e) == -1.0

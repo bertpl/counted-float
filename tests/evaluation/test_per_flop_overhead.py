@@ -48,9 +48,9 @@ def _operand_columns(pool) -> list[list]:
     first = pool[0]
     if isinstance(first, tuple) and isinstance(first[0], tuple):
         return [[element[i][j] for element in pool] for i in (0, 1) for j in (0, 1)]
-    if isinstance(first, tuple) and isinstance(first[0], type):
+    elif isinstance(first, tuple) and isinstance(first[0], type):
         return [[element[1] for element in pool]]
-    if isinstance(first, tuple):
+    elif isinstance(first, tuple):
         return [[element[i] for element in pool] for i in range(len(first))]
     else:
         return [list(pool)]
@@ -61,9 +61,9 @@ def _measured_operands(pool) -> list:
     first = pool[0]
     if isinstance(first, tuple) and isinstance(first[0], tuple):
         return [element[0][0] for element in pool]
-    if isinstance(first, tuple) and isinstance(first[0], type):
+    elif isinstance(first, tuple) and isinstance(first[0], type):
         return [element[0] for element in pool]  # the constructor plays the measured role
-    if isinstance(first, tuple):
+    elif isinstance(first, tuple):
         return [element[0] for element in pool]
     else:
         return list(pool)
