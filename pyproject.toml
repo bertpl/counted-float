@@ -217,7 +217,7 @@ select = [
 ]
 ignore = [
     "RUF001", "RUF002", "RUF003",  # intentional typography, not "ambiguous"
-    "RET505",  # the final return of an if/elif chain whose arms return sits in `else:`, as a peer arm
+    "RET505",  # house style puts the last `return` of an if/elif chain in an `else:` branch, which this rule flags
 ]
 
 [tool.ruff.lint.mccabe]
