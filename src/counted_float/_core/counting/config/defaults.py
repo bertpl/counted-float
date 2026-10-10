@@ -47,4 +47,5 @@ def _get_builtin_flop_weights_cached(
     weights = BuiltInData.get_flop_weights(key_filter=key_filter)
     if rounding_mode is not None:
         return weights.round(mode=rounding_mode)
-    return weights
+    else:
+        return weights

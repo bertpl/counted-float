@@ -88,7 +88,8 @@ class FlopCounts:
         counts = {flop_type: getattr(self, flop_type.name) for flop_type in FlopType}
         if nonzero_only:
             return {flop_type: count for flop_type, count in counts.items() if count}
-        return counts
+        else:
+            return counts
 
     def total_count(self) -> int:
         """Sum of all flop counts."""

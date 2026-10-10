@@ -31,7 +31,8 @@ class FlopWeights(JsonReprModel):
         """
         if mode == "nearest_int":
             return self._map_present_weights(lambda weight: max(1, round(weight)))
-        return self._map_present_weights(lambda weight: round_number(weight, mode="10%"))
+        else:
+            return self._map_present_weights(lambda weight: round_number(weight, mode="10%"))
 
     def _map_present_weights(self, fn: Callable[[float | int], float | int]) -> FlopWeights:
         """Apply fn to every known weight, leaving missing ones missing."""

@@ -73,7 +73,8 @@ class BuiltInData:
         cached = _precomputed_flop_weights().get(key_filter)
         if cached is not None:
             return cached.model_copy(deep=True)  # callers may mutate what they get; the cache is shared
-        return _aggregate_flop_weights_from_sources(key_filter)
+        else:
+            return _aggregate_flop_weights_from_sources(key_filter)
 
     @classmethod
     def get_flop_weights_dict(cls, key_filter: str = "") -> dict[str, FlopWeights]:

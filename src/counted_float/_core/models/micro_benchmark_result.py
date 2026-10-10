@@ -43,7 +43,8 @@ class Quantiles(JsonReprModel):
         """
         if self.q50 == 0:
             return ""
-        return f" ± {50 * (self.q75 - self.q25) / self.q50:4.1f}%"
+        else:
+            return f" ± {50 * (self.q75 - self.q25) / self.q50:4.1f}%"
 
 
 class MicroBenchmarkResult(JsonReprModel):
