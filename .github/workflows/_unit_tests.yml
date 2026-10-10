@@ -15,31 +15,30 @@ jobs:
       matrix:
         # Core flop-counting is pure Python, so most combos run on ubuntu. But the CPU-freq
         # detection (psutil) and system-info collection (cpuinfo) paths are OS-dependent, and a
-        # dependency bump can change their behavior on macOS or Windows -- so one leg on each keeps
+        # dependency bump can change their behavior on macOS or Windows -- so one matrix job on each keeps
         # those paths on the pull-request gate rather than only in the manual benchmark workflows.
         # Combos cover every axis (every supported Python, both resolution ends, extras on/off,
         # all three OSes) strategically rather than as a full product.
         #
-        # The ubuntu legs run on arm runners, which are faster. One stays on x86: libm is found
+        # The ubuntu matrix jobs run on arm runners, which are faster. One stays on x86: libm is found
         # through a lookup whose path is architecture-specific, and the FMA probes are checked
-        # against emitted machine code -- both want a leg per architecture. It runs the default
-        # Python, like the other single-purpose legs.
+        # against emitted machine code -- both want a matrix job per architecture. It runs the default
+        # Python, like the other single-purpose matrix jobs.
         include:
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.13", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,    python: "3.14", resolution: highest,       all_extras: "true"  }  # x86: see above
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "true"  }
+          # The lowest-direct jobs install every dependency at its declared minimum version,
+          # on the oldest and newest supported Python and on the default Python.
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "false" }  # base install: no extras
-          - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
-          # 3.15 is supported from its rc1: the interpreter is feature- and ABI-frozen there, so
-          # validating against the rc validates the final release. Pinned to one exact build so
-          # upstream breakage can only arrive in the commit that moves the pin; bump it as each
-          # rc lands and at GA. Base install only, until numba ships 3.15 wheels.
-          - { os: ubuntu-24.04-arm, python: "3.15.0rc1", resolution: highest,  all_extras: "false" }  # base install: no extras
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: macos-latest,     python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest,   python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
-          # Free-threaded build: counting state is per-thread, so this leg is where the
+          # Free-threaded build: counting state is per-thread, so this matrix job is where the
           # concurrency tests can actually fail for the reason they were written -- without the
           # GIL serializing the increments they guard. `highest` resolution is required: the
           # numba floor for 3.14 predates free-threaded wheels (first shipped in numba 0.65),
@@ -51,15 +50,6 @@ jobs:
           # full history + tags: hatch-vcs derives the package version via git describe
           fetch-depth: 0
           persist-credentials: false
-      # uv never auto-downloads a pre-release for a bare version request, so a pre-release leg's
-      # interpreter must be installed before the shared action can resolve it
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        if: contains(matrix.python, 'rc')
-      - name: Install the pinned pre-release interpreter
-        if: contains(matrix.python, 'rc')
-        env:
-          PYTHON_PRERELEASE: ${{ matrix.python }}
-        run: uv python install "$PYTHON_PRERELEASE"
       - uses: ./.github/actions/unit_test
         with:
           python_version: ${{ matrix.python }}
@@ -74,7 +64,7 @@ jobs:
     # on some combos) don't read as uncovered.
     needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
-    # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
+    # than skip — GitHub doesn't reliably propagate a cancelled matrix job through needs.
     if: always()
     runs-on: ubuntu-latest
     steps:

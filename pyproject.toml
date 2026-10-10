@@ -22,7 +22,8 @@ dependencies = [
     # further where a newer CPython needs a newer pydantic-core wheel.
     "pydantic>=2.7; python_version == '3.12'",
     "pydantic>=2.9; python_version == '3.13'",
-    "pydantic>=2.12; python_version >= '3.14'",
+    "pydantic>=2.12; python_version == '3.14'",
+    "pydantic>=2.14; python_version >= '3.15'",
     # 13.4 floor: the weight tree view relies on FORCE_COLOR producing ANSI styling in captured
     # (non-tty) output, which older rich does not honor
     "rich>=13.4.0",
@@ -63,12 +64,14 @@ benchmarking = [
     # indirect llvmlite build failure — old numba>=0.50 dragged in unbuildable llvmlite 0.33)
     "numba>=0.59; python_version == '3.12'",
     "numba>=0.61; python_version == '3.13'",
-    "numba>=0.63; python_version >= '3.14'",
+    "numba>=0.63; python_version == '3.14'",
+    "numba>=0.68; python_version >= '3.15'",
     # per-Python floors, same rationale: earliest release shipping a wheel for that CPython, so a
     # `lowest-direct` install resolves to a wheel rather than attempting a source build.
     "numpy>=1.26.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
-    "numpy>=2.3.2; python_version >= '3.14'",
+    "numpy>=2.3.2; python_version == '3.14'",
+    "numpy>=2.5.2; python_version >= '3.15'",
     "psutil>=5.9.4; python_version == '3.12'",
     "psutil>=7.1.2; python_version >= '3.13'",
     "py-cpuinfo>=9.0.0",
@@ -95,17 +98,20 @@ constraint-dependencies = [
 [dependency-groups]
 # Split by activity, so what each consumer needs is a stated fact rather than a shared pile. The
 # test matrix installs no linters and no packaging tools, which matters beyond tidiness here: those
-# tools brought `click` into every environment, so a leg installed *without* the cli extra still had
+# tools brought `click` into every environment, so a matrix job installed *without* the cli extra still had
 # click importable and could not exercise the guard that extra exists for.
 test = [
     # floor raised off 6.0: older 6.x calls entry_points().get(), which importlib.metadata
-    # removed in Python 3.14 (breaks the lowest-direct resolution there).
-    "hypothesis>=6.156",
+    # removed in Python 3.14 (breaks the lowest-direct resolution there). On 3.15 the minimum
+    # version is the first release with 3.15 wheels: hypothesis ships only compiled wheels and no
+    # source distribution, so an older release cannot be installed on 3.15.
+    "hypothesis>=6.156; python_version < '3.15'",
+    "hypothesis>=6.156.4; python_version >= '3.15'",
     "pytest>=8.0",
     # floor at 7.1: pytest-cov 6 auto-measures subprocesses through a site-packages hook that
-    # ignores [tool.coverage.run] source, so a lowest-direct leg recorded files outside the
+    # ignores [tool.coverage.run] source, so a lowest-direct matrix job recorded files outside the
     # package (docs snippets, and a system interpreter's sitecustomize.py) into the coverage
-    # union while every other leg did not.
+    # union while every other matrix job did not.
     "pytest-cov>=7.1",
     "pytest-xdist>=3.5.0",
 ]
