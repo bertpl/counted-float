@@ -182,7 +182,8 @@ def math_sqrt(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().SQRT += 1
         return float.__new__(CountedFloat, result)
-    return original_math_sqrt(x)
+    else:
+        return original_math_sqrt(x)
 
 
 def math_cbrt(x: float) -> float | CountedFloat:
@@ -193,7 +194,8 @@ def math_cbrt(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().CBRT += 1
         return float.__new__(CountedFloat, result)
-    return original_math_cbrt(x)
+    else:
+        return original_math_cbrt(x)
 
 
 def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rules
@@ -226,7 +228,8 @@ def math_log(  # noqa: C901 -- branches mirror the per-log-variant counting rule
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().LOG += 1
             return float.__new__(CountedFloat, result)
-        return original_math_log(x)
+        else:
+            return original_math_log(x)
     # computed first: raises per stdlib contract before anything is counted
     result = original_math_log(x, base)
     if not (isinstance(x, CountedFloat) or isinstance(base, CountedFloat)):
@@ -280,7 +283,8 @@ def math_log2(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().LOG2 += 1
         return float.__new__(CountedFloat, result)
-    return original_math_log2(x)
+    else:
+        return original_math_log2(x)
 
 
 def math_log10(x: float) -> float | CountedFloat:
@@ -291,7 +295,8 @@ def math_log10(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().LOG10 += 1
         return float.__new__(CountedFloat, result)
-    return original_math_log10(x)
+    else:
+        return original_math_log10(x)
 
 
 def math_exp(x: float) -> float | CountedFloat:
@@ -302,7 +307,8 @@ def math_exp(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().EXP += 1
         return float.__new__(CountedFloat, result)
-    return original_math_exp(x)
+    else:
+        return original_math_exp(x)
 
 
 def math_exp2(x: float) -> float | CountedFloat:
@@ -313,7 +319,8 @@ def math_exp2(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().EXP2 += 1
         return float.__new__(CountedFloat, result)
-    return original_math_exp2(x)
+    else:
+        return original_math_exp2(x)
 
 
 def math_pow(x: float, y: float) -> float | CountedFloat:
@@ -341,7 +348,8 @@ def math_pow(x: float, y: float) -> float | CountedFloat:
                 return result  # pow(1, y) is 1.0 for every y: the port's constant, plain and uncounted
             count_pow_with_constant_base(x)
         return float.__new__(CountedFloat, result)
-    return original_math_pow(x, y)
+    else:
+        return original_math_pow(x, y)
 
 
 def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
@@ -381,7 +389,8 @@ def math_fma(x: float, y: float, z: float) -> float | CountedFloat:
             except AttributeError:  # first counted op on this thread
                 _create_thread_state().ADD += 1
         return float.__new__(CountedFloat, result)
-    return original_math_fma(x, y, z)
+    else:
+        return original_math_fma(x, y, z)
 
 
 def math_sin(x: float) -> float | CountedFloat:
@@ -392,7 +401,8 @@ def math_sin(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().SIN += 1
         return float.__new__(CountedFloat, result)
-    return original_math_sin(x)
+    else:
+        return original_math_sin(x)
 
 
 def math_cos(x: float) -> float | CountedFloat:
@@ -403,7 +413,8 @@ def math_cos(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COS += 1
         return float.__new__(CountedFloat, result)
-    return original_math_cos(x)
+    else:
+        return original_math_cos(x)
 
 
 def math_tan(x: float) -> float | CountedFloat:
@@ -414,7 +425,8 @@ def math_tan(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().TAN += 1
         return float.__new__(CountedFloat, result)
-    return original_math_tan(x)
+    else:
+        return original_math_tan(x)
 
 
 def math_asin(x: float) -> float | CountedFloat:
@@ -425,7 +437,8 @@ def math_asin(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ASIN += 1
         return float.__new__(CountedFloat, result)
-    return original_math_asin(x)
+    else:
+        return original_math_asin(x)
 
 
 def math_acos(x: float) -> float | CountedFloat:
@@ -436,7 +449,8 @@ def math_acos(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ACOS += 1
         return float.__new__(CountedFloat, result)
-    return original_math_acos(x)
+    else:
+        return original_math_acos(x)
 
 
 def math_atan(x: float) -> float | CountedFloat:
@@ -447,7 +461,8 @@ def math_atan(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ATAN += 1
         return float.__new__(CountedFloat, result)
-    return original_math_atan(x)
+    else:
+        return original_math_atan(x)
 
 
 def math_atan2(y: float, x: float) -> float | CountedFloat:
@@ -458,7 +473,8 @@ def math_atan2(y: float, x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ATAN2 += 1
         return float.__new__(CountedFloat, result)
-    return original_math_atan2(y, x)
+    else:
+        return original_math_atan2(y, x)
 
 
 def math_hypot(*coordinates: float) -> float | CountedFloat:
@@ -496,7 +512,8 @@ def math_expm1(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().EXPM1 += 1
         return float.__new__(CountedFloat, result)
-    return original_math_expm1(x)
+    else:
+        return original_math_expm1(x)
 
 
 def math_log1p(x: float) -> float | CountedFloat:
@@ -507,7 +524,8 @@ def math_log1p(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().LOG1P += 1
         return float.__new__(CountedFloat, result)
-    return original_math_log1p(x)
+    else:
+        return original_math_log1p(x)
 
 
 def math_fmod(x: float, y: float) -> float | CountedFloat:
@@ -518,7 +536,8 @@ def math_fmod(x: float, y: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().FMOD += 1
         return float.__new__(CountedFloat, result)
-    return original_math_fmod(x, y)
+    else:
+        return original_math_fmod(x, y)
 
 
 def math_remainder(x: float, y: float) -> float | CountedFloat:
@@ -529,7 +548,8 @@ def math_remainder(x: float, y: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().REMAINDER += 1
         return float.__new__(CountedFloat, result)
-    return original_math_remainder(x, y)
+    else:
+        return original_math_remainder(x, y)
 
 
 def math_fabs(x: float) -> float | CountedFloat:
@@ -540,7 +560,8 @@ def math_fabs(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ABS += 1
         return float.__new__(CountedFloat, result)
-    return original_math_fabs(x)
+    else:
+        return original_math_fabs(x)
 
 
 def math_sinh(x: float) -> float | CountedFloat:
@@ -551,7 +572,8 @@ def math_sinh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().SINH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_sinh(x)
+    else:
+        return original_math_sinh(x)
 
 
 def math_cosh(x: float) -> float | CountedFloat:
@@ -562,7 +584,8 @@ def math_cosh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COSH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_cosh(x)
+    else:
+        return original_math_cosh(x)
 
 
 def math_tanh(x: float) -> float | CountedFloat:
@@ -573,7 +596,8 @@ def math_tanh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().TANH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_tanh(x)
+    else:
+        return original_math_tanh(x)
 
 
 def math_asinh(x: float) -> float | CountedFloat:
@@ -584,7 +608,8 @@ def math_asinh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ASINH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_asinh(x)
+    else:
+        return original_math_asinh(x)
 
 
 def math_acosh(x: float) -> float | CountedFloat:
@@ -595,7 +620,8 @@ def math_acosh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ACOSH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_acosh(x)
+    else:
+        return original_math_acosh(x)
 
 
 def math_atanh(x: float) -> float | CountedFloat:
@@ -606,7 +632,8 @@ def math_atanh(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ATANH += 1
         return float.__new__(CountedFloat, result)
-    return original_math_atanh(x)
+    else:
+        return original_math_atanh(x)
 
 
 def math_gamma(x: float) -> float | CountedFloat:
@@ -619,7 +646,8 @@ def math_gamma(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().GAMMA += 1
         return float.__new__(CountedFloat, result)
-    return original_math_gamma(x)
+    else:
+        return original_math_gamma(x)
 
 
 def math_lgamma(x: float) -> float | CountedFloat:
@@ -630,7 +658,8 @@ def math_lgamma(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().LGAMMA += 1
         return float.__new__(CountedFloat, result)
-    return original_math_lgamma(x)
+    else:
+        return original_math_lgamma(x)
 
 
 def math_erf(x: float) -> float | CountedFloat:
@@ -641,7 +670,8 @@ def math_erf(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ERF += 1
         return float.__new__(CountedFloat, result)
-    return original_math_erf(x)
+    else:
+        return original_math_erf(x)
 
 
 def math_erfc(x: float) -> float | CountedFloat:
@@ -652,7 +682,8 @@ def math_erfc(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().ERFC += 1
         return float.__new__(CountedFloat, result)
-    return original_math_erfc(x)
+    else:
+        return original_math_erfc(x)
 
 
 def math_degrees(x: float) -> float | CountedFloat:
@@ -663,7 +694,8 @@ def math_degrees(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, result)
-    return original_math_degrees(x)
+    else:
+        return original_math_degrees(x)
 
 
 def math_radians(x: float) -> float | CountedFloat:
@@ -674,7 +706,8 @@ def math_radians(x: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().MUL += 1
         return float.__new__(CountedFloat, result)
-    return original_math_radians(x)
+    else:
+        return original_math_radians(x)
 
 
 def math_dist(p: Iterable[float], q: Iterable[float]) -> float | CountedFloat:
@@ -797,7 +830,8 @@ def math_copysign(x: float, y: float) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COPYSIGN += 1
         return float.__new__(CountedFloat, result)
-    return original_math_copysign(x, y)
+    else:
+        return original_math_copysign(x, y)
 
 
 def math_fmax(x: float, y: float, /) -> float | CountedFloat:
@@ -821,7 +855,8 @@ def math_fmax(x: float, y: float, /) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COMP += 1
         return float.__new__(CountedFloat, result)
-    return original_math_fmax(x, y)
+    else:
+        return original_math_fmax(x, y)
 
 
 def math_fmin(x: float, y: float, /) -> float | CountedFloat:
@@ -837,7 +872,8 @@ def math_fmin(x: float, y: float, /) -> float | CountedFloat:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COMP += 1
         return float.__new__(CountedFloat, result)
-    return original_math_fmin(x, y)
+    else:
+        return original_math_fmin(x, y)
 
 
 def math_isnan(x: float) -> bool:
@@ -854,7 +890,8 @@ def math_isnan(x: float) -> bool:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COMP += 1
         return result
-    return original_math_isnan(x)
+    else:
+        return original_math_isnan(x)
 
 
 def math_isinf(x: float) -> bool:
@@ -874,7 +911,8 @@ def math_isinf(x: float) -> bool:
         cnt.ABS += 1
         cnt.COMP += 1
         return result
-    return original_math_isinf(x)
+    else:
+        return original_math_isinf(x)
 
 
 def math_isfinite(x: float) -> bool:
@@ -892,7 +930,8 @@ def math_isfinite(x: float) -> bool:
         cnt.ABS += 1
         cnt.COMP += 1
         return result
-    return original_math_isfinite(x)
+    else:
+        return original_math_isfinite(x)
 
 
 def math_isclose(a: float, b: float, **kwargs: float) -> bool:
@@ -944,7 +983,8 @@ def math_isnormal(x: float, /) -> bool:
         cnt.ABS += 1
         cnt.COMP += 2
         return result
-    return original_math_isnormal(x)
+    else:
+        return original_math_isnormal(x)
 
 
 def math_issubnormal(x: float, /) -> bool:
@@ -963,7 +1003,8 @@ def math_issubnormal(x: float, /) -> bool:
         cnt.ABS += 1
         cnt.COMP += 2
         return result
-    return original_math_issubnormal(x)
+    else:
+        return original_math_issubnormal(x)
 
 
 def math_signbit(x: float, /) -> bool:
@@ -983,7 +1024,8 @@ def math_signbit(x: float, /) -> bool:
         except AttributeError:  # first counted op on this thread
             _create_thread_state().COMP += 1
         return result
-    return original_math_signbit(x)
+    else:
+        return original_math_signbit(x)
 
 
 # -------------------------------------------------------------------------
