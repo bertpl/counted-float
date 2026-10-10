@@ -23,7 +23,7 @@ _mod = _load_module()
 
 
 def test_reads_only_quoted_matrix_python_values(tmp_path):
-    """The parser picks up quoted `python:` matrix legs and ignores every `python_version:` key."""
+    """The parser picks up quoted `python:` matrix entries and ignores every `python_version:` key."""
     # --- arrange ----------------------
     workflow = tmp_path / "wf.yml"
     workflow.write_text(
@@ -45,12 +45,14 @@ def test_reads_only_quoted_matrix_python_values(tmp_path):
 @pytest.mark.parametrize(
     ("declared", "tested", "expected_exit_code"),
     [
-        ({"3.11", "3.15"}, {"3.11", "3.14t"}, 1),  # 3.15 has no matrix leg
-        ({"3.11"}, {"3.11", "3.14t"}, 0),  # an extra matrix leg is fine
+        ({"3.11", "3.15"}, {"3.11", "3.14t"}, 1),  # 3.15 has no matrix entry
+        ({"3.11"}, {"3.11", "3.14t"}, 0),  # an extra matrix entry is fine
     ],
 )
-def test_main_fails_only_on_a_declared_version_without_a_leg(monkeypatch, declared, tested, expected_exit_code):
-    """The check fails on a declared version that has no matrix leg, and accepts extra matrix legs."""
+def test_main_fails_only_on_a_declared_version_without_a_matrix_entry(
+    monkeypatch, declared, tested, expected_exit_code
+):
+    """The check fails on a declared version that has no matrix entry, and accepts extra matrix entries."""
     # --- arrange ----------------------
     monkeypatch.setattr(_mod, "read_declared_versions", lambda: declared)
     monkeypatch.setattr(_mod, "read_tested_versions", lambda: tested)
@@ -63,6 +65,6 @@ def test_main_fails_only_on_a_declared_version_without_a_leg(monkeypatch, declar
 
 
 def test_repo_matrix_covers_declared_versions():
-    """The live repo satisfies the invariant: every declared version has a matrix leg."""
+    """The live repo satisfies the invariant: every declared version has a matrix entry."""
     # --- act / assert -----------------
     assert _mod.main() == 0

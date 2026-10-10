@@ -29,8 +29,8 @@ jobs:
           - { os: ubuntu-24.04-arm, python: "3.13", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,    python: "3.14", resolution: highest,       all_extras: "true"  }  # x86: see above
           - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "true"  }
-          # The minimum versions are checked at both ends of the supported range, and on the
-          # default Python.
+          # The lowest-direct entries install every dependency at its declared minimum version,
+          # on the oldest and newest supported Python and on the default Python.
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.15", resolution: lowest-direct, all_extras: "true"  }
