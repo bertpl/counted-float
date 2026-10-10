@@ -57,4 +57,5 @@ def format_location(location: tuple[str, int]) -> str:
     file_path, line_number = location
     if file_path == _UNKNOWN:
         return _UNKNOWN
-    return f"{Path(file_path).name}:{line_number}"
+    else:
+        return f"{Path(file_path).name}:{line_number}"

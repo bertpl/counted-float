@@ -83,7 +83,8 @@ class StaleInputs(Stale):
         """A one-line statement of what is known, since no diff is available."""
         if self.recorded is None:
             return f"{self.artifact.path.name}: never recorded -- no fingerprint exists to check it against"
-        return f"{self.artifact.path.name}: source content or render settings changed since it was built"
+        else:
+            return f"{self.artifact.path.name}: source content or render settings changed since it was built"
 
 
 @dataclasses.dataclass(frozen=True)
@@ -158,7 +159,8 @@ class DocsArtifactManager:
         committed = read_lf(artifact.path) if artifact.path.exists() else ""
         if committed == intended:
             return None
-        return StaleContent(artifact=artifact, committed=committed, intended=intended)
+        else:
+            return StaleContent(artifact=artifact, committed=committed, intended=intended)
 
     def _compare_fingerprint(self, artifact: DerivedFile, manifest: Manifest) -> StaleInputs | None:
         """Compare one unproducible artifact's input fingerprint against the recorded one."""
@@ -168,7 +170,8 @@ class DocsArtifactManager:
         recorded = manifest.recorded(self._manifest_key(artifact))
         if recorded == fingerprint:
             return None
-        return StaleInputs(artifact=artifact, recorded=recorded)
+        else:
+            return StaleInputs(artifact=artifact, recorded=recorded)
 
     def _manifest_key(self, artifact: DerivedFile) -> str:
         """An artifact's manifest key: its repo-relative path with forward slashes."""

@@ -114,8 +114,9 @@ def thread_is_reporting() -> bool:
     """
     if getattr(_TLS, "verbosity", Verbosity.OFF) is Verbosity.OFF:
         return False
-    # verbosity is only ever set on fully created thread state, so both aliases exist here
-    return _TLS.flop_counts is not _TLS.flop_counts_inactive
+    else:
+        # verbosity is only ever set on fully created thread state, so both aliases exist here
+        return _TLS.flop_counts is not _TLS.flop_counts_inactive
 
 
 class ThreadLocalFlopCounter:
@@ -154,7 +155,8 @@ class ThreadLocalFlopCounter:
         """
         if _TLS.verbosity is not Verbosity.INFO:
             return _TLS.flop_counts_active
-        return FlopCountsWithLogging(_TLS.flop_counts_active)
+        else:
+            return FlopCountsWithLogging(_TLS.flop_counts_active)
 
     def pause(self) -> None:
         self._ensure()

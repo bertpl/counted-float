@@ -8,7 +8,8 @@ def format_time_duration(nsec: float) -> str:
         return _format_nsec_as_us(nsec)
     if nsec < 1e9:
         return _format_nsec_as_ms(nsec)
-    return _format_nsec_as_s(nsec) + " "  # add trailing whitespace to right-align well with other cases
+    else:
+        return _format_nsec_as_s(nsec) + " "  # add trailing whitespace to right-align well with other cases
 
 
 def _format_nsec_as_ns(nsec: float) -> str:
@@ -43,4 +44,5 @@ def format_latency(n_cycles: float) -> str:
         return f"{n_cycles / 1e3:4.1f}K cpu cycles"
     if round(n_cycles, -3) < 1_000_000:
         return f"{n_cycles / 1e3:4.0f}K cpu cycles"
-    return f"{n_cycles / 1e6:4.2f}M cpu cycles"
+    else:
+        return f"{n_cycles / 1e6:4.2f}M cpu cycles"

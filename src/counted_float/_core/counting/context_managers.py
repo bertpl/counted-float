@@ -99,7 +99,8 @@ class FlopCountingContext:
             # when paused), only the frozen subtotal is read, which is safe from any thread
             self.__require_owner_thread()
             return THREAD_COUNTER.flop_counts() - self.__cnt_start_snapshot
-        return self.__cnt_subtotal.copy()
+        else:
+            return self.__cnt_subtotal.copy()
 
     # -------------------------------------------------------------------------
     #  Pause/Resume

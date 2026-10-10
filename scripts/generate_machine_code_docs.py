@@ -564,7 +564,8 @@ def main() -> int:
         if stale:
             sys.stderr.write("run `make regen-machine-code`\n")
             return 1
-        return 0
+        else:
+            return 0
 
     for file_path, intended in regenerated.items():
         if read_lf(file_path) != intended:

@@ -261,7 +261,8 @@ def _coverage_color(pct: float) -> str:
     """Map a coverage percentage to a shields.io badge color."""
     if pct >= 90:
         return "brightgreen"
-    return "yellow" if pct >= 75 else "red"
+    else:
+        return "yellow" if pct >= 75 else "red"
 
 
 def _mutation_color(pct: int) -> str:
@@ -273,7 +274,8 @@ def _mutation_color(pct: int) -> str:
     """
     if pct >= 80:
         return "brightgreen"
-    return "yellow" if pct >= 60 else "red"
+    else:
+        return "yellow" if pct >= 60 else "red"
 
 
 def _measure_mutation_score() -> int:
@@ -415,7 +417,8 @@ def _stamp_badge_provenance(text: str, version: str) -> str:
     stamp = f"<!-- badges below refreshed at release v{version} -->"
     if BADGE_STAMP_RE.search(text):
         return BADGE_STAMP_RE.sub(stamp, text, count=1)
-    return f"{stamp}\n{text}"
+    else:
+        return f"{stamp}\n{text}"
 
 
 def refresh_readme_badges(version: str, badges: BadgeMetrics) -> None:

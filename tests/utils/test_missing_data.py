@@ -17,11 +17,12 @@ def _same(actual: Matrix, expected: Matrix, *, rel_tol: float = 1e-10) -> bool:
     """Whether two matrices agree cell by cell, counting two missing markers as agreeing."""
     if [len(row) for row in actual] != [len(row) for row in expected]:
         return False
-    return all(
-        (math.isnan(a) and math.isnan(e)) or math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10)
-        for row_a, row_e in zip(actual, expected, strict=True)
-        for a, e in zip(row_a, row_e, strict=True)
-    )
+    else:
+        return all(
+            (math.isnan(a) and math.isnan(e)) or math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10)
+            for row_a, row_e in zip(actual, expected, strict=True)
+            for a, e in zip(row_a, row_e, strict=True)
+        )
 
 
 def _outer(rows: list[float], cols: list[float]) -> Matrix:

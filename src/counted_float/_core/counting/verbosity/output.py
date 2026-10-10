@@ -132,4 +132,5 @@ def _location_spans(location: str) -> tuple[tuple[str, str], ...]:
     file_name, separator, line_number = location.rpartition(":")
     if not separator:
         return ((location, "dim"),)
-    return ((f"{file_name}:", "dim"), (line_number, "default"))
+    else:
+        return ((f"{file_name}:", "dim"), (line_number, "default"))

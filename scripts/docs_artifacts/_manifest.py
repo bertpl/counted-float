@@ -37,7 +37,8 @@ class Manifest:
         """
         if not path.exists():
             return cls({})
-        return cls(json.loads(path.read_text(encoding="utf-8")))
+        else:
+            return cls(json.loads(path.read_text(encoding="utf-8")))
 
     def write(self, path: Path) -> None:
         """Write the manifest sorted and newline-terminated, so its diffs stay reviewable."""

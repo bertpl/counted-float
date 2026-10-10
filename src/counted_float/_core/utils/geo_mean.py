@@ -15,4 +15,5 @@ def geo_mean(values: list[float | int]) -> float:
         raise ValueError("geo_mean requires non-negative values")
     if any(v == 0 for v in values):
         return 0.0
-    return math.exp(math.fsum(math.log(v) for v in values) / len(values))
+    else:
+        return math.exp(math.fsum(math.log(v) for v in values) / len(values))

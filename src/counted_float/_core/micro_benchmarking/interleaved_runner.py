@@ -67,7 +67,8 @@ class SliceController:
         """Effective slice target: the common target, floored at N_MIN_EXECUTIONS executions."""
         if self._t_per_exec_nsecs is None:
             return self.t_slice_common_target_nsecs
-        return max(self.t_slice_common_target_nsecs, self.N_MIN_EXECUTIONS * self._t_per_exec_nsecs)
+        else:
+            return max(self.t_slice_common_target_nsecs, self.N_MIN_EXECUTIONS * self._t_per_exec_nsecs)
 
     @property
     def execution_floor_active(self) -> bool:
@@ -104,7 +105,8 @@ class SliceController:
         """
         if t_nsecs <= 0.0:
             return math.inf
-        return target / t_nsecs
+        else:
+            return target / t_nsecs
 
     def _rescale(self, factor: float, max_factor: float) -> None:
         factor = max(1 / max_factor, min(max_factor, factor))

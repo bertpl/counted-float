@@ -33,7 +33,8 @@ def gate_reason(requires: str | None) -> str | None:
         # log(e) or log(1/e) inexactly makes the fold legitimately not fire.
         exact = math.log(math.e) == 1.0 and math.log(1.0 / math.e) == -1.0
         return None if exact else "requires a libm where log(e) == 1.0 and log(1/e) == -1.0"
-    return None if hasattr(math, requires) else f"requires math.{requires}"
+    else:
+        return None if hasattr(math, requires) else f"requires math.{requires}"
 
 
 @dataclass(frozen=True)

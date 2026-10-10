@@ -36,4 +36,5 @@ def quantile(values: list[float], q: float) -> float:
     fraction = virtual_index - below
     if fraction < 0.5:
         return low + span * fraction
-    return high - span * (1.0 - fraction)
+    else:
+        return high - span * (1.0 - fraction)

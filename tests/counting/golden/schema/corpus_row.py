@@ -94,7 +94,8 @@ class CorpusRow:
         """Return the exception type of a raising probe, or None for a returning probe."""
         if isinstance(self.outcome, type) and issubclass(self.outcome, BaseException):
             return self.outcome
-        return None
+        else:
+            return None
 
     @property
     def uid(self) -> str:

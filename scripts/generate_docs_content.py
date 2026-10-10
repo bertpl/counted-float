@@ -595,7 +595,8 @@ def main() -> int:
         if stale := manager.check():
             sys.stderr.write(manager.stale_report(stale))
             return 1
-        return 0
+        else:
+            return 0
 
     regenerated = manager.regenerate()
     for file_path in regenerated.written:
