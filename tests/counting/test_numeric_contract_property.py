@@ -41,7 +41,10 @@ def _outcome(op: Callable, a: object, b: object) -> tuple[str, object]:
 def _values_match(plain: object, counted: object) -> bool:
     """Value parity, treating NaN as equal to NaN and allowing complex / tuple (divmod) results."""
     if isinstance(plain, tuple) and isinstance(counted, tuple):
-        return len(plain) == len(counted) and all(_values_match(p, c) for p, c in zip(plain, counted, strict=True))
+        if len(plain) != len(counted):
+            return False
+        else:
+            return all(_values_match(p, c) for p, c in zip(plain, counted, strict=True))
     if isinstance(plain, complex) or isinstance(counted, complex):
         return plain == counted
     p, c = float(plain), float(counted)  # ty: ignore[invalid-argument-type] -- both are real numbers here

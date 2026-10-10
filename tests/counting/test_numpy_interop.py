@@ -90,7 +90,10 @@ def test_counted_float_compared_against_a_numpy_scalar_counts(order: str):
 
     # --- act ---------------------------------------------
     with FlopCountingContext() as fcc:
-        result = counted < numpy_scalar if order == "counted_left" else numpy_scalar > counted
+        if order == "counted_left":
+            result = counted < numpy_scalar
+        else:
+            result = numpy_scalar > counted
 
     # --- assert ------------------------------------------
     assert result is True
@@ -120,10 +123,14 @@ def test_mixing_with_a_numpy_array_raises(
     # --- arrange -----------------------------------------
     counted = CountedFloat(2.0)
     array = np.array([1.0, 2.0])
+    if counted_side == "left":
+        left, right = counted, array
+    else:
+        left, right = array, counted
 
     # --- act / assert ------------------------------------
     with pytest.raises(TypeError):
-        op(counted, array) if counted_side == "left" else op(array, counted)
+        op(left, right)
 
 
 @pytest.mark.parametrize("scalar_type", [np.float32, np.int64], ids=["float32", "int64"])

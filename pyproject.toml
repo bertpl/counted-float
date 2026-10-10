@@ -218,6 +218,7 @@ select = [
 ignore = [
     "RUF001", "RUF002", "RUF003",  # intentional typography, not "ambiguous"
     "RET505",  # RET505 flags an `else:` after a `return`; this project puts the last `return` of an if/elif chain in an `else:` branch on purpose
+    "SIM108",  # SIM108 flags an if/else that could be a conditional expression; this project keeps the if/else when a branch does more than pick a value, or the condition is not simple
 ]
 
 [tool.ruff.lint.mccabe]

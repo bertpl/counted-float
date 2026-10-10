@@ -41,7 +41,10 @@ def _axis_corrections(matrix: list[list[float]], own: list[float], other: list[f
             for j, value in enumerate(row)
             if not (own_is_missing or math.isnan(value) or math.isnan(other[j]))
         ]
-        corrections.append(geo_mean(factors) if factors else math.nan)
+        if factors:
+            corrections.append(geo_mean(factors))
+        else:
+            corrections.append(math.nan)
     return corrections
 
 

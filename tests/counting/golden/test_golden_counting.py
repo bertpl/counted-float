@@ -42,7 +42,10 @@ def test_golden_counting(row: CorpusRow, regime: str, reps: int) -> None:
 
     # --- counts and result shape ------
     if regime in ("counting", "paused"):
-        expected = {flop_type: count * reps for flop_type, count in row.counts.items()} if regime == "counting" else {}
+        if regime == "counting":
+            expected = {flop_type: count * reps for flop_type, count in row.counts.items()}
+        else:
+            expected = {}
         assert run.counts == expected, f"{row.uid} [{regime}]: counts at {reps}x are {run.counts}, expected {expected}"
         if row.raises is None:
             assert_result_shape(run.raw_last, row)

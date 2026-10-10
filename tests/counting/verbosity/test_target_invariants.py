@@ -41,7 +41,11 @@ def test_increment_target(thread_counter, logged_lines, incr_flop, level, paused
     assert thread_counter.is_active() is (not paused)
 
     # counts are read back from the real counts, never through the alias
-    assert thread_counter.flop_counts() == (FlopCounts(ADD=1) if counted else FlopCounts())
+    if counted:
+        expected_counts = FlopCounts(ADD=1)
+    else:
+        expected_counts = FlopCounts()
+    assert thread_counter.flop_counts() == expected_counts
 
     assert len(logged_lines()) == (1 if logged else 0)
 

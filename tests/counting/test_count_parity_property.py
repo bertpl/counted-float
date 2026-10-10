@@ -67,7 +67,10 @@ def test_operand_side_does_not_change_the_count(
     # --- assert ------------------------------------------
     if op is operator.mul and float(other) in (1.0, -1.0):
         # identity multipliers fold on both sides alike: * 1.0 counts nothing, * -1.0 a bare MINUS
-        expected = FlopCounts() if float(other) == 1.0 else FlopCounts(MINUS=1)
+        if float(other) == 1.0:
+            expected = FlopCounts()
+        else:
+            expected = FlopCounts(MINUS=1)
         assert counts_counted_left == expected
         assert counts_counted_right == expected
         return

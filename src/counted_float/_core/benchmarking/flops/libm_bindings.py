@@ -29,7 +29,10 @@ def _load_libm() -> ctypes.CDLL | None:
     below, which raise a clear error at flops-benchmark time rather than at import time.
     Cached, so the library is loaded once on first use and never at import.
     """
-    name = "ucrtbase" if sys.platform == "win32" else ctypes.util.find_library("m")
+    if sys.platform == "win32":
+        name = "ucrtbase"
+    else:
+        name = ctypes.util.find_library("m")
     if name is None:
         return None
     try:

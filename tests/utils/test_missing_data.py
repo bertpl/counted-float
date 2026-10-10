@@ -18,11 +18,12 @@ def _same(actual: Matrix, expected: Matrix, *, rel_tol: float = 1e-10) -> bool:
     if [len(row) for row in actual] != [len(row) for row in expected]:
         return False
     else:
-        return all(
-            (math.isnan(a) and math.isnan(e)) or math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10)
-            for row_a, row_e in zip(actual, expected, strict=True)
-            for a, e in zip(row_a, row_e, strict=True)
-        )
+        for row_a, row_e in zip(actual, expected, strict=True):
+            for a, e in zip(row_a, row_e, strict=True):
+                are_both_missing = math.isnan(a) and math.isnan(e)
+                if not are_both_missing and not math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10):
+                    return False
+        return True
 
 
 def _outer(rows: list[float], cols: list[float]) -> Matrix:
@@ -267,13 +268,15 @@ def _two_blocks_with_thin_coupling(n: int = 10) -> tuple[Matrix, Matrix]:
     cols = [0.5 * 1.8**j for j in range(n)]
     full = _outer(rows, cols)
     half = n // 2
-    holed = [
-        [
-            value if ((i < half and j <= half) or (i >= half and j >= half - 1)) else math.nan
-            for j, value in enumerate(row)
-        ]
-        for i, row in enumerate(full)
-    ]
+    holed = []
+    for i, row in enumerate(full):
+        holed_row = []
+        for j, value in enumerate(row):
+            if (i < half and j <= half) or (i >= half and j >= half - 1):
+                holed_row.append(value)
+            else:
+                holed_row.append(math.nan)
+        holed.append(holed_row)
     return holed, full
 
 
