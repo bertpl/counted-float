@@ -20,8 +20,8 @@ def _same(actual: Matrix, expected: Matrix, *, rel_tol: float = 1e-10) -> bool:
     else:
         for row_a, row_e in zip(actual, expected, strict=True):
             for a, e in zip(row_a, row_e, strict=True):
-                both_missing = math.isnan(a) and math.isnan(e)
-                if not both_missing and not math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10):
+                are_both_missing = math.isnan(a) and math.isnan(e)
+                if not are_both_missing and not math.isclose(a, e, rel_tol=rel_tol, abs_tol=1e-10):
                     return False
         return True
 
