@@ -15,21 +15,21 @@ jobs:
       matrix:
         # Core flop-counting is pure Python, so most combos run on ubuntu. But the CPU-freq
         # detection (psutil) and system-info collection (cpuinfo) paths are OS-dependent, and a
-        # dependency bump can change their behavior on macOS or Windows -- so one leg on each keeps
+        # dependency bump can change their behavior on macOS or Windows -- so one matrix job on each keeps
         # those paths on the pull-request gate rather than only in the manual benchmark workflows.
         # Combos cover every axis (every supported Python, both resolution ends, extras on/off,
         # all three OSes) strategically rather than as a full product.
         #
-        # The ubuntu legs run on arm runners, which are faster. One stays on x86: libm is found
+        # The ubuntu matrix jobs run on arm runners, which are faster. One stays on x86: libm is found
         # through a lookup whose path is architecture-specific, and the FMA probes are checked
-        # against emitted machine code -- both want a leg per architecture. It runs the default
-        # Python, like the other single-purpose legs.
+        # against emitted machine code -- both want a matrix job per architecture. It runs the default
+        # Python, like the other single-purpose matrix jobs.
         include:
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.13", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,    python: "3.14", resolution: highest,       all_extras: "true"  }  # x86: see above
           - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "true"  }
-          # The lowest-direct entries install every dependency at its declared minimum version,
+          # The lowest-direct jobs install every dependency at its declared minimum version,
           # on the oldest and newest supported Python and on the default Python.
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
@@ -38,7 +38,7 @@ jobs:
           - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: macos-latest,     python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest,   python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
-          # Free-threaded build: counting state is per-thread, so this leg is where the
+          # Free-threaded build: counting state is per-thread, so this matrix job is where the
           # concurrency tests can actually fail for the reason they were written -- without the
           # GIL serializing the increments they guard. `highest` resolution is required: the
           # numba floor for 3.14 predates free-threaded wheels (first shipped in numba 0.65),
@@ -64,7 +64,7 @@ jobs:
     # on some combos) don't read as uncovered.
     needs: [core]
     # always() so a cancelled/failed combo makes this job FAIL explicitly rather
-    # than skip — GitHub doesn't reliably propagate a cancelled leg through needs.
+    # than skip — GitHub doesn't reliably propagate a cancelled matrix job through needs.
     if: always()
     runs-on: ubuntu-latest
     steps:

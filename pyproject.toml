@@ -98,7 +98,7 @@ constraint-dependencies = [
 [dependency-groups]
 # Split by activity, so what each consumer needs is a stated fact rather than a shared pile. The
 # test matrix installs no linters and no packaging tools, which matters beyond tidiness here: those
-# tools brought `click` into every environment, so a leg installed *without* the cli extra still had
+# tools brought `click` into every environment, so a matrix job installed *without* the cli extra still had
 # click importable and could not exercise the guard that extra exists for.
 test = [
     # floor raised off 6.0: older 6.x calls entry_points().get(), which importlib.metadata
@@ -109,9 +109,9 @@ test = [
     "hypothesis>=6.156.4; python_version >= '3.15'",
     "pytest>=8.0",
     # floor at 7.1: pytest-cov 6 auto-measures subprocesses through a site-packages hook that
-    # ignores [tool.coverage.run] source, so a lowest-direct leg recorded files outside the
+    # ignores [tool.coverage.run] source, so a lowest-direct matrix job recorded files outside the
     # package (docs snippets, and a system interpreter's sitecustomize.py) into the coverage
-    # union while every other leg did not.
+    # union while every other matrix job did not.
     "pytest-cov>=7.1",
     "pytest-xdist>=3.5.0",
 ]

@@ -9,7 +9,7 @@ so a version can sit in `.python-versions` and the classifiers, pass the release
 with no matrix entry testing it.
 
 This check fails when a declared version has no matrix entry. It is one-directional: extra matrix entries
-(such as the free-threaded ones, deliberately absent from `.python-versions`) are fine; only an
+(such as the free-threaded one, deliberately absent from `.python-versions`) are fine; only an
 uncovered declared version is an error.
 
 Usage:
