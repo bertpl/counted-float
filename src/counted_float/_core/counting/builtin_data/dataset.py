@@ -164,9 +164,9 @@ def _flat_to_nested_dict(flat_dict: dict[str, FlopWeights]) -> NestedFlopWeights
 
     E.g. {'a.b.c': 1, 'a.b.d': 2, 'a.e': 3} -> {'a': {'b': {'c': 1, 'd': 2}, 'e': 3}}.
     """
-    # The dict is typed as dict[str, Any], not NestedFlopWeights: with NestedFlopWeights, the
-    # type checker treats each value that setdefault returns as possibly a FlopWeights value, so
-    # the next setdefault call on it fails to type-check. Every level is a plain dict at runtime.
+    # The dict is typed as dict[str, Any], not NestedFlopWeights: NestedFlopWeights types each value as
+    # `NestedFlopWeights | FlopWeights`, so the type checker treats the return value of setdefault as
+    # possibly a FlopWeights value, and the next setdefault call on that return value fails to type-check.
     nested_dict: dict[str, Any] = {}
     for flat_key, value in flat_dict.items():
         keys = flat_key.split(".")
