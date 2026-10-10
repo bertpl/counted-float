@@ -757,11 +757,17 @@ def math_prod(iterable: Iterable[float], /, *, start: float = 1) -> float | Coun
         return original_math_prod(values, start=start)
     # unboxed first: the original's own multiplications would otherwise register counts of their own
     plain_values = [float(v) if isinstance(v, CountedFloat) else v for v in values]
-    plain_start = float(start) if isinstance(start, CountedFloat) else start
+    if isinstance(start, CountedFloat):
+        plain_start = float(start)
+    else:
+        plain_start = start
     # computed first: raises per stdlib contract (non-numeric elements) before anything is counted
     result = original_math_prod(plain_values, start=plain_start)
     opens_with_multiply = isinstance(start, CountedFloat) or start != 1
-    n_muls = len(values) if opens_with_multiply else len(values) - 1
+    if opens_with_multiply:
+        n_muls = len(values)
+    else:
+        n_muls = len(values) - 1
     if n_muls:
         try:
             _TLS.flop_counts.MUL += n_muls

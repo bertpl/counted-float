@@ -25,16 +25,27 @@ def gate_reason(requires: str | None) -> str | None:
     if requires is None:
         return None
     elif requires == "numpy":
-        return None if importlib.util.find_spec("numpy") else "requires numpy"
+        if importlib.util.find_spec("numpy"):
+            return None
+        else:
+            return "requires numpy"
     elif requires == "from_number":
-        return None if hasattr(float, "from_number") else "requires float.from_number (3.14+)"
+        if hasattr(float, "from_number"):
+            return None
+        else:
+            return "requires float.from_number (3.14+)"
     elif requires == "exact-log-e":
         # The log-base identity folds depend on the runtime libm value, so a libm computing
         # log(e) or log(1/e) inexactly makes the fold legitimately not fire.
         exact = math.log(math.e) == 1.0 and math.log(1.0 / math.e) == -1.0
-        return None if exact else "requires a libm where log(e) == 1.0 and log(1/e) == -1.0"
+        if exact:
+            return None
+        else:
+            return "requires a libm where log(e) == 1.0 and log(1/e) == -1.0"
+    elif hasattr(math, requires):
+        return None
     else:
-        return None if hasattr(math, requires) else f"requires math.{requires}"
+        return f"requires math.{requires}"
 
 
 @dataclass(frozen=True)
@@ -62,7 +73,11 @@ def run_probe(row: CorpusRow, number_type: type, reps: int, regime: str = "count
         return ProbeRun(counts={}, outcomes=[comparable for _, comparable in executions], raw_last=executions[-1][0])
     with FlopCountingContext() as ctx:
         assert not _nonzero_counts(ctx), "context must open at zero counts"
-        with PauseFlopCounting() if regime == "paused" else nullcontext():
+        if regime == "paused":
+            regime_context = PauseFlopCounting()
+        else:
+            regime_context = nullcontext()
+        with regime_context:
             executions = [_execute(row, number_type) for _ in range(reps)]
     return ProbeRun(
         counts=_nonzero_counts(ctx), outcomes=[comparable for _, comparable in executions], raw_last=executions[-1][0]

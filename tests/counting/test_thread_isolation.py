@@ -153,7 +153,10 @@ def _call_in_thread(fn) -> BaseException | None:
     t = threading.Thread(target=runner)
     t.start()
     t.join()
-    return caught[0] if caught else None
+    if caught:
+        return caught[0]
+    else:
+        return None
 
 
 def test_open_context_is_confined_to_owner_thread():

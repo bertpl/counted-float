@@ -666,7 +666,7 @@ def f_lte_addsub(n_executions: int, n: int, in_f: np.ndarray, out_f: np.ndarray,
     for _ in range(n_executions):
         tmp = math.e
         for i in range(n):
-            if tmp >= in_f[i]:  # noqa: SIM108 -- timed probe: keep the branchy shape being measured
+            if tmp >= in_f[i]:  # timed probe: keep the branchy shape being measured
                 tmp = tmp - in_f[i]
             else:
                 tmp = tmp + in_f[i]

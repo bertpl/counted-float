@@ -294,7 +294,10 @@ def test_from_abs_flop_costs_accepts_a_free_or_unknown_non_reference_cost(cost: 
 
     # --- assert ------------------------------------------
     weight = weights.weights[FlopType.MUL]
-    assert math.isnan(weight) if math.isnan(expected) else weight == expected
+    if math.isnan(expected):
+        assert math.isnan(weight)
+    else:
+        assert weight == expected
 
 
 def test_show_lists_measured_weights_before_missing_ones(capsys):

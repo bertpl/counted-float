@@ -261,8 +261,10 @@ def _coverage_color(pct: float) -> str:
     """Map a coverage percentage to a shields.io badge color."""
     if pct >= 90:
         return "brightgreen"
+    elif pct >= 75:
+        return "yellow"
     else:
-        return "yellow" if pct >= 75 else "red"
+        return "red"
 
 
 def _mutation_color(pct: int) -> str:
@@ -274,8 +276,10 @@ def _mutation_color(pct: int) -> str:
     """
     if pct >= 80:
         return "brightgreen"
+    elif pct >= 60:
+        return "yellow"
     else:
-        return "yellow" if pct >= 60 else "red"
+        return "red"
 
 
 def _measure_mutation_score() -> int:

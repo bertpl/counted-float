@@ -156,7 +156,10 @@ class DocsArtifactManager:
     def _compare_content(artifact: DerivedFile) -> StaleContent | None:
         """Re-derive one artifact's content and compare it against what is committed."""
         intended = artifact.intended_content()
-        committed = read_lf(artifact.path) if artifact.path.exists() else ""
+        if artifact.path.exists():
+            committed = read_lf(artifact.path)
+        else:
+            committed = ""
         if committed == intended:
             return None
         else:

@@ -14,7 +14,10 @@ class _DisplayAware(JsonReprModel):
     @field_serializer("v")
     def _serialize_v(self, v, info):
         # renders differently under the {"display": True} context that JsonReprModel.__str__/show pass
-        return "shown" if (info.context or {}).get("display") else "stored"
+        if (info.context or {}).get("display"):
+            return "shown"
+        else:
+            return "stored"
 
 
 def test_str_renders_indented_json():

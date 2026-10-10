@@ -170,7 +170,10 @@ class Config:
 def aws_json(cfg: Config, *args: str) -> object:
     """Run an AWS CLI command and return its parsed JSON output."""
     out = _run(cfg.aws_base + list(args))
-    return json.loads(out) if out.strip() else None
+    if out.strip():
+        return json.loads(out)
+    else:
+        return None
 
 
 def latest_al2023_ami(cfg: Config, arch: str) -> str:
@@ -472,7 +475,10 @@ def main(argv: list[str] | None = None) -> int:
         location = f" -> {r.result_path}" if r.result_path else ""
         print(f"  [{status}] {r.instance_type}: {r.detail}{location}")
 
-    return 0 if all(r.ok for r in results) else 1
+    if all(r.ok for r in results):
+        return 0
+    else:
+        return 1
 
 
 if __name__ == "__main__":

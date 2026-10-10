@@ -176,8 +176,14 @@ def normalize_flop_type_keyed_dict(v: object, *, null_to_nan: bool) -> object:
         return v
     resolved: dict[FlopType, object] = {}
     for key, value in v.items():
-        member = key if isinstance(key, FlopType) else FlopType.from_serialized_key(str(key))
-        resolved[member] = math.nan if (null_to_nan and value is None) else value
+        if isinstance(key, FlopType):
+            member = key
+        else:
+            member = FlopType.from_serialized_key(str(key))
+        if null_to_nan and value is None:
+            resolved[member] = math.nan
+        else:
+            resolved[member] = value
     return resolved
 
 

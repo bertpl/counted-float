@@ -52,7 +52,10 @@ def _spread(lo: float, hi: float) -> list[float]:
 
 def _wrapped(values: list[float], counted: bool) -> _Pool:
     """The measured-operand stream: wrapped in CountedFloat for the counted variant."""
-    return [CountedFloat(v) for v in values] if counted else list(values)
+    if counted:
+        return [CountedFloat(v) for v in values]
+    else:
+        return list(values)
 
 
 def _unary_pool(lo: float, hi: float) -> Callable[[bool], _Pool]:
