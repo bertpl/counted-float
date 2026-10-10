@@ -22,7 +22,8 @@ dependencies = [
     # further where a newer CPython needs a newer pydantic-core wheel.
     "pydantic>=2.7; python_version == '3.12'",
     "pydantic>=2.9; python_version == '3.13'",
-    "pydantic>=2.12; python_version >= '3.14'",
+    "pydantic>=2.12; python_version == '3.14'",
+    "pydantic>=2.14; python_version >= '3.15'",
     # 13.4 floor: the weight tree view relies on FORCE_COLOR producing ANSI styling in captured
     # (non-tty) output, which older rich does not honor
     "rich>=13.4.0",
@@ -63,12 +64,14 @@ benchmarking = [
     # indirect llvmlite build failure — old numba>=0.50 dragged in unbuildable llvmlite 0.33)
     "numba>=0.59; python_version == '3.12'",
     "numba>=0.61; python_version == '3.13'",
-    "numba>=0.63; python_version >= '3.14'",
+    "numba>=0.63; python_version == '3.14'",
+    "numba>=0.68; python_version >= '3.15'",
     # per-Python floors, same rationale: earliest release shipping a wheel for that CPython, so a
     # `lowest-direct` install resolves to a wheel rather than attempting a source build.
     "numpy>=1.26.0; python_version == '3.12'",
     "numpy>=2.1.0; python_version == '3.13'",
-    "numpy>=2.3.2; python_version >= '3.14'",
+    "numpy>=2.3.2; python_version == '3.14'",
+    "numpy>=2.5.2; python_version >= '3.15'",
     "psutil>=5.9.4; python_version == '3.12'",
     "psutil>=7.1.2; python_version >= '3.13'",
     "py-cpuinfo>=9.0.0",

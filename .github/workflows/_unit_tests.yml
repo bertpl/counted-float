@@ -28,15 +28,14 @@ jobs:
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.13", resolution: highest,       all_extras: "true"  }
           - { os: ubuntu-latest,    python: "3.14", resolution: highest,       all_extras: "true"  }  # x86: see above
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "true"  }
+          # The minimum versions are checked at both ends of the supported range, and on the
+          # default Python.
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.14", resolution: lowest-direct, all_extras: "true"  }
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: lowest-direct, all_extras: "true"  }
           - { os: ubuntu-24.04-arm, python: "3.12", resolution: highest,       all_extras: "false" }  # base install: no extras
-          - { os: ubuntu-24.04-arm, python: "3.14", resolution: highest,       all_extras: "false" }  # base install: no extras
-          # 3.15 is supported from its rc1: the interpreter is feature- and ABI-frozen there, so
-          # validating against the rc validates the final release. Pinned to one exact build so
-          # upstream breakage can only arrive in the commit that moves the pin; bump it as each
-          # rc lands and at GA. Base install only, until numba ships 3.15 wheels.
-          - { os: ubuntu-24.04-arm, python: "3.15.0rc1", resolution: highest,  all_extras: "false" }  # base install: no extras
+          - { os: ubuntu-24.04-arm, python: "3.15", resolution: highest,       all_extras: "false" }  # base install: no extras
           - { os: macos-latest,     python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           - { os: windows-latest,   python: "3.14", resolution: highest,       all_extras: "true"  }  # OS-dependent CPU paths
           # Free-threaded build: counting state is per-thread, so this leg is where the
@@ -51,15 +50,6 @@ jobs:
           # full history + tags: hatch-vcs derives the package version via git describe
           fetch-depth: 0
           persist-credentials: false
-      # uv never auto-downloads a pre-release for a bare version request, so a pre-release leg's
-      # interpreter must be installed before the shared action can resolve it
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-        if: contains(matrix.python, 'rc')
-      - name: Install the pinned pre-release interpreter
-        if: contains(matrix.python, 'rc')
-        env:
-          PYTHON_PRERELEASE: ${{ matrix.python }}
-        run: uv python install "$PYTHON_PRERELEASE"
       - uses: ./.github/actions/unit_test
         with:
           python_version: ${{ matrix.python }}
