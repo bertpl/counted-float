@@ -217,6 +217,7 @@ select = [
 ]
 ignore = [
     "RUF001", "RUF002", "RUF003",  # intentional typography, not "ambiguous"
+    "RET505",  # the final return of an if/elif chain whose arms return sits in `else:`, as a peer arm
 ]
 
 [tool.ruff.lint.mccabe]
