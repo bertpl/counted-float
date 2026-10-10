@@ -33,7 +33,6 @@ class Timer:
             # timer still running
             return time.perf_counter_ns() - self._start
         else:
-            # timer finished
             return self._end - self._start
 
     def t_elapsed_sec(self) -> float:
