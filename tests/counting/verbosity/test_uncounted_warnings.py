@@ -6,10 +6,7 @@ import pytest
 from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
 from counted_float._core.counting import math_patching
 
-UNCOUNTED_FUNCTION_NAMES = sorted(math_patching._UNCOUNTED_MATH)
-
-# what each of them needs after its first (counted) argument
-EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,)}
+from .conftest import EXTRA_ARGUMENTS, UNCOUNTED_FUNCTION_NAMES
 
 
 # ==================================================================================================
@@ -58,9 +55,10 @@ def test_sumprod_is_counted_not_reported(logged_lines):
     assert ctx.flop_counts().SUMPROD == 1
 
 
-def test_a_call_without_counted_values_is_not_reported(logged_lines):
+@pytest.mark.parametrize("level", [Verbosity.WARNING, Verbosity.ERROR])
+def test_a_call_without_counted_values_is_not_reported(logged_lines, level):
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING):
+    with FlopCountingContext(verbosity=level):
         _ = math.ulp(2.5)
 
     # --- assert ------------------------------------------
@@ -108,12 +106,13 @@ def test_off_reports_nothing(logged_lines):
     assert logged_lines() == []
 
 
-def test_a_call_while_paused_is_not_reported(logged_lines):
+@pytest.mark.parametrize("level", [Verbosity.WARNING, Verbosity.ERROR])
+def test_a_call_while_paused_is_not_reported(logged_lines, level):
     # --- arrange -----------------------------------------
     x = CountedFloat(2.5)
 
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING), PauseFlopCounting():
+    with FlopCountingContext(verbosity=level), PauseFlopCounting():
         _ = math.ulp(x)
 
     # --- assert ------------------------------------------
@@ -373,33 +372,7 @@ def test_uncounted_functions_exist_in_math(function_name):
 # ==================================================================================================
 # Direct tests of _make_uncounted_wrapper: the module-level _UNCOUNTED_PATCHES registry is built at
 # import time, so only a factory call made inside a test exercises the closure where mutation
-# attribution can see it. Each test builds its own probe name -- warnings dedup per (operation,
-# location) process-wide, so sharing a name across tests would silence all but the first.
-@pytest.fixture
-def make_probe_wrapper(monkeypatch):
-    """Build wrappers for fake math functions that record their delegated calls.
-
-    Removing the reporting patches restores everything in _uncounted_originals onto the math
-    module, so a probe entry leaks a new `math.<probe>` attribute the monkeypatch teardown does
-    not know about; the fixture deletes those on the way out.
-    """
-    probe_names: list[str] = []
-
-    def make(name: str, delegate_calls: list):
-        def original(*args: object, **kwargs: object) -> str:
-            delegate_calls.append((args, kwargs))
-            return "delegated"
-
-        monkeypatch.setitem(math_patching._uncounted_originals, name, original)
-        probe_names.append(name)
-        return math_patching._make_uncounted_wrapper(name, f"{name} consequence")
-
-    yield make
-    for name in probe_names:
-        if hasattr(math, name):
-            delattr(math, name)
-
-
+# attribution can see it.
 def test_a_wrapper_delegates_untouched_when_nobody_reports(make_probe_wrapper, logged_lines):
     # --- arrange -----------------------------------------
     delegate_calls: list = []

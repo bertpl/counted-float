@@ -61,8 +61,8 @@ from math import copysign as _copysign  # the raw builtin: math.copysign is patc
 from typing import TYPE_CHECKING, Never
 
 from .counted_float import CountedFloat, count_pow_with_constant_base, count_pow_with_constant_exponent
-from .thread_counter import _TLS, _create_thread_state, thread_is_reporting
-from .verbosity import warn_uncounted_call
+from .thread_counter import _TLS, _create_thread_state, thread_reporting_level
+from .verbosity import Verbosity, report_uncounted_operation
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
@@ -1065,18 +1065,21 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
 
     Returns:
         A replacement that reports the call while the calling thread is reporting, and otherwise
-        behaves exactly like the function it replaces.
+        behaves exactly like the replaced function.  At ERROR the report is an exception,
+        raised before the replaced function runs.
     """
 
     def replacement(*args: object, **kwargs: object) -> object:
-        # the thread's reporting state is tested first: it settles the question for every thread
-        # that is not reporting -- one that never counted, runs at level OFF, or is paused (paused
-        # operations are deliberately uncounted, so they are not warned about either) -- without
-        # walking the arguments.  Keyword values are scanned too: math.isclose takes its
-        # tolerances by keyword, and a CountedFloat there is as unseen by the count as one in a
-        # positional slot.
-        if thread_is_reporting() and any(isinstance(arg, CountedFloat) for arg in (*args, *kwargs.values())):
-            warn_uncounted_call(name, consequence)
+        # the thread's reporting level is read first: it is OFF for every thread that is not
+        # reporting -- one that never counted, runs at level OFF, or is paused (paused operations are
+        # deliberately uncounted, so they are not reported either) -- so those threads skip the report
+        # without walking the arguments.
+        #
+        # Keyword values are scanned too: math.isclose takes its tolerances by keyword, and a
+        # CountedFloat there is as unseen by the count as one in a positional slot.
+        level = thread_reporting_level()
+        if level is not Verbosity.OFF and any(isinstance(arg, CountedFloat) for arg in (*args, *kwargs.values())):
+            report_uncounted_operation(level, name, consequence)
         return _uncounted_originals[name](*args, **kwargs)
 
     return replacement

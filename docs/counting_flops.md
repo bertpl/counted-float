@@ -312,6 +312,8 @@ levels:
 
 Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
+A third level, **`Verbosity.ERROR`**, treats an operation that could not be counted as an error: it writes nothing, and raises an exception at each operation that `WARNING` would report, so that a test reaching such an operation fails (Example 9).
+
 **Example 6**: _verbose counting_
 
 <!-- BEGIN generated: snippet-verbosity-info -->
@@ -422,6 +424,41 @@ The mantissa `frexp` hands back is a plain `float` — the yellow line reports
 that loss — while the multiply and subtract around it still involve `x` and
 are counted as usual. Anything computed from the plain mantissa alone would go
 missing silently, and the output says so up front.
+
+**Example 9**: _failing a test on an operation that could not be counted_
+
+```python
+import math
+
+import pytest
+
+from counted_float import CountedFloat, FlopCountingContext, UncountedOperationError, Verbosity
+
+
+def normalized(x):
+    mantissa, _ = math.frexp(x)
+    return 2.0 * mantissa
+
+
+def test_normalized_is_fully_counted():
+    # fails: the frexp call raises UncountedOperationError
+    with FlopCountingContext(verbosity=Verbosity.ERROR):
+        normalized(CountedFloat(0.6))
+
+
+def test_normalized_loses_the_count_at_frexp():
+    with FlopCountingContext(verbosity=Verbosity.ERROR):
+        with pytest.raises(UncountedOperationError) as exc_info:
+            normalized(CountedFloat(0.6))
+    assert exc_info.value.operation == "frexp"
+```
+
+`ERROR` raises `UncountedOperationError` before the operation runs. It sees exactly what `WARNING` sees, so the limits in *What `WARNING` can and cannot see* apply to it too.
+
+- **`ERROR` raises at every call, while `WARNING` reports each call site once,** so every test that reaches an uncounted operation fails, not only the first test to reach it.
+- **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
+- **`UncountedOperationError` is a `RuntimeError`,** so an `except Exception` handler in the code under test catches it like any other error, and the test does not fail.
+- **`ERROR` does not print less than `WARNING`,** as the `ERROR` level of Python's `logging` module would: it prints nothing, and raises where `WARNING` prints. A thread has one level at a time, so `ERROR` and `INFO` cannot be combined.
 
 ## Performance overhead
 
