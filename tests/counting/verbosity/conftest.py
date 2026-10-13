@@ -5,9 +5,9 @@ import pytest
 from counted_float._core.counting import math_patching
 from counted_float._core.counting.verbosity import uncounted_operation_reports
 
-# Shared by the WARNING and ERROR test modules for the uncounted math functions, which pass them to
-# `@pytest.mark.parametrize`; pytest needs those values at collection time, so they are module
-# constants here, not fixtures.
+# These constants describe the uncounted math functions.  The WARNING and ERROR test modules
+# share them and pass them to `@pytest.mark.parametrize`; pytest needs those values at collection
+# time, so they are module constants here, not fixtures.
 UNCOUNTED_FUNCTION_NAMES = sorted(math_patching._UNCOUNTED_MATH)
 
 # EXTRA_ARGUMENTS holds what each function needs after its first (counted) argument

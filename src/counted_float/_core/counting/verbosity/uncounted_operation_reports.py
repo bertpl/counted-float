@@ -11,13 +11,15 @@ from .output import VerbosityWriter
 
 # _reported holds the call sites written to stderr so far, for the lifetime of the process.  Each
 # entry pairs the operation that could not be counted with the exact place it was called from --
-# ("erf", ("/proj/my_algo.py", 42)) -- so one operation called from two places is two findings,
+# ("erf", ("/proj/my_algo.py", 42)) -- so one operation called from 2 places is 2 findings,
 # while a call site inside a loop stays one however often it runs.
 #
 # A finding belongs to a source line, not to a run or a thread, so reporting it once is enough;
 # reporting each call site once keeps WARNING usable on a full run, not only on a snippet
-# (Python's own warnings default to the same once-per-location rule).  Shared across threads
-# without a lock: two threads racing on one site can at worst report it twice.
+# (Python's own warnings default to the same once-per-location rule).
+#
+# The set is shared across threads without a lock: 2 threads racing on one site can at worst
+# report it twice.
 _reported: set[tuple[str, tuple[str, int]]] = set()
 
 
@@ -54,7 +56,9 @@ def report_uncounted_operation(level: Verbosity, operation: str, consequence: st
 
     Args:
         level: The calling thread's verbosity level, as `thread_reporting_level()` returns it;
-            at OFF nothing is reported.
+            at OFF nothing is reported.  The caller reads the level and passes it in, because
+            this package cannot import `thread_counter`, which sits beside it, and because the
+            `math` replacements need the level first, to skip scanning their arguments at OFF.
         operation: Name of the operation that could not be counted, e.g. ``"erf"``.
         consequence: Short statement of what that costs the count, e.g. that the result comes
             back as a plain float and stops counting downstream.

@@ -249,13 +249,14 @@ class CountedFloat(float):
         return result
 
     def as_integer_ratio(self) -> tuple[int, int]:
-        """Return the exact integer ratio, uncounted, and report the call while the thread is reporting.
+        """Return the exact integer ratio, uncounted, and report the call unless the thread's reporting level is OFF.
 
         The port's extraction is a bit-field read plus an integer shift -- integer-domain work
         the model prices nowhere -- so nothing is counted. But `n / d` on the result silently
         resumes float arithmetic at zero flops, the same re-entry math.frexp reports, so the
         call is surfaced through the same channel. Unlike the math patches this override is
-        permanently installed; the method is cold and the reporting test is one TLS read.
+        permanently installed; the method is cold, and on a thread at OFF the report costs one TLS
+        read and a call that returns at once.
 
         Raises:
             UncountedOperationError: If the thread's verbosity is ERROR.

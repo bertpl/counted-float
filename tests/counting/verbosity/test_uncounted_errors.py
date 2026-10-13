@@ -50,7 +50,7 @@ def test_the_error_locates_the_calling_line():
     x = CountedFloat(2.5)
 
     def call_ulp() -> float:
-        return math.ulp(x)  # the calling line is the one below the def
+        return math.ulp(x)  # this is the calling line, co_firstlineno + 1
 
     calling_line = call_ulp.__code__.co_firstlineno + 1
 
@@ -158,12 +158,12 @@ def test_the_error_survives_pickling():
     error = UncountedOperationError("frexp", "uncounted; result is a plain float", "algo.py:7")
 
     # --- act --------------------------
-    restored = pickle.loads(pickle.dumps(error))  # noqa: S301 -- the payload was pickled one line up
+    restored_error = pickle.loads(pickle.dumps(error))  # noqa: S301 -- the payload was pickled one line up
 
     # --- assert -----------------------
-    assert (restored.operation, restored.consequence, restored.location) == (
+    assert (restored_error.operation, restored_error.consequence, restored_error.location) == (
         "frexp",
         "uncounted; result is a plain float",
         "algo.py:7",
     )
-    assert str(restored) == str(error)
+    assert str(restored_error) == str(error)

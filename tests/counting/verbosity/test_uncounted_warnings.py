@@ -372,8 +372,7 @@ def test_uncounted_functions_exist_in_math(function_name):
 # ==================================================================================================
 # Direct tests of _make_uncounted_wrapper: the module-level _UNCOUNTED_PATCHES registry is built at
 # import time, so only a factory call made inside a test exercises the closure where mutation
-# attribution can see it. Each test builds its own probe name -- warnings dedup per (operation,
-# location) process-wide, so sharing a name across tests would silence all but the first.
+# attribution can see it.
 def test_a_wrapper_delegates_untouched_when_nobody_reports(make_probe_wrapper, logged_lines):
     # --- arrange -----------------------------------------
     delegate_calls: list = []

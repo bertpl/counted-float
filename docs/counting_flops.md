@@ -312,7 +312,7 @@ levels:
 
 Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
-A third level, **`Verbosity.ERROR`**, writes nothing: it raises an exception at each operation that `WARNING` would report, so that a test can fail on it (Example 9).
+A third level, **`Verbosity.ERROR`**, writes nothing: it raises an exception at each operation that `WARNING` would report, so that a test reaching such an operation fails (Example 9).
 
 **Example 6**: _verbose counting_
 
@@ -453,11 +453,11 @@ def test_normalized_loses_the_count_at_frexp():
     assert exc_info.value.operation == "frexp"
 ```
 
-`ERROR` raises `UncountedOperationError` at every operation that `WARNING` would report, before the operation runs, and prints nothing. It sees exactly what `WARNING` sees, so the limits in *What `WARNING` can and cannot see* apply to it too.
+`ERROR` raises `UncountedOperationError` before the operation runs. It sees exactly what `WARNING` sees, so the limits in *What `WARNING` can and cannot see* apply to it too.
 
 - **`ERROR` raises at every call, while `WARNING` reports each call site once,** so every test that reaches an uncounted operation fails, not only the first test to reach it.
 - **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
-- **`ERROR` is an alternative to `WARNING`, not a step beyond `INFO`:** a thread has one level at a time, so `ERROR` and `INFO` cannot be combined. Like the other levels, it applies to the whole thread while the block is open, and a context opened inside it takes over until that context exits.
+- **`ERROR` is an alternative to `WARNING`, not a step beyond `INFO`:** a thread has one level at a time, so `ERROR` and `INFO` cannot be combined.
 
 ## Performance overhead
 

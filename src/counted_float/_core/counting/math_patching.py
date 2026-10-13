@@ -1065,17 +1065,18 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
 
     Returns:
         A replacement that reports the call while the calling thread is reporting, and otherwise
-        behaves exactly like the function it replaces.  At ERROR the report is an exception,
+        behaves exactly like the replaced function.  At ERROR the report is an exception,
         raised before the replaced function runs.
     """
 
     def replacement(*args: object, **kwargs: object) -> object:
-        # the thread's reporting level is read first: OFF rules out a report for every thread
-        # that is not reporting -- one that never counted, runs at level OFF, or is paused (paused
-        # operations are deliberately uncounted, so they are not reported either) -- without
-        # walking the arguments.  Keyword values are scanned too: math.isclose takes its
-        # tolerances by keyword, and a CountedFloat there is as unseen by the count as one in a
-        # positional slot.
+        # the thread's reporting level is read first: it is OFF for every thread that is not
+        # reporting -- one that never counted, runs at level OFF, or is paused (paused operations are
+        # deliberately uncounted, so they are not reported either) -- so those threads skip the report
+        # without walking the arguments.
+        #
+        # Keyword values are scanned too: math.isclose takes its tolerances by keyword, and a
+        # CountedFloat there is as unseen by the count as one in a positional slot.
         level = thread_reporting_level()
         if level is not Verbosity.OFF and any(isinstance(arg, CountedFloat) for arg in (*args, *kwargs.values())):
             report_uncounted_operation(level, name, consequence)

@@ -39,8 +39,8 @@ class FlopCountingContext:
     a cross-thread call would silently read or pause the *caller's* thread state).  To measure a
     multi-threaded computation, open a separate context per worker thread and sum the results.
 
-    Pass a `verbosity` level to have the context also report, as it goes, what it counts and what
-    it cannot count, or raise at an operation that it cannot count (see Verbosity).
+    Pass a `verbosity` level to have the context report, while it runs, what it counts and what it
+    cannot count, or raise at an operation that it cannot count (see Verbosity).
 
     LIMITATIONS:
         - not _all_ floating-point operations are counted, see the docs for more details.
