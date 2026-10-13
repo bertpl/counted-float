@@ -39,9 +39,8 @@ class FlopCountingContext:
     a cross-thread call would silently read or pause the *caller's* thread state).  To measure a
     multi-threaded computation, open a separate context per worker thread and sum the results.
 
-    Pass a `verbosity` level to have the context report what it counts and what it cannot count as
-    it goes, instead of only totalling the counts, or raise at an operation it cannot count (see
-    Verbosity).
+    Pass a `verbosity` level to have the context also report, as it goes, what it counts and what
+    it cannot count, or raise at an operation that it cannot count (see Verbosity).
 
     LIMITATIONS:
         - not _all_ floating-point operations are counted, see the docs for more details.
@@ -54,9 +53,10 @@ class FlopCountingContext:
         """Create a counting context.
 
         Args:
-            verbosity: What to report, or raise at, while this context's with-block is open.  The
-                level applies to the whole thread, so a context opened inside this one takes over
-                until it exits, whatever level it asks for.
+            verbosity: Whether to report counted and uncounted operations, or to raise at
+                uncounted ones, while this context's with-block is open.  The level applies to the
+                whole thread, so a context opened inside this one takes over until it exits,
+                whatever level it asks for.
         """
         # Verbosity requested by this context, and the thread level it replaced while open
         self.__verbosity: Verbosity = verbosity

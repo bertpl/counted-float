@@ -110,13 +110,13 @@ def thread_reporting_level() -> Verbosity:
 
     Unlike the facade, this never initializes thread state: it is called from the replacements
     that surface uncountable `math.*` calls, which any thread in the process may hit, and a
-    thread that never counted holds no state — and should not acquire any just for being asked.
-    Such a thread reports at OFF.
+    thread that never counted holds no state, should not acquire any just for being asked,
+    and reports at OFF.
     """
     level = getattr(_TLS, "verbosity", Verbosity.OFF)
-    # the pause test runs only for a level other than OFF, and is safe there: `_TLS.verbosity` is
-    # only set by `_create_thread_state()` or after it ran, and that function also creates
-    # `_TLS.flop_counts` and `_TLS.flop_counts_inactive`
+    # the pause test runs only for a level other than OFF, where the attributes it reads exist:
+    # `_TLS.verbosity` is only set by `_create_thread_state()` or after it ran, and that function
+    # also creates `_TLS.flop_counts` and `_TLS.flop_counts_inactive`
     if level is Verbosity.OFF or _TLS.flop_counts is _TLS.flop_counts_inactive:
         return Verbosity.OFF
     else:

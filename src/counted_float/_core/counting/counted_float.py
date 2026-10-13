@@ -6,7 +6,7 @@ from math import frexp as _frexp  # the raw builtin: math.frexp may later carry 
 from typing import TYPE_CHECKING, SupportsIndex, final
 
 from .thread_counter import _TLS, _create_thread_state, thread_reporting_level
-from .verbosity import Verbosity, report_uncounted_operation
+from .verbosity import report_uncounted_operation
 
 if TYPE_CHECKING:
     from .thread_counter import CountsTarget
@@ -256,12 +256,13 @@ class CountedFloat(float):
         resumes float arithmetic at zero flops, the same re-entry math.frexp reports, so the
         call is surfaced through the same channel. Unlike the math patches this override is
         permanently installed; the method is cold and the reporting test is one TLS read.
+
+        Raises:
+            UncountedOperationError: If the thread's verbosity is ERROR.
         """
-        level = thread_reporting_level()
-        if level is not Verbosity.OFF:
-            report_uncounted_operation(
-                level, "float.as_integer_ratio", "its integer parts re-enter float math uncounted"
-            )
+        report_uncounted_operation(
+            thread_reporting_level(), "float.as_integer_ratio", "its integer parts re-enter float math uncounted"
+        )
         return float.as_integer_ratio(self)
 
     # -------------------------------------------------------------------------

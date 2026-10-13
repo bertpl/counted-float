@@ -4,7 +4,7 @@ from enum import StrEnum
 
 
 class Verbosity(StrEnum):
-    """What a counting context reports about the flops it registers, as it registers them.
+    """A Verbosity level sets what a counting context reports, or raises at, while it counts flops.
 
     ``OFF`` is the default and reports nothing; it is also the only level counting sites pay
     nothing for.  ``WARNING`` reports the operations that were seen but could not be counted.

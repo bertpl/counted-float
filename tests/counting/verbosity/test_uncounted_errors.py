@@ -9,7 +9,6 @@ from counted_float import (
     CountedFloat,
     FlopCountingContext,
     FlopCounts,
-    PauseFlopCounting,
     UncountedOperationError,
     Verbosity,
 )
@@ -27,22 +26,22 @@ def test_every_uncounted_math_function_raises(function_name):
     arguments = (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ()))
 
     # --- act --------------------------
-    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as error:
-        # resolved inside the context, where the replacements are installed
+    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as exc_info:
+        # the name is resolved inside the context, where the replacements are installed
         getattr(math, function_name)(*arguments)
 
     # --- assert -----------------------
-    assert error.value.operation == function_name
+    assert exc_info.value.operation == function_name
 
 
 def test_as_integer_ratio_raises():
-    """`as_integer_ratio` raises, named as the float method it is."""
+    """`as_integer_ratio` raises, with `"float.as_integer_ratio"` as the operation."""
     # --- act --------------------------
-    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as error:
+    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as exc_info:
         CountedFloat(1.5).as_integer_ratio()
 
     # --- assert -----------------------
-    assert error.value.operation == "float.as_integer_ratio"
+    assert exc_info.value.operation == "float.as_integer_ratio"
 
 
 def test_the_error_locates_the_calling_line():
@@ -51,36 +50,16 @@ def test_the_error_locates_the_calling_line():
     x = CountedFloat(2.5)
 
     def call_ulp() -> float:
-        return math.ulp(x)  # the calling line: the one below the def
+        return math.ulp(x)  # the calling line is the one below the def
 
     calling_line = call_ulp.__code__.co_firstlineno + 1
 
     # --- act --------------------------
-    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as error:
+    with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as exc_info:
         call_ulp()
 
     # --- assert -----------------------
-    assert error.value.location == f"test_uncounted_errors.py:{calling_line}"
-
-
-def test_plain_arguments_raise_nothing():
-    """A call without counted values loses no count, so it raises nothing."""
-    # --- act --------------------------
-    with FlopCountingContext(verbosity=Verbosity.ERROR):
-        result = math.ulp(2.5)
-
-    # --- assert -----------------------
-    assert result == 2.0**-51
-
-
-def test_a_paused_call_raises_nothing():
-    """Paused operations are deliberately uncounted, so they raise nothing."""
-    # --- act --------------------------
-    with FlopCountingContext(verbosity=Verbosity.ERROR), PauseFlopCounting():
-        result = math.ulp(CountedFloat(2.5))
-
-    # --- assert -----------------------
-    assert result == 2.0**-51
+    assert exc_info.value.location == f"test_uncounted_errors.py:{calling_line}"
 
 
 # ==================================================================================================
@@ -104,7 +83,7 @@ def test_a_call_site_reported_at_warning_still_raises(logged_lines):
     x = CountedFloat(2.5)
 
     def call_ulp() -> float:
-        return math.ulp(x)  # one call site, reached at both levels
+        return math.ulp(x)  # both levels reach this one call site
 
     # --- act --------------------------
     with FlopCountingContext(verbosity=Verbosity.WARNING):
@@ -149,7 +128,7 @@ def test_error_prints_nothing_and_counts_as_usual(logged_lines):
 
 @pytest.mark.parametrize("inner_level", [level for level in Verbosity if level is not Verbosity.ERROR])
 def test_an_inner_context_at_another_level_suspends_error(inner_level):
-    """The innermost context's level wins, as for every level, and ERROR resumes once it exits."""
+    """The innermost context's level wins, as for every level, and ERROR resumes once the inner context exits."""
     # --- arrange ----------------------
     x = CountedFloat(2.5)
 

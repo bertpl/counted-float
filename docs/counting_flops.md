@@ -448,14 +448,14 @@ def test_normalized_is_fully_counted():
 
 def test_normalized_loses_the_count_at_frexp():
     with FlopCountingContext(verbosity=Verbosity.ERROR):
-        with pytest.raises(UncountedOperationError) as error:
+        with pytest.raises(UncountedOperationError) as exc_info:
             normalized(CountedFloat(0.6))
-    assert error.value.operation == "frexp"
+    assert exc_info.value.operation == "frexp"
 ```
 
-`ERROR` answers the question of `WARNING` in a form a test can act on. It raises `UncountedOperationError` at every operation that `WARNING` would report, before the operation runs, and prints nothing. It sees exactly what `WARNING` sees, so the limits in the box above apply to it too.
+`ERROR` raises `UncountedOperationError` at every operation that `WARNING` would report, before the operation runs, and prints nothing. It sees exactly what `WARNING` sees, so the limits in *What `WARNING` can and cannot see* apply to it too.
 
-- **It raises at every call, not once per call site,** so every test that reaches such an operation fails, not only the first one.
+- **`ERROR` raises at every call, while `WARNING` reports each call site once,** so every test that reaches an uncounted operation fails, not only the first test to reach it.
 - **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
 - **`ERROR` is an alternative to `WARNING`, not a step beyond `INFO`:** a thread has one level at a time, so `ERROR` and `INFO` cannot be combined. Like the other levels, it applies to the whole thread while the block is open, and a context opened inside it takes over until that context exits.
 

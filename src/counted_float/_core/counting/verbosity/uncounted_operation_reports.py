@@ -9,13 +9,13 @@ from .callsite import format_location, locate_call
 from .levels import Verbosity
 from .output import VerbosityWriter
 
-# Call sites written to stderr so far, for the lifetime of the process.  Each entry pairs the
-# operation that could not be counted with the exact place it was called from --
+# _reported holds the call sites written to stderr so far, for the lifetime of the process.  Each
+# entry pairs the operation that could not be counted with the exact place it was called from --
 # ("erf", ("/proj/my_algo.py", 42)) -- so one operation called from two places is two findings,
 # while a call site inside a loop stays one however often it runs.
 #
-# A finding belongs to a source line rather than to a run or a thread, so reporting it once is
-# enough -- which is what keeps WARNING usable on a full run instead of only on a snippet
+# A finding belongs to a source line, not to a run or a thread, so reporting it once is enough;
+# reporting each call site once keeps WARNING usable on a full run, not only on a snippet
 # (Python's own warnings default to the same once-per-location rule).  Shared across threads
 # without a lock: two threads racing on one site can at worst report it twice.
 _reported: set[tuple[str, tuple[str, int]]] = set()
@@ -31,9 +31,9 @@ class UncountedOperationError(RuntimeError):
     """
 
     def __init__(self, operation: str, consequence: str, location: str) -> None:
-        # the fields are RuntimeError's args, so that the error survives pickling: unpickling calls
-        # the class with its args, and multiprocessing pickles an error to send it from a worker
-        # process back to its parent
+        # the fields are RuntimeError's args, so that unpickling restores the error: unpickling
+        # calls the class with its args, and multiprocessing pickles an error to send it from a
+        # worker process back to its parent
         super().__init__(operation, consequence, location)
         self.operation = operation
         self.consequence = consequence
@@ -47,13 +47,14 @@ class UncountedOperationError(RuntimeError):
 def report_uncounted_operation(level: Verbosity, operation: str, consequence: str) -> None:
     """Report an operation that touched a counted value without being counted.
 
-    At ERROR this raises, on every call: a test that reaches the operation has to fail, even when
-    an earlier test already raised at the same call site, or WARNING already reported it.  At
-    WARNING and INFO it writes a line, once per call site for the lifetime of the process.
+    At ERROR this raises on every call, so that every test reaching the operation fails, even when
+    the same call site already raised in an earlier test or was already reported at WARNING.
+
+    At WARNING and INFO it writes a line, once per call site for the lifetime of the process.
 
     Args:
-        level: The calling thread's verbosity level; never OFF, because a thread at OFF reports
-            nothing.
+        level: The calling thread's verbosity level, as `thread_reporting_level()` returns it;
+            at OFF nothing is reported.
         operation: Name of the operation that could not be counted, e.g. ``"erf"``.
         consequence: Short statement of what that costs the count, e.g. that the result comes
             back as a plain float and stops counting downstream.
@@ -61,11 +62,14 @@ def report_uncounted_operation(level: Verbosity, operation: str, consequence: st
     Raises:
         UncountedOperationError: If `level` is ERROR.
     """
+    if level is Verbosity.OFF:
+        return
     location = locate_call()
     if level is Verbosity.ERROR:
         raise UncountedOperationError(operation, consequence, format_location(location))
-    # deduplicated on the raw location, so that a call site already reported costs a tuple and a
-    # set lookup -- rendering it (and walking pathlib to do so) happens once, on the first report
+    # the record is deduplicated on the raw location, so that a call site already reported costs a
+    # tuple and a set lookup -- rendering it (and walking pathlib to do so) happens once, on the
+    # first report
     key = (operation, location)
     if key in _reported:
         return

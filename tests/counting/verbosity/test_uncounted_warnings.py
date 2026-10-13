@@ -55,9 +55,10 @@ def test_sumprod_is_counted_not_reported(logged_lines):
     assert ctx.flop_counts().SUMPROD == 1
 
 
-def test_a_call_without_counted_values_is_not_reported(logged_lines):
+@pytest.mark.parametrize("level", [Verbosity.WARNING, Verbosity.ERROR])
+def test_a_call_without_counted_values_is_not_reported(logged_lines, level):
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING):
+    with FlopCountingContext(verbosity=level):
         _ = math.ulp(2.5)
 
     # --- assert ------------------------------------------
@@ -105,12 +106,13 @@ def test_off_reports_nothing(logged_lines):
     assert logged_lines() == []
 
 
-def test_a_call_while_paused_is_not_reported(logged_lines):
+@pytest.mark.parametrize("level", [Verbosity.WARNING, Verbosity.ERROR])
+def test_a_call_while_paused_is_not_reported(logged_lines, level):
     # --- arrange -----------------------------------------
     x = CountedFloat(2.5)
 
     # --- act ---------------------------------------------
-    with FlopCountingContext(verbosity=Verbosity.WARNING), PauseFlopCounting():
+    with FlopCountingContext(verbosity=level), PauseFlopCounting():
         _ = math.ulp(x)
 
     # --- assert ------------------------------------------

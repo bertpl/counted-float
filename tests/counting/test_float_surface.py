@@ -207,9 +207,9 @@ def test_is_integer_counts_the_floor_and_compare(thread_counter, value, expected
 # =================================================================================================
 def test_as_integer_ratio_is_uncounted_and_warns_when_reporting(thread_counter, capsys):
     # --- arrange -------------------------------
-    from counted_float._core.counting.verbosity import uncounted_operations
+    from counted_float._core.counting.verbosity import uncounted_operation_reports
 
-    uncounted_operations._reported.clear()  # the reported-sites record is process-wide
+    uncounted_operation_reports._reported.clear()  # the reported-sites record is process-wide
 
     # --- act -----------------------------------
     quiet = CountedFloat(1.5).as_integer_ratio()

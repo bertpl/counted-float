@@ -3,13 +3,14 @@ import math
 import pytest
 
 from counted_float._core.counting import math_patching
-from counted_float._core.counting.verbosity import uncounted_operations
+from counted_float._core.counting.verbosity import uncounted_operation_reports
 
-# Shared by the WARNING and ERROR tests of the uncounted math functions; defined here so both reach
-# them at collection time (they key `@pytest.mark.parametrize` decorators).
+# Shared by the WARNING and ERROR test modules for the uncounted math functions, which pass them to
+# `@pytest.mark.parametrize`; pytest needs those values at collection time, so they are module
+# constants here, not fixtures.
 UNCOUNTED_FUNCTION_NAMES = sorted(math_patching._UNCOUNTED_MATH)
 
-# what each of them needs after its first (counted) argument
+# EXTRA_ARGUMENTS holds what each function needs after its first (counted) argument
 EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,)}
 
 
@@ -21,7 +22,7 @@ def forget_reported_calls():
     tests have to clear it themselves to stay independent of one another.
     """
 
-    uncounted_operations._reported.clear()
+    uncounted_operation_reports._reported.clear()
 
 
 @pytest.fixture
@@ -39,8 +40,8 @@ def make_probe_wrapper(monkeypatch):
     """Build wrappers for fake math functions that record their delegated calls.
 
     Removing the reporting patches restores everything in _uncounted_originals onto the math
-    module, so a probe entry leaks a new `math.<probe>` attribute the monkeypatch teardown does
-    not know about; the fixture deletes those on the way out.
+    module, so a probe entry leaks a new `math.<probe>` attribute that the monkeypatch teardown
+    does not know about; the fixture deletes those on the way out.
     """
     probe_names: list[str] = []
 

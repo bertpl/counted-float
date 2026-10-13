@@ -28,6 +28,7 @@ INCREMENT_TARGETS = [
 
 
 def test_the_matrix_covers_every_level_paused_and_unpaused():
+    """INCREMENT_TARGETS has a row for every (verbosity level, paused) pair, and no other rows."""
     # --- act & assert ------------------------------------
     assert {(level, paused) for level, paused, *_ in INCREMENT_TARGETS} == {
         (level, paused) for level in Verbosity for paused in (False, True)

@@ -1070,7 +1070,7 @@ def _make_uncounted_wrapper(name: str, consequence: str) -> Callable[..., object
     """
 
     def replacement(*args: object, **kwargs: object) -> object:
-        # the thread's reporting level is read first: OFF settles the question for every thread
+        # the thread's reporting level is read first: OFF rules out a report for every thread
         # that is not reporting -- one that never counted, runs at level OFF, or is paused (paused
         # operations are deliberately uncounted, so they are not reported either) -- without
         # walking the arguments.  Keyword values are scanned too: math.isclose takes its
