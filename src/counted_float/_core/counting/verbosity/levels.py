@@ -11,10 +11,11 @@ class Verbosity(StrEnum):
     ``INFO`` additionally logs one line per registered flop, with the source location that
     triggered it and, where the counting rule applied is not self-evident, a short rationale.
 
-    ``ERROR`` prints nothing, and raises `UncountedOperationError` at every operation that
-    ``WARNING`` would report, so that a test reaching one fails.  It is an alternative to
-    ``WARNING``, not a step on the ``WARNING``/``INFO`` scale: a thread has one level at a time,
-    so ``ERROR`` cannot be combined with ``INFO``.
+    ``ERROR`` treats an operation that could not be counted as an error: it raises
+    `UncountedOperationError` at every operation that ``WARNING`` would report, so that a test
+    reaching one fails, and prints nothing.  Unlike the ``ERROR`` level of Python's ``logging``,
+    it does not print a subset of the ``WARNING`` lines.  A thread has one level at a time, so
+    ``ERROR`` cannot be combined with ``INFO``.
     """
 
     OFF = "off"

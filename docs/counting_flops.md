@@ -312,7 +312,7 @@ levels:
 
 Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
-A third level, **`Verbosity.ERROR`**, writes nothing: it raises an exception at each operation that `WARNING` would report, so that a test reaching such an operation fails (Example 9).
+A third level, **`Verbosity.ERROR`**, treats an operation that could not be counted as an error: it writes nothing, and raises an exception at each operation that `WARNING` would report, so that a test reaching such an operation fails (Example 9).
 
 **Example 6**: _verbose counting_
 
@@ -457,7 +457,7 @@ def test_normalized_loses_the_count_at_frexp():
 
 - **`ERROR` raises at every call, while `WARNING` reports each call site once,** so every test that reaches an uncounted operation fails, not only the first test to reach it.
 - **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
-- **`ERROR` is an alternative to `WARNING`, not a step beyond `INFO`:** a thread has one level at a time, so `ERROR` and `INFO` cannot be combined.
+- **`ERROR` does not print less than `WARNING`,** as the `ERROR` level of Python's `logging` module would: it prints nothing, and raises where `WARNING` prints. A thread has one level at a time, so `ERROR` and `INFO` cannot be combined.
 
 ## Performance overhead
 
