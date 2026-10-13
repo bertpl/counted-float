@@ -6,10 +6,7 @@ import pytest
 from counted_float import CountedFloat, FlopCountingContext, PauseFlopCounting, Verbosity
 from counted_float._core.counting import math_patching
 
-UNCOUNTED_FUNCTION_NAMES = sorted(math_patching._UNCOUNTED_MATH)
-
-# what each of them needs after its first (counted) argument
-EXTRA_ARGUMENTS = {"ldexp": (2,), "nextafter": (3.0,)}
+from .conftest import EXTRA_ARGUMENTS, UNCOUNTED_FUNCTION_NAMES
 
 
 # ==================================================================================================
@@ -375,31 +372,6 @@ def test_uncounted_functions_exist_in_math(function_name):
 # import time, so only a factory call made inside a test exercises the closure where mutation
 # attribution can see it. Each test builds its own probe name -- warnings dedup per (operation,
 # location) process-wide, so sharing a name across tests would silence all but the first.
-@pytest.fixture
-def make_probe_wrapper(monkeypatch):
-    """Build wrappers for fake math functions that record their delegated calls.
-
-    Removing the reporting patches restores everything in _uncounted_originals onto the math
-    module, so a probe entry leaks a new `math.<probe>` attribute the monkeypatch teardown does
-    not know about; the fixture deletes those on the way out.
-    """
-    probe_names: list[str] = []
-
-    def make(name: str, delegate_calls: list):
-        def original(*args: object, **kwargs: object) -> str:
-            delegate_calls.append((args, kwargs))
-            return "delegated"
-
-        monkeypatch.setitem(math_patching._uncounted_originals, name, original)
-        probe_names.append(name)
-        return math_patching._make_uncounted_wrapper(name, f"{name} consequence")
-
-    yield make
-    for name in probe_names:
-        if hasattr(math, name):
-            delattr(math, name)
-
-
 def test_a_wrapper_delegates_untouched_when_nobody_reports(make_probe_wrapper, logged_lines):
     # --- arrange -----------------------------------------
     delegate_calls: list = []

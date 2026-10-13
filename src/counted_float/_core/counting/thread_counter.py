@@ -23,7 +23,7 @@ Two invariants follow from the alias having three possible targets, and both are
 tests:
 
   - "is this thread counting?" is derived from the alias in two places only — ``is_active()``
-    and its stateless counterpart ``thread_is_reporting()`` — and everything needing the answer
+    and its stateless counterpart ``thread_reporting_level()`` — and everything needing the answer
     calls one of them.  The comparison is against ``flop_counts_inactive``; re-deriving it
     against ``flop_counts_active`` answers wrongly for a thread whose increments are routed
     through a logging target;
@@ -100,24 +100,27 @@ def _create_thread_state() -> CountsTarget:
     return _TLS.flop_counts
 
 
-def thread_is_reporting() -> bool:
-    """Return whether the calling thread should report uncountable operations right now.
+def thread_reporting_level() -> Verbosity:
+    """Return the level at which the calling thread reports uncountable operations right now.
 
-    True while the thread's verbosity is not OFF *and* its counting is not paused: paused
-    operations are deliberately uncounted, so reporting them as "could not be counted" would be
-    noise.  The pause test mirrors `ThreadLocalFlopCounter.is_active()` — against the inactive
-    sink, the comparison that stays correct with a logging target installed.
+    That is the thread's verbosity level, except while its counting is paused, when it is OFF:
+    paused operations are deliberately uncounted, so reporting them as "could not be counted"
+    would be noise.  The pause test mirrors `ThreadLocalFlopCounter.is_active()` — against the
+    inactive sink, the comparison that stays correct with a logging target installed.
 
     Unlike the facade, this never initializes thread state: it is called from the replacements
     that surface uncountable `math.*` calls, which any thread in the process may hit, and a
     thread that never counted holds no state — and should not acquire any just for being asked.
+    Such a thread reports at OFF.
     """
-    if getattr(_TLS, "verbosity", Verbosity.OFF) is Verbosity.OFF:
-        return False
+    level = getattr(_TLS, "verbosity", Verbosity.OFF)
+    # the pause test runs only for a level other than OFF, and is safe there: `_TLS.verbosity` is
+    # only set by `_create_thread_state()` or after it ran, and that function also creates
+    # `_TLS.flop_counts` and `_TLS.flop_counts_inactive`
+    if level is Verbosity.OFF or _TLS.flop_counts is _TLS.flop_counts_inactive:
+        return Verbosity.OFF
     else:
-        # `_TLS.verbosity` is only set by `_create_thread_state()` or after it ran, and that
-        # function also creates `_TLS.flop_counts` and `_TLS.flop_counts_inactive`, so both exist here
-        return _TLS.flop_counts is not _TLS.flop_counts_inactive
+        return level
 
 
 class ThreadLocalFlopCounter:
@@ -147,7 +150,7 @@ class ThreadLocalFlopCounter:
     def counts_target_for_verbosity() -> CountsTarget:
         """Return the object this thread's increments should go to while it is counting.
 
-        At verbosity OFF that is the thread's own FlopCounts.  At INFO it is a
+        At every level but INFO that is the thread's own FlopCounts.  At INFO it is a
         FlopCountsWithLogging wrapping those same counts, which logs each increment before
         applying it.
 

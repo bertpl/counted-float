@@ -312,6 +312,8 @@ levels:
 
 Both write to `stderr`, and `INFO` includes the `WARNING` lines.
 
+A third level, **`Verbosity.ERROR`**, writes nothing: it raises an exception at each operation that `WARNING` would report, so that a test can fail on it (Example 9).
+
 **Example 6**: _verbose counting_
 
 <!-- BEGIN generated: snippet-verbosity-info -->
@@ -422,6 +424,40 @@ The mantissa `frexp` hands back is a plain `float` — the yellow line reports
 that loss — while the multiply and subtract around it still involve `x` and
 are counted as usual. Anything computed from the plain mantissa alone would go
 missing silently, and the output says so up front.
+
+**Example 9**: _failing a test on an operation that could not be counted_
+
+```python
+import math
+
+import pytest
+
+from counted_float import CountedFloat, FlopCountingContext, UncountedOperationError, Verbosity
+
+
+def normalized(x):
+    mantissa, _ = math.frexp(x)
+    return 2.0 * mantissa
+
+
+def test_normalized_is_fully_counted():
+    # fails: the frexp call raises UncountedOperationError
+    with FlopCountingContext(verbosity=Verbosity.ERROR):
+        normalized(CountedFloat(0.6))
+
+
+def test_normalized_loses_the_count_at_frexp():
+    with FlopCountingContext(verbosity=Verbosity.ERROR):
+        with pytest.raises(UncountedOperationError) as error:
+            normalized(CountedFloat(0.6))
+    assert error.value.operation == "frexp"
+```
+
+`ERROR` answers the question of `WARNING` in a form a test can act on. It raises `UncountedOperationError` at every operation that `WARNING` would report, before the operation runs, and prints nothing. It sees exactly what `WARNING` sees, so the limits in the box above apply to it too.
+
+- **It raises at every call, not once per call site,** so every test that reaches such an operation fails, not only the first one.
+- **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
+- **`ERROR` is an alternative to `WARNING`, not a step beyond `INFO`:** a thread has one level at a time, so `ERROR` and `INFO` cannot be combined. Like the other levels, it applies to the whole thread while the block is open, and a context opened inside it takes over until that context exits.
 
 ## Performance overhead
 

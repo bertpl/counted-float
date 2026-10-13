@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add `Verbosity.ERROR`, which raises `UncountedOperationError` for an operation that could not be counted
+
 ### Changed
 
 ### Deprecated

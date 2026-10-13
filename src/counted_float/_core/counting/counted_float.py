@@ -5,8 +5,8 @@ from math import copysign as _copysign  # the raw builtin: math.copysign is patc
 from math import frexp as _frexp  # the raw builtin: math.frexp may later carry a reporting wrapper
 from typing import TYPE_CHECKING, SupportsIndex, final
 
-from .thread_counter import _TLS, _create_thread_state, thread_is_reporting
-from .verbosity import warn_uncounted_call
+from .thread_counter import _TLS, _create_thread_state, thread_reporting_level
+from .verbosity import Verbosity, report_uncounted_operation
 
 if TYPE_CHECKING:
     from .thread_counter import CountsTarget
@@ -249,7 +249,7 @@ class CountedFloat(float):
         return result
 
     def as_integer_ratio(self) -> tuple[int, int]:
-        """The exact integer ratio, uncounted but reported at WARNING verbosity.
+        """Return the exact integer ratio, uncounted, and report the call while the thread is reporting.
 
         The port's extraction is a bit-field read plus an integer shift -- integer-domain work
         the model prices nowhere -- so nothing is counted. But `n / d` on the result silently
@@ -257,8 +257,11 @@ class CountedFloat(float):
         call is surfaced through the same channel. Unlike the math patches this override is
         permanently installed; the method is cold and the reporting test is one TLS read.
         """
-        if thread_is_reporting():
-            warn_uncounted_call("float.as_integer_ratio", "its integer parts re-enter float math uncounted")
+        level = thread_reporting_level()
+        if level is not Verbosity.OFF:
+            report_uncounted_operation(
+                level, "float.as_integer_ratio", "its integer parts re-enter float math uncounted"
+            )
         return float.as_integer_ratio(self)
 
     # -------------------------------------------------------------------------

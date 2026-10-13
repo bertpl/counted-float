@@ -337,6 +337,7 @@ pytest_add_cli_args = [
     "--deselect=tests/counting/verbosity/test_flop_counts_with_logging.py::test_lines_without_a_note_carry_no_rationale",
     "--deselect=tests/counting/verbosity/test_info_counting.py::test_logged_lines_locate_the_user_expression_not_the_library",
     "--deselect=tests/counting/verbosity/test_uncounted_warnings.py::test_each_call_site_is_reported_separately",
+    "--deselect=tests/counting/verbosity/test_uncounted_errors.py::test_the_error_locates_the_calling_line",
 ]
 # The whole suite, minus what the sandbox genuinely cannot run (see --ignore above). Exclusion, not
 # inclusion, for the reason given at only_mutate's old home: a listed set of directories stops being

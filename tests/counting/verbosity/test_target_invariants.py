@@ -11,21 +11,30 @@ import pytest
 from counted_float import FlopCounts, Verbosity
 from counted_float._core.counting.thread_counter import _TLS
 
-
 # ==================================================================================================
 #  Which target increments go to, per (level, paused)
 # ==================================================================================================
-@pytest.mark.parametrize(
-    ("level", "paused", "counted", "logged"),
-    [
-        (Verbosity.OFF, False, True, False),
-        (Verbosity.OFF, True, False, False),
-        (Verbosity.WARNING, False, True, False),
-        (Verbosity.WARNING, True, False, False),
-        (Verbosity.INFO, False, True, True),
-        (Verbosity.INFO, True, False, False),
-    ],
-)
+# (level, paused, counted, logged)
+INCREMENT_TARGETS = [
+    (Verbosity.OFF, False, True, False),
+    (Verbosity.OFF, True, False, False),
+    (Verbosity.WARNING, False, True, False),
+    (Verbosity.WARNING, True, False, False),
+    (Verbosity.INFO, False, True, True),
+    (Verbosity.INFO, True, False, False),
+    (Verbosity.ERROR, False, True, False),
+    (Verbosity.ERROR, True, False, False),
+]
+
+
+def test_the_matrix_covers_every_level_paused_and_unpaused():
+    # --- act & assert ------------------------------------
+    assert {(level, paused) for level, paused, *_ in INCREMENT_TARGETS} == {
+        (level, paused) for level in Verbosity for paused in (False, True)
+    }
+
+
+@pytest.mark.parametrize(("level", "paused", "counted", "logged"), INCREMENT_TARGETS)
 def test_increment_target(thread_counter, logged_lines, incr_flop, level, paused, counted, logged):
     # --- arrange -----------------------------------------
     thread_counter.set_verbosity(level)
