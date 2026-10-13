@@ -2,6 +2,7 @@
 
 import math
 import pickle
+import re
 
 import pytest
 
@@ -12,6 +13,7 @@ from counted_float import (
     UncountedOperationError,
     Verbosity,
 )
+from counted_float._core.counting import math_patching
 
 from .conftest import EXTRA_ARGUMENTS, UNCOUNTED_FUNCTION_NAMES
 
@@ -21,7 +23,7 @@ from .conftest import EXTRA_ARGUMENTS, UNCOUNTED_FUNCTION_NAMES
 # ==================================================================================================
 @pytest.mark.parametrize("function_name", UNCOUNTED_FUNCTION_NAMES)
 def test_every_uncounted_math_function_raises(function_name):
-    """Each uncounted math function raises, naming itself as the operation."""
+    """Each uncounted math function raises, naming itself, its consequence and a `file.py:lineno` location."""
     # --- arrange ----------------------
     arguments = (CountedFloat(2.5), *EXTRA_ARGUMENTS.get(function_name, ()))
 
@@ -32,16 +34,19 @@ def test_every_uncounted_math_function_raises(function_name):
 
     # --- assert -----------------------
     assert exc_info.value.operation == function_name
+    assert exc_info.value.consequence == math_patching._UNCOUNTED_MATH[function_name]
+    assert re.fullmatch(r"[^:]+\.py:\d+", exc_info.value.location)
 
 
 def test_as_integer_ratio_raises():
-    """`as_integer_ratio` raises, with `"float.as_integer_ratio"` as the operation."""
+    """`as_integer_ratio` raises, naming `"float.as_integer_ratio"` as the operation and its own consequence."""
     # --- act --------------------------
     with FlopCountingContext(verbosity=Verbosity.ERROR), pytest.raises(UncountedOperationError) as exc_info:
         CountedFloat(1.5).as_integer_ratio()
 
     # --- assert -----------------------
     assert exc_info.value.operation == "float.as_integer_ratio"
+    assert exc_info.value.consequence == "its integer parts re-enter float math uncounted"
 
 
 def test_the_error_locates_the_calling_line():
@@ -153,7 +158,7 @@ def test_the_message_names_the_operation_location_and_consequence():
 
 
 def test_the_error_survives_pickling():
-    """Unpickling restores every field and the message, as multiprocessing needs."""
+    """Unpickling restores every field, the args and the message, as multiprocessing needs."""
     # --- arrange ----------------------
     error = UncountedOperationError("frexp", "uncounted; result is a plain float", "algo.py:7")
 
@@ -166,4 +171,5 @@ def test_the_error_survives_pickling():
         "uncounted; result is a plain float",
         "algo.py:7",
     )
+    assert restored_error.args == error.args == ("frexp", "uncounted; result is a plain float", "algo.py:7")
     assert str(restored_error) == str(error)

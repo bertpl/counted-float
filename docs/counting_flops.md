@@ -457,6 +457,7 @@ def test_normalized_loses_the_count_at_frexp():
 
 - **`ERROR` raises at every call, while `WARNING` reports each call site once,** so every test that reaches an uncounted operation fails, not only the first test to reach it.
 - **The error's `operation` and `location` attributes** name the operation and the line of your code that called it.
+- **`UncountedOperationError` is a `RuntimeError`,** so an `except Exception` handler in the code under test catches it like any other error, and the test does not fail.
 - **`ERROR` does not print less than `WARNING`,** as the `ERROR` level of Python's `logging` module would: it prints nothing, and raises where `WARNING` prints. A thread has one level at a time, so `ERROR` and `INFO` cannot be combined.
 
 ## Performance overhead
